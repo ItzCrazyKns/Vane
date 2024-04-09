@@ -8,7 +8,7 @@ import EmptyChat from './EmptyChat';
 
 export type Message = {
   id: string;
-  createdAt?: Date;
+  createdAt: Date;
   content: string;
   role: 'user' | 'assistant';
   sources?: Document[];
@@ -65,6 +65,7 @@ const ChatWindow = () => {
         content: message,
         id: Math.random().toString(36).substring(7),
         role: 'user',
+        createdAt: new Date(),
       },
     ]);
 
@@ -81,6 +82,7 @@ const ChatWindow = () => {
               id: data.messageId,
               role: 'assistant',
               sources: sources,
+              createdAt: new Date(),
             },
           ]);
           added = true;
@@ -97,6 +99,7 @@ const ChatWindow = () => {
               id: data.messageId,
               role: 'assistant',
               sources: sources,
+              createdAt: new Date(),
             },
           ]);
           added = true;
@@ -151,7 +154,7 @@ const ChatWindow = () => {
     <div>
       {messages.length > 0 ? (
         <>
-          <Navbar />
+          <Navbar messages={messages} />
           <Chat
             loading={loading}
             messages={messages}
