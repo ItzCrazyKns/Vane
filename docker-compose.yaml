@@ -1,0 +1,44 @@
+services:
+  searxng:
+    build:
+      context: .
+      dockerfile: searxng.dockerfile
+    expose:
+      - 4000
+    ports:
+      - 4000:8080
+    networks:
+      - perplexica-network
+  perplexica-backend:
+    build:
+      context: .
+      dockerfile: backend.dockerfile
+      args:
+        - SEARXNG_API_URL=http://searxng:8080
+    depends_on:
+      - searxng
+    expose:
+      - 3001
+    ports:
+      - 3001:3001
+    networks:
+      - perplexica-network
+
+  perplexica-frontend:
+    build:
+      context: .
+      dockerfile: app.dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
+        - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
+    depends_on:
+      - perplexica-backend
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    networks:
+      - perplexica-network
+
+networks:
+  perplexica-network:

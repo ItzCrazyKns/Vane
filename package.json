@@ -1,0 +1,32 @@
+{
+  "name": "perplexica-backend",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": "ItzCrazyKns",
+  "scripts": {
+    "start": "node --env-file=.env dist/app.js",
+    "build": "tsc",
+    "dev": "nodemon --env-file=.env src/app.ts",
+    "format": "prettier . --check",
+    "format:write": "prettier . --write"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/readable-stream": "^4.0.11",
+    "prettier": "^3.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "@langchain/openai": "^0.0.25",
+    "axios": "^1.6.8",
+    "compute-cosine-similarity": "^1.1.0",
+    "compute-dot": "^1.1.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "langchain": "^0.1.30",
+    "ws": "^8.16.0",
+    "zod": "^3.22.4"
+  }
+}
