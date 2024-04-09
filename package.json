@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node --env-file=.env dist/app.js",
     "build": "tsc",
-    "dev": "nodemon --env-file=.env src/app.ts",
+    "dev": "nodemon -r dotenv/config src/app.ts",
     "format": "prettier . --check",
     "format:write": "prettier . --write"
   },
@@ -24,6 +24,7 @@
     "compute-cosine-similarity": "^1.1.0",
     "compute-dot": "^1.1.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "langchain": "^0.1.30",
     "ws": "^8.16.0",
