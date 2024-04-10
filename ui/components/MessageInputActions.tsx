@@ -4,7 +4,7 @@ import { Switch } from '@headlessui/react';
 
 export const Attach = () => {
   return (
-    <button className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
+    <button type="button" className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
       <CopyPlus />
     </button>
   );
@@ -12,7 +12,7 @@ export const Attach = () => {
 
 export const Focus = () => {
   return (
-    <button className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
+    <button type="button" className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
       <ScanEye />
     </button>
   );
