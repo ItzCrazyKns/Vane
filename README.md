@@ -7,6 +7,7 @@
 Perplexica is an open-source AI-powered searching tool or an AI-powered search engine that goes deep into the internet to find answers. Inspired by Perplexity AI, it's an open-source option that not just searches the web but understands your questions. It uses advanced machine learning algorithms like similarity searching and embeddings to refine results and provides clear answers with sources cited.
 
 ## Preview
+
 ![video-preview](.assets/perplexica-preview.gif)
 
 ## Features
@@ -25,25 +26,28 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 ### Getting Started with Docker (Recommended)
 
-1. Make sure Docker is installed and running on your system.
+1. Ensure Docker is installed and running on your system.
 2. Clone the Perplexica repository:
 
-```bash
-git clone https://github.com/ItzCrazyKns/Perplexica.git
-```
+   ```bash
+   git clone https://github.com/ItzCrazyKns/Perplexica.git
+   ```
 
-3. After cloning, rename the `.env.example` file to `.env` in the root directory. For Docker setups, you only need to fill these fields:
+3. After cloning, navigate to the directory containing the project files.
 
-- `OPENAI_API_KEY`
-- `SIMILARITY_MEASURE` (Its filled by default, you can leave it if you do not know about it.)
+4. Rename the `.env.example` file to `.env`. For Docker setups, you need only fill in the following fields:
+   - `OPENAI_API_KEY`
+   - `SIMILARITY_MEASURE` (This is filled by default; you can leave it as is if you are unsure about it.)
 
-4. Navigate to the directory containing `docker-compose.yaml` and execute:
+5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
 
-```bash
-docker compose up
-```
+   ```bash
+   docker compose up
+   ```
 
-5. Wait a few minutes for the setup to complete. Access Perplexica at `http://localhost:3001` in your web browser.
+6. Wait a few minutes for the setup to complete. You can access Perplexica at `http://localhost:3001` in your web browser.
+
+**Note**: Once the terminal is stopped, Perplexica will also stop. To restart it, you will need to open Docker Desktop and run Perplexica again.
 
 ### Non-Docker Installation
 
