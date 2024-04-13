@@ -54,7 +54,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    docker compose up
    ```
 
-6. Wait a few minutes for the setup to complete. You can access Perplexica at `http://localhost:3001` in your web browser.
+6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
 
 **Note**: Once the terminal is stopped, Perplexica will also stop. To restart it, you will need to open Docker Desktop and run Perplexica again.
 
