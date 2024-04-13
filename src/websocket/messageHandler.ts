@@ -2,12 +2,17 @@ import { WebSocket } from 'ws';
 import pickSuitableAgent from '../core/agentPicker';
 import handleWebSearch from '../agents/webSearchAgent';
 import { BaseMessage, AIMessage, HumanMessage } from '@langchain/core/messages';
+import handleAcademicSearch from '../agents/academicSearchAgent';
+import handleWritingAssistant from '../agents/writingAssistant';
+import handleWolframAlphaSearch from '../agents/wolframAlphaSearchAgent';
+import handleYoutubeSearch from '../agents/youtubeSearchAgent';
+import handleRedditSearch from '../agents/redditSearchAgent';
 
 type Message = {
   type: string;
   content: string;
   copilot: boolean;
-  focus: string;
+  focusMode: string;
   history: Array<[string, string]>;
 };
 
@@ -34,14 +39,7 @@ export const handleMessage = async (message: string, ws: WebSocket) => {
     });
 
     if (parsedMessage.type === 'message') {
-      /* if (!parsedMessage.focus) {
-        const agent = await pickSuitableAgent(parsedMessage.content);
-        parsedMessage.focus = agent;
-      } */
-
-      parsedMessage.focus = 'webSearch';
-
-      switch (parsedMessage.focus) {
+      switch (parsedMessage.focusMode) {
         case 'webSearch': {
           const emitter = handleWebSearch(parsedMessage.content, history);
           emitter.on('data', (data) => {
@@ -71,6 +69,160 @@ export const handleMessage = async (message: string, ws: WebSocket) => {
             const parsedData = JSON.parse(data);
             ws.send(JSON.stringify({ type: 'error', data: parsedData.data }));
           });
+          break;
+        }
+        case 'academicSearch': {
+          const emitter = handleAcademicSearch(parsedMessage.content, history);
+          emitter.on('data', (data) => {
+            const parsedData = JSON.parse(data);
+            if (parsedData.type === 'response') {
+              ws.send(
+                JSON.stringify({
+                  type: 'message',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            } else if (parsedData.type === 'sources') {
+              ws.send(
+                JSON.stringify({
+                  type: 'sources',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            }
+          });
+          emitter.on('end', () => {
+            ws.send(JSON.stringify({ type: 'messageEnd', messageId: id }));
+          });
+          emitter.on('error', (data) => {
+            const parsedData = JSON.parse(data);
+            ws.send(JSON.stringify({ type: 'error', data: parsedData.data }));
+          });
+          break;
+        }
+        case 'writingAssistant': {
+          const emitter = handleWritingAssistant(
+            parsedMessage.content,
+            history,
+          );
+          emitter.on('data', (data) => {
+            const parsedData = JSON.parse(data);
+            if (parsedData.type === 'response') {
+              ws.send(
+                JSON.stringify({
+                  type: 'message',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            }
+          });
+          emitter.on('end', () => {
+            ws.send(JSON.stringify({ type: 'messageEnd', messageId: id }));
+          });
+          emitter.on('error', (data) => {
+            const parsedData = JSON.parse(data);
+            ws.send(JSON.stringify({ type: 'error', data: parsedData.data }));
+          });
+          break;
+        }
+        case 'wolframAlphaSearch': {
+          const emitter = handleWolframAlphaSearch(
+            parsedMessage.content,
+            history,
+          );
+          emitter.on('data', (data) => {
+            const parsedData = JSON.parse(data);
+            if (parsedData.type === 'response') {
+              ws.send(
+                JSON.stringify({
+                  type: 'message',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            } else if (parsedData.type === 'sources') {
+              ws.send(
+                JSON.stringify({
+                  type: 'sources',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            }
+          });
+          emitter.on('end', () => {
+            ws.send(JSON.stringify({ type: 'messageEnd', messageId: id }));
+          });
+          emitter.on('error', (data) => {
+            const parsedData = JSON.parse(data);
+            ws.send(JSON.stringify({ type: 'error', data: parsedData.data }));
+          });
+          break;
+        }
+        case 'youtubeSearch': {
+          const emitter = handleYoutubeSearch(parsedMessage.content, history);
+          emitter.on('data', (data) => {
+            const parsedData = JSON.parse(data);
+            if (parsedData.type === 'response') {
+              ws.send(
+                JSON.stringify({
+                  type: 'message',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            } else if (parsedData.type === 'sources') {
+              ws.send(
+                JSON.stringify({
+                  type: 'sources',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            }
+          });
+          emitter.on('end', () => {
+            ws.send(JSON.stringify({ type: 'messageEnd', messageId: id }));
+          });
+          emitter.on('error', (data) => {
+            const parsedData = JSON.parse(data);
+            ws.send(JSON.stringify({ type: 'error', data: parsedData.data }));
+          });
+          break;
+        }
+        case 'redditSearch': {
+          const emitter = handleRedditSearch(parsedMessage.content, history);
+          emitter.on('data', (data) => {
+            const parsedData = JSON.parse(data);
+            if (parsedData.type === 'response') {
+              ws.send(
+                JSON.stringify({
+                  type: 'message',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            } else if (parsedData.type === 'sources') {
+              ws.send(
+                JSON.stringify({
+                  type: 'sources',
+                  data: parsedData.data,
+                  messageId: id,
+                }),
+              );
+            }
+          });
+          emitter.on('end', () => {
+            ws.send(JSON.stringify({ type: 'messageEnd', messageId: id }));
+          });
+          emitter.on('error', (data) => {
+            const parsedData = JSON.parse(data);
+            ws.send(JSON.stringify({ type: 'error', data: parsedData.data }));
+          });
+          break;
         }
       }
     }

@@ -5,8 +5,12 @@ import { Attach, CopilotToggle, Focus } from './MessageInputActions';
 
 const EmptyChatMessageInput = ({
   sendMessage,
+  focusMode,
+  setFocusMode,
 }: {
   sendMessage: (message: string) => void;
+  focusMode: string;
+  setFocusMode: (mode: string) => void;
 }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
@@ -37,8 +41,8 @@ const EmptyChatMessageInput = ({
         />
         <div className="flex flex-row items-center justify-between mt-4">
           <div className="flex flex-row items-center space-x-1 -mx-2">
-            <Focus />
-            <Attach />
+            <Focus focusMode={focusMode} setFocusMode={setFocusMode} />
+            {/* <Attach /> */}
           </div>
           <div className="flex flex-row items-center space-x-4 -mx-2">
             <CopilotToggle

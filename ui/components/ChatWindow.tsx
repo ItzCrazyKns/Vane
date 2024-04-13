@@ -41,6 +41,7 @@ const ChatWindow = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
+  const [focusMode, setFocusMode] = useState('webSearch');
 
   const sendMessage = async (message: string) => {
     if (loading) return;
@@ -55,6 +56,7 @@ const ChatWindow = () => {
       JSON.stringify({
         type: 'message',
         content: message,
+        focusMode: focusMode,
         history: [...chatHistory, ['human', message]],
       }),
     );
@@ -164,7 +166,11 @@ const ChatWindow = () => {
           />
         </>
       ) : (
-        <EmptyChat sendMessage={sendMessage} />
+        <EmptyChat
+          sendMessage={sendMessage}
+          focusMode={focusMode}
+          setFocusMode={setFocusMode}
+        />
       )}
     </div>
   );

@@ -1,20 +1,131 @@
-import { CopyPlus, ScanEye } from 'lucide-react';
+import {
+  BadgePercent,
+  CopyPlus,
+  Globe,
+  Pencil,
+  ScanEye,
+  SwatchBook,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Switch } from '@headlessui/react';
+import { Popover, Switch, Transition } from '@headlessui/react';
+import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
+import { Fragment } from 'react';
 
 export const Attach = () => {
   return (
-    <button type="button" className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
+    <button
+      type="button"
+      className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white"
+    >
       <CopyPlus />
     </button>
   );
 };
 
-export const Focus = () => {
+const focusModes = [
+  {
+    key: 'webSearch',
+    title: 'All',
+    description: 'Searches across all of the internet',
+    icon: <Globe size={20} />,
+  },
+  {
+    key: 'academicSearch',
+    title: 'Academic',
+    description: 'Search in published academic papers',
+    icon: <SwatchBook size={20} />,
+  },
+  {
+    key: 'writingAssistant',
+    title: 'Writing',
+    description: 'Chat without searching the web',
+    icon: <Pencil size={20} />,
+  },
+  {
+    key: 'wolframAlphaSearch',
+    title: 'Wolfram Alpha',
+    description: 'Computational knowledge engine',
+    icon: <BadgePercent size={20} />,
+  },
+  {
+    key: 'youtubeSearch',
+    title: 'Youtube',
+    description: 'Search and watch videos',
+    icon: (
+      <SiYoutube
+        className="h-5 w-auto mr-0.5"
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      />
+    ),
+  },
+  {
+    key: 'redditSearch',
+    title: 'Reddit',
+    description: 'Search for discussions and opinions',
+    icon: (
+      <SiReddit
+        className="h-5 w-auto mr-0.5"
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      />
+    ),
+  },
+];
+
+export const Focus = ({
+  focusMode,
+  setFocusMode,
+}: {
+  focusMode: string;
+  setFocusMode: (mode: string) => void;
+}) => {
   return (
-    <button type="button" className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
-      <ScanEye />
-    </button>
+    <Popover className="fixed w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
+      <Popover.Button
+        type="button"
+        className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white"
+      >
+        <ScanEye />
+      </Popover.Button>
+      <Transition
+        as={Fragment}
+        enter="transition ease-out duration-150"
+        enterFrom="opacity-0 translate-y-1"
+        enterTo="opacity-100 translate-y-0"
+        leave="transition ease-in duration-150"
+        leaveFrom="opacity-100 translate-y-0"
+        leaveTo="opacity-0 translate-y-1"
+      >
+        <Popover.Panel className="absolute z-10 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-[#0A0A0A] border rounded-lg  border-[#1c1c1c] w-full p-2">
+            {focusModes.map((mode, i) => (
+              <Popover.Button
+                onClick={() => setFocusMode(mode.key)}
+                key={i}
+                className={cn(
+                  'p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-2 duration-200 cursor-pointer transition',
+                  focusMode === mode.key
+                    ? 'bg-[#111111]'
+                    : 'hover:bg-[#111111]',
+                )}
+              >
+                <div
+                  className={cn(
+                    'flex flex-row items-center space-x-1',
+                    focusMode === mode.key ? 'text-[#24A0ED]' : 'text-white',
+                  )}
+                >
+                  {mode.icon}
+                  <p className="text-sm font-medium">{mode.title}</p>
+                </div>
+                <p className="text-white/70 text-xs">{mode.description}</p>
+              </Popover.Button>
+            ))}
+          </div>
+        </Popover.Panel>
+      </Transition>
+    </Popover>
   );
 };
 

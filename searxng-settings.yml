@@ -1898,7 +1898,7 @@ engines:
     engine: wolframalpha_noapi
     timeout: 6.0
     categories: general
-    disabled: true
+    disabled: false
 
   - name: dictzone
     engine: dictzone
