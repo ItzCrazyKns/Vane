@@ -1,7 +1,6 @@
 import { WebSocket } from 'ws';
-import pickSuitableAgent from '../core/agentPicker';
-import handleWebSearch from '../agents/webSearchAgent';
 import { BaseMessage, AIMessage, HumanMessage } from '@langchain/core/messages';
+import handleWebSearch from '../agents/webSearchAgent';
 import handleAcademicSearch from '../agents/academicSearchAgent';
 import handleWritingAssistant from '../agents/writingAssistant';
 import handleWolframAlphaSearch from '../agents/wolframAlphaSearchAgent';

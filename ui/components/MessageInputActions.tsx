@@ -1,5 +1,6 @@
 import {
   BadgePercent,
+  ChevronDown,
   CopyPlus,
   Globe,
   Pencil,
@@ -39,7 +40,7 @@ const focusModes = [
     key: 'writingAssistant',
     title: 'Writing',
     description: 'Chat without searching the web',
-    icon: <Pencil size={20} />,
+    icon: <Pencil size={16} />,
   },
   {
     key: 'wolframAlphaSearch',
@@ -84,9 +85,19 @@ export const Focus = ({
     <Popover className="fixed w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
       <Popover.Button
         type="button"
-        className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white"
+        className="p-2 text-white/50 rounded-xl hover:bg-[#1c1c1c] active:scale-95 transition duration-200 hover:text-white"
       >
-        <ScanEye />
+        {focusMode !== 'webSearch' ? (
+          <div className="flex flex-row items-center space-x-1">
+            {focusModes.find((mode) => mode.key === focusMode)?.icon}
+            <p className="text-xs font-medium">
+              {focusModes.find((mode) => mode.key === focusMode)?.title}
+            </p>
+            <ChevronDown size={20} />
+          </div>
+        ) : (
+          <ScanEye />
+        )}
       </Popover.Button>
       <Transition
         as={Fragment}
