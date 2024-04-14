@@ -1,6 +1,19 @@
-# 🚀 Perplexica - An AI-powered search engine 🔎
+# 🚀 Perplexica - An AI-powered search engine 🔎 <!-- omit in toc -->
 
 ![preview](.assets/perplexica-screenshot.png)
+
+## Table of Contents <!-- omit in toc -->
+
+- [Overview](#overview)
+- [Preview](#preview)
+- [Features](#features)
+- [Installation](#installation)
+  - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
+  - [Non-Docker Installation](#non-docker-installation)
+- [Upcoming Features](#upcoming-features)
+- [Support Us](#support-us)
+- [Contribution](#contribution)
+- [Acknowledgements](#acknowledgements)
 
 ## Overview
 
@@ -74,6 +87,10 @@ For setups without Docker:
 - [ ] Adding support for multiple local LLMs and LLM providers such as Anthropic, Google, etc.
 - [ ] Adding Discover and History Saving features
 - [x] Introducing various Focus Modes
+
+## Support Us
+
+If you find Perplexica useful, consider giving us a star on GitHub. This helps more people discover Perplexica and supports the development of new features. Your support is appreciated.
 
 ## Contribution
 
