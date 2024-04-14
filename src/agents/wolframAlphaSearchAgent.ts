@@ -115,44 +115,6 @@ const processDocs = async (docs: Document[]) => {
     .join('\n');
 };
 
-const rerankDocs = async ({
-  query,
-  docs,
-}: {
-  query: string;
-  docs: Document[];
-}) => {
-  if (docs.length === 0) {
-    return docs;
-  }
-
-  const docsWithContent = docs.filter(
-    (doc) => doc.pageContent && doc.pageContent.length > 0,
-  );
-
-  const docEmbeddings = await embeddings.embedDocuments(
-    docsWithContent.map((doc) => doc.pageContent),
-  );
-
-  const queryEmbedding = await embeddings.embedQuery(query);
-
-  const similarity = docEmbeddings.map((docEmbedding, i) => {
-    const sim = computeSimilarity(queryEmbedding, docEmbedding);
-
-    return {
-      index: i,
-      similarity: sim,
-    };
-  });
-
-  const sortedDocs = similarity
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, 15)
-    .map((sim) => docsWithContent[sim.index]);
-
-  return sortedDocs;
-};
-
 type BasicChainInput = {
   chat_history: BaseMessage[];
   query: string;
@@ -198,7 +160,7 @@ const basicWolframAlphaSearchAnsweringChain = RunnableSequence.from([
         chat_history: formatChatHistoryAsString(input.chat_history),
       }),
       basicWolframAlphaSearchRetrieverChain
-        .pipe(rerankDocs)
+        .pipe(({ query, docs }) => { return docs })
         .withConfig({
           runName: 'FinalSourceRetriever',
         })
