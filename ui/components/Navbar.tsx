@@ -11,7 +11,7 @@ const Navbar = ({ messages }: { messages: Message[] }) => {
     if (messages.length > 0) {
       const newTitle =
         messages[0].content.length > 20
-          ? `${messages[0].content.substring(0, 20)}...`
+          ? `${messages[0].content.substring(0, 20).trim()}...`
           : messages[0].content;
       setTitle(newTitle);
       const newTimeAgo = formatTimeDifference(
