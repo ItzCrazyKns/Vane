@@ -160,7 +160,9 @@ const basicWolframAlphaSearchAnsweringChain = RunnableSequence.from([
         chat_history: formatChatHistoryAsString(input.chat_history),
       }),
       basicWolframAlphaSearchRetrieverChain
-        .pipe(({ query, docs }) => { return docs })
+        .pipe(({ query, docs }) => {
+          return docs;
+        })
         .withConfig({
           runName: 'FinalSourceRetriever',
         })

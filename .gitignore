@@ -12,10 +12,6 @@ yarn-error.log
 .idea/
 *.iml
 
-# Dependency lock files
-package-lock.json
-yarn.lock
-
 # Environment variables
 .env
 .env.local
