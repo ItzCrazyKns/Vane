@@ -12,7 +12,7 @@ import { searchSearxng } from '../core/searxng';
 
 const llm = new OpenAI({
   temperature: 0,
-  modelName: 'gpt-3.5-turbo',
+  modelName: process.env.MODEL_NAME,
 });
 
 const imageSearchChainPrompt = `

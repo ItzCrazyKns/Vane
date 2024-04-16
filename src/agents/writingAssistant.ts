@@ -10,7 +10,7 @@ import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import eventEmitter from 'events';
 
 const chatLLM = new ChatOpenAI({
-  modelName: 'gpt-3.5-turbo',
+  modelName: process.env.MODEL_NAME,
   temperature: 0.7,
 });
 

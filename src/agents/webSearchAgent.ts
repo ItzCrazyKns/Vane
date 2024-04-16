@@ -19,13 +19,13 @@ import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
 
 const chatLLM = new ChatOpenAI({
-  modelName: 'gpt-3.5-turbo',
+  modelName: process.env.MODEL_NAME,
   temperature: 0.7,
 });
 
 const llm = new OpenAI({
   temperature: 0,
-  modelName: 'gpt-3.5-turbo',
+  modelName: process.env.MODEL_NAME,
 });
 
 const embeddings = new OpenAIEmbeddings({
