@@ -9,7 +9,7 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { ChatOpenAI, OpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { ChatOpenAI, OpenAI } from '@langchain/openai';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { Document } from '@langchain/core/documents';
 import { searchSearxng } from '../core/searxng';
