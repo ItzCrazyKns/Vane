@@ -94,7 +94,7 @@ If you find Perplexica useful, consider giving us a star on GitHub. This helps m
 
 ## Contribution
 
-Perplexica is built on the idea that AI and large language models should be easy for everyone to use. If you find bugs or have ideas, please share them in via GitHub Issues. Details on how to contribute will be shared soon.
+Perplexica is built on the idea that AI and large language models should be easy for everyone to use. If you find bugs or have ideas, please share them in via GitHub Issues. For more information on contributing to Perplexica you can read the [CONTRIBUTING.md](CONTRIBUTING.md) file to learn more about Perplexica and how you can contribute to it.
 
 ## Acknowledgements
 
