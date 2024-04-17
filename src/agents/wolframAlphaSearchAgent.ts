@@ -16,7 +16,6 @@ import { searchSearxng } from '../core/searxng';
 import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
-import computeSimilarity from '../utils/computeSimilarity';
 
 const chatLLM = new ChatOpenAI({
   modelName: process.env.MODEL_NAME,
@@ -26,10 +25,6 @@ const chatLLM = new ChatOpenAI({
 const llm = new OpenAI({
   temperature: 0,
   modelName: process.env.MODEL_NAME,
-});
-
-const embeddings = new OpenAIEmbeddings({
-  modelName: 'text-embedding-3-large',
 });
 
 const basicWolframAlphaSearchRetrieverPrompt = `
