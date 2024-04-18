@@ -9,7 +9,7 @@ import { StringOutputParser } from '@langchain/core/output_parsers';
 import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import eventEmitter from 'events';
 
-const chatLLM = new ChatOpenAI({
+const llm = new ChatOpenAI({
   modelName: process.env.MODEL_NAME,
   temperature: 0.7,
 });
@@ -50,7 +50,7 @@ const writingAssistantChain = RunnableSequence.from([
     new MessagesPlaceholder('chat_history'),
     ['user', '{query}'],
   ]),
-  chatLLM,
+  llm,
   strParser,
 ]).withConfig({
   runName: 'FinalResponseGenerator',

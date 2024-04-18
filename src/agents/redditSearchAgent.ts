@@ -9,7 +9,7 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { ChatOpenAI, OpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { Document } from '@langchain/core/documents';
 import { searchSearxng } from '../core/searxng';
@@ -18,14 +18,9 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
 
-const chatLLM = new ChatOpenAI({
+const llm = new ChatOpenAI({
   modelName: process.env.MODEL_NAME,
   temperature: 0.7,
-});
-
-const llm = new OpenAI({
-  temperature: 0,
-  modelName: process.env.MODEL_NAME,
 });
 
 const embeddings = new OpenAIEmbeddings({
@@ -211,7 +206,7 @@ const basicRedditSearchAnsweringChain = RunnableSequence.from([
     new MessagesPlaceholder('chat_history'),
     ['user', '{query}'],
   ]),
-  chatLLM,
+  llm,
   strParser,
 ]).withConfig({
   runName: 'FinalResponseGenerator',

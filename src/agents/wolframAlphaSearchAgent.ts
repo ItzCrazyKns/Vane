@@ -17,14 +17,9 @@ import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 
-const chatLLM = new ChatOpenAI({
+const llm = new ChatOpenAI({
   modelName: process.env.MODEL_NAME,
   temperature: 0.7,
-});
-
-const llm = new OpenAI({
-  temperature: 0,
-  modelName: process.env.MODEL_NAME,
 });
 
 const basicWolframAlphaSearchRetrieverPrompt = `
@@ -169,7 +164,7 @@ const basicWolframAlphaSearchAnsweringChain = RunnableSequence.from([
     new MessagesPlaceholder('chat_history'),
     ['user', '{query}'],
   ]),
-  chatLLM,
+  llm,
   strParser,
 ]).withConfig({
   runName: 'FinalResponseGenerator',

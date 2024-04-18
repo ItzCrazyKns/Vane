@@ -4,15 +4,15 @@ import {
   RunnableLambda,
 } from '@langchain/core/runnables';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { OpenAI } from '@langchain/openai';
+import { ChatOpenAI } from '@langchain/openai';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../core/searxng';
 
-const llm = new OpenAI({
-  temperature: 0,
+const llm = new ChatOpenAI({
   modelName: process.env.MODEL_NAME,
+  temperature: 0.7,
 });
 
 const imageSearchChainPrompt = `
