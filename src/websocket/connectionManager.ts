@@ -1,18 +1,32 @@
 import { WebSocket } from 'ws';
 import { handleMessage } from './messageHandler';
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
-import { getOpenaiApiKey } from '../config';
+import { getChatModel, getChatModelProvider } from '../config';
+import { getAvailableProviders } from '../lib/providers';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { Embeddings } from '@langchain/core/embeddings';
 
-export const handleConnection = (ws: WebSocket) => {
-  const llm = new ChatOpenAI({
-    temperature: 0.7,
-    openAIApiKey: getOpenaiApiKey(),
-  });
+export const handleConnection = async (ws: WebSocket) => {
+  const models = await getAvailableProviders();
+  const provider = getChatModelProvider();
+  const chatModel = getChatModel();
 
-  const embeddings = new OpenAIEmbeddings({
-    openAIApiKey: getOpenaiApiKey(),
-    modelName: 'text-embedding-3-large',
-  });
+  let llm: BaseChatModel | undefined;
+  let embeddings: Embeddings | undefined;
+
+  if (models[provider] && models[provider][chatModel]) {
+    llm = models[provider][chatModel] as BaseChatModel | undefined;
+    embeddings = models[provider].embeddings as Embeddings | undefined;
+  }
+
+  if (!llm || !embeddings) {
+    ws.send(
+      JSON.stringify({
+        type: 'error',
+        data: 'Invalid LLM or embeddings model selected',
+      }),
+    );
+    ws.close();
+  }
 
   ws.on(
     'message',

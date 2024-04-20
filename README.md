@@ -25,6 +25,8 @@ Perplexica is an open-source AI-powered searching tool or an AI-powered search e
 
 ## Features
 
+- **Local LLMs**: You can make use local LLMs such as LLama2 and Mixtral using Ollama.
+
 - **Two Main Modes:**
   - **Copilot Mode:** (In development) Boosts search by generating different queries to find more relevant internet sources. Like normal search instead of just using the context by SearxNG, it visits the top matches and tries to find relevant sources to the user's query directly from the page.
   - **Normal Mode:** Processes your query and performs a web search.
@@ -58,7 +60,14 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
 
-   - `OPENAI`: Your OpenAI API key.
+   - `CHAT_MODEL`: The name of the LLM to use. Example: `llama2` for Ollama users & `gpt-3.5-turbo` for OpenAI users.
+   - `CHAT_MODEL_PROVIDER`: The chat model provider, either `openai` or `ollama`. Depending upon which provider you use you would have to fill in the following fields:
+
+     - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models.**
+     - `OLLAMA`: Your Ollama API URL. **You need to fill this if you wish to use Ollama's models instead of OpenAI's.**
+
+      **Note**: (In development) You can change these and use different models after running Perplexica as well from the settings page.
+
    - `SIMILARITY_MEASURE`: The similarity measure to use (This is filled by default; you can leave it as is if you are unsure about it.)
 
 5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
@@ -84,7 +93,7 @@ For setups without Docker:
 ## Upcoming Features
 
 - [ ] Finalizing Copilot Mode
-- [ ] Adding support for multiple local LLMs and LLM providers such as Anthropic, Google, etc.
+- [X] Adding support for local LLMs
 - [ ] Adding Discover and History Saving features
 - [x] Introducing various Focus Modes
 

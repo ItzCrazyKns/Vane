@@ -9,16 +9,14 @@ Perplexica's design consists of two main domains:
 - **Frontend (`ui` directory)**: This is a Next.js application holding all user interface components. It's a self-contained environment that manages everything the user interacts with.
 - **Backend (root and `src` directory)**: The backend logic is situated in the `src` folder, but the root directory holds the main `package.json` for backend dependency management.
 
-Both the root directory (for backend configurations outside `src`) and the `ui` folder come with an `.env.example` file. These are templates for environment variables that you need to set up manually for the application to run correctly.
-
 ## Setting Up Your Environment
 
 Before diving into coding, setting up your local environment is key. Here's what you need to do:
 
 ### Backend
 
-1. In the root directory, locate the `.env.example` file.
-2. Rename it to `.env` and fill in the necessary environment variables specific to the backend.
+1. In the root directory, locate the `sample.config.toml` file.
+2. Rename it to `config.toml` and fill in the necessary configuration fields specific to the backend.
 3. Run `npm install` to install dependencies.
 4. Use `npm run dev` to start the backend in development mode.
 

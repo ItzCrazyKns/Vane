@@ -1,9 +1,12 @@
 [GENERAL]
 PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
+CHAT_MODEL_PROVIDER = "openai" # "openai" or "ollama"
+CHAT_MODEL = "gpt-3.5-turbo" # Name of the model to use
 
 [API_KEYS]
 OPENAI = "sk-1234567890abcdef1234567890abcdef" # OpenAI API key
 
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API ULR
+OLLAMA = "http://localhost:11434" # Ollama API URL
