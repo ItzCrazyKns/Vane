@@ -1,5 +1,7 @@
 import express from 'express';
-import imageSearchChain from '../agents/imageSearchAgent';
+import handleImageSearch from '../agents/imageSearchAgent';
+import { ChatOpenAI } from '@langchain/openai';
+import { getOpenaiApiKey } from '../config';
 
 const router = express.Router();
 
@@ -7,10 +9,12 @@ router.post('/', async (req, res) => {
   try {
     const { query, chat_history } = req.body;
 
-    const images = await imageSearchChain.invoke({
-      query,
-      chat_history,
+    const llm = new ChatOpenAI({
+      temperature: 0.7,
+      openAIApiKey: getOpenaiApiKey(),
     });
+
+    const images = await handleImageSearch({ query, chat_history }, llm);
 
     res.status(200).json({ images });
   } catch (err) {

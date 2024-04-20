@@ -9,23 +9,15 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { Document } from '@langchain/core/documents';
 import { searchSearxng } from '../core/searxng';
 import type { StreamEvent } from '@langchain/core/tracers/log_stream';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { Embeddings } from '@langchain/core/embeddings';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
-
-const llm = new ChatOpenAI({
-  modelName: process.env.MODEL_NAME,
-  temperature: 0.7,
-});
-
-const embeddings = new OpenAIEmbeddings({
-  modelName: 'text-embedding-3-large',
-});
 
 const basicAcademicSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
@@ -49,7 +41,7 @@ Rephrased question:
 `;
 
 const basicAcademicSearchResponsePrompt = `
-    You are Perplexica, an AI model who is expert at searching the web and answering user's queries. You are set on focus mode 'Acadedemic', this means you will be searching for academic papers and articles on the web.
+    You are Perplexica, an AI model who is expert at searching the web and answering user's queries. You are set on focus mode 'Academic', this means you will be searching for academic papers and articles on the web.
 
     Generate a response that is informative and relevant to the user's query based on provided context (the context consits of search results containg a brief description of the content of that page).
     You must use this context to answer the user's query in the best way possible. Use an unbaised and journalistic tone in your response. Do not repeat the text.
@@ -104,122 +96,140 @@ const handleStream = async (
   }
 };
 
-const processDocs = async (docs: Document[]) => {
-  return docs
-    .map((_, index) => `${index + 1}. ${docs[index].pageContent}`)
-    .join('\n');
-};
-
-const rerankDocs = async ({
-  query,
-  docs,
-}: {
-  query: string;
-  docs: Document[];
-}) => {
-  if (docs.length === 0) {
-    return docs;
-  }
-
-  const docsWithContent = docs.filter(
-    (doc) => doc.pageContent && doc.pageContent.length > 0,
-  );
-
-  const docEmbeddings = await embeddings.embedDocuments(
-    docsWithContent.map((doc) => doc.pageContent),
-  );
-
-  const queryEmbedding = await embeddings.embedQuery(query);
-
-  const similarity = docEmbeddings.map((docEmbedding, i) => {
-    const sim = computeSimilarity(queryEmbedding, docEmbedding);
-
-    return {
-      index: i,
-      similarity: sim,
-    };
-  });
-
-  const sortedDocs = similarity
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, 15)
-    .map((sim) => docsWithContent[sim.index]);
-
-  return sortedDocs;
-};
-
 type BasicChainInput = {
   chat_history: BaseMessage[];
   query: string;
 };
 
-const basicAcademicSearchRetrieverChain = RunnableSequence.from([
-  PromptTemplate.fromTemplate(basicAcademicSearchRetrieverPrompt),
-  llm,
-  strParser,
-  RunnableLambda.from(async (input: string) => {
-    if (input === 'not_needed') {
-      return { query: '', docs: [] };
+const createBasicAcademicSearchRetrieverChain = (llm: BaseChatModel) => {
+  return RunnableSequence.from([
+    PromptTemplate.fromTemplate(basicAcademicSearchRetrieverPrompt),
+    llm,
+    strParser,
+    RunnableLambda.from(async (input: string) => {
+      if (input === 'not_needed') {
+        return { query: '', docs: [] };
+      }
+
+      const res = await searchSearxng(input, {
+        language: 'en',
+        engines: [
+          'arxiv',
+          'google_scholar',
+          'internet_archive_scholar',
+          'pubmed',
+        ],
+      });
+
+      const documents = res.results.map(
+        (result) =>
+          new Document({
+            pageContent: result.content,
+            metadata: {
+              title: result.title,
+              url: result.url,
+              ...(result.img_src && { img_src: result.img_src }),
+            },
+          }),
+      );
+
+      return { query: input, docs: documents };
+    }),
+  ]);
+};
+
+const createBasicAcademicSearchAnsweringChain = (
+  llm: BaseChatModel,
+  embeddings: Embeddings,
+) => {
+  const basicAcademicSearchRetrieverChain =
+    createBasicAcademicSearchRetrieverChain(llm);
+
+  const processDocs = async (docs: Document[]) => {
+    return docs
+      .map((_, index) => `${index + 1}. ${docs[index].pageContent}`)
+      .join('\n');
+  };
+
+  const rerankDocs = async ({
+    query,
+    docs,
+  }: {
+    query: string;
+    docs: Document[];
+  }) => {
+    if (docs.length === 0) {
+      return docs;
     }
 
-    const res = await searchSearxng(input, {
-      language: 'en',
-      engines: [
-        'arxiv',
-        'google_scholar',
-        'internet_archive_scholar',
-        'pubmed',
-      ],
-    });
-
-    const documents = res.results.map(
-      (result) =>
-        new Document({
-          pageContent: result.content,
-          metadata: {
-            title: result.title,
-            url: result.url,
-            ...(result.img_src && { img_src: result.img_src }),
-          },
-        }),
+    const docsWithContent = docs.filter(
+      (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
 
-    return { query: input, docs: documents };
-  }),
-]);
+    const docEmbeddings = await embeddings.embedDocuments(
+      docsWithContent.map((doc) => doc.pageContent),
+    );
 
-const basicAcademicSearchAnsweringChain = RunnableSequence.from([
-  RunnableMap.from({
-    query: (input: BasicChainInput) => input.query,
-    chat_history: (input: BasicChainInput) => input.chat_history,
-    context: RunnableSequence.from([
-      (input) => ({
-        query: input.query,
-        chat_history: formatChatHistoryAsString(input.chat_history),
-      }),
-      basicAcademicSearchRetrieverChain
-        .pipe(rerankDocs)
-        .withConfig({
-          runName: 'FinalSourceRetriever',
-        })
-        .pipe(processDocs),
+    const queryEmbedding = await embeddings.embedQuery(query);
+
+    const similarity = docEmbeddings.map((docEmbedding, i) => {
+      const sim = computeSimilarity(queryEmbedding, docEmbedding);
+
+      return {
+        index: i,
+        similarity: sim,
+      };
+    });
+
+    const sortedDocs = similarity
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 15)
+      .map((sim) => docsWithContent[sim.index]);
+
+    return sortedDocs;
+  };
+
+  return RunnableSequence.from([
+    RunnableMap.from({
+      query: (input: BasicChainInput) => input.query,
+      chat_history: (input: BasicChainInput) => input.chat_history,
+      context: RunnableSequence.from([
+        (input) => ({
+          query: input.query,
+          chat_history: formatChatHistoryAsString(input.chat_history),
+        }),
+        basicAcademicSearchRetrieverChain
+          .pipe(rerankDocs)
+          .withConfig({
+            runName: 'FinalSourceRetriever',
+          })
+          .pipe(processDocs),
+      ]),
+    }),
+    ChatPromptTemplate.fromMessages([
+      ['system', basicAcademicSearchResponsePrompt],
+      new MessagesPlaceholder('chat_history'),
+      ['user', '{query}'],
     ]),
-  }),
-  ChatPromptTemplate.fromMessages([
-    ['system', basicAcademicSearchResponsePrompt],
-    new MessagesPlaceholder('chat_history'),
-    ['user', '{query}'],
-  ]),
-  llm,
-  strParser,
-]).withConfig({
-  runName: 'FinalResponseGenerator',
-});
+    llm,
+    strParser,
+  ]).withConfig({
+    runName: 'FinalResponseGenerator',
+  });
+};
 
-const basicAcademicSearch = (query: string, history: BaseMessage[]) => {
+const basicAcademicSearch = (
+  query: string,
+  history: BaseMessage[],
+  llm: BaseChatModel,
+  embeddings: Embeddings,
+) => {
   const emitter = new eventEmitter();
 
   try {
+    const basicAcademicSearchAnsweringChain =
+      createBasicAcademicSearchAnsweringChain(llm, embeddings);
+
     const stream = basicAcademicSearchAnsweringChain.streamEvents(
       {
         chat_history: history,
@@ -242,8 +252,13 @@ const basicAcademicSearch = (query: string, history: BaseMessage[]) => {
   return emitter;
 };
 
-const handleAcademicSearch = (message: string, history: BaseMessage[]) => {
-  const emitter = basicAcademicSearch(message, history);
+const handleAcademicSearch = (
+  message: string,
+  history: BaseMessage[],
+  llm: BaseChatModel,
+  embeddings: Embeddings,
+) => {
+  const emitter = basicAcademicSearch(message, history, llm, embeddings);
   return emitter;
 };
 

@@ -4,16 +4,11 @@ import {
   RunnableLambda,
 } from '@langchain/core/runnables';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { ChatOpenAI } from '@langchain/openai';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../core/searxng';
-
-const llm = new ChatOpenAI({
-  modelName: process.env.MODEL_NAME,
-  temperature: 0.7,
-});
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const imageSearchChainPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search the web for images.
@@ -43,38 +38,48 @@ type ImageSearchChainInput = {
 
 const strParser = new StringOutputParser();
 
-const imageSearchChain = RunnableSequence.from([
-  RunnableMap.from({
-    chat_history: (input: ImageSearchChainInput) => {
-      return formatChatHistoryAsString(input.chat_history);
-    },
-    query: (input: ImageSearchChainInput) => {
-      return input.query;
-    },
-  }),
-  PromptTemplate.fromTemplate(imageSearchChainPrompt),
-  llm,
-  strParser,
-  RunnableLambda.from(async (input: string) => {
-    const res = await searchSearxng(input, {
-      categories: ['images'],
-      engines: ['bing_images', 'google_images'],
-    });
+const createImageSearchChain = (llm: BaseChatModel) => {
+  return RunnableSequence.from([
+    RunnableMap.from({
+      chat_history: (input: ImageSearchChainInput) => {
+        return formatChatHistoryAsString(input.chat_history);
+      },
+      query: (input: ImageSearchChainInput) => {
+        return input.query;
+      },
+    }),
+    PromptTemplate.fromTemplate(imageSearchChainPrompt),
+    llm,
+    strParser,
+    RunnableLambda.from(async (input: string) => {
+      const res = await searchSearxng(input, {
+        categories: ['images'],
+        engines: ['bing_images', 'google_images'],
+      });
 
-    const images = [];
+      const images = [];
 
-    res.results.forEach((result) => {
-      if (result.img_src && result.url && result.title) {
-        images.push({
-          img_src: result.img_src,
-          url: result.url,
-          title: result.title,
-        });
-      }
-    });
+      res.results.forEach((result) => {
+        if (result.img_src && result.url && result.title) {
+          images.push({
+            img_src: result.img_src,
+            url: result.url,
+            title: result.title,
+          });
+        }
+      });
 
-    return images.slice(0, 10);
-  }),
-]);
+      return images.slice(0, 10);
+    }),
+  ]);
+};
 
-export default imageSearchChain;
+const handleImageSearch = (
+  input: ImageSearchChainInput,
+  llm: BaseChatModel,
+) => {
+  const imageSearchChain = createImageSearchChain(llm);
+  return imageSearchChain.invoke(input);
+};
+
+export default handleImageSearch;

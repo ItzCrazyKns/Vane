@@ -6,6 +6,8 @@ import handleWritingAssistant from '../agents/writingAssistant';
 import handleWolframAlphaSearch from '../agents/wolframAlphaSearchAgent';
 import handleYoutubeSearch from '../agents/youtubeSearchAgent';
 import handleRedditSearch from '../agents/redditSearchAgent';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { Embeddings } from '@langchain/core/embeddings';
 
 type Message = {
   type: string;
@@ -58,7 +60,12 @@ const handleEmitterEvents = (
   });
 };
 
-export const handleMessage = async (message: string, ws: WebSocket) => {
+export const handleMessage = async (
+  message: string,
+  ws: WebSocket,
+  llm: BaseChatModel,
+  embeddings: Embeddings,
+) => {
   try {
     const parsedMessage = JSON.parse(message) as Message;
     const id = Math.random().toString(36).substring(7);
@@ -83,7 +90,12 @@ export const handleMessage = async (message: string, ws: WebSocket) => {
     if (parsedMessage.type === 'message') {
       const handler = searchHandlers[parsedMessage.focusMode];
       if (handler) {
-        const emitter = handler(parsedMessage.content, history);
+        const emitter = handler(
+          parsedMessage.content,
+          history,
+          llm,
+          embeddings,
+        );
         handleEmitterEvents(emitter, ws, id);
       } else {
         ws.send(JSON.stringify({ type: 'error', data: 'Invalid focus mode' }));

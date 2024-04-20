@@ -4,15 +4,11 @@ import {
   MessagesPlaceholder,
 } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
-import { ChatOpenAI } from '@langchain/openai';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import eventEmitter from 'events';
-
-const llm = new ChatOpenAI({
-  modelName: process.env.MODEL_NAME,
-  temperature: 0.7,
-});
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { Embeddings } from '@langchain/core/embeddings';
 
 const writingAssistantPrompt = `
 You are Perplexica, an AI model who is expert at searching the web and answering user's queries. You are currently set on focus mode 'Writing Assistant', this means you will be helping the user write a response to a given query. 
@@ -44,22 +40,30 @@ const handleStream = async (
   }
 };
 
-const writingAssistantChain = RunnableSequence.from([
-  ChatPromptTemplate.fromMessages([
-    ['system', writingAssistantPrompt],
-    new MessagesPlaceholder('chat_history'),
-    ['user', '{query}'],
-  ]),
-  llm,
-  strParser,
-]).withConfig({
-  runName: 'FinalResponseGenerator',
-});
+const createWritingAssistantChain = (llm: BaseChatModel) => {
+  return RunnableSequence.from([
+    ChatPromptTemplate.fromMessages([
+      ['system', writingAssistantPrompt],
+      new MessagesPlaceholder('chat_history'),
+      ['user', '{query}'],
+    ]),
+    llm,
+    strParser,
+  ]).withConfig({
+    runName: 'FinalResponseGenerator',
+  });
+};
 
-const handleWritingAssistant = (query: string, history: BaseMessage[]) => {
+const handleWritingAssistant = (
+  query: string,
+  history: BaseMessage[],
+  llm: BaseChatModel,
+  embeddings: Embeddings,
+) => {
   const emitter = new eventEmitter();
 
   try {
+    const writingAssistantChain = createWritingAssistantChain(llm);
     const stream = writingAssistantChain.streamEvents(
       {
         chat_history: history,

@@ -4,9 +4,9 @@
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
-    "start": "node --env-file=.env dist/app.js",
+    "start": "node dist/app.js",
     "build": "tsc",
-    "dev": "nodemon -r dotenv/config src/app.ts",
+    "dev": "nodemon src/app.ts",
     "format": "prettier . --check",
     "format:write": "prettier . --write"
   },
@@ -19,6 +19,7 @@
     "typescript": "^5.4.3"
   },
   "dependencies": {
+    "@iarna/toml": "^2.2.5",
     "@langchain/openai": "^0.0.25",
     "axios": "^1.6.8",
     "compute-cosine-similarity": "^1.1.0",

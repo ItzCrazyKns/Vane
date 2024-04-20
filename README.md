@@ -56,10 +56,10 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 3. After cloning, navigate to the directory containing the project files.
 
-4. Rename the `.env.example` file to `.env`. For Docker setups, you need only fill in the following fields:
+4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
 
-   - `OPENAI_API_KEY`
-   - `SIMILARITY_MEASURE` (This is filled by default; you can leave it as is if you are unsure about it.)
+   - `OPENAI`: Your OpenAI API key.
+   - `SIMILARITY_MEASURE`: The similarity measure to use (This is filled by default; you can leave it as is if you are unsure about it.)
 
 5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
 
@@ -75,7 +75,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 For setups without Docker:
 
-1. Follow the initial steps to clone the repository and rename the `.env.example` file to `.env` in the root directory. You will need to fill in all the fields in this file.
+1. Follow the initial steps to clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. You will need to fill in all the fields in this file.
 2. Additionally, rename the `.env.example` file to `.env` in the `ui` folder and complete all fields.
 3. The non-Docker setup requires manual configuration of both the backend and frontend.
 

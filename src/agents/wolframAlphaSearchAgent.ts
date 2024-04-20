@@ -9,18 +9,14 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { ChatOpenAI, OpenAI } from '@langchain/openai';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { Document } from '@langchain/core/documents';
 import { searchSearxng } from '../core/searxng';
 import type { StreamEvent } from '@langchain/core/tracers/log_stream';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { Embeddings } from '@langchain/core/embeddings';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
-
-const llm = new ChatOpenAI({
-  modelName: process.env.MODEL_NAME,
-  temperature: 0.7,
-});
 
 const basicWolframAlphaSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
@@ -99,81 +95,94 @@ const handleStream = async (
   }
 };
 
-const processDocs = async (docs: Document[]) => {
-  return docs
-    .map((_, index) => `${index + 1}. ${docs[index].pageContent}`)
-    .join('\n');
-};
-
 type BasicChainInput = {
   chat_history: BaseMessage[];
   query: string;
 };
 
-const basicWolframAlphaSearchRetrieverChain = RunnableSequence.from([
-  PromptTemplate.fromTemplate(basicWolframAlphaSearchRetrieverPrompt),
-  llm,
-  strParser,
-  RunnableLambda.from(async (input: string) => {
-    if (input === 'not_needed') {
-      return { query: '', docs: [] };
-    }
+const createBasicWolframAlphaSearchRetrieverChain = (llm: BaseChatModel) => {
+  return RunnableSequence.from([
+    PromptTemplate.fromTemplate(basicWolframAlphaSearchRetrieverPrompt),
+    llm,
+    strParser,
+    RunnableLambda.from(async (input: string) => {
+      if (input === 'not_needed') {
+        return { query: '', docs: [] };
+      }
 
-    const res = await searchSearxng(input, {
-      language: 'en',
-      engines: ['wolframalpha'],
-    });
+      const res = await searchSearxng(input, {
+        language: 'en',
+        engines: ['wolframalpha'],
+      });
 
-    const documents = res.results.map(
-      (result) =>
-        new Document({
-          pageContent: result.content,
-          metadata: {
-            title: result.title,
-            url: result.url,
-            ...(result.img_src && { img_src: result.img_src }),
-          },
+      const documents = res.results.map(
+        (result) =>
+          new Document({
+            pageContent: result.content,
+            metadata: {
+              title: result.title,
+              url: result.url,
+              ...(result.img_src && { img_src: result.img_src }),
+            },
+          }),
+      );
+
+      return { query: input, docs: documents };
+    }),
+  ]);
+};
+
+const createBasicWolframAlphaSearchAnsweringChain = (llm: BaseChatModel) => {
+  const basicWolframAlphaSearchRetrieverChain =
+    createBasicWolframAlphaSearchRetrieverChain(llm);
+
+  const processDocs = (docs: Document[]) => {
+    return docs
+      .map((_, index) => `${index + 1}. ${docs[index].pageContent}`)
+      .join('\n');
+  };
+
+  return RunnableSequence.from([
+    RunnableMap.from({
+      query: (input: BasicChainInput) => input.query,
+      chat_history: (input: BasicChainInput) => input.chat_history,
+      context: RunnableSequence.from([
+        (input) => ({
+          query: input.query,
+          chat_history: formatChatHistoryAsString(input.chat_history),
         }),
-    );
-
-    return { query: input, docs: documents };
-  }),
-]);
-
-const basicWolframAlphaSearchAnsweringChain = RunnableSequence.from([
-  RunnableMap.from({
-    query: (input: BasicChainInput) => input.query,
-    chat_history: (input: BasicChainInput) => input.chat_history,
-    context: RunnableSequence.from([
-      (input) => ({
-        query: input.query,
-        chat_history: formatChatHistoryAsString(input.chat_history),
-      }),
-      basicWolframAlphaSearchRetrieverChain
-        .pipe(({ query, docs }) => {
-          return docs;
-        })
-        .withConfig({
-          runName: 'FinalSourceRetriever',
-        })
-        .pipe(processDocs),
+        basicWolframAlphaSearchRetrieverChain
+          .pipe(({ query, docs }) => {
+            return docs;
+          })
+          .withConfig({
+            runName: 'FinalSourceRetriever',
+          })
+          .pipe(processDocs),
+      ]),
+    }),
+    ChatPromptTemplate.fromMessages([
+      ['system', basicWolframAlphaSearchResponsePrompt],
+      new MessagesPlaceholder('chat_history'),
+      ['user', '{query}'],
     ]),
-  }),
-  ChatPromptTemplate.fromMessages([
-    ['system', basicWolframAlphaSearchResponsePrompt],
-    new MessagesPlaceholder('chat_history'),
-    ['user', '{query}'],
-  ]),
-  llm,
-  strParser,
-]).withConfig({
-  runName: 'FinalResponseGenerator',
-});
+    llm,
+    strParser,
+  ]).withConfig({
+    runName: 'FinalResponseGenerator',
+  });
+};
 
-const basicWolframAlphaSearch = (query: string, history: BaseMessage[]) => {
+const basicWolframAlphaSearch = (
+  query: string,
+  history: BaseMessage[],
+  llm: BaseChatModel,
+) => {
   const emitter = new eventEmitter();
 
   try {
+    const basicWolframAlphaSearchAnsweringChain =
+      createBasicWolframAlphaSearchAnsweringChain(llm);
     const stream = basicWolframAlphaSearchAnsweringChain.streamEvents(
       {
         chat_history: history,
@@ -196,8 +205,13 @@ const basicWolframAlphaSearch = (query: string, history: BaseMessage[]) => {
   return emitter;
 };
 
-const handleWolframAlphaSearch = (message: string, history: BaseMessage[]) => {
-  const emitter = basicWolframAlphaSearch(message, history);
+const handleWolframAlphaSearch = (
+  message: string,
+  history: BaseMessage[],
+  llm: BaseChatModel,
+  embeddings: Embeddings,
+) => {
+  const emitter = basicWolframAlphaSearch(message, history, llm);
   return emitter;
 };
 
