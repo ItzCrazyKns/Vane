@@ -57,7 +57,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
 
-   - `CHAT_MODEL`: The name of the LLM to use. Example: `llama2` for Ollama users & `gpt-3.5-turbo` for OpenAI users.
+   - `CHAT_MODEL`: The name of the LLM to use. Like `llama2` (using Ollama), `gpt-3.5-turbo` (using OpenAI), etc.
    - `CHAT_MODEL_PROVIDER`: The chat model provider, either `openai` or `ollama`. Depending upon which provider you use you would have to fill in the following fields:
 
      - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models.**
