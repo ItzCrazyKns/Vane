@@ -10,22 +10,26 @@ export const getAvailableProviders = async () => {
   const models = {};
 
   if (openAIApiKey) {
-    models['openai'] = {
-      'gpt-3.5-turbo': new ChatOpenAI({
-        openAIApiKey,
-        modelName: 'gpt-3.5-turbo',
-        temperature: 0.7,
-      }),
-      'gpt-4': new ChatOpenAI({
-        openAIApiKey,
-        modelName: 'gpt-4',
-        temperature: 0.7,
-      }),
-      embeddings: new OpenAIEmbeddings({
-        openAIApiKey,
-        modelName: 'text-embedding-3-large',
-      }),
-    };
+    try {
+      models['openai'] = {
+        'gpt-3.5-turbo': new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-3.5-turbo',
+          temperature: 0.7,
+        }),
+        'gpt-4': new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-4',
+          temperature: 0.7,
+        }),
+        embeddings: new OpenAIEmbeddings({
+          openAIApiKey,
+          modelName: 'text-embedding-3-large',
+        }),
+      };
+    } catch (err) {
+      console.log(`Error loading OpenAI models: ${err}`);
+    }
   }
 
   if (ollamaEndpoint) {
@@ -50,7 +54,7 @@ export const getAvailableProviders = async () => {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.log(`Error loading Ollama models: ${err}`);
     }
   }
 
