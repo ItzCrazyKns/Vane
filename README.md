@@ -63,7 +63,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
      - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models.**
      - `OLLAMA`: Your Ollama API URL. **You need to fill this if you wish to use Ollama's models instead of OpenAI's.**
 
-      **Note**: (In development) You can change these and use different models after running Perplexica as well from the settings page.
+       **Note**: (In development) You can change these and use different models after running Perplexica as well from the settings page.
 
    - `SIMILARITY_MEASURE`: The similarity measure to use (This is filled by default; you can leave it as is if you are unsure about it.)
 
@@ -90,7 +90,7 @@ For setups without Docker:
 ## Upcoming Features
 
 - [ ] Finalizing Copilot Mode
-- [X] Adding support for local LLMs
+- [x] Adding support for local LLMs
 - [ ] Adding Discover and History Saving features
 - [x] Introducing various Focus Modes
 

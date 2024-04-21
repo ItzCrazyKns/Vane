@@ -1,21 +1,20 @@
 /* eslint-disable @next/next/no-img-element */
-import { cn } from '@/lib/utils';
 import { Dialog, Transition } from '@headlessui/react';
 import { Document } from '@langchain/core/documents';
-import Link from 'next/link';
 import { Fragment, useState } from 'react';
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  function closeModal() {
+
+  const closeModal = () => {
     setIsDialogOpen(false);
     document.body.classList.remove('overflow-hidden-scrollable');
-  }
+  };
 
-  function openModal() {
+  const openModal = () => {
     setIsDialogOpen(true);
     document.body.classList.add('overflow-hidden-scrollable');
-  }
+  };
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
