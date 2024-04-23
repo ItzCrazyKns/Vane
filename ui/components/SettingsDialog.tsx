@@ -93,10 +93,12 @@ const SettingsDialog = ({
                   Settings
                 </Dialog.Title>
                 {config && !isLoading && (
-                  <div className="flex flex-col space-y-4 mt-6">
+                  <div className="flex flex-col space-y-4 mt-6 max-h-[200px] overflow-auto pr-2">
                     {config.providers && (
                       <div className="flex flex-col space-y-1">
-                        <p className="text-white/70 text-sm">LLM Provider</p>
+                        <p className="text-white/70 text-sm">
+                          Chat model Provider
+                        </p>
                         <select
                           onChange={(e) =>
                             setConfig({
@@ -156,44 +158,42 @@ const SettingsDialog = ({
                             )
                           ) : (
                             <option value="" disabled selected>
-                              Invalid provider
+                              Invalid provider, please check backend logs
                             </option>
                           )}
                         </select>
                       </div>
                     )}
-                    {config.selectedProvider === 'openai' && (
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-white/70 text-sm">OpenAI API Key</p>
-                        <input
-                          type="text"
-                          defaultValue={config.openeaiApiKey}
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              openeaiApiKey: e.target.value,
-                            })
-                          }
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
-                        />
-                      </div>
-                    )}
-                    {config.selectedProvider === 'ollama' && (
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-white/70 text-sm">Ollama API URL</p>
-                        <input
-                          type="text"
-                          defaultValue={config.ollamaApiUrl}
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              ollamaApiUrl: e.target.value,
-                            })
-                          }
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
-                        />
-                      </div>
-                    )}
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-white/70 text-sm">OpenAI API Key</p>
+                      <input
+                        type="text"
+                        placeholder='OpenAI API Key'
+                        defaultValue={config.openeaiApiKey}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            openeaiApiKey: e.target.value,
+                          })
+                        }
+                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-white/70 text-sm">Ollama API URL</p>
+                      <input
+                        type="text"
+                        placeholder='Ollama API URL'
+                        defaultValue={config.ollamaApiUrl}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            ollamaApiUrl: e.target.value,
+                          })
+                        }
+                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                      />
+                    </div>
                   </div>
                 )}
                 {isLoading && (
@@ -211,9 +211,9 @@ const SettingsDialog = ({
                     disabled={isLoading || isUpdating}
                   >
                     {isUpdating ? (
-                      <RefreshCw className="animate-spin" />
+                      <RefreshCw size={20} className="animate-spin" />
                     ) : (
-                      <CloudUpload />
+                      <CloudUpload size={20} />
                     )}
                   </button>
                 </div>
