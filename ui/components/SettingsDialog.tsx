@@ -93,7 +93,7 @@ const SettingsDialog = ({
                   Settings
                 </Dialog.Title>
                 {config && !isLoading && (
-                  <div className="flex flex-col space-y-4 mt-6 pr-2">
+                  <div className="flex flex-col space-y-4 mt-6">
                     {config.providers && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-white/70 text-sm">
