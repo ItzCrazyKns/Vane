@@ -1,15 +1,18 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { BookOpenText, Home, Search, SquarePen } from 'lucide-react';
-import { SiGithub } from '@icons-pack/react-simple-icons';
+import { BookOpenText, Home, Search, SquarePen, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
-import React from 'react';
+import React, { Fragment, useState } from 'react';
 import Layout from './Layout';
+import { Dialog, Transition } from '@headlessui/react';
+import SettingsDialog from './SettingsDialog';
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const navLinks = [
     {
@@ -56,16 +59,14 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
               </Link>
             ))}
           </div>
-          <Link
-            href="https://github.com/ItzCrazyKns/Perplexica"
-            className="flex flex-col items-center text-center justify-center"
-          >
-            <SiGithub
-              className="text-white"
-              onPointerEnterCapture={undefined}
-              onPointerLeaveCapture={undefined}
-            />
-          </Link>
+          <Settings
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            className="text-white cursor-pointer"
+          />
+          <SettingsDialog
+            isOpen={isSettingsOpen}
+            setIsOpen={setIsSettingsOpen}
+          />
         </div>
       </div>
 

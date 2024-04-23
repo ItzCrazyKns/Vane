@@ -90,6 +90,7 @@ For setups without Docker:
 ## Upcoming Features
 
 - [ ] Finalizing Copilot Mode
+- [x] Add settings page
 - [x] Adding support for local LLMs
 - [ ] Adding Discover and History Saving features
 - [x] Introducing various Focus Modes
