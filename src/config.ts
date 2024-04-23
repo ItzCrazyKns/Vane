@@ -55,11 +55,15 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
 
     if (currentConfig[key] && typeof currentConfig[key] === 'object') {
       for (const nestedKey in currentConfig[key]) {
-        if (currentConfig[key][nestedKey] && !config[key][nestedKey]) {
+        if (
+          currentConfig[key][nestedKey] &&
+          !config[key][nestedKey] &&
+          config[key][nestedKey] !== ''
+        ) {
           config[key][nestedKey] = currentConfig[key][nestedKey];
         }
       }
-    } else if (currentConfig[key] && !config[key]) {
+    } else if (currentConfig[key] && !config[key] && config[key] !== '') {
       config[key] = currentConfig[key];
     }
   }
