@@ -20,6 +20,10 @@ interface Config {
   };
 }
 
+type RecursivePartial<T> = {
+  [P in keyof T]?: RecursivePartial<T[P]>;
+};
+
 const loadConfig = () =>
   toml.parse(
     fs.readFileSync(path.join(__dirname, `../${configFileName}`), 'utf-8'),
@@ -40,3 +44,28 @@ export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
 export const getSearxngApiEndpoint = () => loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+
+export const updateConfig = (config: RecursivePartial<Config>) => {
+  const currentConfig = loadConfig();
+
+  for (const key in currentConfig) {
+    /* if (currentConfig[key] && !config[key]) {
+      config[key] = currentConfig[key];
+    } */
+
+    if (currentConfig[key] && typeof currentConfig[key] === 'object') {
+      for (const nestedKey in currentConfig[key]) {
+        if (currentConfig[key][nestedKey] && !config[key][nestedKey]) {
+          config[key][nestedKey] = currentConfig[key][nestedKey];
+        }
+      }
+    } else if (currentConfig[key] && !config[key]) {
+      config[key] = currentConfig[key];
+    }
+  }
+
+  fs.writeFileSync(
+    path.join(__dirname, `../${configFileName}`),
+    toml.stringify(config),
+  );
+};
