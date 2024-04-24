@@ -77,7 +77,7 @@ const Chat = ({
           className="bottom-24 lg:bottom-10 fixed z-40"
           style={{ width: dividerWidth }}
         >
-          <MessageInput sendMessage={sendMessage} />
+          <MessageInput loading={loading} sendMessage={sendMessage} />
         </div>
       )}
     </div>

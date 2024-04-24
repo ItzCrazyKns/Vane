@@ -6,8 +6,10 @@ import { Attach, CopilotToggle } from './MessageInputActions';
 
 const MessageInput = ({
   sendMessage,
+  loading,
 }: {
   sendMessage: (message: string) => void;
+  loading: boolean;
 }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
@@ -25,12 +27,13 @@ const MessageInput = ({
   return (
     <form
       onSubmit={(e) => {
+        if (loading) return;
         e.preventDefault();
         sendMessage(message);
         setMessage('');
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !loading) {
           e.preventDefault();
           sendMessage(message);
           setMessage('');
@@ -58,7 +61,7 @@ const MessageInput = ({
             setCopilotEnabled={setCopilotEnabled}
           />
           <button
-            disabled={message.trim().length === 0}
+            disabled={message.trim().length === 0 || loading}
             className="bg-[#24A0ED] text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full p-2"
           >
             <ArrowUp className="bg-background" size={17} />
@@ -74,7 +77,7 @@ const MessageInput = ({
               setCopilotEnabled={setCopilotEnabled}
             />
             <button
-              disabled={message.trim().length === 0}
+              disabled={message.trim().length === 0 || loading}
               className="bg-[#24A0ED] text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full p-2"
             >
               <ArrowUp className="bg-background" size={17} />

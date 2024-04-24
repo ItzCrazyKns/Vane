@@ -168,7 +168,7 @@ const SettingsDialog = ({
                       <p className="text-white/70 text-sm">OpenAI API Key</p>
                       <input
                         type="text"
-                        placeholder='OpenAI API Key'
+                        placeholder="OpenAI API Key"
                         defaultValue={config.openeaiApiKey}
                         onChange={(e) =>
                           setConfig({
@@ -183,7 +183,7 @@ const SettingsDialog = ({
                       <p className="text-white/70 text-sm">Ollama API URL</p>
                       <input
                         type="text"
-                        placeholder='Ollama API URL'
+                        placeholder="Ollama API URL"
                         defaultValue={config.ollamaApiUrl}
                         onChange={(e) =>
                           setConfig({
