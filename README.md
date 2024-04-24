@@ -30,9 +30,9 @@ Perplexica is an open-source AI-powered searching tool or an AI-powered search e
   - **Copilot Mode:** (In development) Boosts search by generating different queries to find more relevant internet sources. Like normal search instead of just using the context by SearxNG, it visits the top matches and tries to find relevant sources to the user's query directly from the page.
   - **Normal Mode:** Processes your query and performs a web search.
 - **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 6 focus modes:
-  -  **All Mode:** Searches the entire web to find the best results.
-  -  **Writing Assistant Mode:** Helpful for writing tasks that does not require searching the web.
-  -  **Academic Search Mode:** Finds articles and papers, ideal for academic research.
+  - **All Mode:** Searches the entire web to find the best results.
+  - **Writing Assistant Mode:** Helpful for writing tasks that does not require searching the web.
+  - **Academic Search Mode:** Finds articles and papers, ideal for academic research.
   - **YouTube Search Mode:** Finds YouTube videos based on the search query.
   - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
   - **Reddit Search Mode:** Searches Reddit for discussions and opinions related to the query.

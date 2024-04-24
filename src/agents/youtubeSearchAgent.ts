@@ -161,11 +161,10 @@ const createBasicYoutubeSearchAnsweringChain = (
       (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
 
-    const docEmbeddings = await embeddings.embedDocuments(
-      docsWithContent.map((doc) => doc.pageContent),
-    );
-
-    const queryEmbedding = await embeddings.embedQuery(query);
+    const [docEmbeddings, queryEmbedding] = await Promise.all([
+      embeddings.embedDocuments(docsWithContent.map((doc) => doc.pageContent)),
+      embeddings.embedQuery(query),
+    ]);
 
     const similarity = docEmbeddings.map((docEmbedding, i) => {
       const sim = computeSimilarity(queryEmbedding, docEmbedding);

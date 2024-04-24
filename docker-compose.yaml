@@ -9,6 +9,7 @@ services:
       - 4000:8080
     networks:
       - perplexica-network
+
   perplexica-backend:
     build:
       context: .
