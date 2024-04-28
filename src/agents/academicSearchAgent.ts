@@ -115,8 +115,8 @@ const createBasicAcademicSearchRetrieverChain = (llm: BaseChatModel) => {
         language: 'en',
         engines: [
           'arxiv',
-          'google_scholar',
-          'internet_archive_scholar',
+          'google scholar',
+          'internetarchivescholar',
           'pubmed',
         ],
       });

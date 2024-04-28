@@ -53,8 +53,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
     strParser,
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
-        categories: ['images'],
-        engines: ['bing_images', 'google_images'],
+        engines: ['bing images', 'google images'],
       });
 
       const images = [];
