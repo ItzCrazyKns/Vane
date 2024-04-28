@@ -3,6 +3,7 @@ import { ImagesIcon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
+import { Message } from './ChatWindow';
 
 type Image = {
   url: string;
@@ -10,7 +11,13 @@ type Image = {
   title: string;
 };
 
-const SearchImages = ({ query }: { query: string }) => {
+const SearchImages = ({
+  query,
+  chat_history,
+}: {
+  query: string;
+  chat_history: Message[];
+}) => {
   const [images, setImages] = useState<Image[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -31,7 +38,7 @@ const SearchImages = ({ query }: { query: string }) => {
                 },
                 body: JSON.stringify({
                   query: query,
-                  chat_history: [],
+                  chat_history: chat_history,
                 }),
               },
             );

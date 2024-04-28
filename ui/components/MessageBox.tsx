@@ -116,7 +116,10 @@ const MessageBox = ({
             </div>
           </div>
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
-            <SearchImages query={history[messageIndex - 1].content} />
+            <SearchImages
+              query={history[messageIndex - 1].content}
+              chat_history={history.slice(0, messageIndex - 1)}
+            />
             <div className="border border-dashed border-[#1C1C1C] px-4 py-2 flex flex-row items-center justify-between rounded-lg text-white text-sm w-full">
               <div className="flex flex-row items-center space-x-2">
                 <VideoIcon size={17} />
