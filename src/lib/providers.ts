@@ -22,6 +22,11 @@ export const getAvailableProviders = async () => {
           modelName: 'gpt-4',
           temperature: 0.7,
         }),
+        'gpt-4-turbo': new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-4-turbo',
+          temperature: 0.7,
+        }),
         embeddings: new OpenAIEmbeddings({
           openAIApiKey,
           modelName: 'text-embedding-3-large',
