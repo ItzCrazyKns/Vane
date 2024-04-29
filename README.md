@@ -81,11 +81,11 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 ### Non-Docker Installation
 
-For setups without Docker:
-
-1. Follow the initial steps to clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. You will need to fill in all the fields in this file.
-2. Additionally, rename the `.env.example` file to `.env` in the `ui` folder and complete all fields.
-3. The non-Docker setup requires manual configuration of both the backend and frontend.
+1. Clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. Ensure you complete all required fields in this file.
+2. Rename the `.env.example` file to `.env` in the `ui` folder and fill in all necessary fields.
+3. After populating the configuration and environment files, run `npm i` in both the `ui` folder and the root directory.
+4. Install the dependencies and then execute `npm run build` in both the `ui` folder and the root directory.
+5. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
