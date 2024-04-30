@@ -92,7 +92,7 @@ const SearchImages = ({
                     key={i}
                     src={image.img_src}
                     alt={image.title}
-                    className="h-full w-full aspect-video object-cover rounded-lg transition duration-200 active:scale-95 cursor-pointer"
+                    className="h-full w-full aspect-video object-cover rounded-lg transition duration-200 active:scale-95 hover:scale-[1.02] cursor-zoom-in"
                   />
                 ))
               : images.map((image, i) => (
@@ -108,13 +108,13 @@ const SearchImages = ({
                     key={i}
                     src={image.img_src}
                     alt={image.title}
-                    className="h-full w-full aspect-video object-cover rounded-lg transition duration-200 active:scale-95 cursor-pointer"
+                    className="h-full w-full aspect-video object-cover rounded-lg transition duration-200 active:scale-95 hover:scale-[1.02] cursor-zoom-in"
                   />
                 ))}
             {images.length > 4 && (
               <button
                 onClick={() => setOpen(true)}
-                className="bg-[#111111] hover:bg-[#1c1c1c] transition duration-200 active:scale-95 h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
+                className="bg-[#111111] hover:bg-[#1c1c1c] transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
                   {images.slice(3, 6).map((image, i) => (
