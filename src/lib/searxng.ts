@@ -13,8 +13,10 @@ interface SearxngSearchResult {
   url: string;
   img_src?: string;
   thumbnail_src?: string;
+  thumbnail?: string;
   content?: string;
   author?: string;
+  iframe_src?: string;
 }
 
 export const searchSearxng = async (
