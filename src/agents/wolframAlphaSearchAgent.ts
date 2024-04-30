@@ -17,6 +17,7 @@ import type { BaseChatModel } from '@langchain/core/language_models/chat_models'
 import type { Embeddings } from '@langchain/core/embeddings';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
+import logger from '../utils/logger';
 
 const basicWolframAlphaSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
@@ -199,7 +200,7 @@ const basicWolframAlphaSearch = (
       'error',
       JSON.stringify({ data: 'An error has occurred please try again later' }),
     );
-    console.error(err);
+    logger.error(`Error in WolframAlphaSearch: ${err}`);
   }
 
   return emitter;

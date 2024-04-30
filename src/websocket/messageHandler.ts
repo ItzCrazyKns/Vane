@@ -8,6 +8,7 @@ import handleYoutubeSearch from '../agents/youtubeSearchAgent';
 import handleRedditSearch from '../agents/redditSearchAgent';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
+import logger from '../utils/logger';
 
 type Message = {
   type: string;
@@ -101,8 +102,8 @@ export const handleMessage = async (
         ws.send(JSON.stringify({ type: 'error', data: 'Invalid focus mode' }));
       }
     }
-  } catch (error) {
-    console.error('Failed to handle message', error);
+  } catch (err) {
     ws.send(JSON.stringify({ type: 'error', data: 'Invalid message format' }));
+    logger.error(`Failed to handle message: ${err}`);
   }
 };

@@ -4,6 +4,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableProviders } from '../lib/providers';
 import { getChatModel, getChatModelProvider } from '../config';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ router.post('/', async (req, res) => {
     res.status(200).json({ images });
   } catch (err) {
     res.status(500).json({ message: 'An error has occurred.' });
-    console.log(err.message);
+    logger.error(`Error in image search: ${err.message}`);
   }
 });
 

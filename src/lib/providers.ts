@@ -2,6 +2,7 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import { getOllamaApiEndpoint, getOpenaiApiKey } from '../config';
+import logger from '../utils/logger';
 
 export const getAvailableProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
@@ -33,7 +34,7 @@ export const getAvailableProviders = async () => {
         }),
       };
     } catch (err) {
-      console.log(`Error loading OpenAI models: ${err}`);
+      logger.error(`Error loading OpenAI models: ${err}`);
     }
   }
 
@@ -59,7 +60,7 @@ export const getAvailableProviders = async () => {
         });
       }
     } catch (err) {
-      console.log(`Error loading Ollama models: ${err}`);
+      logger.error(`Error loading Ollama models: ${err}`);
     }
   }
 

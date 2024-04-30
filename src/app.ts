@@ -4,6 +4,7 @@ import cors from 'cors';
 import http from 'http';
 import routes from './routes';
 import { getPort } from './config';
+import logger from './utils/logger';
 
 const port = getPort();
 
@@ -23,7 +24,7 @@ app.get('/api', (_, res) => {
 });
 
 server.listen(port, () => {
-  console.log(`API server started on port ${port}`);
+  logger.info(`Server is running on port ${port}`);
 });
 
 startWebSocketServer(server);

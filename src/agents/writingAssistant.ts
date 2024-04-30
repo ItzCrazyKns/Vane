@@ -9,6 +9,7 @@ import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import eventEmitter from 'events';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
+import logger from '../utils/logger';
 
 const writingAssistantPrompt = `
 You are Perplexica, an AI model who is expert at searching the web and answering user's queries. You are currently set on focus mode 'Writing Assistant', this means you will be helping the user write a response to a given query. 
@@ -80,7 +81,7 @@ const handleWritingAssistant = (
       'error',
       JSON.stringify({ data: 'An error has occurred please try again later' }),
     );
-    console.error(err);
+    logger.error(`Error in writing assistant: ${err}`);
   }
 
   return emitter;

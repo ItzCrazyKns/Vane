@@ -4,6 +4,7 @@ import { getChatModel, getChatModelProvider } from '../config';
 import { getAvailableProviders } from '../lib/providers';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
+import logger from '../utils/logger';
 
 export const handleConnection = async (ws: WebSocket) => {
   const models = await getAvailableProviders();
@@ -34,5 +35,5 @@ export const handleConnection = async (ws: WebSocket) => {
       await handleMessage(message.toString(), ws, llm, embeddings),
   );
 
-  ws.on('close', () => console.log('Connection closed'));
+  ws.on('close', () => logger.debug('Connection closed'));
 };

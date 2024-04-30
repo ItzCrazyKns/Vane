@@ -2,6 +2,7 @@ import { WebSocketServer } from 'ws';
 import { handleConnection } from './connectionManager';
 import http from 'http';
 import { getPort } from '../config';
+import logger from '../utils/logger';
 
 export const initServer = (
   server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse>,
@@ -13,5 +14,5 @@ export const initServer = (
     handleConnection(ws);
   });
 
-  console.log(`WebSocket server started on port ${port}`);
+  logger.info(`WebSocket server started on port ${port}`);
 };
