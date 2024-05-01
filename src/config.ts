@@ -13,6 +13,7 @@ interface Config {
   };
   API_KEYS: {
     OPENAI: string;
+    GROQ: string;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -40,6 +41,8 @@ export const getChatModelProvider = () =>
 export const getChatModel = () => loadConfig().GENERAL.CHAT_MODEL;
 
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
+
+export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 
 export const getSearxngApiEndpoint = () => loadConfig().API_ENDPOINTS.SEARXNG;
 

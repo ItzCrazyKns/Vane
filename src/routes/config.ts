@@ -3,6 +3,7 @@ import { getAvailableProviders } from '../lib/providers';
 import {
   getChatModel,
   getChatModelProvider,
+  getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
   updateConfig,
@@ -30,6 +31,7 @@ router.get('/', async (_, res) => {
 
   config['openeaiApiKey'] = getOpenaiApiKey();
   config['ollamaApiUrl'] = getOllamaApiEndpoint();
+  config['groqApiKey'] = getGroqApiKey();
 
   res.status(200).json(config);
 });
@@ -44,6 +46,7 @@ router.post('/', async (req, res) => {
     },
     API_KEYS: {
       OPENAI: config.openeaiApiKey,
+      GROQ: config.groqApiKey,
     },
     API_ENDPOINTS: {
       OLLAMA: config.ollamaApiUrl,

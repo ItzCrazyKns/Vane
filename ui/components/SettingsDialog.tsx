@@ -9,6 +9,7 @@ interface SettingsType {
   selectedProvider: string;
   selectedChatModel: string;
   openeaiApiKey: string;
+  groqApiKey: string;
   ollamaApiUrl: string;
 }
 
@@ -189,6 +190,21 @@ const SettingsDialog = ({
                           setConfig({
                             ...config,
                             ollamaApiUrl: e.target.value,
+                          })
+                        }
+                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-white/70 text-sm">GROQ API Key</p>
+                      <input
+                        type="text"
+                        placeholder="GROQ API Key"
+                        defaultValue={config.groqApiKey}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            groqApiKey: e.target.value,
                           })
                         }
                         className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"

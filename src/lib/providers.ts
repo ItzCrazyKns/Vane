@@ -1,11 +1,16 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { getOllamaApiEndpoint, getOpenaiApiKey } from '../config';
+import {
+  getGroqApiKey,
+  getOllamaApiEndpoint,
+  getOpenaiApiKey,
+} from '../config';
 import logger from '../utils/logger';
 
 export const getAvailableProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
+  const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
 
   const models = {};
@@ -13,17 +18,17 @@ export const getAvailableProviders = async () => {
   if (openAIApiKey) {
     try {
       models['openai'] = {
-        'gpt-3.5-turbo': new ChatOpenAI({
+        'GPT-3.5 turbo': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-3.5-turbo',
           temperature: 0.7,
         }),
-        'gpt-4': new ChatOpenAI({
+        'GPT-4': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4',
           temperature: 0.7,
         }),
-        'gpt-4-turbo': new ChatOpenAI({
+        'GPT-4 turbo': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4-turbo',
           temperature: 0.7,
@@ -35,6 +40,59 @@ export const getAvailableProviders = async () => {
       };
     } catch (err) {
       logger.error(`Error loading OpenAI models: ${err}`);
+    }
+  }
+
+  if (groqApiKey) {
+    try {
+      models['groq'] = {
+        'LLaMA3 8b': new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'llama3-8b-8192',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+        'LLaMA3 70b': new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'llama3-70b-8192',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+        'Mixtral 8x7b': new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'gemma-7b-it',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+        'Gemma 7b': new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'llama3-70b-8192',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+        embeddings: new OpenAIEmbeddings({
+          openAIApiKey: openAIApiKey,
+          modelName: 'text-embedding-3-large',
+        }),
+      };
+    } catch (err) {
+      logger.error(`Error loading Groq models: ${err}`);
     }
   }
 
