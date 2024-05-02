@@ -10,6 +10,7 @@
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
+- [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
 - [Contribution](#contribution)
@@ -86,6 +87,10 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 5. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
+
+## One-Click Deployment
+
+[![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
 
 ## Upcoming Features
 
