@@ -8,8 +8,6 @@ interface Config {
   GENERAL: {
     PORT: number;
     SIMILARITY_MEASURE: string;
-    CHAT_MODEL_PROVIDER: string;
-    CHAT_MODEL: string;
   };
   API_KEYS: {
     OPENAI: string;
@@ -35,11 +33,6 @@ export const getPort = () => loadConfig().GENERAL.PORT;
 export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
-export const getChatModelProvider = () =>
-  loadConfig().GENERAL.CHAT_MODEL_PROVIDER;
-
-export const getChatModel = () => loadConfig().GENERAL.CHAT_MODEL;
-
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
 
 export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
@@ -52,21 +45,19 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
 
   for (const key in currentConfig) {
-    /* if (currentConfig[key] && !config[key]) {
-      config[key] = currentConfig[key];
-    } */
+    if (!config[key]) config[key] = {};
 
-    if (currentConfig[key] && typeof currentConfig[key] === 'object') {
+    if (typeof currentConfig[key] === 'object' && currentConfig[key] !== null) {
       for (const nestedKey in currentConfig[key]) {
         if (
-          currentConfig[key][nestedKey] &&
           !config[key][nestedKey] &&
+          currentConfig[key][nestedKey] &&
           config[key][nestedKey] !== ''
         ) {
           config[key][nestedKey] = currentConfig[key][nestedKey];
         }
       }
-    } else if (currentConfig[key] && !config[key] && config[key] !== '') {
+    } else if (currentConfig[key] && config[key] !== '') {
       config[key] = currentConfig[key];
     }
   }

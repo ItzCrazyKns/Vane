@@ -10,9 +10,7 @@ export const initServer = (
   const port = getPort();
   const wss = new WebSocketServer({ server });
 
-  wss.on('connection', (ws) => {
-    handleConnection(ws);
-  });
+  wss.on('connection', handleConnection);
 
   logger.info(`WebSocket server started on port ${port}`);
 };

@@ -6,8 +6,6 @@ interface SettingsType {
   providers: {
     [key: string]: string[];
   };
-  selectedProvider: string;
-  selectedChatModel: string;
   openeaiApiKey: string;
   groqApiKey: string;
   ollamaApiUrl: string;
@@ -21,6 +19,12 @@ const SettingsDialog = ({
   setIsOpen: (isOpen: boolean) => void;
 }) => {
   const [config, setConfig] = useState<SettingsType | null>(null);
+  const [selectedChatModelProvider, setSelectedChatModelProvider] = useState<
+    string | null
+  >(null);
+  const [selectedChatModel, setSelectedChatModel] = useState<string | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -39,6 +43,11 @@ const SettingsDialog = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  useEffect(() => {
+    setSelectedChatModelProvider(localStorage.getItem('chatModelProvider'));
+    setSelectedChatModel(localStorage.getItem('chatModel'));
+  }, []);
+
   const handleSubmit = async () => {
     setIsUpdating(true);
 
@@ -50,6 +59,9 @@ const SettingsDialog = ({
         },
         body: JSON.stringify(config),
       });
+
+      localStorage.setItem('chatModelProvider', selectedChatModelProvider!);
+      localStorage.setItem('chatModel', selectedChatModel!);
     } catch (err) {
       console.log(err);
     } finally {
@@ -101,21 +113,19 @@ const SettingsDialog = ({
                           Chat model Provider
                         </p>
                         <select
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              selectedProvider: e.target.value,
-                              selectedChatModel:
-                                config.providers[e.target.value][0],
-                            })
-                          }
+                          onChange={(e) => {
+                            setSelectedChatModelProvider(e.target.value);
+                            setSelectedChatModel(
+                              config.providers[e.target.value][0],
+                            );
+                          }}
                           className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
                           {Object.keys(config.providers).map((provider) => (
                             <option
                               key={provider}
                               value={provider}
-                              selected={provider === config.selectedProvider}
+                              selected={provider === selectedChatModelProvider}
                             >
                               {provider.charAt(0).toUpperCase() +
                                 provider.slice(1)}
@@ -124,29 +134,22 @@ const SettingsDialog = ({
                         </select>
                       </div>
                     )}
-                    {config.selectedProvider && (
+                    {selectedChatModelProvider && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-white/70 text-sm">Chat Model</p>
                         <select
-                          onChange={(e) =>
-                            setConfig({
-                              ...config,
-                              selectedChatModel: e.target.value,
-                            })
-                          }
+                          onChange={(e) => setSelectedChatModel(e.target.value)}
                           className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
-                          {config.providers[config.selectedProvider] ? (
-                            config.providers[config.selectedProvider].length >
+                          {config.providers[selectedChatModelProvider] ? (
+                            config.providers[selectedChatModelProvider].length >
                             0 ? (
-                              config.providers[config.selectedProvider].map(
+                              config.providers[selectedChatModelProvider].map(
                                 (model) => (
                                   <option
                                     key={model}
                                     value={model}
-                                    selected={
-                                      model === config.selectedChatModel
-                                    }
+                                    selected={model === selectedChatModel}
                                   >
                                     {model}
                                   </option>

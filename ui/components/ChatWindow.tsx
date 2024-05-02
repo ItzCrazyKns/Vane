@@ -19,14 +19,42 @@ const useSocket = (url: string) => {
 
   useEffect(() => {
     if (!ws) {
-      const ws = new WebSocket(url);
-      ws.onopen = () => {
-        console.log('[DEBUG] open');
-        setWs(ws);
+      const connectWs = async () => {
+        let chatModel = localStorage.getItem('chatModel');
+        let chatModelProvider = localStorage.getItem('chatModelProvider');
+
+        if (!chatModel || !chatModelProvider) {
+          const chatModelProviders = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/models`,
+          ).then(async (res) => (await res.json())['providers']);
+
+          if (
+            !chatModelProviders ||
+            Object.keys(chatModelProviders).length === 0
+          )
+            return console.error('No chat models available');
+
+          chatModelProvider = Object.keys(chatModelProviders)[0];
+          chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+
+          localStorage.setItem('chatModel', chatModel!);
+          localStorage.setItem('chatModelProvider', chatModelProvider);
+        }
+
+        const ws = new WebSocket(
+          `${url}?chatModel=${chatModel}&chatModelProvider=${chatModelProvider}`,
+        );
+        ws.onopen = () => {
+          console.log('[DEBUG] open');
+          setWs(ws);
+        };
       };
+
+      connectWs();
     }
 
     return () => {
+      1;
       ws?.close();
       console.log('[DEBUG] closed');
     };

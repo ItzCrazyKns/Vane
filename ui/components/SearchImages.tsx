@@ -29,6 +29,10 @@ const SearchImages = ({
         <button
           onClick={async () => {
             setLoading(true);
+
+            const chatModelProvider = localStorage.getItem('chatModelProvider');
+            const chatModel = localStorage.getItem('chatModel');
+
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/images`,
               {
@@ -39,6 +43,8 @@ const SearchImages = ({
                 body: JSON.stringify({
                   query: query,
                   chat_history: chat_history,
+                  chat_model_provider: chatModelProvider,
+                  chat_model: chatModel,
                 }),
               },
             );

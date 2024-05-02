@@ -1,15 +1,23 @@
 import { WebSocket } from 'ws';
 import { handleMessage } from './messageHandler';
-import { getChatModel, getChatModelProvider } from '../config';
 import { getAvailableProviders } from '../lib/providers';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
+import type { IncomingMessage } from 'http';
 import logger from '../utils/logger';
 
-export const handleConnection = async (ws: WebSocket) => {
+export const handleConnection = async (
+  ws: WebSocket,
+  request: IncomingMessage,
+) => {
+  const searchParams = new URL(request.url, `http://${request.headers.host}`)
+    .searchParams;
+
   const models = await getAvailableProviders();
-  const provider = getChatModelProvider();
-  const chatModel = getChatModel();
+  const provider =
+    searchParams.get('chatModelProvider') || Object.keys(models)[0];
+  const chatModel =
+    searchParams.get('chatModel') || Object.keys(models[provider])[0];
 
   let llm: BaseChatModel | undefined;
   let embeddings: Embeddings | undefined;

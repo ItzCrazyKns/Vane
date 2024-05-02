@@ -1,8 +1,6 @@
 import express from 'express';
 import { getAvailableProviders } from '../lib/providers';
 import {
-  getChatModel,
-  getChatModelProvider,
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
@@ -26,9 +24,6 @@ router.get('/', async (_, res) => {
     config['providers'][provider] = Object.keys(providers[provider]);
   }
 
-  config['selectedProvider'] = getChatModelProvider();
-  config['selectedChatModel'] = getChatModel();
-
   config['openeaiApiKey'] = getOpenaiApiKey();
   config['ollamaApiUrl'] = getOllamaApiEndpoint();
   config['groqApiKey'] = getGroqApiKey();
@@ -40,10 +35,6 @@ router.post('/', async (req, res) => {
   const config = req.body;
 
   const updatedConfig = {
-    GENERAL: {
-      CHAT_MODEL_PROVIDER: config.selectedProvider,
-      CHAT_MODEL: config.selectedChatModel,
-    },
     API_KEYS: {
       OPENAI: config.openeaiApiKey,
       GROQ: config.groqApiKey,

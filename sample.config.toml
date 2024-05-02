@@ -1,8 +1,6 @@
 [GENERAL]
 PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
-CHAT_MODEL_PROVIDER = "openai" # "openai" or "ollama" or "groq"
-CHAT_MODEL = "gpt-3.5-turbo" # Name of the model to use
 
 [API_KEYS]
 OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef

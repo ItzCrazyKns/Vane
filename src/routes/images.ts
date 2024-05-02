@@ -2,7 +2,6 @@ import express from 'express';
 import handleImageSearch from '../agents/imageSearchAgent';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableProviders } from '../lib/providers';
-import { getChatModel, getChatModelProvider } from '../config';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
 
@@ -10,7 +9,7 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   try {
-    let { query, chat_history } = req.body;
+    let { query, chat_history, chat_model_provider, chat_model } = req.body;
 
     chat_history = chat_history.map((msg: any) => {
       if (msg.role === 'user') {
@@ -20,14 +19,14 @@ router.post('/', async (req, res) => {
       }
     });
 
-    const models = await getAvailableProviders();
-    const provider = getChatModelProvider();
-    const chatModel = getChatModel();
+    const chatModels = await getAvailableProviders();
+    const provider = chat_model_provider || Object.keys(chatModels)[0];
+    const chatModel = chat_model || Object.keys(chatModels[provider])[0];
 
     let llm: BaseChatModel | undefined;
 
-    if (models[provider] && models[provider][chatModel]) {
-      llm = models[provider][chatModel] as BaseChatModel | undefined;
+    if (chatModels[provider] && chatModels[provider][chatModel]) {
+      llm = chatModels[provider][chatModel] as BaseChatModel | undefined;
     }
 
     if (!llm) {
