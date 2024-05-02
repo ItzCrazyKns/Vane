@@ -6,7 +6,7 @@ interface SettingsType {
   providers: {
     [key: string]: string[];
   };
-  openeaiApiKey: string;
+  openaiApiKey: string;
   groqApiKey: string;
   ollamaApiUrl: string;
 }
@@ -173,11 +173,11 @@ const SettingsDialog = ({
                       <input
                         type="text"
                         placeholder="OpenAI API Key"
-                        defaultValue={config.openeaiApiKey}
+                        defaultValue={config.openaiApiKey}
                         onChange={(e) =>
                           setConfig({
                             ...config,
-                            openeaiApiKey: e.target.value,
+                            openaiApiKey: e.target.value,
                           })
                         }
                         className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"

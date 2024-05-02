@@ -24,7 +24,7 @@ router.get('/', async (_, res) => {
     config['providers'][provider] = Object.keys(providers[provider]);
   }
 
-  config['openeaiApiKey'] = getOpenaiApiKey();
+  config['openaiApiKey'] = getOpenaiApiKey();
   config['ollamaApiUrl'] = getOllamaApiEndpoint();
   config['groqApiKey'] = getGroqApiKey();
 
@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
 
   const updatedConfig = {
     API_KEYS: {
-      OPENAI: config.openeaiApiKey,
+      OPENAI: config.openaiApiKey,
       GROQ: config.groqApiKey,
     },
     API_ENDPOINTS: {
