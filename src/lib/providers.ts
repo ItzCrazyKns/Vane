@@ -69,7 +69,7 @@ export const getAvailableProviders = async () => {
         'Mixtral 8x7b': new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'gemma-7b-it',
+            modelName: 'mixtral-8x7b-32768',
             temperature: 0.7,
           },
           {
@@ -79,7 +79,7 @@ export const getAvailableProviders = async () => {
         'Gemma 7b': new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'llama3-70b-8192',
+            modelName: 'gemma-7b-it',
             temperature: 0.7,
           },
           {
