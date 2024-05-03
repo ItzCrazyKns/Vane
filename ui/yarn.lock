@@ -2632,10 +2632,10 @@ react-is@^16.13.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
 
-react-speech-kit@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/react-speech-kit/-/react-speech-kit-3.0.1.tgz#8bd936adfe064be1c5a07e2992dfdfd772e80d14"
-  integrity sha512-MXNOciISanhmnxpHJkBOev3M3NPDpW1T7nTc/eGw5pO9cXpoUccRxZkmr/IlpTPbPEneDNeTmbwri/YweyctZg==
+react-text-to-speech@^0.14.5:
+  version "0.14.5"
+  resolved "https://registry.yarnpkg.com/react-text-to-speech/-/react-text-to-speech-0.14.5.tgz#f918786ab283311535682011045bd49777193300"
+  integrity sha512-3brr/IrK/5YTtOZSTo+Y8b+dnWelzfZiDZvkXnOct1e7O7fgA/h9bYAVrtwSRo/VxKfdw+wh6glkj6M0mlQuQQ==
 
 react-textarea-autosize@^8.5.3:
   version "8.5.3"

@@ -1291,11 +1291,6 @@ raw-body@2.5.2:
     iconv-lite "0.4.24"
     unpipe "1.0.0"
 
-react-text-to-speech@^0.14.5:
-  version "0.14.5"
-  resolved "https://registry.yarnpkg.com/react-text-to-speech/-/react-text-to-speech-0.14.5.tgz#f918786ab283311535682011045bd49777193300"
-  integrity sha512-3brr/IrK/5YTtOZSTo+Y8b+dnWelzfZiDZvkXnOct1e7O7fgA/h9bYAVrtwSRo/VxKfdw+wh6glkj6M0mlQuQQ==
-
 readable-stream@^3.4.0, readable-stream@^3.6.0:
   version "3.6.2"
   resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-3.6.2.tgz#56a9b36ea965c00c5a93ef31eb111a0f11056967"

@@ -1,6 +1,6 @@
 {
   "name": "perplexica-frontend",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
@@ -22,7 +22,7 @@
     "next": "14.1.4",
     "react": "^18",
     "react-dom": "^18",
-    "react-speech-kit": "^3.0.1",
+    "react-text-to-speech": "^0.14.5",
     "react-textarea-autosize": "^8.5.3",
     "tailwind-merge": "^2.2.2",
     "yet-another-react-lightbox": "^3.17.2",
