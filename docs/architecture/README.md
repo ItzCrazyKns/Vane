@@ -1,4 +1,5 @@
 ## Perplexica's Architecture
+
 Perplexica's architecture consists of the following key components:
 
 1. **User Interface**: A web-based interface that allows users to interact with Perplexica for searching images, videos, and much more.

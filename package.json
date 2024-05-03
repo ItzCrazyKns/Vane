@@ -1,6 +1,6 @@
 {
   "name": "perplexica-backend",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
@@ -29,6 +29,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "langchain": "^0.1.30",
+    "react-text-to-speech": "^0.14.5",
     "winston": "^3.13.0",
     "ws": "^8.16.0",
     "zod": "^3.22.4"

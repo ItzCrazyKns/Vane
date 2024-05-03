@@ -1,22 +1,17 @@
+'use client';
+
 /* eslint-disable @next/next/no-img-element */
 import React, { MutableRefObject, useEffect, useState } from 'react';
 import { Message } from './ChatWindow';
 import { cn } from '@/lib/utils';
-import {
-  BookCopy,
-  Disc3,
-  FilePen,
-  PlusIcon,
-  Share,
-  ThumbsDown,
-  VideoIcon,
-} from 'lucide-react';
+import { BookCopy, Disc3, Share, Volume2, StopCircle } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
+import { useSpeech } from 'react-text-to-speech';
 
 const MessageBox = ({
   message,
@@ -36,6 +31,7 @@ const MessageBox = ({
   rewrite: (messageId: string) => void;
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
+  const [speechMessage, setSpeechMessage] = useState(message.content);
 
   useEffect(() => {
     if (
@@ -44,6 +40,8 @@ const MessageBox = ({
       message.sources.length > 0
     ) {
       const regex = /\[(\d+)\]/g;
+
+      setSpeechMessage(message.content.replace(regex, ''));
 
       return setParsedMessage(
         message.content.replace(
@@ -55,6 +53,8 @@ const MessageBox = ({
     }
     setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
+
+  const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   return (
     <div>
@@ -105,11 +105,21 @@ const MessageBox = ({
                   </div>
                   <div className="flex flex-row items-center space-x-1">
                     <Copy initialMessage={message.content} message={message} />
-                    <button className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
-                      <FilePen size={18} />
-                    </button>
-                    <button className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
-                      <ThumbsDown size={18} />
+                    <button
+                      onClick={() => {
+                        if (speechStatus === 'started') {
+                          stop();
+                        } else {
+                          start();
+                        }
+                      }}
+                      className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white"
+                    >
+                      {speechStatus === 'started' ? (
+                        <StopCircle size={18} />
+                      ) : (
+                        <Volume2 size={18} />
+                      )}
                     </button>
                   </div>
                 </div>
