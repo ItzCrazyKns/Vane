@@ -34,15 +34,13 @@ const MessageBox = ({
   const [speechMessage, setSpeechMessage] = useState(message.content);
 
   useEffect(() => {
+    const regex = /\[(\d+)\]/g;
+
     if (
       message.role === 'assistant' &&
       message?.sources &&
       message.sources.length > 0
     ) {
-      const regex = /\[(\d+)\]/g;
-
-      setSpeechMessage(message.content.replace(regex, ''));
-
       return setParsedMessage(
         message.content.replace(
           regex,
@@ -51,6 +49,8 @@ const MessageBox = ({
         ),
       );
     }
+
+    setSpeechMessage(message.content.replace(regex, ''));
     setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
 
@@ -95,7 +95,7 @@ const MessageBox = ({
               <Markdown className="prose max-w-none break-words prose-invert prose-p:leading-relaxed prose-pre:p-0 text-white text-sm md:text-base font-medium">
                 {parsedMessage}
               </Markdown>
-              {!loading && (
+              {loading && isLast ? null : (
                 <div className="flex flex-row items-center justify-between w-full text-white py-4 -mx-2">
                   <div className="flex flex-row items-center space-x-1">
                     <button className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
