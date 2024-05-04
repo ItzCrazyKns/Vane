@@ -46,7 +46,11 @@ const SettingsDialog = ({
     if (isOpen) {
       const fetchConfig = async () => {
         setIsLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         const data = await res.json();
         setConfig(data);
         setIsLoading(false);
@@ -251,7 +255,7 @@ const SettingsDialog = ({
                         </>
                       )}
                     {/* Embedding models */}
-                    {config.chatModelProviders && (
+                    {config.embeddingModelProviders && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-white/70 text-sm">
                           Embedding model Provider

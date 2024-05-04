@@ -36,6 +36,11 @@ const useSocket = (url: string) => {
         ) {
           const providers = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/models`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
           ).then(async (res) => await res.json());
 
           const chatModelProviders = providers.chatModelProviders;
