@@ -1,5 +1,8 @@
 import express from 'express';
-import { getAvailableProviders } from '../lib/providers';
+import {
+  getAvailableChatModelProviders,
+  getAvailableEmbeddingModelProviders,
+} from '../lib/providers';
 import {
   getGroqApiKey,
   getOllamaApiEndpoint,
@@ -12,16 +15,24 @@ const router = express.Router();
 router.get('/', async (_, res) => {
   const config = {};
 
-  const providers = await getAvailableProviders();
+  const [chatModelProviders, embeddingModelProviders] = await Promise.all([
+    getAvailableChatModelProviders(),
+    getAvailableEmbeddingModelProviders(),
+  ]);
 
-  for (const provider in providers) {
-    delete providers[provider]['embeddings'];
+  config['chatModelProviders'] = {};
+  config['embeddingModelProviders'] = {};
+
+  for (const provider in chatModelProviders) {
+    config['chatModelProviders'][provider] = Object.keys(
+      chatModelProviders[provider],
+    );
   }
 
-  config['providers'] = {};
-
-  for (const provider in providers) {
-    config['providers'][provider] = Object.keys(providers[provider]);
+  for (const provider in embeddingModelProviders) {
+    config['embeddingModelProviders'][provider] = Object.keys(
+      embeddingModelProviders[provider],
+    );
   }
 
   config['openaiApiKey'] = getOpenaiApiKey();

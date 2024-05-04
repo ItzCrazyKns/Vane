@@ -1,7 +1,7 @@
 import express from 'express';
 import handleImageSearch from '../agents/imageSearchAgent';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { getAvailableProviders } from '../lib/providers';
+import { getAvailableChatModelProviders } from '../lib/providers';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
 
@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
       }
     });
 
-    const chatModels = await getAvailableProviders();
+    const chatModels = await getAvailableChatModelProviders();
     const provider = chat_model_provider || Object.keys(chatModels)[0];
     const chatModel = chat_model || Object.keys(chatModels[provider])[0];
 
