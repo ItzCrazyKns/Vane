@@ -24,6 +24,7 @@
     "react-dom": "^18",
     "react-text-to-speech": "^0.14.5",
     "react-textarea-autosize": "^8.5.3",
+    "sonner": "^1.4.41",
     "tailwind-merge": "^2.2.2",
     "yet-another-react-lightbox": "^3.17.2",
     "zod": "^3.22.4"

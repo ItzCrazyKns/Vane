@@ -5,6 +5,7 @@ import { Document } from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
+import { toast } from 'sonner';
 
 export type Message = {
   id: string;
@@ -92,9 +93,17 @@ const useSocket = (url: string) => {
         wsURL.search = searchParams.toString();
 
         const ws = new WebSocket(wsURL.toString());
+
         ws.onopen = () => {
           console.log('[DEBUG] open');
           setWs(ws);
+        };
+
+        ws.onmessage = (e) => {
+          const parsedData = JSON.parse(e.data);
+          if (parsedData.type === 'error') {
+            toast.error(parsedData.data);
+          }
         };
       };
 
@@ -102,7 +111,6 @@ const useSocket = (url: string) => {
     }
 
     return () => {
-      1;
       ws?.close();
       console.log('[DEBUG] closed');
     };
@@ -149,6 +157,12 @@ const ChatWindow = () => {
 
     const messageHandler = (e: MessageEvent) => {
       const data = JSON.parse(e.data);
+
+      if (data.type === 'error') {
+        toast.error(data.data);
+        setLoading(false);
+        return;
+      }
 
       if (data.type === 'sources') {
         sources = data.data;
