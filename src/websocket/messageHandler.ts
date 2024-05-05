@@ -57,7 +57,13 @@ const handleEmitterEvents = (
   });
   emitter.on('error', (data) => {
     const parsedData = JSON.parse(data);
-    ws.send(JSON.stringify({ type: 'error', data: parsedData.data }));
+    ws.send(
+      JSON.stringify({
+        type: 'error',
+        data: parsedData.data,
+        key: 'CHAIN_ERROR',
+      }),
+    );
   });
 };
 
@@ -73,7 +79,11 @@ export const handleMessage = async (
 
     if (!parsedMessage.content)
       return ws.send(
-        JSON.stringify({ type: 'error', data: 'Invalid message format' }),
+        JSON.stringify({
+          type: 'error',
+          data: 'Invalid message format',
+          key: 'INVALID_FORMAT',
+        }),
       );
 
     const history: BaseMessage[] = parsedMessage.history.map((msg) => {
@@ -99,11 +109,23 @@ export const handleMessage = async (
         );
         handleEmitterEvents(emitter, ws, id);
       } else {
-        ws.send(JSON.stringify({ type: 'error', data: 'Invalid focus mode' }));
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            data: 'Invalid focus mode',
+            key: 'INVALID_FOCUS_MODE',
+          }),
+        );
       }
     }
   } catch (err) {
-    ws.send(JSON.stringify({ type: 'error', data: 'Invalid message format' }));
+    ws.send(
+      JSON.stringify({
+        type: 'error',
+        data: 'Invalid message format',
+        key: 'INVALID_FORMAT',
+      }),
+    );
     logger.error(`Failed to handle message: ${err}`);
   }
 };

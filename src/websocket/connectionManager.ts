@@ -70,7 +70,8 @@ export const handleConnection = async (
     ws.send(
       JSON.stringify({
         type: 'error',
-        data: 'Invalid LLM or embeddings model selected',
+        data: 'Invalid LLM or embeddings model selected, please refresh the page and try again.',
+        key: 'INVALID_MODEL_SELECTED',
       }),
     );
     ws.close();
