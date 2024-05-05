@@ -108,6 +108,9 @@ const useSocket = (url: string) => {
           const parsedData = JSON.parse(e.data);
           if (parsedData.type === 'error') {
             toast.error(parsedData.data);
+            if (parsedData.key === 'INVALID_MODEL_SELECTED') {
+              localStorage.clear();
+            }
           }
         };
       };
