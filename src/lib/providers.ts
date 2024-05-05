@@ -90,7 +90,11 @@ export const getAvailableChatModelProviders = async () => {
 
   if (ollamaEndpoint) {
     try {
-      const response = await fetch(`${ollamaEndpoint}/api/tags`);
+      const response = await fetch(`${ollamaEndpoint}/api/tags`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       const { models: ollamaModels } = (await response.json()) as any;
 
@@ -137,7 +141,11 @@ export const getAvailableEmbeddingModelProviders = async () => {
 
   if (ollamaEndpoint) {
     try {
-      const response = await fetch(`${ollamaEndpoint}/api/tags`);
+      const response = await fetch(`${ollamaEndpoint}/api/tags`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       const { models: ollamaModels } = (await response.json()) as any;
 
