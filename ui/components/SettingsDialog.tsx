@@ -53,6 +53,14 @@ const SettingsDialog = ({
         });
         const data = await res.json();
         setConfig(data);
+        setSelectedChatModelProvider(localStorage.getItem('chatModelProvider'));
+        setSelectedChatModel(localStorage.getItem('chatModel'));
+        setSelectedEmbeddingModelProvider(
+          localStorage.getItem('embeddingModelProvider'),
+        );
+        setSelectedEmbeddingModel(localStorage.getItem('embeddingModel'));
+        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey'));
+        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseUrl'));
         setIsLoading(false);
       };
 
@@ -60,17 +68,6 @@ const SettingsDialog = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
-
-  useEffect(() => {
-    setSelectedChatModelProvider(localStorage.getItem('chatModelProvider'));
-    setSelectedChatModel(localStorage.getItem('chatModel'));
-    setSelectedEmbeddingModelProvider(
-      localStorage.getItem('embeddingModelProvider'),
-    );
-    setSelectedEmbeddingModel(localStorage.getItem('embeddingModel'));
-    setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey'));
-    setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseUrl'));
-  }, []);
 
   const handleSubmit = async () => {
     setIsUpdating(true);
