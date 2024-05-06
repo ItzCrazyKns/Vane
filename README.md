@@ -10,6 +10,8 @@
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
+  - [Troubleshooting](#troubleshooting)
+    - [Ollama connection errors](#ollama-connection-errors)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
@@ -89,6 +91,19 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 5. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
+
+### Troubleshooting
+Enocuntered a bug or an issue? Feel free to join our [Discord community](https://discord.gg/2bdhg2R3ze) where we can do our best to help you.
+
+#### Ollama connection errors
+
+If you're facing an Ollama connection error, it is often related to the backend not being able to connect to Ollama's API. How can you fix it? You can fix it by updating your Ollama API URL in the settings menu to the following:
+
+On Windows: `http://host.docker.internal:11434`<br>
+On Mac: `http://host.docker.internal:11434`<br>
+On Linux: `http://private_ip_of_computer_hosting_ollama:11434`
+
+You need to edit the ports accordingly.
 
 ## One-Click Deployment
 
