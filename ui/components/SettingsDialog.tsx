@@ -33,12 +33,8 @@ const SettingsDialog = ({
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<
     string | null
   >(null);
-  const [customOpenAIApiKey, setCustomOpenAIApiKey] = useState<string | null>(
-    null,
-  );
-  const [customOpenAIBaseURL, setCustomOpenAIBaseURL] = useState<string | null>(
-    null,
-  );
+  const [customOpenAIApiKey, setCustomOpenAIApiKey] = useState<string>('');
+  const [customOpenAIBaseURL, setCustomOpenAIBaseURL] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -51,16 +47,49 @@ const SettingsDialog = ({
             'Content-Type': 'application/json',
           },
         });
-        const data = await res.json();
+
+        const data = (await res.json()) as SettingsType;
         setConfig(data);
-        setSelectedChatModelProvider(localStorage.getItem('chatModelProvider'));
-        setSelectedChatModel(localStorage.getItem('chatModel'));
-        setSelectedEmbeddingModelProvider(
-          localStorage.getItem('embeddingModelProvider'),
+
+        const chatModelProvidersKeys = Object.keys(
+          data.chatModelProviders || {},
         );
-        setSelectedEmbeddingModel(localStorage.getItem('embeddingModel'));
-        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey'));
-        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseUrl'));
+        const embeddingModelProvidersKeys = Object.keys(
+          data.embeddingModelProviders || {},
+        );
+
+        const defaultChatModelProvider =
+          chatModelProvidersKeys.length > 0 ? chatModelProvidersKeys[0] : '';
+        const defaultEmbeddingModelProvider =
+          embeddingModelProvidersKeys.length > 0
+            ? embeddingModelProvidersKeys[0]
+            : '';
+
+        const chatModelProvider =
+          localStorage.getItem('chatModelProvider') ||
+          defaultChatModelProvider ||
+          '';
+        const chatModel =
+          localStorage.getItem('chatModel') ||
+          (data.chatModelProviders &&
+            data.chatModelProviders[chatModelProvider]?.[0]) ||
+          '';
+        const embeddingModelProvider =
+          localStorage.getItem('embeddingModelProvider') ||
+          defaultEmbeddingModelProvider ||
+          '';
+        const embeddingModel =
+          localStorage.getItem('embeddingModel') ||
+          (data.embeddingModelProviders &&
+            data.embeddingModelProviders[embeddingModelProvider]?.[0]) ||
+          '';
+
+        setSelectedChatModelProvider(chatModelProvider);
+        setSelectedChatModel(chatModel);
+        setSelectedEmbeddingModelProvider(embeddingModelProvider);
+        setSelectedEmbeddingModel(embeddingModel);
+        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
+        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseUrl') || '');
         setIsLoading(false);
       };
 
@@ -223,7 +252,7 @@ const SettingsDialog = ({
                           </div>
                           <div className="flex flex-col space-y-1">
                             <p className="text-white/70 text-sm">
-                              Custom OpenAI API Key (optional)
+                              Custom OpenAI API Key
                             </p>
                             <input
                               type="text"
