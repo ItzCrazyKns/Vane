@@ -50,13 +50,13 @@ const useSocket = (url: string) => {
             !chatModelProviders ||
             Object.keys(chatModelProviders).length === 0
           )
-            return console.error('No chat models available');
+            return toast.error('No chat models available');
 
           if (
             !embeddingModelProviders ||
             Object.keys(embeddingModelProviders).length === 0
           )
-            return console.error('No embedding models available');
+            return toast.error('No embedding models available');
 
           chatModelProvider = Object.keys(chatModelProviders)[0];
           chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
