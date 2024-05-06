@@ -170,6 +170,7 @@ const SettingsDialog = ({
                           Chat model Provider
                         </p>
                         <select
+                          value={selectedChatModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedChatModelProvider(e.target.value);
                             setSelectedChatModel(
@@ -180,13 +181,7 @@ const SettingsDialog = ({
                         >
                           {Object.keys(config.chatModelProviders).map(
                             (provider) => (
-                              <option
-                                key={provider}
-                                value={provider}
-                                selected={
-                                  provider === selectedChatModelProvider
-                                }
-                              >
+                              <option key={provider} value={provider}>
                                 {provider.charAt(0).toUpperCase() +
                                   provider.slice(1)}
                               </option>
@@ -200,6 +195,7 @@ const SettingsDialog = ({
                         <div className="flex flex-col space-y-1">
                           <p className="text-white/70 text-sm">Chat Model</p>
                           <select
+                            value={selectedChatModel ?? undefined}
                             onChange={(e) =>
                               setSelectedChatModel(e.target.value)
                             }
@@ -214,21 +210,17 @@ const SettingsDialog = ({
                                 config.chatModelProviders[
                                   selectedChatModelProvider
                                 ].map((model) => (
-                                  <option
-                                    key={model}
-                                    value={model}
-                                    selected={model === selectedChatModel}
-                                  >
+                                  <option key={model} value={model}>
                                     {model}
                                   </option>
                                 ))
                               ) : (
-                                <option value="" disabled selected>
+                                <option value="" disabled>
                                   No models available
                                 </option>
                               )
                             ) : (
-                              <option value="" disabled selected>
+                              <option value="" disabled>
                                 Invalid provider, please check backend logs
                               </option>
                             )}
@@ -287,6 +279,7 @@ const SettingsDialog = ({
                           Embedding model Provider
                         </p>
                         <select
+                          value={selectedEmbeddingModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedEmbeddingModelProvider(e.target.value);
                             setSelectedEmbeddingModel(
@@ -297,13 +290,7 @@ const SettingsDialog = ({
                         >
                           {Object.keys(config.embeddingModelProviders).map(
                             (provider) => (
-                              <option
-                                key={provider}
-                                value={provider}
-                                selected={
-                                  provider === selectedEmbeddingModelProvider
-                                }
-                              >
+                              <option key={provider} value={provider}>
                                 {provider.charAt(0).toUpperCase() +
                                   provider.slice(1)}
                               </option>
@@ -316,6 +303,7 @@ const SettingsDialog = ({
                       <div className="flex flex-col space-y-1">
                         <p className="text-white/70 text-sm">Embedding Model</p>
                         <select
+                          value={selectedEmbeddingModel ?? undefined}
                           onChange={(e) =>
                             setSelectedEmbeddingModel(e.target.value)
                           }
@@ -330,11 +318,7 @@ const SettingsDialog = ({
                               config.embeddingModelProviders[
                                 selectedEmbeddingModelProvider
                               ].map((model) => (
-                                <option
-                                  key={model}
-                                  value={model}
-                                  selected={model === selectedEmbeddingModel}
-                                >
+                                <option key={model} value={model}>
                                   {model}
                                 </option>
                               ))
