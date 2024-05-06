@@ -10,7 +10,6 @@
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
-  - [Troubleshooting](#troubleshooting)
     - [Ollama connection errors](#ollama-connection-errors)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
@@ -91,9 +90,6 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 5. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
-
-### Troubleshooting
-Enocuntered a bug or an issue? Feel free to join our [Discord community](https://discord.gg/2bdhg2R3ze) where we can do our best to help you.
 
 #### Ollama connection errors
 
