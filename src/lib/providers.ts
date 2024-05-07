@@ -1,6 +1,7 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
+import { HuggingFaceTransformersEmbeddings } from './huggingfaceTransformer';
 import {
   getGroqApiKey,
   getOllamaApiEndpoint,
@@ -156,6 +157,12 @@ export const getAvailableEmbeddingModelProviders = async () => {
         });
         return acc;
       }, {});
+
+      models['local'] = {
+        'GTE Small': new HuggingFaceTransformersEmbeddings({
+          modelName: 'Xenova/gte-small',
+        }),
+      };
     } catch (err) {
       logger.error(`Error loading Ollama embeddings: ${err}`);
     }

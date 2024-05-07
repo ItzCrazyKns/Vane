@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "lib": ["ESNext"],
-    "module": "commonjs",
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "target": "ESNext",
     "outDir": "dist",
     "sourceMap": false,
