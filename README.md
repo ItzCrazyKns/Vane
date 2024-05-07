@@ -10,10 +10,11 @@
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
-    - [Ollama connection errors](#ollama-connection-errors)
+  - [Ollama connection errors](#ollama-connection-errors)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
+  - [Donations](#donations)
 - [Contribution](#contribution)
 - [Help and Support](#help-and-support)
 
@@ -91,7 +92,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
-#### Ollama connection errors
+### Ollama connection errors
 
 If you're facing an Ollama connection error, it is often related to the backend not being able to connect to Ollama's API. How can you fix it? You can fix it by updating your Ollama API URL in the settings menu to the following:
 
@@ -115,7 +116,15 @@ You need to edit the ports accordingly.
 
 ## Support Us
 
-If you find Perplexica useful, consider giving us a star on GitHub. This helps more people discover Perplexica and supports the development of new features. Your support is appreciated.
+If you find Perplexica useful, consider giving us a star on GitHub. This helps more people discover Perplexica and supports the development of new features. Your support is greatly appreciated.
+
+### Donations
+
+We also accept donations to help sustain our project. If you would like to contribute, you can use the following button to make a donation in cryptocurrency. Thank you for your support!
+
+<a href="https://nowpayments.io/donation?api_key=RFFKJH1-GRR4DQG-HFV1DZP-00G6MMK&source=lk_donation&medium=referral" target="_blank">
+  <img src="https://nowpayments.io/images/embeds/donation-button-white.svg" alt="Crypto donation button by NOWPayments">
+</a>
 
 ## Contribution
 
