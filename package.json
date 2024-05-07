@@ -1,12 +1,12 @@
 {
   "name": "perplexica-backend",
-  "version": "1.3.4",
+  "version": "1.4.0",
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
     "start": "node dist/app.js",
     "build": "tsc",
-    "dev": "nodemon src/app.ts",
+    "dev": "nodemon src/app.ts" , 
     "format": "prettier . --check",
     "format:write": "prettier . --write"
   },
