@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:buster-slim
 
 ARG SEARXNG_API_URL
 
