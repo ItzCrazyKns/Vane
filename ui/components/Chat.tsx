@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import MessageInput from './MessageInput';
 import { Message } from './ChatWindow';
 import MessageBox from './MessageBox';
@@ -53,7 +53,7 @@ const Chat = ({
         const isLast = i === messages.length - 1;
 
         return (
-          <>
+          <Fragment key={msg.id}>
             <MessageBox
               key={i}
               message={msg}
@@ -67,7 +67,7 @@ const Chat = ({
             {!isLast && msg.role === 'assistant' && (
               <div className="h-px w-full bg-[#1C1C1C]" />
             )}
-          </>
+          </Fragment>
         );
       })}
       {loading && !messageAppeared && <MessageBoxLoading />}
