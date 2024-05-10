@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dist/app.js",
     "build": "tsc",
-    "dev": "nodemon src/app.ts" , 
+    "dev": "nodemon src/app.ts",
     "format": "prettier . --check",
     "format:write": "prettier . --write"
   },

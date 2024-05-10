@@ -157,7 +157,6 @@ export const getAvailableEmbeddingModelProviders = async () => {
         });
         return acc;
       }, {});
-
     } catch (err) {
       logger.error(`Error loading Ollama embeddings: ${err}`);
     }
@@ -172,11 +171,11 @@ export const getAvailableEmbeddingModelProviders = async () => {
         modelName: 'Xenova/gte-small',
       }),
       'Bert Multilingual': new HuggingFaceTransformersEmbeddings({
-        modelName: 'Xenova/bert-base-multilingual-uncased'
+        modelName: 'Xenova/bert-base-multilingual-uncased',
       }),
     };
-  } catch(err) {
-    logger.error(`Error loading local embeddings: ${err}`); 
+  } catch (err) {
+    logger.error(`Error loading local embeddings: ${err}`);
   }
 
   return models;
