@@ -1,10 +1,10 @@
 services:
   searxng:
-    build:
-      context: .
-      dockerfile: searxng.dockerfile
+    image: docker.io/searxng/searxng:latest
     ports:
       - 4000:8080
+    volumes:
+      - ./searxng:/etc/searxng:rw
     networks:
       - perplexica-network
 
