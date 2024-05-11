@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
-import { Attach, CopilotToggle, Focus } from './MessageInputActions';
+import { CopilotToggle, Focus } from './MessageInputActions';
 
 const EmptyChatMessageInput = ({
   sendMessage,

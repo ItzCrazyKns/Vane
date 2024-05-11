@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import { toast } from 'sonner';
+import { useSearchParams } from 'next/navigation';
 
 export type Message = {
   id: string;
@@ -15,7 +16,7 @@ export type Message = {
   sources?: Document[];
 };
 
-const useSocket = (url: string) => {
+const useSocket = (url: string, setIsReady: (ready: boolean) => void) => {
   const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
@@ -101,8 +102,16 @@ const useSocket = (url: string) => {
 
         ws.onopen = () => {
           console.log('[DEBUG] open');
-          setWs(ws);
         };
+
+        const stateCheckInterval = setInterval(() => {
+          if (ws.readyState === 1) {
+            setIsReady(true);
+            clearInterval(stateCheckInterval);
+          }
+        }, 100);
+
+        setWs(ws);
 
         ws.onmessage = (e) => {
           const parsedData = JSON.parse(e.data);
@@ -122,13 +131,18 @@ const useSocket = (url: string) => {
       ws?.close();
       console.log('[DEBUG] closed');
     };
-  }, [ws, url]);
+  }, [ws, url, setIsReady]);
 
   return ws;
 };
 
 const ChatWindow = () => {
-  const ws = useSocket(process.env.NEXT_PUBLIC_WS_URL!);
+  const searchParams = useSearchParams();
+  const initialMessage = searchParams.get('q');
+
+  const [isReady, setIsReady] = useState(false);
+  const ws = useSocket(process.env.NEXT_PUBLIC_WS_URL!, setIsReady);
+
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -250,7 +264,14 @@ const ChatWindow = () => {
     sendMessage(message.content);
   };
 
-  return ws ? (
+  useEffect(() => {
+    if (isReady && initialMessage) {
+      sendMessage(initialMessage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, initialMessage]);
+
+  return isReady ? (
     <div>
       {messages.length > 0 ? (
         <>
