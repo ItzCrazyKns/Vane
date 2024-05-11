@@ -1,5 +1,6 @@
 import ChatWindow from '@/components/ChatWindow';
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Chat - Perplexica',
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 const Home = () => {
   return (
     <div>
-      <ChatWindow />
+      <Suspense>
+        <ChatWindow />
+      </Suspense>
     </div>
   );
 };
