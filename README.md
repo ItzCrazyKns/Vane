@@ -11,6 +11,7 @@
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
   - [Ollama connection errors](#ollama-connection-errors)
+- [Using as a Search Engine](#using-as-a-search-engine)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
@@ -103,6 +104,15 @@ On Mac: `http://host.docker.internal:11434`<br>
 On Linux: `http://private_ip_of_computer_hosting_ollama:11434`
 
 You need to edit the ports accordingly.
+
+## Using as a Search Engine
+
+If you wish to use Perplexica as an alternative to traditional search engines like Google or Bing, or if you want to add a shortcut for quick access from your browser's search bar, follow these steps:
+
+1. Open your browser's settings.
+2. Navigate to the 'Search Engines' section.
+3. Add a new site search with the following URL: `http://localhost:3000/?q=%s`. Replace `localhost` with your IP address or domain name, and `3000` with the port number if Perplexica is not hosted locally.
+4. Click the add button. Now, you can use Perplexica directly from your browser's search bar.
 
 ## One-Click Deployment
 
