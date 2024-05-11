@@ -9,6 +9,7 @@
 - [Features](#features)
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
+    - [Exposing to network](#exposing-to-network)
   - [Non-Docker Installation](#non-docker-installation)
   - [Ollama connection errors](#ollama-connection-errors)
 - [One-Click Deployment](#one-click-deployment)
@@ -81,6 +82,10 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
+
+#### Exposing to network
+
+If you wish to expose Perplexica to your network and use it accross all devices on that network you can read [NETWORKING.md](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
 
 ### Non-Docker Installation
 
