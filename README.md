@@ -9,7 +9,6 @@
 - [Features](#features)
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
-    - [Exposing to network](#exposing-to-network)
   - [Non-Docker Installation](#non-docker-installation)
   - [Ollama connection errors](#ollama-connection-errors)
 - [One-Click Deployment](#one-click-deployment)
@@ -83,10 +82,6 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
 
-#### Exposing to network
-
-If you wish to expose Perplexica to your network and use it accross all devices on that network you can read [NETWORKING.md](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
-
 ### Non-Docker Installation
 
 1. Clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. Ensure you complete all required fields in this file.
@@ -96,6 +91,8 @@ If you wish to expose Perplexica to your network and use it accross all devices 
 5. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
+
+See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information.
 
 ### Ollama connection errors
 
