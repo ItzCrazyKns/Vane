@@ -10,6 +10,7 @@
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
+  - [Ollama connection errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
@@ -65,7 +66,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
 
    - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
-   - `OLLAMA`: Your Ollama API URL. If Ollama is hosted on the same computer as Perplexica, you should enter it as `http://127.0.0.1:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://127.0.0.1:11434`. For other ports, adjust accordingly. If Ollama is running on some other server use the server's IP with port or domain in place of it. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
+   - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
    - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**
 
      **Note**: You can change these after starting Perplexica from the settings dialog.
@@ -93,6 +94,16 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like exposing it your network, etc.
+
+### Ollama connection errors
+
+If you're facing an Ollama connection error, it is often related to the backend not being able to connect to Ollama's API. How can you fix it? You can fix it by updating your Ollama API URL in the settings menu to the following:
+
+On Windows: `http://host.docker.internal:11434`<br>
+On Mac: `http://host.docker.internal:11434`<br>
+On Linux: `http://private_ip_of_computer_hosting_ollama:11434`
+
+You need to edit the ports accordingly.
 
 ## Using as a Search Engine
 
