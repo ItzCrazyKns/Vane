@@ -3,10 +3,11 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import routes from './routes';
-import { getPort } from './config';
+import { getBindAddress, getPort } from './config';
 import logger from './utils/logger';
 
 const port = getPort();
+const bindAddress = getBindAddress();
 
 const app = express();
 const server = http.createServer(app);
@@ -23,7 +24,7 @@ app.get('/api', (_, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-server.listen(port, () => {
+server.listen(port, bindAddress, () => {
   logger.info(`Server is running on port ${port}`);
 });
 
