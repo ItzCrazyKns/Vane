@@ -10,7 +10,6 @@
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
-  - [Ollama connection errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
@@ -66,7 +65,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
 
    - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
-   - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
+   - `OLLAMA`: Your Ollama API URL. If Ollama is hosted on the same computer as Perplexica, you should enter it as `http://127.0.0.1:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://127.0.0.1:11434`. For other ports, adjust accordingly. If Ollama is running on some other server use the server's IP with port or domain in place of it. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
    - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**
 
      **Note**: You can change these after starting Perplexica from the settings dialog.
@@ -79,7 +78,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    docker compose up -d
    ```
 
-6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
+6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:31337 in your web browser.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
 
@@ -95,23 +94,13 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information.
 
-### Ollama connection errors
-
-If you're facing an Ollama connection error, it is often related to the backend not being able to connect to Ollama's API. How can you fix it? You can fix it by updating your Ollama API URL in the settings menu to the following:
-
-On Windows: `http://host.docker.internal:11434`<br>
-On Mac: `http://host.docker.internal:11434`<br>
-On Linux: `http://private_ip_of_computer_hosting_ollama:11434`
-
-You need to edit the ports accordingly.
-
 ## Using as a Search Engine
 
 If you wish to use Perplexica as an alternative to traditional search engines like Google or Bing, or if you want to add a shortcut for quick access from your browser's search bar, follow these steps:
 
 1. Open your browser's settings.
 2. Navigate to the 'Search Engines' section.
-3. Add a new site search with the following URL: `http://localhost:3000/?q=%s`. Replace `localhost` with your IP address or domain name, and `3000` with the port number if Perplexica is not hosted locally.
+3. Add a new site search with the following URL: `http://localhost:31337/?q=%s`. Replace `localhost` with your IP address or domain name, and `31337` with the port number if Perplexica is not hosted locally.
 4. Click the add button. Now, you can use Perplexica directly from your browser's search bar.
 
 ## One-Click Deployment
