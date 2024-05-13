@@ -7,7 +7,6 @@ const configFileName = 'config.toml';
 interface Config {
   GENERAL: {
     PORT: number;
-    BIND_ADDRESS: string;
     SIMILARITY_MEASURE: string;
   };
   API_KEYS: {
@@ -30,8 +29,6 @@ const loadConfig = () =>
   ) as any as Config;
 
 export const getPort = () => loadConfig().GENERAL.PORT;
-
-export const getBindAddress = () => loadConfig().GENERAL.BIND_ADDRESS;
 
 export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;

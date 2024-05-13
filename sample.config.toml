@@ -1,6 +1,5 @@
 [GENERAL]
-PORT = 31338 # Port to run the server on
-BIND_ADDRESS = "0.0.0.0"
+PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 
 [API_KEYS]
