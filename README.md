@@ -79,7 +79,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    docker compose up -d
    ```
 
-6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:31337 in your web browser.
+6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
 
@@ -111,7 +111,7 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 
 1. Open your browser's settings.
 2. Navigate to the 'Search Engines' section.
-3. Add a new site search with the following URL: `http://localhost:31337/?q=%s`. Replace `localhost` with your IP address or domain name, and `31337` with the port number if Perplexica is not hosted locally.
+3. Add a new site search with the following URL: `http://localhost:3000/?q=%s`. Replace `localhost` with your IP address or domain name, and `3000` with the port number if Perplexica is not hosted locally.
 4. Click the add button. Now, you can use Perplexica directly from your browser's search bar.
 
 ## One-Click Deployment
