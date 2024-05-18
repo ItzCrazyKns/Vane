@@ -4,7 +4,15 @@
 import React, { MutableRefObject, useEffect, useState } from 'react';
 import { Message } from './ChatWindow';
 import { cn } from '@/lib/utils';
-import { BookCopy, Disc3, Share, Volume2, StopCircle } from 'lucide-react';
+import {
+  BookCopy,
+  Disc3,
+  Share,
+  Volume2,
+  StopCircle,
+  Layers3,
+  Plus,
+} from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
@@ -21,6 +29,7 @@ const MessageBox = ({
   dividerRef,
   isLast,
   rewrite,
+  sendMessage,
 }: {
   message: Message;
   messageIndex: number;
@@ -29,6 +38,7 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
   rewrite: (messageId: string) => void;
+  sendMessage: (message: string) => void;
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
@@ -98,9 +108,9 @@ const MessageBox = ({
               {loading && isLast ? null : (
                 <div className="flex flex-row items-center justify-between w-full text-white py-4 -mx-2">
                   <div className="flex flex-row items-center space-x-1">
-                    <button className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
+                    {/*  <button className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
                       <Share size={18} />
-                    </button>
+                    </button> */}
                     <Rewrite rewrite={rewrite} messageId={message.id} />
                   </div>
                   <div className="flex flex-row items-center space-x-1">
@@ -124,6 +134,42 @@ const MessageBox = ({
                   </div>
                 </div>
               )}
+              {isLast &&
+                message.suggestions &&
+                message.suggestions.length > 0 &&
+                message.role === 'assistant' &&
+                !loading && (
+                  <>
+                    <div className="h-px w-full bg-[#1C1C1C]" />
+                    <div className="flex flex-col space-y-3 text-white">
+                      <div className="flex flex-row items-center space-x-2 mt-4">
+                        <Layers3 />
+                        <h3 className="text-xl font-medium">Related</h3>
+                      </div>
+                      <div className="flex flex-col space-y-3">
+                        {message.suggestions.map((suggestion, i) => (
+                          <div
+                            className="flex flex-col space-y-3 text-sm"
+                            key={i}
+                          >
+                            <div className="h-px w-full bg-[#1C1C1C]" />
+                            <div
+                              onClick={() => {
+                                sendMessage(suggestion);
+                              }}
+                              className="cursor-pointer flex flex-row justify-between font-medium space-x-2 items-center"
+                            >
+                              <p className="transition duration-200 hover:text-[#24A0ED]">
+                                {suggestion}
+                              </p>
+                              <Plus size={20} className="text-[#24A0ED]" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
             </div>
           </div>
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
