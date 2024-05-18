@@ -63,6 +63,7 @@ const Chat = ({
               dividerRef={isLast ? dividerRef : undefined}
               isLast={isLast}
               rewrite={rewrite}
+              sendMessage={sendMessage}
             />
             {!isLast && msg.role === 'assistant' && (
               <div className="h-px w-full bg-[#1C1C1C]" />

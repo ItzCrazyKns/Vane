@@ -1,18 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Document } from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
+import { getSuggestions } from '@/lib/actions';
 
 export type Message = {
   id: string;
   createdAt: Date;
   content: string;
   role: 'user' | 'assistant';
+  suggestions?: string[];
   sources?: Document[];
 };
 
@@ -145,9 +147,14 @@ const ChatWindow = () => {
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const messagesRef = useRef<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
   const [focusMode, setFocusMode] = useState('webSearch');
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const sendMessage = async (message: string) => {
     if (loading) return;
@@ -177,7 +184,7 @@ const ChatWindow = () => {
       },
     ]);
 
-    const messageHandler = (e: MessageEvent) => {
+    const messageHandler = async (e: MessageEvent) => {
       const data = JSON.parse(e.data);
 
       if (data.type === 'error') {
@@ -239,8 +246,28 @@ const ChatWindow = () => {
           ['human', message],
           ['assistant', recievedMessage],
         ]);
+
         ws?.removeEventListener('message', messageHandler);
         setLoading(false);
+
+        const lastMsg = messagesRef.current[messagesRef.current.length - 1];
+
+        if (
+          lastMsg.role === 'assistant' &&
+          lastMsg.sources &&
+          lastMsg.sources.length > 0 &&
+          !lastMsg.suggestions
+        ) {
+          const suggestions = await getSuggestions(messagesRef.current);
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.id === lastMsg.id) {
+                return { ...msg, suggestions: suggestions };
+              }
+              return msg;
+            }),
+          );
+        }
       }
     };
 
