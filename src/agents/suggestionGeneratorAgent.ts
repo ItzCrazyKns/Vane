@@ -14,9 +14,9 @@ Make sure the suggestions are medium in length and are informative and relevant 
 Provide these suggestions separated by newlines between the XML tags <suggestions> and </suggestions>. For example:
 
 <suggestions>
-Suggestion 1
-Suggestion 2
-Suggestion 3
+Tell me more about SpaceX and their recent projects
+What is the latest news on SpaceX?
+Who is the CEO of SpaceX?
 </suggestions>
 
 Conversation:
