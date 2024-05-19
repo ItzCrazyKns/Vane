@@ -20,8 +20,8 @@ docker compose down --rmi all
 
 ```
 args:
-  - NEXT_PUBLIC_API_URL=http://127.0.0.1:31338/api
-  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:31338
+  - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
+  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
 ```
 
 6. Save and close the `docker-compose.yaml` file
@@ -58,8 +58,8 @@ nano docker-compose.yaml
 
 ```
 args:
-  - NEXT_PUBLIC_API_URL=http://127.0.0.1:31338/api
-  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:31338
+  - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
+  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
 ```
 
 6. Save and exit the editor
@@ -96,8 +96,8 @@ nano docker-compose.yaml
 
 ```
 args:
-  - NEXT_PUBLIC_API_URL=http://127.0.0.1:31338/api
-  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:31338
+  - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
+  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
 ```
 
 6. Save and exit the editor
