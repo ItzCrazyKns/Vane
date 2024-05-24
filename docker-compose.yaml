@@ -18,6 +18,8 @@ services:
       - searxng
     ports:
       - 3001:3001
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - perplexica-network
 
@@ -32,6 +34,8 @@ services:
       - perplexica-backend
     ports:
       - 3000:3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - perplexica-network
 
