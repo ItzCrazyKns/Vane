@@ -112,7 +112,7 @@ const MessageBox = ({
               {loading && isLast ? null : (
                 <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4 -mx-2">
                   <div className="flex flex-row items-center space-x-1">
-                    {/*  <button className="p-2 text-black/70 dark:text-white/70 rounded-xl hover(bg-secondLight dark:bg-secondDark) transition duration-200 hover:text-black dark:hover:text-white">
+                    {/*  <button className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-secondLight dark:hover:bg-secondDark transition duration-200 hover:text-black text-black dark:hover:text-white">
                       <Share size={18} />
                     </button> */}
                     <Rewrite rewrite={rewrite} messageId={message.id} />
@@ -127,7 +127,7 @@ const MessageBox = ({
                           start();
                         }
                       }}
-                      className="p-2 text-black/70 dark:text-white/70 rounded-xl hover(bg-secondLight dark:bg-secondDark) transition duration-200 hover:text-black dark:hover:text-white"
+                      className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-secondLight dark:hover:bg-secondDark transition duration-200 hover:text-black dark:hover:text-white"
                     >
                       {speechStatus === 'started' ? (
                         <StopCircle size={18} />

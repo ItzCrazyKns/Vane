@@ -85,7 +85,7 @@ export const Focus = ({
     <Popover className="fixed w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
       <Popover.Button
         type="button"
-        className="p-2 text-black/50 dark:text-white/50 rounded-xl hover(bg-secondLight dark:bg-secondDark) active:scale-95 transition duration-200 hover:text-white"
+        className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-secondLight dark:hover:bg-secondDark active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
         {focusMode !== 'webSearch' ? (
           <div className="flex flex-row items-center space-x-1">

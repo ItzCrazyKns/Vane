@@ -62,7 +62,7 @@ const SearchImages = ({
             );
             setLoading(false);
           }}
-          className="border border-dashed border-light dark:border-dark hover(bg-secondLight dark:bg-secondDark) active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg dark:text-white text-sm w-full"
+          className="border border-dashed border-light dark:border-dark hover:bg-secondLight dark:hover:bg-secondDark active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg dark:text-white text-sm w-full"
         >
           <div className="flex flex-row items-center space-x-2">
             <ImagesIcon size={17} />
@@ -120,7 +120,7 @@ const SearchImages = ({
             {images.length > 4 && (
               <button
                 onClick={() => setOpen(true)}
-                className="bg-primaryLight dark:bg-primaryDark hover(bg-secondLight dark:bg-secondDark) transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between dark:text-white p-2"
+                className="bg-primaryLight hover:bg-secondLight dark:bg-primaryDark dark:hover:bg-secondDark transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between dark:text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
                   {images.slice(3, 6).map((image, i) => (
