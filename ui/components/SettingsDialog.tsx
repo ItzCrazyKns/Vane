@@ -1,6 +1,51 @@
+import { cn } from '@/lib/utils';
 import { Dialog, Transition } from '@headlessui/react';
 import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
-import React, { Fragment, useEffect, useState } from 'react';
+import React, {
+  Fragment,
+  useEffect,
+  useMemo,
+  useState,
+  type SelectHTMLAttributes,
+} from 'react';
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+function Input({ className, ...restProps }: InputProps) {
+  return (
+    <input
+      {...restProps}
+      className={cn(
+        'bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm',
+        className,
+      )}
+    />
+  );
+}
+
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  options: { value: string; label: string; disabled?: boolean }[];
+}
+
+function Select({ className, options, ...restProps }: SelectProps) {
+  return (
+    <select
+      {...restProps}
+      className={cn(
+        'bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm',
+        className,
+      )}
+    >
+      {options.map(({ label, value, disabled }) => {
+        return (
+          <option key={value} value={value} disabled={disabled}>
+            {label}
+          </option>
+        );
+      })}
+    </select>
+  );
+}
 
 interface SettingsType {
   chatModelProviders: {
@@ -169,7 +214,7 @@ const SettingsDialog = ({
                         <p className="text-black/70 dark:text-white/70 text-sm">
                           Chat model Provider
                         </p>
-                        <select
+                        <Select
                           value={selectedChatModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedChatModelProvider(e.target.value);
@@ -177,17 +222,15 @@ const SettingsDialog = ({
                               config.chatModelProviders[e.target.value][0],
                             );
                           }}
-                          className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
-                        >
-                          {Object.keys(config.chatModelProviders).map(
-                            (provider) => (
-                              <option key={provider} value={provider}>
-                                {provider.charAt(0).toUpperCase() +
-                                  provider.slice(1)}
-                              </option>
-                            ),
+                          options={Object.keys(config.chatModelProviders).map(
+                            (provider) => ({
+                              value: provider,
+                              label:
+                                provider.charAt(0).toUpperCase() +
+                                provider.slice(1),
+                            }),
                           )}
-                        </select>
+                        />
                       </div>
                     )}
                     {selectedChatModelProvider &&
@@ -196,37 +239,40 @@ const SettingsDialog = ({
                           <p className="text-black/70 dark:text-white/70 text-sm">
                             Chat Model
                           </p>
-                          <select
+                          <Select
                             value={selectedChatModel ?? undefined}
                             onChange={(e) =>
                               setSelectedChatModel(e.target.value)
                             }
-                            className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
-                          >
-                            {config.chatModelProviders[
-                              selectedChatModelProvider
-                            ] ? (
-                              config.chatModelProviders[
-                                selectedChatModelProvider
-                              ].length > 0 ? (
+                            options={(() => {
+                              const chatModelProvider =
                                 config.chatModelProviders[
                                   selectedChatModelProvider
-                                ].map((model) => (
-                                  <option key={model} value={model}>
-                                    {model}
-                                  </option>
-                                ))
-                              ) : (
-                                <option value="" disabled>
-                                  No models available
-                                </option>
-                              )
-                            ) : (
-                              <option value="" disabled>
-                                Invalid provider, please check backend logs
-                              </option>
-                            )}
-                          </select>
+                                ];
+
+                              return chatModelProvider
+                                ? chatModelProvider.length > 0
+                                  ? chatModelProvider.map((model) => ({
+                                      value: model,
+                                      label: model,
+                                    }))
+                                  : [
+                                      {
+                                        value: '',
+                                        label: 'No models available',
+                                        disabled: true,
+                                      },
+                                    ]
+                                : [
+                                    {
+                                      value: '',
+                                      label:
+                                        'Invalid provider, please check backend logs',
+                                      disabled: true,
+                                    },
+                                  ];
+                            })()}
+                          />
                         </div>
                       )}
                     {selectedChatModelProvider &&
@@ -236,42 +282,39 @@ const SettingsDialog = ({
                             <p className="text-black/70 dark:text-white/70 text-sm">
                               Model name
                             </p>
-                            <input
+                            <Input
                               type="text"
                               placeholder="Model name"
                               defaultValue={selectedChatModel!}
                               onChange={(e) =>
                                 setSelectedChatModel(e.target.value)
                               }
-                              className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
                             <p className="text-black/70 dark:text-white/70 text-sm">
                               Custom OpenAI API Key
                             </p>
-                            <input
+                            <Input
                               type="text"
                               placeholder="Custom OpenAI API Key"
                               defaultValue={customOpenAIApiKey!}
                               onChange={(e) =>
                                 setCustomOpenAIApiKey(e.target.value)
                               }
-                              className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
                             <p className="text-black/70 dark:text-white/70 text-sm">
                               Custom OpenAI Base URL
                             </p>
-                            <input
+                            <Input
                               type="text"
                               placeholder="Custom OpenAI Base URL"
                               defaultValue={customOpenAIBaseURL!}
                               onChange={(e) =>
                                 setCustomOpenAIBaseURL(e.target.value)
                               }
-                              className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                             />
                           </div>
                         </>
@@ -282,7 +325,7 @@ const SettingsDialog = ({
                         <p className="text-black/70 dark:text-white/70 text-sm">
                           Embedding model Provider
                         </p>
-                        <select
+                        <Select
                           value={selectedEmbeddingModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedEmbeddingModelProvider(e.target.value);
@@ -290,17 +333,15 @@ const SettingsDialog = ({
                               config.embeddingModelProviders[e.target.value][0],
                             );
                           }}
-                          className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
-                        >
-                          {Object.keys(config.embeddingModelProviders).map(
-                            (provider) => (
-                              <option key={provider} value={provider}>
-                                {provider.charAt(0).toUpperCase() +
-                                  provider.slice(1)}
-                              </option>
-                            ),
-                          )}
-                        </select>
+                          options={Object.keys(
+                            config.embeddingModelProviders,
+                          ).map((provider) => ({
+                            label:
+                              provider.charAt(0).toUpperCase() +
+                              provider.slice(1),
+                            value: provider,
+                          }))}
+                        />
                       </div>
                     )}
                     {selectedEmbeddingModelProvider && (
@@ -308,44 +349,47 @@ const SettingsDialog = ({
                         <p className="text-black/70 dark:text-white/70 text-sm">
                           Embedding Model
                         </p>
-                        <select
+                        <Select
                           value={selectedEmbeddingModel ?? undefined}
                           onChange={(e) =>
                             setSelectedEmbeddingModel(e.target.value)
                           }
-                          className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
-                        >
-                          {config.embeddingModelProviders[
-                            selectedEmbeddingModelProvider
-                          ] ? (
-                            config.embeddingModelProviders[
-                              selectedEmbeddingModelProvider
-                            ].length > 0 ? (
+                          options={(() => {
+                            const embeddingModelProvider =
                               config.embeddingModelProviders[
                                 selectedEmbeddingModelProvider
-                              ].map((model) => (
-                                <option key={model} value={model}>
-                                  {model}
-                                </option>
-                              ))
-                            ) : (
-                              <option value="" disabled selected>
-                                No embedding models available
-                              </option>
-                            )
-                          ) : (
-                            <option value="" disabled selected>
-                              Invalid provider, please check backend logs
-                            </option>
-                          )}
-                        </select>
+                              ];
+
+                            return embeddingModelProvider
+                              ? embeddingModelProvider.length > 0
+                                ? embeddingModelProvider.map((model) => ({
+                                    label: model,
+                                    value: model,
+                                  }))
+                                : [
+                                    {
+                                      label: 'No embedding models available',
+                                      value: '',
+                                      disabled: true,
+                                    },
+                                  ]
+                              : [
+                                  {
+                                    label:
+                                      'Invalid provider, please check backend logs',
+                                    value: '',
+                                    disabled: true,
+                                  },
+                                ];
+                          })()}
+                        />
                       </div>
                     )}
                     <div className="flex flex-col space-y-1">
                       <p className="text-black/70 dark:text-white/70 text-sm">
                         OpenAI API Key
                       </p>
-                      <input
+                      <Input
                         type="text"
                         placeholder="OpenAI API Key"
                         defaultValue={config.openaiApiKey}
@@ -355,14 +399,13 @@ const SettingsDialog = ({
                             openaiApiKey: e.target.value,
                           })
                         }
-                        className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
                       <p className="text-black/70 dark:text-white/70 text-sm">
                         Ollama API URL
                       </p>
-                      <input
+                      <Input
                         type="text"
                         placeholder="Ollama API URL"
                         defaultValue={config.ollamaApiUrl}
@@ -372,14 +415,13 @@ const SettingsDialog = ({
                             ollamaApiUrl: e.target.value,
                           })
                         }
-                        className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
                       <p className="text-black/70 dark:text-white/70 text-sm">
                         GROQ API Key
                       </p>
-                      <input
+                      <Input
                         type="text"
                         placeholder="GROQ API Key"
                         defaultValue={config.groqApiKey}
@@ -389,7 +431,6 @@ const SettingsDialog = ({
                             groqApiKey: e.target.value,
                           })
                         }
-                        className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                       />
                     </div>
                   </div>
