@@ -66,7 +66,7 @@ const Chat = ({
               sendMessage={sendMessage}
             />
             {!isLast && msg.role === 'assistant' && (
-              <div className="h-px w-full bg-[#1C1C1C]" />
+              <div className="h-px w-full bg-secondLight dark:bg-secondDark" />
             )}
           </Fragment>
         );

@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import color from 'tailwindcss/colors';
 
 const config: Config = {
   content: [
@@ -8,7 +9,18 @@ const config: Config = {
   ],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      borderColor: {
+        light: 'rgba(0, 0, 0, 0.1)',
+        dark: '#1c1c1c',
+      },
+      colors: {
+        primaryDark: '#0a0a0a',
+        secondDark: '#1c1c1c',
+        primaryLight: '#fff',
+        secondLight: color.gray[50],
+      },
+    },
   },
   plugins: [require('@tailwindcss/typography')],
 };

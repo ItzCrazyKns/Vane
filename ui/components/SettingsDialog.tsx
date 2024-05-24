@@ -145,7 +145,7 @@ const SettingsDialog = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/50" />
+          <div className="fixed inset-0 bg-white/50 dark:bg-black/50" />
         </Transition.Child>
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
@@ -158,15 +158,15 @@ const SettingsDialog = ({
               leaveFrom="opacity-100 scale-200"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-[#111111] border border-[#1c1c1c] p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title className="text-xl font-medium leading-6 text-white">
+              <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-secondLight dark:bg-secondDark border border-light dark:border-dark p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Title className="text-xl font-medium leading-6 dark:text-white">
                   Settings
                 </Dialog.Title>
                 {config && !isLoading && (
                   <div className="flex flex-col space-y-4 mt-6">
                     {config.chatModelProviders && (
                       <div className="flex flex-col space-y-1">
-                        <p className="text-white/70 text-sm">
+                        <p className="text-black/70 dark:text-white/70 text-sm">
                           Chat model Provider
                         </p>
                         <select
@@ -177,7 +177,7 @@ const SettingsDialog = ({
                               config.chatModelProviders[e.target.value][0],
                             );
                           }}
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                          className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                         >
                           {Object.keys(config.chatModelProviders).map(
                             (provider) => (
@@ -193,13 +193,15 @@ const SettingsDialog = ({
                     {selectedChatModelProvider &&
                       selectedChatModelProvider != 'custom_openai' && (
                         <div className="flex flex-col space-y-1">
-                          <p className="text-white/70 text-sm">Chat Model</p>
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Chat Model
+                          </p>
                           <select
                             value={selectedChatModel ?? undefined}
                             onChange={(e) =>
                               setSelectedChatModel(e.target.value)
                             }
-                            className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                            className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                           >
                             {config.chatModelProviders[
                               selectedChatModelProvider
@@ -231,7 +233,9 @@ const SettingsDialog = ({
                       selectedChatModelProvider === 'custom_openai' && (
                         <>
                           <div className="flex flex-col space-y-1">
-                            <p className="text-white/70 text-sm">Model name</p>
+                            <p className="text-black/70 dark:text-white/70 text-sm">
+                              Model name
+                            </p>
                             <input
                               type="text"
                               placeholder="Model name"
@@ -239,11 +243,11 @@ const SettingsDialog = ({
                               onChange={(e) =>
                                 setSelectedChatModel(e.target.value)
                               }
-                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                              className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
-                            <p className="text-white/70 text-sm">
+                            <p className="text-black/70 dark:text-white/70 text-sm">
                               Custom OpenAI API Key
                             </p>
                             <input
@@ -253,11 +257,11 @@ const SettingsDialog = ({
                               onChange={(e) =>
                                 setCustomOpenAIApiKey(e.target.value)
                               }
-                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                              className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
-                            <p className="text-white/70 text-sm">
+                            <p className="text-black/70 dark:text-white/70 text-sm">
                               Custom OpenAI Base URL
                             </p>
                             <input
@@ -267,7 +271,7 @@ const SettingsDialog = ({
                               onChange={(e) =>
                                 setCustomOpenAIBaseURL(e.target.value)
                               }
-                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                              className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                             />
                           </div>
                         </>
@@ -275,7 +279,7 @@ const SettingsDialog = ({
                     {/* Embedding models */}
                     {config.embeddingModelProviders && (
                       <div className="flex flex-col space-y-1">
-                        <p className="text-white/70 text-sm">
+                        <p className="text-black/70 dark:text-white/70 text-sm">
                           Embedding model Provider
                         </p>
                         <select
@@ -286,7 +290,7 @@ const SettingsDialog = ({
                               config.embeddingModelProviders[e.target.value][0],
                             );
                           }}
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                          className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                         >
                           {Object.keys(config.embeddingModelProviders).map(
                             (provider) => (
@@ -301,13 +305,15 @@ const SettingsDialog = ({
                     )}
                     {selectedEmbeddingModelProvider && (
                       <div className="flex flex-col space-y-1">
-                        <p className="text-white/70 text-sm">Embedding Model</p>
+                        <p className="text-black/70 dark:text-white/70 text-sm">
+                          Embedding Model
+                        </p>
                         <select
                           value={selectedEmbeddingModel ?? undefined}
                           onChange={(e) =>
                             setSelectedEmbeddingModel(e.target.value)
                           }
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                          className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                         >
                           {config.embeddingModelProviders[
                             selectedEmbeddingModelProvider
@@ -336,7 +342,9 @@ const SettingsDialog = ({
                       </div>
                     )}
                     <div className="flex flex-col space-y-1">
-                      <p className="text-white/70 text-sm">OpenAI API Key</p>
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        OpenAI API Key
+                      </p>
                       <input
                         type="text"
                         placeholder="OpenAI API Key"
@@ -347,11 +355,13 @@ const SettingsDialog = ({
                             openaiApiKey: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-white/70 text-sm">Ollama API URL</p>
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Ollama API URL
+                      </p>
                       <input
                         type="text"
                         placeholder="Ollama API URL"
@@ -362,11 +372,13 @@ const SettingsDialog = ({
                             ollamaApiUrl: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-white/70 text-sm">GROQ API Key</p>
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        GROQ API Key
+                      </p>
                       <input
                         type="text"
                         placeholder="GROQ API Key"
@@ -377,18 +389,18 @@ const SettingsDialog = ({
                             groqApiKey: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        className="bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm"
                       />
                     </div>
                   </div>
                 )}
                 {isLoading && (
-                  <div className="w-full flex items-center justify-center mt-6 text-white/70 py-6">
+                  <div className="w-full flex items-center justify-center mt-6 text-black/70 dark:text-white/70 py-6">
                     <RefreshCcw className="animate-spin" />
                   </div>
                 )}
                 <div className="w-full mt-6 space-y-2">
-                  <p className="text-xs text-white/50">
+                  <p className="text-xs text-black/50 dark:text-white/50">
                     We&apos;ll refresh the page after updating the settings.
                   </p>
                   <button
