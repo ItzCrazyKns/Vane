@@ -118,7 +118,7 @@ const Searchvideos = ({
                       alt={video.title}
                       className="relative h-full w-full aspect-video object-cover rounded-lg"
                     />
-                    <div className="absolute bg-black/70 text-black/70 dark:text-white/70 px-2 py-1 flex flex-row items-center space-x-1 bottom-1 right-1 rounded-md">
+                    <div className="absolute bg-white/70 dark:bg-black/70 text-black/70 dark:text-white/70 px-2 py-1 flex flex-row items-center space-x-1 bottom-1 right-1 rounded-md">
                       <PlayCircle size={15} />
                       <p className="text-xs">Video</p>
                     </div>
