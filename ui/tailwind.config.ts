@@ -1,5 +1,18 @@
 import type { Config } from 'tailwindcss';
-import color from 'tailwindcss/colors';
+import type { DefaultColors } from 'tailwindcss/types/generated/colors';
+
+const themeDark = (colors: DefaultColors) => ({
+  50: '#0a0a0a',
+  100: '#111111',
+  200: '#1c1c1c',
+});
+
+const themeLight = (colors: DefaultColors) => ({
+  50: '#fff',
+  100: colors.slate[50],
+  200: colors.slate[100],
+  300: colors.slate[200],
+});
 
 const config: Config = {
   content: [
@@ -10,15 +23,28 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
-      borderColor: {
-        light: 'rgba(0, 0, 0, 0.1)',
-        dark: '#1c1c1c',
+      borderColor: ({ colors }) => {
+        return {
+          light: themeLight(colors),
+          dark: themeDark(colors),
+        };
       },
-      colors: {
-        primaryDark: '#0a0a0a',
-        secondDark: '#1c1c1c',
-        primaryLight: '#fff',
-        secondLight: color.gray[50],
+      colors: ({ colors }) => {
+        const colorsDark = themeDark(colors);
+        const colorsLight = themeLight(colors);
+
+        return {
+          dark: {
+            primary: colorsDark[50],
+            secondary: colorsDark[100],
+            ...colorsDark,
+          },
+          light: {
+            primary: colorsLight[50],
+            secondary: colorsLight[100],
+            ...colorsLight,
+          },
+        };
       },
     },
   },

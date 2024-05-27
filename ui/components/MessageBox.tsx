@@ -55,7 +55,7 @@ const MessageBox = ({
         message.content.replace(
           regex,
           (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-secondLight dark:bg-secondDark px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
         ),
       );
     }
@@ -112,7 +112,7 @@ const MessageBox = ({
               {loading && isLast ? null : (
                 <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4 -mx-2">
                   <div className="flex flex-row items-center space-x-1">
-                    {/*  <button className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-secondLight dark:hover:bg-secondDark transition duration-200 hover:text-black text-black dark:hover:text-white">
+                    {/*  <button className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black text-black dark:hover:text-white">
                       <Share size={18} />
                     </button> */}
                     <Rewrite rewrite={rewrite} messageId={message.id} />
@@ -127,7 +127,7 @@ const MessageBox = ({
                           start();
                         }
                       }}
-                      className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-secondLight dark:hover:bg-secondDark transition duration-200 hover:text-black dark:hover:text-white"
+                      className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
                     >
                       {speechStatus === 'started' ? (
                         <StopCircle size={18} />
@@ -144,7 +144,7 @@ const MessageBox = ({
                 message.role === 'assistant' &&
                 !loading && (
                   <>
-                    <div className="h-px w-full bg-secondLight dark:bg-secondDark" />
+                    <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
                     <div className="flex flex-col space-y-3 text-black dark:text-white">
                       <div className="flex flex-row items-center space-x-2 mt-4">
                         <Layers3 />
@@ -156,7 +156,7 @@ const MessageBox = ({
                             className="flex flex-col space-y-3 text-sm"
                             key={i}
                           >
-                            <div className="h-px w-full bg-secondLight dark:bg-secondDark" />
+                            <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
                             <div
                               onClick={() => {
                                 sendMessage(suggestion);

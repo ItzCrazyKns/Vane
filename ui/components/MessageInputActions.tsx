@@ -16,7 +16,7 @@ export const Attach = () => {
   return (
     <button
       type="button"
-      className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:(bg-secondLight dark:bg-secondDark) transition duration-200 hover:text-black dark:hover:text-white"
+      className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
     >
       <CopyPlus />
     </button>
@@ -85,7 +85,7 @@ export const Focus = ({
     <Popover className="fixed w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
       <Popover.Button
         type="button"
-        className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-secondLight dark:hover:bg-secondDark active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
+        className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
         {focusMode !== 'webSearch' ? (
           <div className="flex flex-row items-center space-x-1">
@@ -109,7 +109,7 @@ export const Focus = ({
         leaveTo="opacity-0 translate-y-1"
       >
         <Popover.Panel className="absolute z-10 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 dark:bg-primaryDark border rounded-lg border-light dark:border-dark w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 dark:bg-dark-primary border rounded-lg border-light-300 dark:border-dark-200 w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
             {focusModes.map((mode, i) => (
               <Popover.Button
                 onClick={() => setFocusMode(mode.key)}
@@ -117,8 +117,8 @@ export const Focus = ({
                 className={cn(
                   'p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-2 duration-200 cursor-pointer transition',
                   focusMode === mode.key
-                    ? 'bg-primaryLight dark:bg-primaryDark'
-                    : 'hover:bg-primaryLight dark:bg-primaryDark',
+                    ? 'bg-light-primary dark:bg-dark-primary'
+                    : 'hover:bg-light-primary dark:bg-dark-primary',
                 )}
               >
                 <div
@@ -156,7 +156,7 @@ export const CopilotToggle = ({
       <Switch
         checked={copilotEnabled}
         onChange={setCopilotEnabled}
-        className="bg-primaryLight dark:bg-primaryDark border border-light dark:border-dark relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
+        className="bg-light-primary dark:bg-dark-primary border border-light-300 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
       >
         <span className="sr-only">Copilot</span>
         <span

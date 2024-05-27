@@ -77,7 +77,7 @@ const Searchvideos = ({
             );
             setLoading(false);
           }}
-          className="border border-dashed border-light dark:border-dark hover:bg-secondLight dark:hover:bg-secondDark active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg dark:text-white text-sm w-full"
+          className="border border-dashed border-light-300 dark:border-dark-200 hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg dark:text-white text-sm w-full"
         >
           <div className="flex flex-row items-center space-x-2">
             <VideoIcon size={17} />
@@ -91,7 +91,7 @@ const Searchvideos = ({
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="bg-secondLight dark:bg-secondDark h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
+              className="bg-light-secondary dark:bg-dark-secondary h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
             />
           ))}
         </div>
@@ -151,7 +151,7 @@ const Searchvideos = ({
             {videos.length > 4 && (
               <button
                 onClick={() => setOpen(true)}
-                className="bg-gray-100 hover:bg-gray-200 dark:bg-[#111111] dark:hover:bg-[#1c1c1c] transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
+                className="bg-gray-100 hover:bg-gray-200 dark:bg-dark-100 dark:hover:bg-dark-300 transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
                   {videos.slice(3, 6).map((video, i) => (

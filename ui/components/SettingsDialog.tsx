@@ -16,7 +16,7 @@ function Input({ className, ...restProps }: InputProps) {
     <input
       {...restProps}
       className={cn(
-        'bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm',
+        'bg-light-primary dark:bg-dark-primary px-3 py-2 flex items-center overflow-hidden border border-light-300 dark:border-dark-200 dark:text-white rounded-lg text-sm',
         className,
       )}
     />
@@ -32,7 +32,7 @@ function Select({ className, options, ...restProps }: SelectProps) {
     <select
       {...restProps}
       className={cn(
-        'bg-primaryLight dark:bg-primaryDark px-3 py-2 flex items-center overflow-hidden border border-light dark:border-dark dark:text-white rounded-lg text-sm',
+        'bg-light-primary dark:bg-dark-primary px-3 py-2 flex items-center overflow-hidden border border-light-300 dark:border-dark-200 dark:text-white rounded-lg text-sm',
         className,
       )}
     >
@@ -203,7 +203,7 @@ const SettingsDialog = ({
               leaveFrom="opacity-100 scale-200"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-secondLight dark:bg-secondDark border border-light dark:border-dark p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-300 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title className="text-xl font-medium leading-6 dark:text-white">
                   Settings
                 </Dialog.Title>
