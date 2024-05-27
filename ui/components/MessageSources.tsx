@@ -42,7 +42,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
               </p>
             </div>
             <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
-              <div className="bg-white/50 h-[4px] w-[4px] rounded-full" />
+              <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
               <span>{i + 1}</span>
             </div>
           </div>
@@ -115,7 +115,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                             </p>
                           </div>
                           <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
-                            <div className="bg-white/50 h-[4px] w-[4px] rounded-full" />
+                            <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
                             <span>{i + 1}</span>
                           </div>
                         </div>
