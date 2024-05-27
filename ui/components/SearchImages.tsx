@@ -120,7 +120,7 @@ const SearchImages = ({
             {images.length > 4 && (
               <button
                 onClick={() => setOpen(true)}
-                className="bg-primaryLight hover:bg-secondLight dark:bg-primaryDark dark:hover:bg-secondDark transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between dark:text-white p-2"
+                className="bg-gray-100 hover:bg-gray-200 dark:bg-[#111111] dark:hover:bg-[#1c1c1c] transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
                   {images.slice(3, 6).map((image, i) => (
