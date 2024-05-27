@@ -117,8 +117,8 @@ export const Focus = ({
                 className={cn(
                   'p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-2 duration-200 cursor-pointer transition',
                   focusMode === mode.key
-                    ? 'bg-light-primary dark:bg-dark-primary'
-                    : 'hover:bg-light-primary dark:bg-dark-primary',
+                    ? 'bg-light-secondary dark:bg-dark-secondary'
+                    : 'hover:bg-light-secondary dark:hover:bg-dark-secondary',
                 )}
               >
                 <div
