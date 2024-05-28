@@ -156,7 +156,7 @@ export const CopilotToggle = ({
       <Switch
         checked={copilotEnabled}
         onChange={setCopilotEnabled}
-        className="bg-light-primary dark:bg-dark-primary border border-light-300 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
+        className="bg-light-primary dark:bg-dark-primary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
       >
         <span className="sr-only">Copilot</span>
         <span
