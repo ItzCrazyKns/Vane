@@ -2,6 +2,7 @@ import { Clock, Edit, Share, Trash } from 'lucide-react';
 import { Message } from './ChatWindow';
 import { useEffect, useState } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
+import { ThemeSwitcher } from './theme/Switcher';
 
 const Navbar = ({ messages }: { messages: Message[] }) => {
   const [title, setTitle] = useState<string>('');
@@ -49,6 +50,8 @@ const Navbar = ({ messages }: { messages: Message[] }) => {
       </div>
       <p className="hidden lg:flex">{title}</p>
       <div className="flex flex-row items-center space-x-4">
+        <ThemeSwitcher size={17} className="lg:hidden" />
+
         <Share
           size={17}
           className="active:scale-95 transition duration-100 cursor-pointer"

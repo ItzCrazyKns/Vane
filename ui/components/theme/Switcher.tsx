@@ -2,10 +2,16 @@
 import { useTheme } from 'next-themes';
 import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 type Theme = 'dark' | 'light' | 'system';
 
-export function ThemeSwitcher() {
+interface ThemeSwitcherProps {
+  size?: number | string;
+  className?: string;
+}
+
+export function ThemeSwitcher({ size, className }: ThemeSwitcherProps) {
   const [mounted, setMounted] = useState(false);
 
   const { theme, setTheme } = useTheme();
@@ -46,17 +52,20 @@ export function ThemeSwitcher() {
 
   return isTheme('dark') ? (
     <SunIcon
-      className="cursor-pointer"
+      className={cn('cursor-pointer', className)}
+      size={size}
       onClick={() => handleThemeSwitch('light')}
     />
   ) : isTheme('light') ? (
     <MoonIcon
-      className="cursor-pointer"
+      className={cn('cursor-pointer', className)}
+      size={size}
       onClick={() => handleThemeSwitch('dark')}
     />
   ) : (
     <MonitorIcon
-      className="cursor-pointer"
+      className={cn('cursor-pointer', className)}
+      size={size}
       onClick={() => handleThemeSwitch('system')}
     />
   );
