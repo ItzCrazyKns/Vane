@@ -92,11 +92,13 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             key={i}
             className={cn(
               'relative flex flex-col items-center space-y-1 text-center w-full',
-              link.active ? 'text-white' : 'text-white/70',
+              link.active
+                ? 'text-black dark:text-white'
+                : 'text-black dark:text-white/70',
             )}
           >
             {link.active && (
-              <div className="absolute top-0 -mt-4 h-1 w-full rounded-b-lg bg-white" />
+              <div className="absolute top-0 -mt-4 h-1 w-full rounded-b-lg bg-black dark:bg-white" />
             )}
             <link.icon />
             <p className="text-xs">{link.label}</p>
