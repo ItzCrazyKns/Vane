@@ -20,7 +20,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
       {sources.slice(0, 3).map((source, i) => (
         <a
-          className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-300 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+          className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
           key={i}
           href={source.metadata.url}
           target="_blank"
@@ -51,7 +51,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
       {sources.length > 3 && (
         <button
           onClick={openModal}
-          className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-300 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+          className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
         >
           <div className="flex flex-row items-center space-x-1">
             {sources.slice(3, 6).map((source, i) => (
@@ -90,7 +90,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
                     {sources.map((source, i) => (
                       <a
-                        className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-300 border border-light-200 dark:border-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+                        className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 border border-light-200 dark:border-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
                         key={i}
                         href={source.metadata.url}
                         target="_blank"
