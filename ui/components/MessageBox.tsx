@@ -171,7 +171,10 @@ const MessageBox = ({
                               <p className="transition duration-200 hover:text-[#24A0ED]">
                                 {suggestion}
                               </p>
-                              <Plus size={20} className="text-[#24A0ED]" />
+                              <Plus
+                                size={20}
+                                className="text-[#24A0ED] flex-shrink-0"
+                              />
                             </div>
                           </div>
                         ))}
