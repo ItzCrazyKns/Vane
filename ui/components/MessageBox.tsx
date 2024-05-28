@@ -106,7 +106,12 @@ const MessageBox = ({
                   Answer
                 </h3>
               </div>
-              <Markdown className="prose dark:prose-invert prose-strong:text-black dark:prose-strong:text-white prose-code:text-black dark:prose-code:text-white max-w-none break-words prose-invert prose-p:leading-relaxed prose-pre:p-0 text-black dark:text-white text-sm md:text-base font-medium">
+              <Markdown
+                className={cn(
+                  'prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0',
+                  'max-w-none break-words text-black dark:text-white text-sm md:text-base font-medium',
+                )}
+              >
                 {parsedMessage}
               </Markdown>
               {loading && isLast ? null : (
