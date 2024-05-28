@@ -109,7 +109,7 @@ export const Focus = ({
         leaveTo="opacity-0 translate-y-1"
       >
         <Popover.Panel className="absolute z-10 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-300 dark:border-dark-200 w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
             {focusModes.map((mode, i) => (
               <Popover.Button
                 onClick={() => setFocusMode(mode.key)}
