@@ -49,9 +49,10 @@ const Navbar = ({ messages }: { messages: Message[] }) => {
         <p className="text-xs">{timeAgo} ago</p>
       </div>
       <p className="hidden lg:flex">{title}</p>
-      <div className="flex flex-row items-center space-x-4">
-        <ThemeSwitcher size={17} className="lg:hidden" />
 
+      <ThemeSwitcher size={17} className="lg:hidden ml-auto mr-4" />
+
+      <div className="flex flex-row items-center space-x-4">
         <Share
           size={17}
           className="active:scale-95 transition duration-100 cursor-pointer"
