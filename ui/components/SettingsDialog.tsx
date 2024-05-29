@@ -16,7 +16,7 @@ function Input({ className, ...restProps }: InputProps) {
     <input
       {...restProps}
       className={cn(
-        'bg-light-primary dark:bg-dark-primary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm',
+        'bg-light-secondary dark:bg-dark-secondary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm',
         className,
       )}
     />
@@ -32,7 +32,7 @@ function Select({ className, options, ...restProps }: SelectProps) {
     <select
       {...restProps}
       className={cn(
-        'bg-light-primary dark:bg-dark-primary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm',
+        'bg-light-secondary dark:bg-dark-secondary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm',
         className,
       )}
     >
