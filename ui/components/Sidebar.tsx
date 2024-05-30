@@ -10,11 +10,11 @@ import { Dialog, Transition } from '@headlessui/react';
 import SettingsDialog from './SettingsDialog';
 import { ThemeSwitcher } from './theme/Switcher';
 
-function VerticalIconContainer({ children }: { children: ReactNode }) {
+const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return (
     <div className="flex flex-col items-center gap-y-3 w-full">{children}</div>
   );
-}
+};
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();

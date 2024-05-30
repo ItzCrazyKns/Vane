@@ -11,7 +11,7 @@ import React, {
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-function Input({ className, ...restProps }: InputProps) {
+const Input = ({ className, ...restProps }: InputProps) => {
   return (
     <input
       {...restProps}
@@ -21,13 +21,13 @@ function Input({ className, ...restProps }: InputProps) {
       )}
     />
   );
-}
+};
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string; disabled?: boolean }[];
 }
 
-function Select({ className, options, ...restProps }: SelectProps) {
+const Select = ({ className, options, ...restProps }: SelectProps) => {
   return (
     <select
       {...restProps}
@@ -45,7 +45,7 @@ function Select({ className, options, ...restProps }: SelectProps) {
       })}
     </select>
   );
-}
+};
 
 interface SettingsType {
   chatModelProviders: {

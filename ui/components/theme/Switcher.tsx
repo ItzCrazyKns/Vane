@@ -11,7 +11,7 @@ interface ThemeSwitcherProps {
   className?: string;
 }
 
-export function ThemeSwitcher({ size, className }: ThemeSwitcherProps) {
+export const ThemeSwitcher = ({ size, className }: ThemeSwitcherProps) => {
   const [mounted, setMounted] = useState(false);
 
   const { theme, setTheme } = useTheme();
@@ -69,4 +69,4 @@ export function ThemeSwitcher({ size, className }: ThemeSwitcherProps) {
       onClick={() => handleThemeSwitch('system')}
     />
   );
-}
+};
