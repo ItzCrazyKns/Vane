@@ -7,6 +7,7 @@ services:
       - 4000:8080
     networks:
       - perplexica-network
+    restart: unless-stopped
 
   perplexica-backend:
     build:
@@ -20,6 +21,7 @@ services:
       - 3001:3001
     networks:
       - perplexica-network
+    restart: unless-stopped
 
   perplexica-frontend:
     build:
@@ -34,6 +36,7 @@ services:
       - 3000:3000
     networks:
       - perplexica-network
+    restart: unless-stopped
 
 networks:
   perplexica-network:
