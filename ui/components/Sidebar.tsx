@@ -4,11 +4,10 @@ import { cn } from '@/lib/utils';
 import { BookOpenText, Home, Search, SquarePen, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
-import React, { Fragment, useState, type ReactNode } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import Layout from './Layout';
-import { Dialog, Transition } from '@headlessui/react';
 import SettingsDialog from './SettingsDialog';
-import { ThemeSwitcher } from './theme/Switcher';
+import ThemeSwitcher from './theme/Switcher';
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return (

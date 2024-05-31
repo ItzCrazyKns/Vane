@@ -1,7 +1,7 @@
 'use client';
 import { ThemeProvider } from 'next-themes';
 
-export const ThemeProviderComponent = ({
+const ThemeProviderComponent = ({
   children,
 }: {
   children: React.ReactNode;
@@ -12,3 +12,5 @@ export const ThemeProviderComponent = ({
     </ThemeProvider>
   );
 };
+
+export default ThemeProviderComponent;

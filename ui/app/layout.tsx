@@ -4,7 +4,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'sonner';
-import { ThemeProviderComponent } from '@/components/theme/Provider';
+import ThemeProvider from '@/components/theme/Provider';
 
 const montserrat = Montserrat({
   weight: ['300', '400', '500', '700'],
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html className="h-full" lang="en" suppressHydrationWarning>
       <body className={cn('h-full', montserrat.className)}>
-        <ThemeProviderComponent>
+        <ThemeProvider>
           <Sidebar>{children}</Sidebar>
           <Toaster
             toastOptions={{
@@ -38,7 +38,7 @@ export default function RootLayout({
               },
             }}
           />
-        </ThemeProviderComponent>
+        </ThemeProvider>
       </body>
     </html>
   );
