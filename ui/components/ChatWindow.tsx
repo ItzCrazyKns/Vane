@@ -323,7 +323,7 @@ const ChatWindow = () => {
     <div className="flex flex-row items-center justify-center min-h-screen">
       <svg
         aria-hidden="true"
-        className="w-8 h-8 text-[#202020] animate-spin fill-[#ffffff3b]"
+        className="w-8 h-8 text-light-200 fill-light-secondary dark:text-[#202020] animate-spin dark:fill-[#ffffff3b]"
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
