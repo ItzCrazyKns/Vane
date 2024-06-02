@@ -3,15 +3,11 @@ import { useTheme } from 'next-themes';
 import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Select } from '../SettingsDialog';
 
 type Theme = 'dark' | 'light' | 'system';
 
-interface ThemeSwitcherProps {
-  size?: number | string;
-  className?: string;
-}
-
-const ThemeSwitcher = ({ size, className }: ThemeSwitcherProps) => {
+const ThemeSwitcher = ({ className }: { className?: string }) => {
   const [mounted, setMounted] = useState(false);
 
   const { theme, setTheme } = useTheme();
@@ -50,23 +46,15 @@ const ThemeSwitcher = ({ size, className }: ThemeSwitcherProps) => {
     return null;
   }
 
-  return isTheme('dark') ? (
-    <SunIcon
-      className={cn('cursor-pointer', className)}
-      size={size}
-      onClick={() => handleThemeSwitch('light')}
-    />
-  ) : isTheme('light') ? (
-    <MoonIcon
-      className={cn('cursor-pointer', className)}
-      size={size}
-      onClick={() => handleThemeSwitch('dark')}
-    />
-  ) : (
-    <MonitorIcon
-      className={cn('cursor-pointer', className)}
-      size={size}
-      onClick={() => handleThemeSwitch('system')}
+  return (
+    <Select
+      className={className}
+      value={theme}
+      onChange={(e) => handleThemeSwitch(e.target.value as Theme)}
+      options={[
+        { value: 'light', label: 'Light' },
+        { value: 'dark', label: 'Dark' }
+      ]}
     />
   );
 };

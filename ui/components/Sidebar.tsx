@@ -68,14 +68,10 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             ))}
           </VerticalIconContainer>
 
-          <VerticalIconContainer>
-            <ThemeSwitcher />
-
-            <Settings
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className="cursor-pointer"
-            />
-          </VerticalIconContainer>
+          <Settings
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            className="cursor-pointer"
+          />
 
           <SettingsDialog
             isOpen={isSettingsOpen}

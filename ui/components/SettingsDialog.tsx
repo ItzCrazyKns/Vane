@@ -8,6 +8,7 @@ import React, {
   useState,
   type SelectHTMLAttributes,
 } from 'react';
+import ThemeSwitcher from './theme/Switcher';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -27,7 +28,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string; disabled?: boolean }[];
 }
 
-const Select = ({ className, options, ...restProps }: SelectProps) => {
+export const Select = ({ className, options, ...restProps }: SelectProps) => {
   return (
     <select
       {...restProps}
@@ -209,6 +210,12 @@ const SettingsDialog = ({
                 </Dialog.Title>
                 {config && !isLoading && (
                   <div className="flex flex-col space-y-4 mt-6">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Theme
+                      </p>
+                      <ThemeSwitcher />
+                    </div>
                     {config.chatModelProviders && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-black/70 dark:text-white/70 text-sm">
