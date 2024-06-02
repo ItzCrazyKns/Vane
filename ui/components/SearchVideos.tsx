@@ -77,7 +77,7 @@ const Searchvideos = ({
             );
             setLoading(false);
           }}
-          className="border border-dashed border-[#1C1C1C] hover:bg-[#1c1c1c] active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg text-white text-sm w-full"
+          className="border border-dashed border-light-200 dark:border-dark-200 hover:bg-light-200 dark:hover:bg-dark-200 active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg dark:text-white text-sm w-full"
         >
           <div className="flex flex-row items-center space-x-2">
             <VideoIcon size={17} />
@@ -91,7 +91,7 @@ const Searchvideos = ({
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="bg-[#1C1C1C] h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
+              className="bg-light-secondary dark:bg-dark-secondary h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
             />
           ))}
         </div>
@@ -118,7 +118,7 @@ const Searchvideos = ({
                       alt={video.title}
                       className="relative h-full w-full aspect-video object-cover rounded-lg"
                     />
-                    <div className="absolute bg-black/70 text-white/70 px-2 py-1 flex flex-row items-center space-x-1 bottom-1 right-1 rounded-md">
+                    <div className="absolute bg-white/70 dark:bg-black/70 text-black/70 dark:text-white/70 px-2 py-1 flex flex-row items-center space-x-1 bottom-1 right-1 rounded-md">
                       <PlayCircle size={15} />
                       <p className="text-xs">Video</p>
                     </div>
@@ -142,7 +142,7 @@ const Searchvideos = ({
                       alt={video.title}
                       className="relative h-full w-full aspect-video object-cover rounded-lg"
                     />
-                    <div className="absolute bg-black/70 text-white/70 px-2 py-1 flex flex-row items-center space-x-1 bottom-1 right-1 rounded-md">
+                    <div className="absolute bg-white/70 dark:bg-black/70 text-black/70 dark:text-white/70 px-2 py-1 flex flex-row items-center space-x-1 bottom-1 right-1 rounded-md">
                       <PlayCircle size={15} />
                       <p className="text-xs">Video</p>
                     </div>
@@ -151,7 +151,7 @@ const Searchvideos = ({
             {videos.length > 4 && (
               <button
                 onClick={() => setOpen(true)}
-                className="bg-[#111111] hover:bg-[#1c1c1c] transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
+                className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
                   {videos.slice(3, 6).map((video, i) => (
@@ -163,7 +163,7 @@ const Searchvideos = ({
                     />
                   ))}
                 </div>
-                <p className="text-white/70 text-xs">
+                <p className="text-black/70 dark:text-white/70 text-xs">
                   View {videos.length - 3} more
                 </p>
               </button>

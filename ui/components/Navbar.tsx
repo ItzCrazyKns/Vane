@@ -2,6 +2,7 @@ import { Clock, Edit, Share, Trash } from 'lucide-react';
 import { Message } from './ChatWindow';
 import { useEffect, useState } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
+import ThemeSwitcher from './theme/Switcher';
 
 const Navbar = ({ messages }: { messages: Message[] }) => {
   const [title, setTitle] = useState<string>('');
@@ -38,7 +39,7 @@ const Navbar = ({ messages }: { messages: Message[] }) => {
   }, []);
 
   return (
-    <div className="fixed z-40 top-0 left-0 right-0 px-4 lg:pl-[104px] lg:pr-6 lg:px-8 flex flex-row items-center justify-between w-full py-4 text-sm text-white/70 border-b bg-[#0A0A0A] border-[#1C1C1C]">
+    <div className="fixed z-40 top-0 left-0 right-0 px-4 lg:pl-[104px] lg:pr-6 lg:px-8 flex flex-row items-center justify-between w-full py-4 text-sm text-black dark:text-white/70 border-b bg-light-primary dark:bg-dark-primary border-light-100 dark:border-dark-200">
       <Edit
         size={17}
         className="active:scale-95 transition duration-100 cursor-pointer lg:hidden"
@@ -48,6 +49,9 @@ const Navbar = ({ messages }: { messages: Message[] }) => {
         <p className="text-xs">{timeAgo} ago</p>
       </div>
       <p className="hidden lg:flex">{title}</p>
+
+      <ThemeSwitcher size={17} className="lg:hidden ml-auto mr-4" />
+
       <div className="flex flex-row items-center space-x-4">
         <Share
           size={17}

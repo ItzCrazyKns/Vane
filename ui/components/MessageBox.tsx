@@ -55,7 +55,7 @@ const MessageBox = ({
         message.content.replace(
           regex,
           (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-[#1C1C1C] px-1 rounded ml-1 no-underline text-xs text-white/70 relative">${number}</a>`,
+            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
         ),
       );
     }
@@ -70,7 +70,7 @@ const MessageBox = ({
     <div>
       {message.role === 'user' && (
         <div className={cn('w-full', messageIndex === 0 ? 'pt-16' : 'pt-8')}>
-          <h2 className="text-white font-medium text-3xl lg:w-9/12">
+          <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
             {message.content}
           </h2>
         </div>
@@ -85,8 +85,10 @@ const MessageBox = ({
             {message.sources && message.sources.length > 0 && (
               <div className="flex flex-col space-y-2">
                 <div className="flex flex-row items-center space-x-2">
-                  <BookCopy className="text-white" size={20} />
-                  <h3 className="text-white font-medium text-xl">Sources</h3>
+                  <BookCopy className="text-black dark:text-white" size={20} />
+                  <h3 className="text-black dark:text-white font-medium text-xl">
+                    Sources
+                  </h3>
                 </div>
                 <MessageSources sources={message.sources} />
               </div>
@@ -95,20 +97,27 @@ const MessageBox = ({
               <div className="flex flex-row items-center space-x-2">
                 <Disc3
                   className={cn(
-                    'text-white',
+                    'text-black dark:text-white',
                     isLast && loading ? 'animate-spin' : 'animate-none',
                   )}
                   size={20}
                 />
-                <h3 className="text-white font-medium text-xl">Answer</h3>
+                <h3 className="text-black dark:text-white font-medium text-xl">
+                  Answer
+                </h3>
               </div>
-              <Markdown className="prose max-w-none break-words prose-invert prose-p:leading-relaxed prose-pre:p-0 text-white text-sm md:text-base font-medium">
+              <Markdown
+                className={cn(
+                  'prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0',
+                  'max-w-none break-words text-black dark:text-white text-sm md:text-base font-medium',
+                )}
+              >
                 {parsedMessage}
               </Markdown>
               {loading && isLast ? null : (
-                <div className="flex flex-row items-center justify-between w-full text-white py-4 -mx-2">
+                <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4 -mx-2">
                   <div className="flex flex-row items-center space-x-1">
-                    {/*  <button className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white">
+                    {/*  <button className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black text-black dark:hover:text-white">
                       <Share size={18} />
                     </button> */}
                     <Rewrite rewrite={rewrite} messageId={message.id} />
@@ -123,7 +132,7 @@ const MessageBox = ({
                           start();
                         }
                       }}
-                      className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white"
+                      className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
                     >
                       {speechStatus === 'started' ? (
                         <StopCircle size={18} />
@@ -140,8 +149,8 @@ const MessageBox = ({
                 message.role === 'assistant' &&
                 !loading && (
                   <>
-                    <div className="h-px w-full bg-[#1C1C1C]" />
-                    <div className="flex flex-col space-y-3 text-white">
+                    <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
+                    <div className="flex flex-col space-y-3 text-black dark:text-white">
                       <div className="flex flex-row items-center space-x-2 mt-4">
                         <Layers3 />
                         <h3 className="text-xl font-medium">Related</h3>
@@ -152,7 +161,7 @@ const MessageBox = ({
                             className="flex flex-col space-y-3 text-sm"
                             key={i}
                           >
-                            <div className="h-px w-full bg-[#1C1C1C]" />
+                            <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
                             <div
                               onClick={() => {
                                 sendMessage(suggestion);
@@ -162,7 +171,10 @@ const MessageBox = ({
                               <p className="transition duration-200 hover:text-[#24A0ED]">
                                 {suggestion}
                               </p>
-                              <Plus size={20} className="text-[#24A0ED]" />
+                              <Plus
+                                size={20}
+                                className="text-[#24A0ED] flex-shrink-0"
+                              />
                             </div>
                           </div>
                         ))}
