@@ -1,5 +1,4 @@
 import EmptyChatMessageInput from './EmptyChatMessageInput';
-import ThemeSwitcher from './theme/Switcher';
 
 const EmptyChat = ({
   sendMessage,

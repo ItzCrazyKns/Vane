@@ -2,7 +2,6 @@ import { Clock, Edit, Share, Trash } from 'lucide-react';
 import { Message } from './ChatWindow';
 import { useEffect, useState } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
-import ThemeSwitcher from './theme/Switcher';
 
 const Navbar = ({ messages }: { messages: Message[] }) => {
   const [title, setTitle] = useState<string>('');
