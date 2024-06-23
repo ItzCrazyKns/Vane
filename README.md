@@ -10,7 +10,7 @@
 - [Installation](#installation)
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
-  - [Ollama connection errors](#ollama-connection-errors)
+  - [Ollama Connection Errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
@@ -95,15 +95,26 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like exposing it your network, etc.
 
-### Ollama connection errors
+### Ollama Connection Errors
 
-If you're facing an Ollama connection error, it is often related to the backend not being able to connect to Ollama's API. How can you fix it? You can fix it by updating your Ollama API URL in the settings menu to the following:
+If you're encountering an Ollama connection error, it is likely due to the backend being unable to connect to Ollama's API. To fix this issue you can:
 
-On Windows: `http://host.docker.internal:11434`<br>
-On Mac: `http://host.docker.internal:11434`<br>
-On Linux: `http://private_ip_of_computer_hosting_ollama:11434`
+1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
+2. **Update API URL Based on OS:**
+   - **Windows:** Use `http://host.docker.internal:11434`
+   - **Mac:** Use `http://host.docker.internal:11434`
+   - **Linux:** Use `http://<private_ip_of_host>:11434`
 
-You need to edit the ports accordingly.
+   Adjust the port number if you're using a different one.
+
+3. **Linux Users - Expose Ollama to Network:**
+   - Serve Ollama over your network with the command:
+
+     ```bash
+     OLLAMA_HOST=0.0.0.0 ollama serve
+     ```
+
+   - Ensure that the port (default is 11434) is not blocked by your firewall.
 
 ## Using as a Search Engine
 
