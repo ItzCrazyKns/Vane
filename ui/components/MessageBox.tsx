@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import {
   BookCopy,
   Disc3,
-  Share,
   Volume2,
   StopCircle,
   Layers3,

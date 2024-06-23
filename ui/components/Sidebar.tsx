@@ -7,7 +7,6 @@ import { useSelectedLayoutSegments } from 'next/navigation';
 import React, { useState, type ReactNode } from 'react';
 import Layout from './Layout';
 import SettingsDialog from './SettingsDialog';
-import ThemeSwitcher from './theme/Switcher';
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return (
