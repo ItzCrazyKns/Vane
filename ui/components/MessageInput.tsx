@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { ArrowUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import Attach from './MessageInputActions/Attach';
 import CopilotToggle from './MessageInputActions/Copilot';
@@ -25,6 +25,23 @@ const MessageInput = ({
     }
   }, [textareaRows, mode, message]);
 
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === '/') {
+      e.preventDefault();
+      inputRef.current?.focus();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <form
       onSubmit={(e) => {
@@ -47,6 +64,7 @@ const MessageInput = ({
     >
       {mode === 'single' && <Attach />}
       <TextareaAutosize
+        ref={inputRef}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onHeightChange={(height, props) => {

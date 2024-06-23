@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import CopilotToggle from './MessageInputActions/Copilot';
 import Focus from './MessageInputActions/Focus';
@@ -15,6 +15,23 @@ const EmptyChatMessageInput = ({
 }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
+
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === '/') {
+      e.preventDefault();
+      inputRef.current?.focus();
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   return (
     <form
@@ -34,6 +51,7 @@ const EmptyChatMessageInput = ({
     >
       <div className="flex flex-col bg-light-secondary dark:bg-dark-secondary px-5 pt-5 pb-2 rounded-lg w-full border border-light-200 dark:border-dark-200">
         <TextareaAutosize
+          ref={inputRef}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           minRows={2}
