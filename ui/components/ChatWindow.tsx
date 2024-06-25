@@ -18,7 +18,11 @@ export type Message = {
   sources?: Document[];
 };
 
-const useSocket = (url: string, setIsReady: (ready: boolean) => void) => {
+const useSocket = (
+  url: string,
+  setIsReady: (ready: boolean) => void,
+  setError: (error: boolean) => void,
+) => {
   const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
@@ -102,28 +106,36 @@ const useSocket = (url: string, setIsReady: (ready: boolean) => void) => {
 
         const ws = new WebSocket(wsURL.toString());
 
+        const timeoutId = setTimeout(() => {
+          if (ws.readyState !== 1) {
+            ws.close();
+            setError(true);
+            toast.error(
+              'Failed to connect to the server. Please try again later.',
+            );
+          }
+        }, 10000); // 10 seconds timeout
+
         ws.onopen = () => {
           console.log('[DEBUG] open');
+          clearTimeout(timeoutId);
+          setError(false);
+          setIsReady(true);
         };
 
-        const stateCheckInterval = setInterval(() => {
-          if (ws.readyState === 1) {
-            setIsReady(true);
-            clearInterval(stateCheckInterval);
-          }
-        }, 100);
+        ws.onerror = () => {
+          clearTimeout(timeoutId);
+          setError(true);
+          toast.error('WebSocket connection error.');
+        };
+
+        ws.onclose = () => {
+          clearTimeout(timeoutId);
+          setError(true);
+          console.log('[DEBUG] closed');
+        };
 
         setWs(ws);
-
-        ws.onmessage = (e) => {
-          const parsedData = JSON.parse(e.data);
-          if (parsedData.type === 'error') {
-            toast.error(parsedData.data);
-            if (parsedData.key === 'INVALID_MODEL_SELECTED') {
-              localStorage.clear();
-            }
-          }
-        };
       };
 
       connectWs();
@@ -133,7 +145,7 @@ const useSocket = (url: string, setIsReady: (ready: boolean) => void) => {
       ws?.close();
       console.log('[DEBUG] closed');
     };
-  }, [ws, url, setIsReady]);
+  }, [ws, url, setIsReady, setError]);
 
   return ws;
 };
@@ -143,7 +155,12 @@ const ChatWindow = () => {
   const initialMessage = searchParams.get('q');
 
   const [isReady, setIsReady] = useState(false);
-  const ws = useSocket(process.env.NEXT_PUBLIC_WS_URL!, setIsReady);
+  const [hasError, setHasError] = useState(false);
+  const ws = useSocket(
+    process.env.NEXT_PUBLIC_WS_URL!,
+    setIsReady,
+    setHasError,
+  );
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -298,6 +315,14 @@ const ChatWindow = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, initialMessage]);
 
+  if (hasError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <p>Failed to connect to the server. Please try again later.</p>
+      </div>
+    );
+  }
+
   return isReady ? (
     <div>
       {messages.length > 0 ? (
@@ -329,11 +354,11 @@ const ChatWindow = () => {
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
-          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+          d="M100 50.5908C100.003 78.2051 78.1951 100.003 50.5908 100C22.9765 99.9972 0.997224 78.018 1 50.4037C1.00281 22.7993 22.8108 0.997224 50.4251 1C78.0395 1.00281 100.018 22.8108 100 50.4251ZM9.08164 50.594C9.06312 73.3997 27.7909 92.1272 50.5966 92.1457C73.4023 92.1642 92.1298 73.4365 92.1483 50.6308C92.1669 27.8251 73.4392 9.0973 50.6335 9.07878C27.8278 9.06026 9.10003 27.787 9.08164 50.594Z"
           fill="currentColor"
         />
         <path
-          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+          d="M93.9676 39.0409C96.393 38.4037 97.8624 35.9116 96.9801 33.5533C95.1945 28.8227 92.871 24.3692 90.0681 20.348C85.6237 14.1775 79.4473 9.36872 72.0454 6.45794C64.6435 3.54717 56.3134 2.65431 48.3133 3.89319C45.869 4.27179 44.3768 6.77534 45.014 9.20079C45.6512 11.6262 48.1343 13.0956 50.5786 12.717C56.5073 11.8281 62.5542 12.5399 68.0406 14.7911C73.527 17.0422 78.2187 20.7487 81.5841 25.4923C83.7976 28.5886 85.4467 32.059 86.4416 35.7474C87.1273 38.1189 89.5423 39.6781 91.9676 39.0409Z"
           fill="currentFill"
         />
       </svg>
