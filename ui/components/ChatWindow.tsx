@@ -114,7 +114,7 @@ const useSocket = (
               'Failed to connect to the server. Please try again later.',
             );
           }
-        }, 10000); // 10 seconds timeout
+        }, 10000);
 
         ws.onopen = () => {
           console.log('[DEBUG] open');
@@ -318,7 +318,9 @@ const ChatWindow = () => {
   if (hasError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <p>Failed to connect to the server. Please try again later.</p>
+        <p className="dark:text-white/70 text-black/70 text-sm">
+          Failed to connect to the server. Please try again later.
+        </p>
       </div>
     );
   }
