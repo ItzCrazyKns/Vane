@@ -3,7 +3,13 @@ import { twMerge } from 'tailwind-merge';
 
 export const cn = (...classes: ClassValue[]) => twMerge(clsx(...classes));
 
-export const formatTimeDifference = (date1: Date, date2: Date): string => {
+export const formatTimeDifference = (
+  date1: Date | string,
+  date2: Date | string,
+): string => {
+  date1 = new Date(date1);
+  date2 = new Date(date2);
+
   const diffInSeconds = Math.floor(
     Math.abs(date2.getTime() - date1.getTime()) / 1000,
   );
