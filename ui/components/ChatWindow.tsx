@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
+import Error from 'next/error';
 
 export type Message = {
   messageId: string;
@@ -158,6 +159,7 @@ const loadMessages = async (
   setIsMessagesLoaded: (loaded: boolean) => void,
   setChatHistory: (history: [string, string][]) => void,
   setFocusMode: (mode: string) => void,
+  setNotFound: (notFound: boolean) => void,
 ) => {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
@@ -168,6 +170,12 @@ const loadMessages = async (
       },
     },
   );
+
+  if (res.status === 404) {
+    setNotFound(true);
+    setIsMessagesLoaded(true);
+    return;
+  }
 
   const data = await res.json();
 
@@ -190,7 +198,6 @@ const loadMessages = async (
 
   setChatHistory(history);
   setFocusMode(data.chat.focusMode);
-  console.log(data);
   setIsMessagesLoaded(true);
 };
 
@@ -221,6 +228,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
+  const [notFound, setNotFound] = useState(false);
+
   useEffect(() => {
     if (
       chatId &&
@@ -234,6 +243,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         setIsMessagesLoaded,
         setChatHistory,
         setFocusMode,
+        setNotFound,
       );
     } else if (!chatId) {
       setNewChatCreated(true);
@@ -416,26 +426,30 @@ const ChatWindow = ({ id }: { id?: string }) => {
   }
 
   return isReady ? (
-    <div>
-      {messages.length > 0 ? (
-        <>
-          <Navbar messages={messages} />
-          <Chat
-            loading={loading}
-            messages={messages}
+    notFound ? (
+      <Error statusCode={404} />
+    ) : (
+      <div>
+        {messages.length > 0 ? (
+          <>
+            <Navbar messages={messages} />
+            <Chat
+              loading={loading}
+              messages={messages}
+              sendMessage={sendMessage}
+              messageAppeared={messageAppeared}
+              rewrite={rewrite}
+            />
+          </>
+        ) : (
+          <EmptyChat
             sendMessage={sendMessage}
-            messageAppeared={messageAppeared}
-            rewrite={rewrite}
+            focusMode={focusMode}
+            setFocusMode={setFocusMode}
           />
-        </>
-      ) : (
-        <EmptyChat
-          sendMessage={sendMessage}
-          focusMode={focusMode}
-          setFocusMode={setFocusMode}
-        />
-      )}
-    </div>
+        )}
+      </div>
+    )
   ) : (
     <div className="flex flex-row items-center justify-center min-h-screen">
       <svg
