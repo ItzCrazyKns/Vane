@@ -10,8 +10,6 @@ router.get('/', async (_, res) => {
   try {
     let chats = await db.query.chats.findMany();
 
-    /* Reorder the chats (in opposite direction) */
-
     chats = chats.reverse();
 
     return res.status(200).json({ chats: chats });
