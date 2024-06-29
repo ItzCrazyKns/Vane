@@ -133,11 +133,12 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 
 ## Upcoming Features
 
-- [ ] Finalizing Copilot Mode
 - [x] Add settings page
 - [x] Adding support for local LLMs
-- [ ] Adding Discover and History Saving features
+- [x] History Saving features
 - [x] Introducing various Focus Modes
+- [ ] Finalizing Copilot Mode
+- [ ] Adding Discover
 
 ## Support Us
 
