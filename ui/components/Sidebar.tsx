@@ -23,7 +23,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
     {
       icon: Home,
       href: '/',
-      active: segments.length === 0,
+      active: segments.length === 0 || segments.includes('c'),
       label: 'Home',
     },
     {

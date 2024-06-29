@@ -5,12 +5,14 @@ import { Document } from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
+import crypto from 'crypto';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 
 export type Message = {
-  id: string;
+  messageId: string;
+  chatId: string;
   createdAt: Date;
   content: string;
   role: 'user' | 'assistant';
@@ -20,7 +22,7 @@ export type Message = {
 
 const useSocket = (
   url: string,
-  setIsReady: (ready: boolean) => void,
+  setIsWSReady: (ready: boolean) => void,
   setError: (error: boolean) => void,
 ) => {
   const [ws, setWs] = useState<WebSocket | null>(null);
@@ -120,7 +122,7 @@ const useSocket = (
           console.log('[DEBUG] open');
           clearTimeout(timeoutId);
           setError(false);
-          setIsReady(true);
+          setIsWSReady(true);
         };
 
         ws.onerror = () => {
@@ -145,33 +147,113 @@ const useSocket = (
       ws?.close();
       console.log('[DEBUG] closed');
     };
-  }, [ws, url, setIsReady, setError]);
+  }, [ws, url, setIsWSReady, setError]);
 
   return ws;
 };
 
-const ChatWindow = () => {
+const loadMessages = async (
+  chatId: string,
+  setMessages: (messages: Message[]) => void,
+  setIsMessagesLoaded: (loaded: boolean) => void,
+  setChatHistory: (history: [string, string][]) => void,
+  setFocusMode: (mode: string) => void,
+) => {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
+    {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+
+  const data = await res.json();
+
+  const messages = data.messages.map((msg: any) => {
+    return {
+      ...msg,
+      ...JSON.parse(msg.metadata),
+    };
+  }) as Message[];
+
+  setMessages(messages);
+
+  const history = messages.map((msg) => {
+    return [msg.role, msg.content];
+  }) as [string, string][];
+
+  console.log('[DEBUG] messages loaded');
+
+  document.title = messages[0].content;
+
+  setChatHistory(history);
+  setFocusMode(data.chat.focusMode);
+  console.log(data);
+  setIsMessagesLoaded(true);
+};
+
+const ChatWindow = ({ id }: { id?: string }) => {
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
-  const [isReady, setIsReady] = useState(false);
+  const [chatId, setChatId] = useState<string | undefined>(id);
+  const [newChatCreated, setNewChatCreated] = useState(false);
+
   const [hasError, setHasError] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  const [isWSReady, setIsWSReady] = useState(false);
   const ws = useSocket(
     process.env.NEXT_PUBLIC_WS_URL!,
-    setIsReady,
+    setIsWSReady,
     setHasError,
   );
 
-  const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const messagesRef = useRef<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
+
+  const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+
   const [focusMode, setFocusMode] = useState('webSearch');
+
+  const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
+
+  useEffect(() => {
+    if (
+      chatId &&
+      !newChatCreated &&
+      !isMessagesLoaded &&
+      messages.length === 0
+    ) {
+      loadMessages(
+        chatId,
+        setMessages,
+        setIsMessagesLoaded,
+        setChatHistory,
+        setFocusMode,
+      );
+    } else if (!chatId) {
+      setNewChatCreated(true);
+      setIsMessagesLoaded(true);
+      setChatId(crypto.randomBytes(20).toString('hex'));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const messagesRef = useRef<Message[]>([]);
 
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    if (isMessagesLoaded && isWSReady) {
+      setIsReady(true);
+    }
+  }, [isMessagesLoaded, isWSReady]);
 
   const sendMessage = async (message: string) => {
     if (loading) return;
@@ -182,10 +264,15 @@ const ChatWindow = () => {
     let recievedMessage = '';
     let added = false;
 
+    const messageId = crypto.randomBytes(7).toString('hex');
+
     ws?.send(
       JSON.stringify({
         type: 'message',
-        content: message,
+        message: {
+          chatId: chatId!,
+          content: message,
+        },
         focusMode: focusMode,
         history: [...chatHistory, ['human', message]],
       }),
@@ -195,7 +282,8 @@ const ChatWindow = () => {
       ...prevMessages,
       {
         content: message,
-        id: Math.random().toString(36).substring(7),
+        messageId: messageId,
+        chatId: chatId!,
         role: 'user',
         createdAt: new Date(),
       },
@@ -217,7 +305,8 @@ const ChatWindow = () => {
             ...prevMessages,
             {
               content: '',
-              id: data.messageId,
+              messageId: data.messageId,
+              chatId: chatId!,
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
@@ -234,7 +323,8 @@ const ChatWindow = () => {
             ...prevMessages,
             {
               content: data.data,
-              id: data.messageId,
+              messageId: data.messageId,
+              chatId: chatId!,
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
@@ -245,7 +335,7 @@ const ChatWindow = () => {
 
         setMessages((prev) =>
           prev.map((message) => {
-            if (message.id === data.messageId) {
+            if (message.messageId === data.messageId) {
               return { ...message, content: message.content + data.data };
             }
 
@@ -278,7 +368,7 @@ const ChatWindow = () => {
           const suggestions = await getSuggestions(messagesRef.current);
           setMessages((prev) =>
             prev.map((msg) => {
-              if (msg.id === lastMsg.id) {
+              if (msg.messageId === lastMsg.messageId) {
                 return { ...msg, suggestions: suggestions };
               }
               return msg;
@@ -292,7 +382,7 @@ const ChatWindow = () => {
   };
 
   const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.id === messageId);
+    const index = messages.findIndex((msg) => msg.messageId === messageId);
 
     if (index === -1) return;
 

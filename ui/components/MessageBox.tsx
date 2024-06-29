@@ -119,7 +119,7 @@ const MessageBox = ({
                     {/*  <button className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black text-black dark:hover:text-white">
                       <Share size={18} />
                     </button> */}
-                    <Rewrite rewrite={rewrite} messageId={message.id} />
+                    <Rewrite rewrite={rewrite} messageId={message.messageId} />
                   </div>
                   <div className="flex flex-row items-center space-x-1">
                     <Copy initialMessage={message.content} message={message} />
