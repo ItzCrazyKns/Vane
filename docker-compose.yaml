@@ -19,8 +19,10 @@ services:
       - searxng
     ports:
       - 3001:3001
+    volumes:
+      - backend-dbstore:/home/perplexica/data
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     networks:
       - perplexica-network
     restart: unless-stopped
@@ -42,3 +44,6 @@ services:
 
 networks:
   perplexica-network:
+
+volumes:
+  backend-dbstore:

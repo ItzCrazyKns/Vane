@@ -6,6 +6,7 @@ yarn-error.log
 # Build output
 /.next/
 /out/
+/dist/
 
 # IDE/Editor specific
 .vscode/
@@ -32,3 +33,6 @@ logs/
 # Miscellaneous
 .DS_Store
 Thumbs.db
+
+# Db
+db.sqlite
