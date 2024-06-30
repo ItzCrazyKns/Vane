@@ -147,11 +147,11 @@ If you find Perplexica useful, consider giving us a star on GitHub. This helps m
 
 ### Donations
 
-We also accept donations to help sustain our project. If you would like to contribute, you can use the following button to make a donation in cryptocurrency. Thank you for your support!
+We also accept donations to help sustain our project. If you would like to contribute, you can use the following options to donate. Thank you for your support!
 
-<a href="https://nowpayments.io/donation?api_key=RFFKJH1-GRR4DQG-HFV1DZP-00G6MMK&source=lk_donation&medium=referral" target="_blank">
-  <img src="https://nowpayments.io/images/embeds/donation-button-white.svg" alt="Crypto donation button by NOWPayments">
-</a>
+| Cards  | Ethereum |
+|---|---|
+|  https://www.patreon.com/itzcrazykns  | Address: `0xB025a84b2F269570Eb8D4b05DEdaA41D8525B6DD`  |
 
 ## Contribution
 
