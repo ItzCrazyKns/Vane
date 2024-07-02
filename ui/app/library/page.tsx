@@ -1,11 +1,12 @@
 'use client';
 
+import DeleteChat from '@/components/DeleteChat';
 import { formatTimeDifference } from '@/lib/utils';
-import { BookOpenText, ClockIcon, ScanEye } from 'lucide-react';
+import { BookOpenText, ClockIcon, Delete, ScanEye } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-interface Chat {
+export interface Chat {
   id: string;
   title: string;
   createdAt: string;
@@ -92,6 +93,11 @@ const Page = () => {
                     {formatTimeDifference(new Date(), chat.createdAt)} Ago
                   </p>
                 </div>
+                <DeleteChat
+                  chatId={chat.id}
+                  chats={chats}
+                  setChats={setChats}
+                />
               </div>
             </div>
           ))}

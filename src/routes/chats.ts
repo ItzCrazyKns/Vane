@@ -40,4 +40,27 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+router.delete(`/:id`, async (req, res) => {
+  try {
+    const chatExists = await db.query.chats.findFirst({
+      where: eq(chats.id, req.params.id),
+    });
+
+    if (!chatExists) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    await db.delete(chats).where(eq(chats.id, req.params.id)).execute();
+    await db
+      .delete(messages)
+      .where(eq(messages.chatId, req.params.id))
+      .execute();
+
+    return res.status(200).json({ message: 'Chat deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'An error has occurred.' });
+    logger.error(`Error in deleting chat: ${err.message}`);
+  }
+});
+
 export default router;
