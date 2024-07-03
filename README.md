@@ -111,11 +111,7 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 3. **Linux Users - Expose Ollama to Network:**
 
-   - Serve Ollama over your network with the command:
-
-     ```bash
-     OLLAMA_HOST=0.0.0.0 ollama serve
-     ```
+   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0"`. Then restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
 
