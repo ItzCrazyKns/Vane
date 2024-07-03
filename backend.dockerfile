@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.12-nodejs20-bullseye
+FROM node:slim
 
 ARG SEARXNG_API_URL
 
@@ -15,7 +15,7 @@ RUN sed -i "s|SEARXNG = \".*\"|SEARXNG = \"${SEARXNG_API_URL}\"|g" /home/perplex
 
 RUN mkdir /home/perplexica/data
 
-RUN yarn install
+RUN yarn install 
 RUN yarn build
 
 CMD ["yarn", "start"]
