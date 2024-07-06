@@ -145,9 +145,9 @@ If you find Perplexica useful, consider giving us a star on GitHub. This helps m
 
 We also accept donations to help sustain our project. If you would like to contribute, you can use the following options to donate. Thank you for your support!
 
-| Cards  | Ethereum |
-|---|---|
-|  https://www.patreon.com/itzcrazykns  | Address: `0xB025a84b2F269570Eb8D4b05DEdaA41D8525B6DD`  |
+| Cards                               | Ethereum                                              |
+| ----------------------------------- | ----------------------------------------------------- |
+| https://www.patreon.com/itzcrazykns | Address: `0xB025a84b2F269570Eb8D4b05DEdaA41D8525B6DD` |
 
 ## Contribution
 
