@@ -47,7 +47,7 @@ const generateSuggestions = (
   input: SuggestionGeneratorInput,
   llm: BaseChatModel,
 ) => {
-  (llm as ChatOpenAI).temperature = 0;
+  (llm as unknown as ChatOpenAI).temperature = 0;
   const suggestionGeneratorChain = createSuggestionGeneratorChain(llm);
   return suggestionGeneratorChain.invoke(input);
 };

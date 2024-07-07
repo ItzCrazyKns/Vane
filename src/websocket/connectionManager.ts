@@ -45,7 +45,7 @@ export const handleConnection = async (
       chatModelProviders[chatModelProvider][chatModel] &&
       chatModelProvider != 'custom_openai'
     ) {
-      llm = chatModelProviders[chatModelProvider][chatModel] as
+      llm = chatModelProviders[chatModelProvider][chatModel] as unknown as
         | BaseChatModel
         | undefined;
     } else if (chatModelProvider == 'custom_openai') {
@@ -56,7 +56,7 @@ export const handleConnection = async (
         configuration: {
           baseURL: searchParams.get('openAIBaseURL'),
         },
-      });
+      }) as unknown as BaseChatModel;
     }
 
     if (
