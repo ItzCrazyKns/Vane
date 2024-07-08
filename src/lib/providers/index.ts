@@ -22,6 +22,8 @@ export const getAvailableChatModelProviders = async () => {
     models[provider] = await chatModelProviders[provider]();
   }
 
+  models['custom_openai'] = {}
+
   return models;
 };
 
