@@ -5,6 +5,8 @@ import logger from '../../utils/logger';
 export const loadOpenAIChatModels = async () => {
   const openAIApiKey = getOpenaiApiKey();
 
+  if (!openAIApiKey) return {};
+
   try {
     const chatModels = {
       'GPT-3.5 turbo': new ChatOpenAI({
@@ -36,8 +38,10 @@ export const loadOpenAIChatModels = async () => {
   }
 };
 
-export const loadOpenAIEmbeddingsModel = async () => {
+export const loadOpenAIEmbeddingsModels = async () => {
   const openAIApiKey = getOpenaiApiKey();
+
+  if (!openAIApiKey) return {};
 
   try {
     const embeddingModels = {

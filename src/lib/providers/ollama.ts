@@ -6,6 +6,8 @@ import { ChatOllama } from '@langchain/community/chat_models/ollama';
 export const loadOllamaChatModels = async () => {
   const ollamaEndpoint = getOllamaApiEndpoint();
 
+  if (!ollamaEndpoint) return {};
+
   try {
     const response = await fetch(`${ollamaEndpoint}/api/tags`, {
       headers: {
@@ -31,8 +33,10 @@ export const loadOllamaChatModels = async () => {
   }
 };
 
-export const loadOpenAIEmbeddingsModel = async () => {
+export const loadOllamaEmbeddingsModels = async () => {
   const ollamaEndpoint = getOllamaApiEndpoint();
+
+  if (!ollamaEndpoint) return {};
 
   try {
     const response = await fetch(`${ollamaEndpoint}/api/tags`, {

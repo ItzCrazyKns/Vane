@@ -1,7 +1,7 @@
 import { loadGroqChatModels } from './groq';
-import { loadOllamaChatModels } from './ollama';
-import { loadOpenAIChatModels, loadOpenAIEmbeddingsModel } from './openai';
-import { loadTransformersEmbeddingsModel } from './transformers';
+import { loadOllamaChatModels, loadOllamaEmbeddingsModels } from './ollama';
+import { loadOpenAIChatModels, loadOpenAIEmbeddingsModels } from './openai';
+import { loadTransformersEmbeddingsModels } from './transformers';
 
 const chatModelProviders = {
   openai: loadOpenAIChatModels,
@@ -10,16 +10,19 @@ const chatModelProviders = {
 };
 
 const embeddingModelProviders = {
-  openai: loadOpenAIEmbeddingsModel,
-  local: loadTransformersEmbeddingsModel,
-  ollama: loadOllamaChatModels,
+  openai: loadOpenAIEmbeddingsModels,
+  local: loadTransformersEmbeddingsModels,
+  ollama: loadOllamaEmbeddingsModels,
 };
 
 export const getAvailableChatModelProviders = async () => {
   const models = {};
 
   for (const provider in chatModelProviders) {
-    models[provider] = await chatModelProviders[provider]();
+    const providerModels = await chatModelProviders[provider]();
+    if (Object.keys(providerModels).length > 0) {
+      models[provider] = providerModels
+    }
   }
 
   models['custom_openai'] = {}
@@ -31,7 +34,10 @@ export const getAvailableEmbeddingModelProviders = async () => {
   const models = {};
 
   for (const provider in embeddingModelProviders) {
-    models[provider] = await embeddingModelProviders[provider]();
+    const providerModels = await embeddingModelProviders[provider]();
+    if (Object.keys(providerModels).length > 0) {
+      models[provider] = providerModels
+    }
   }
 
   return models;

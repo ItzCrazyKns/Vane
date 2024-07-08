@@ -1,7 +1,7 @@
 import logger from '../../utils/logger';
 import { HuggingFaceTransformersEmbeddings } from '../huggingfaceTransformer';
 
-export const loadTransformersEmbeddingsModel = async () => {
+export const loadTransformersEmbeddingsModels = async () => {
   try {
     const embeddingModels = {
       'BGE Small': new HuggingFaceTransformersEmbeddings({

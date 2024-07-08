@@ -5,6 +5,8 @@ import logger from '../../utils/logger';
 export const loadGroqChatModels = async () => {
   const groqApiKey = getGroqApiKey();
 
+  if (!groqApiKey) return {};
+
   try {
     const chatModels = {
       'LLaMA3 8b': new ChatOpenAI(
