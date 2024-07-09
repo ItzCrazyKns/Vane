@@ -83,6 +83,55 @@ const useSocket = (
             'embeddingModelProvider',
             embeddingModelProvider,
           );
+        } else {
+          const providers = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/models`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          ).then(async (res) => await res.json());
+
+          const chatModelProviders = providers.chatModelProviders;
+          const embeddingModelProviders = providers.embeddingModelProviders;
+
+          if (
+            Object.keys(chatModelProviders).length > 0 &&
+            !chatModelProviders[chatModelProvider]
+          ) {
+            chatModelProvider = Object.keys(chatModelProviders)[0];
+            localStorage.setItem('chatModelProvider', chatModelProvider);
+          }
+
+          if (
+            chatModelProvider &&
+            !chatModelProviders[chatModelProvider][chatModel]
+          ) {
+            chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+            localStorage.setItem('chatModel', chatModel);
+          }
+
+          if (
+            Object.keys(embeddingModelProviders).length > 0 &&
+            !embeddingModelProviders[embeddingModelProvider]
+          ) {
+            embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
+            localStorage.setItem(
+              'embeddingModelProvider',
+              embeddingModelProvider,
+            );
+          }
+
+          if (
+            embeddingModelProvider &&
+            !embeddingModelProviders[embeddingModelProvider][embeddingModel]
+          ) {
+            embeddingModel = Object.keys(
+              embeddingModelProviders[embeddingModelProvider],
+            )[0];
+            localStorage.setItem('embeddingModel', embeddingModel);
+          }
         }
 
         const wsURL = new URL(url);
