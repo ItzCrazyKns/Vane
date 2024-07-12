@@ -49,6 +49,16 @@ export const loadGroqChatModels = async () => {
           baseURL: 'https://api.groq.com/openai/v1',
         },
       ),
+      'Gemma2 9b': new ChatOpenAI(
+        {
+          openAIApiKey: groqApiKey,
+          modelName: 'gemma2-9b-it',
+          temperature: 0.7,
+        },
+        {
+          baseURL: 'https://api.groq.com/openai/v1',
+        },
+      ),
     };
 
     return chatModels;
