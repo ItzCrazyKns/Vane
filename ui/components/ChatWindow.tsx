@@ -194,8 +194,10 @@ const useSocket = (
     }
 
     return () => {
-      ws?.close();
-      console.log('[DEBUG] closed');
+      if (ws?.readyState === 1) {
+        ws?.close();
+        console.log('[DEBUG] closed');
+      }
     };
   }, [ws, url, setIsWSReady, setError]);
 
