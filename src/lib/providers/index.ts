@@ -1,12 +1,14 @@
 import { loadGroqChatModels } from './groq';
 import { loadOllamaChatModels, loadOllamaEmbeddingsModels } from './ollama';
 import { loadOpenAIChatModels, loadOpenAIEmbeddingsModels } from './openai';
+import { loadAnthropicChatModels } from './anthropic';
 import { loadTransformersEmbeddingsModels } from './transformers';
 
 const chatModelProviders = {
   openai: loadOpenAIChatModels,
   groq: loadGroqChatModels,
   ollama: loadOllamaChatModels,
+  anthropic: loadAnthropicChatModels,
 };
 
 const embeddingModelProviders = {
@@ -21,11 +23,11 @@ export const getAvailableChatModelProviders = async () => {
   for (const provider in chatModelProviders) {
     const providerModels = await chatModelProviders[provider]();
     if (Object.keys(providerModels).length > 0) {
-      models[provider] = providerModels
+      models[provider] = providerModels;
     }
   }
 
-  models['custom_openai'] = {}
+  models['custom_openai'] = {};
 
   return models;
 };
@@ -36,7 +38,7 @@ export const getAvailableEmbeddingModelProviders = async () => {
   for (const provider in embeddingModelProviders) {
     const providerModels = await embeddingModelProviders[provider]();
     if (Object.keys(providerModels).length > 0) {
-      models[provider] = providerModels
+      models[provider] = providerModels;
     }
   }
 

@@ -6,6 +6,7 @@ import {
 import {
   getGroqApiKey,
   getOllamaApiEndpoint,
+  getAnthropicApiKey,
   getOpenaiApiKey,
   updateConfig,
 } from '../config';
@@ -37,6 +38,7 @@ router.get('/', async (_, res) => {
 
   config['openaiApiKey'] = getOpenaiApiKey();
   config['ollamaApiUrl'] = getOllamaApiEndpoint();
+  config['anthropicApiKey'] = getAnthropicApiKey();
   config['groqApiKey'] = getGroqApiKey();
 
   res.status(200).json(config);
@@ -49,6 +51,7 @@ router.post('/', async (req, res) => {
     API_KEYS: {
       OPENAI: config.openaiApiKey,
       GROQ: config.groqApiKey,
+      ANTHROPIC: config.anthropicApiKey,
     },
     API_ENDPOINTS: {
       OLLAMA: config.ollamaApiUrl,

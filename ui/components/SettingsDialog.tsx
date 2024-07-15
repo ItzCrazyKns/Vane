@@ -56,6 +56,7 @@ interface SettingsType {
   };
   openaiApiKey: string;
   groqApiKey: string;
+  anthropicApiKey: string;
   ollamaApiUrl: string;
 }
 
@@ -435,6 +436,22 @@ const SettingsDialog = ({
                           setConfig({
                             ...config,
                             groqApiKey: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Anthropic API Key
+                      </p>
+                      <Input
+                        type="text"
+                        placeholder="Anthropic API key"
+                        defaultValue={config.anthropicApiKey}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            anthropicApiKey: e.target.value,
                           })
                         }
                       />
