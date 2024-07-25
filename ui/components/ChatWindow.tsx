@@ -54,22 +54,32 @@ const useSocket = (
           ).then(async (res) => await res.json());
 
           const chatModelProviders = providers.chatModelProviders;
-          const embeddingModelProviders = providers.embeddingModelProviders;
 
-          if (
-            !chatModelProviders ||
-            Object.keys(chatModelProviders).length === 0
-          )
-            return toast.error('No chat models available');
+          chatModelProvider = Object.keys(chatModelProviders)[0];
+
+          if (chatModelProvider === 'custom_openai') {
+            toast.error(
+              'Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL',
+            );
+            setError(true);
+            return;
+          } else {
+            chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+
+            if (
+              !chatModelProviders ||
+              Object.keys(chatModelProviders).length === 0
+            )
+              return toast.error('No chat models available');
+          }
+
+          const embeddingModelProviders = providers.embeddingModelProviders;
 
           if (
             !embeddingModelProviders ||
             Object.keys(embeddingModelProviders).length === 0
           )
             return toast.error('No embedding models available');
-
-          chatModelProvider = Object.keys(chatModelProviders)[0];
-          chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
 
           embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
           embeddingModel = Object.keys(
@@ -88,7 +98,7 @@ const useSocket = (
             `${process.env.NEXT_PUBLIC_API_URL}/models`,
             {
               headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'app  lication/json',
               },
             },
           ).then(async (res) => await res.json());
@@ -106,6 +116,7 @@ const useSocket = (
 
           if (
             chatModelProvider &&
+            chatModelProvider != 'custom_openai' &&
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
             chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
@@ -186,6 +197,13 @@ const useSocket = (
           setError(true);
           console.log('[DEBUG] closed');
         };
+
+        ws.addEventListener('message', (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === 'error') {
+            toast.error(data.data);
+          }
+        });
 
         setWs(ws);
       };
