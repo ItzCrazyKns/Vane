@@ -225,9 +225,13 @@ const SettingsDialog = ({
                           value={selectedChatModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedChatModelProvider(e.target.value);
-                            setSelectedChatModel(
-                              config.chatModelProviders[e.target.value][0],
-                            );
+                            if (e.target.value === 'custom_openai') {
+                              setSelectedChatModel('');
+                            } else {
+                              setSelectedChatModel(
+                                config.chatModelProviders[e.target.value][0],
+                              );
+                            }
                           }}
                           options={Object.keys(config.chatModelProviders).map(
                             (provider) => ({
