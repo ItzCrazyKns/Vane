@@ -17,6 +17,7 @@ To update Perplexica to the latest version, follow these steps:
 ```bash
 docker compose up -d --build
 ```
+
 4. Once the command completes running go to http://localhost:3000 and verify the latest changes.
 
 ## For non Docker users
