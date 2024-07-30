@@ -1,6 +1,6 @@
 {
   "name": "perplexica-backend",
-  "version": "1.8.1",
+  "version": "1.9.0-rc1",
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
@@ -15,6 +15,8 @@
     "@types/better-sqlite3": "^7.6.10",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/html-to-text": "^9.0.4",
+    "@types/pdf-parse": "^1.1.4",
     "@types/readable-stream": "^4.0.11",
     "drizzle-kit": "^0.22.7",
     "nodemon": "^3.1.0",
@@ -36,7 +38,9 @@
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.31.2",
     "express": "^4.19.2",
+    "html-to-text": "^9.0.5",
     "langchain": "^0.1.30",
+    "pdf-parse": "^1.1.1",
     "winston": "^3.13.0",
     "ws": "^8.17.1",
     "zod": "^3.22.4"
