@@ -1,8 +1,8 @@
 import axios from 'axios';
-import { htmlToText } from 'html-to-text'
+import { htmlToText } from 'html-to-text';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from '@langchain/core/documents';
-import pdfParse from 'pdf-parse'
+import pdfParse from 'pdf-parse';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -23,14 +23,14 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
       const isPdf = res.headers['content-type'] === 'application/pdf';
 
       if (isPdf) {
-        const pdfText = await pdfParse(res.data)
+        const pdfText = await pdfParse(res.data);
         const parsedText = pdfText.text
           .replace(/(\r\n|\n|\r)/gm, ' ')
           .replace(/\s+/g, ' ')
           .trim();
 
         const splittedText = await splitter.splitText(parsedText);
-        const title = 'PDF Document'
+        const title = 'PDF Document';
 
         const linkDocs = splittedText.map((text) => {
           return new Document({
@@ -52,16 +52,18 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
             selector: 'a',
             options: {
               ignoreHref: true,
-            }
+            },
           },
-        ]
+        ],
       })
         .replace(/(\r\n|\n|\r)/gm, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 
       const splittedText = await splitter.splitText(parsedText);
-      const title = res.data.toString('utf8').match(/<title>(.*?)<\/title>/)?.[1];
+      const title = res.data
+        .toString('utf8')
+        .match(/<title>(.*?)<\/title>/)?.[1];
 
       const linkDocs = splittedText.map((text) => {
         return new Document({

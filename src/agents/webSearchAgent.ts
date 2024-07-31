@@ -157,35 +157,43 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
           question = 'Summarize';
         }
 
-        let docs = []
+        let docs = [];
 
         const linkDocs = await getDocumentsFromLinks({ links });
 
         const docGroups: Document[] = [];
 
         linkDocs.map((doc) => {
-          const URLDocExists = docGroups.find((d) => d.metadata.url === doc.metadata.url && d.metadata.totalDocs < 10);
+          const URLDocExists = docGroups.find(
+            (d) =>
+              d.metadata.url === doc.metadata.url && d.metadata.totalDocs < 10,
+          );
 
           if (!URLDocExists) {
             docGroups.push({
               ...doc,
               metadata: {
                 ...doc.metadata,
-                totalDocs: 1
-              }
+                totalDocs: 1,
+              },
             });
           }
 
-          const docIndex = docGroups.findIndex((d) => d.metadata.url === doc.metadata.url && d.metadata.totalDocs < 10);
+          const docIndex = docGroups.findIndex(
+            (d) =>
+              d.metadata.url === doc.metadata.url && d.metadata.totalDocs < 10,
+          );
 
           if (docIndex !== -1) {
-            docGroups[docIndex].pageContent = docGroups[docIndex].pageContent + `\n\n` +  doc.pageContent;
+            docGroups[docIndex].pageContent =
+              docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
             docGroups[docIndex].metadata.totalDocs += 1;
           }
-        })
+        });
 
-        await Promise.all(docGroups.map(async (doc) => {
-          const res = await llm.invoke(`
+        await Promise.all(
+          docGroups.map(async (doc) => {
+            const res = await llm.invoke(`
             You are a text summarizer. You need to summarize the text provided inside the \`text\` XML block. 
             You need to summarize the text into 1 or 2 sentences capturing the main idea of the text.
             You need to make sure that you don't miss any point while summarizing the text.
@@ -204,16 +212,17 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
             Make sure to answer the query in the summary.
           `);
 
-          const document = new Document({
-            pageContent: res.content as string,
-            metadata: {
-              title: doc.metadata.title,
-              url: doc.metadata.url,
-            },
-          })
-          
-          docs.push(document)
-        }))
+            const document = new Document({
+              pageContent: res.content as string,
+              metadata: {
+                title: doc.metadata.title,
+                url: doc.metadata.url,
+              },
+            });
+
+            docs.push(document);
+          }),
+        );
 
         return { query: question, docs: docs };
       } else {
