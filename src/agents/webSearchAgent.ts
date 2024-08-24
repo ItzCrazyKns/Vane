@@ -27,7 +27,7 @@ const basicSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
 If it is a writing task or a simple hi, hello rather than a question, you need to return \`not_needed\` as the response.
 If the question contains some links and asks to answer from those links or even if they don't you need to return the links inside 'links' XML block and the question inside 'question' XML block. If there are no links then you need to return the question without any XML block.
-If the user asks to summarrize the content from some links you need to return \`Summarize\` as the question inside the 'question' XML block and the links inside the 'links' XML block.
+If the user asks to summarize the content from some links you need to return \`Summarize\` as the question inside the 'question' XML block and the links inside the 'links' XML block.
 
 Example:
 1. Follow up question: What is the capital of France?
