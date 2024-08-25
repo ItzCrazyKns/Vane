@@ -19,6 +19,7 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
 import logger from '../utils/logger';
+import { IterableReadableStream } from '@langchain/core/utils/stream';
 
 const basicRedditSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.

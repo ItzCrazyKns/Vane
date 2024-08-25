@@ -96,7 +96,7 @@ const basicWebSearchResponsePrompt = `
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream:  IterableReadableStream<StreamEvent>,
+  stream: IterableReadableStream<StreamEvent>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {
