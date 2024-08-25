@@ -22,6 +22,7 @@ import logger from '../utils/logger';
 import LineListOutputParser from '../lib/outputParsers/listLineOutputParser';
 import { getDocumentsFromLinks } from '../lib/linkDocument';
 import LineOutputParser from '../lib/outputParsers/lineOutputParser';
+import { IterableReadableStream } from '@langchain/core/utils/stream';
 
 const basicSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
@@ -95,7 +96,7 @@ const basicWebSearchResponsePrompt = `
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
+  stream:  IterableReadableStream<StreamEvent>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {
