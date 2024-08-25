@@ -66,7 +66,7 @@ const basicYoutubeSearchResponsePrompt = `
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
+  stream: IterableReadableStream<StreamEvent>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {
