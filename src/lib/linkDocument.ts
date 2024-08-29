@@ -3,6 +3,7 @@ import { htmlToText } from 'html-to-text';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from '@langchain/core/documents';
 import pdfParse from 'pdf-parse';
+import logger from '../utils/logger';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -16,66 +17,81 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
           ? link
           : `https://${link}`;
 
-      const res = await axios.get(link, {
-        responseType: 'arraybuffer',
-      });
+      try {
+        const res = await axios.get(link, {
+          responseType: 'arraybuffer',
+        });
 
-      const isPdf = res.headers['content-type'] === 'application/pdf';
+        const isPdf = res.headers['content-type'] === 'application/pdf';
 
-      if (isPdf) {
-        const pdfText = await pdfParse(res.data);
-        const parsedText = pdfText.text
+        if (isPdf) {
+          const pdfText = await pdfParse(res.data);
+          const parsedText = pdfText.text
+            .replace(/(\r\n|\n|\r)/gm, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          const splittedText = await splitter.splitText(parsedText);
+          const title = 'PDF Document';
+
+          const linkDocs = splittedText.map((text) => {
+            return new Document({
+              pageContent: text,
+              metadata: {
+                title: title,
+                url: link,
+              },
+            });
+          });
+
+          docs.push(...linkDocs);
+          return;
+        }
+
+        const parsedText = htmlToText(res.data.toString('utf8'), {
+          selectors: [
+            {
+              selector: 'a',
+              options: {
+                ignoreHref: true,
+              },
+            },
+          ],
+        })
           .replace(/(\r\n|\n|\r)/gm, ' ')
           .replace(/\s+/g, ' ')
           .trim();
 
         const splittedText = await splitter.splitText(parsedText);
-        const title = 'PDF Document';
+        const title = res.data
+          .toString('utf8')
+          .match(/<title>(.*?)<\/title>/)?.[1];
 
         const linkDocs = splittedText.map((text) => {
           return new Document({
             pageContent: text,
             metadata: {
-              title: title,
+              title: title || link,
               url: link,
             },
           });
         });
 
         docs.push(...linkDocs);
-        return;
-      }
-
-      const parsedText = htmlToText(res.data.toString('utf8'), {
-        selectors: [
-          {
-            selector: 'a',
-            options: {
-              ignoreHref: true,
+      } catch (err) {
+        logger.error(
+          `Error at generating documents from links: ${err.message}`,
+        );
+        docs.push(
+          new Document({
+            pageContent: `Failed to retrieve content from the link: ${err.message}`,
+            metadata: {
+              title: 'Failed to retrieve content',
+              url: link,
             },
-          },
-        ],
-      })
-        .replace(/(\r\n|\n|\r)/gm, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      const splittedText = await splitter.splitText(parsedText);
-      const title = res.data
-        .toString('utf8')
-        .match(/<title>(.*?)<\/title>/)?.[1];
-
-      const linkDocs = splittedText.map((text) => {
-        return new Document({
-          pageContent: text,
-          metadata: {
-            title: title || link,
-            url: link,
-          },
-        });
-      });
-
-      docs.push(...linkDocs);
+          }),
+        );
+      }
     }),
   );
 
