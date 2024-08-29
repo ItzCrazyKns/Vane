@@ -23,22 +23,37 @@ import LineListOutputParser from '../lib/outputParsers/listLineOutputParser';
 import { getDocumentsFromLinks } from '../lib/linkDocument';
 import LineOutputParser from '../lib/outputParsers/lineOutputParser';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
+import { ChatOpenAI } from '@langchain/openai';
 
 const basicSearchRetrieverPrompt = `
-You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
-If it is a writing task or a simple hi, hello rather than a question, you need to return \`not_needed\` as the response.
-If the question contains some links and asks to answer from those links or even if they don't you need to return the links inside 'links' XML block and the question inside 'question' XML block. If there are no links then you need to return the question without any XML block.
-If the user asks to summarize the content from some links you need to return \`Summarize\` as the question inside the 'question' XML block and the links inside the 'links' XML block.
+You are an AI question rephraser. You will be given a conversation and a follow-up question,  you will have to rephrase the follow up question so it is a standalone question and can be used by another LLM to search the web for information to answer it.
+If it is a smple writing task or a greeting (unless the greeting contains a question after it) like Hi, Hello, How are you, etc. than a question then you need to return \`not_needed\` as the response (This is because the LLM won't need to search the web for finding information on this topic).
+If the user asks some question from some URL or wants you to summarize a PDF or a webpage (via URL) you need to return the links inside the \`links\` XML block and the question inside the \`question\` XML block. If the user wants to you to summarize the webpage or the PDF you need to return \`summarize\` inside the \`question\` XML block in place of a question and the link to summarize in the \`links\` XML block.
+You must always return the rephrased question inside the \`question\` XML block, if there are no links in the follow-up question then don't insert a \`links\` XML block in your response.
 
-Example:
-1. Follow up question: What is the capital of France?
-Rephrased question: \`Capital of france\`
+There are several examples attached for your reference inside the below \`examples\` XML block
 
-2. Follow up question: What is the population of New York City?
-Rephrased question: \`Population of New York City\`
+<examples>
+1. Follow up question: What is the capital of France
+Rephrased question:\`
+<question>
+Capital of france
+</question>
+\`
+
+2. Hi, how are you?
+Rephrased question\`
+<question>
+not_needed
+</question>
+\`
 
 3. Follow up question: What is Docker?
-Rephrased question: \`What is Docker\`
+Rephrased question: \`
+<question>
+What is Docker
+</question>
+\`
 
 4. Follow up question: Can you tell me what is X from https://example.com
 Rephrased question: \`
@@ -54,16 +69,20 @@ https://example.com
 5. Follow up question: Summarize the content from https://example.com
 Rephrased question: \`
 <question>
-Summarize
+summarize
 </question>
 
 <links>
 https://example.com
 </links>
 \`
+</examples>
 
-Conversation:
+Anything below is the part of the actual conversation and you need to use conversation and the follow-up question to rephrase the follow-up question as a standalone question based on the guidelines shared above.
+
+<conversation>
 {chat_history}
+</conversation>
 
 Follow up question: {query}
 Rephrased question:
@@ -133,15 +152,13 @@ type BasicChainInput = {
 };
 
 const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
+  (llm as unknown as ChatOpenAI).temperature = 0;
+
   return RunnableSequence.from([
     PromptTemplate.fromTemplate(basicSearchRetrieverPrompt),
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {
-      if (input === 'not_needed') {
-        return { query: '', docs: [] };
-      }
-
       const linksOutputParser = new LineListOutputParser({
         key: 'links',
       });
@@ -153,9 +170,13 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
       const links = await linksOutputParser.parse(input);
       let question = await questionOutputParser.parse(input);
 
+      if (question === 'not_needed') {
+        return { query: '', docs: [] };
+      }
+
       if (links.length > 0) {
         if (question.length === 0) {
-          question = 'Summarize';
+          question = 'summarize';
         }
 
         let docs = [];
@@ -272,7 +293,7 @@ const createBasicWebSearchAnsweringChain = (
       return docs;
     }
 
-    if (query === 'Summarize') {
+    if (query.toLocaleLowerCase() === 'summarize') {
       return docs;
     }
 
@@ -295,7 +316,7 @@ const createBasicWebSearchAnsweringChain = (
     });
 
     const sortedDocs = similarity
-      .filter((sim) => sim.similarity > 0.5)
+      .filter((sim) => sim.similarity > 0.3)
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, 15)
       .map((sim) => docsWithContent[sim.index]);
