@@ -248,7 +248,7 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
 
         return { query: question, docs: docs };
       } else {
-        const res = await searchSearxng(input, {
+        const res = await searchSearxng(question, {
           language: 'en',
         });
 
@@ -264,7 +264,7 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
             }),
         );
 
-        return { query: input, docs: documents };
+        return { query: question, docs: documents };
       }
     }),
   ]);
