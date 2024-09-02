@@ -18,14 +18,21 @@ const EmptyChatMessageInput = ({
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === '/') {
-      e.preventDefault();
-      inputRef.current?.focus();
-    }
-  };
-
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+
+      const isInputFocused =
+        activeElement?.tagName === 'INPUT' ||
+        activeElement?.tagName === 'TEXTAREA' ||
+        activeElement?.hasAttribute('contenteditable');
+
+      if (e.key === '/' && !isInputFocused) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
