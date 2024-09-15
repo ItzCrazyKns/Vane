@@ -64,7 +64,7 @@ const Searchvideos = ({
 
             const data = await res.json();
 
-            const videos = data.videos;
+            const videos = data.videos  ?? [];
             setVideos(videos);
             setSlides(
               videos.map((video: Video) => {

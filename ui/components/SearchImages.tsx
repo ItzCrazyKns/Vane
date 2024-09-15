@@ -51,7 +51,7 @@ const SearchImages = ({
 
             const data = await res.json();
 
-            const images = data.images;
+            const images = data.images ?? [];
             setImages(images);
             setSlides(
               images.map((image: Image) => {
