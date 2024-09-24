@@ -9,26 +9,38 @@ export const loadAnthropicChatModels = async () => {
 
   try {
     const chatModels = {
-      'Claude 3.5 Sonnet': new ChatAnthropic({
-        temperature: 0.7,
-        anthropicApiKey: anthropicApiKey,
-        model: 'claude-3-5-sonnet-20240620',
-      }),
-      'Claude 3 Opus': new ChatAnthropic({
-        temperature: 0.7,
-        anthropicApiKey: anthropicApiKey,
-        model: 'claude-3-opus-20240229',
-      }),
-      'Claude 3 Sonnet': new ChatAnthropic({
-        temperature: 0.7,
-        anthropicApiKey: anthropicApiKey,
-        model: 'claude-3-sonnet-20240229',
-      }),
-      'Claude 3 Haiku': new ChatAnthropic({
-        temperature: 0.7,
-        anthropicApiKey: anthropicApiKey,
-        model: 'claude-3-haiku-20240307',
-      }),
+      'claude-3-5-sonnet-20240620': {
+        displayName: 'Claude 3.5 Sonnet',
+        model: new ChatAnthropic({
+          temperature: 0.7,
+          anthropicApiKey: anthropicApiKey,
+          model: 'claude-3-5-sonnet-20240620',
+        }),
+      },
+      'claude-3-opus-20240229': {
+        displayName: 'Claude 3 Opus',
+        model: new ChatAnthropic({
+          temperature: 0.7,
+          anthropicApiKey: anthropicApiKey,
+          model: 'claude-3-opus-20240229',
+        }),
+      },
+      'claude-3-sonnet-20240229': {
+        displayName: 'Claude 3 Sonnet',
+        model: new ChatAnthropic({
+          temperature: 0.7,
+          anthropicApiKey: anthropicApiKey,
+          model: 'claude-3-sonnet-20240229',
+        }),
+      },
+      'claude-3-haiku-20240307': {
+        displayName: 'Claude 3 Haiku',
+        model: new ChatAnthropic({
+          temperature: 0.7,
+          anthropicApiKey: anthropicApiKey,
+          model: 'claude-3-haiku-20240307',
+        }),
+      },
     };
 
     return chatModels;

@@ -18,11 +18,15 @@ export const loadOllamaChatModels = async () => {
     const { models: ollamaModels } = (await response.json()) as any;
 
     const chatModels = ollamaModels.reduce((acc, model) => {
-      acc[model.model] = new ChatOllama({
-        baseUrl: ollamaEndpoint,
-        model: model.model,
-        temperature: 0.7,
-      });
+      acc[model.model] = {
+        displayName: model.name,
+        model: new ChatOllama({
+          baseUrl: ollamaEndpoint,
+          model: model.model,
+          temperature: 0.7,
+        }),
+      };
+
       return acc;
     }, {});
 
@@ -48,10 +52,14 @@ export const loadOllamaEmbeddingsModels = async () => {
     const { models: ollamaModels } = (await response.json()) as any;
 
     const embeddingsModels = ollamaModels.reduce((acc, model) => {
-      acc[model.model] = new OllamaEmbeddings({
-        baseUrl: ollamaEndpoint,
-        model: model.model,
-      });
+      acc[model.model] = {
+        displayName: model.name,
+        model: new OllamaEmbeddings({
+          baseUrl: ollamaEndpoint,
+          model: model.model,
+        }),
+      };
+
       return acc;
     }, {});
 

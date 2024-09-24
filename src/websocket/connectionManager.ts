@@ -45,9 +45,8 @@ export const handleConnection = async (
       chatModelProviders[chatModelProvider][chatModel] &&
       chatModelProvider != 'custom_openai'
     ) {
-      llm = chatModelProviders[chatModelProvider][chatModel] as unknown as
-        | BaseChatModel
-        | undefined;
+      llm = chatModelProviders[chatModelProvider][chatModel]
+        .model as unknown as BaseChatModel | undefined;
     } else if (chatModelProvider == 'custom_openai') {
       llm = new ChatOpenAI({
         modelName: chatModel,
@@ -65,7 +64,7 @@ export const handleConnection = async (
     ) {
       embeddings = embeddingModelProviders[embeddingModelProvider][
         embeddingModel
-      ] as Embeddings | undefined;
+      ].model as Embeddings | undefined;
     }
 
     if (!llm || !embeddings) {

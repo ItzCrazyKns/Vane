@@ -26,7 +26,7 @@ router.post('/', async (req, res) => {
     let llm: BaseChatModel | undefined;
 
     if (chatModels[provider] && chatModels[provider][chatModel]) {
-      llm = chatModels[provider][chatModel] as BaseChatModel | undefined;
+      llm = chatModels[provider][chatModel].model as BaseChatModel | undefined;
     }
 
     if (!llm) {

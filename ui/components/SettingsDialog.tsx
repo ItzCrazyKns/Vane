@@ -49,10 +49,10 @@ export const Select = ({ className, options, ...restProps }: SelectProps) => {
 
 interface SettingsType {
   chatModelProviders: {
-    [key: string]: string[];
+    [key: string]: [Record<string, any>];
   };
   embeddingModelProviders: {
-    [key: string]: string[];
+    [key: string]: [Record<string, any>];
   };
   openaiApiKey: string;
   groqApiKey: string;
@@ -68,6 +68,10 @@ const SettingsDialog = ({
   setIsOpen: (isOpen: boolean) => void;
 }) => {
   const [config, setConfig] = useState<SettingsType | null>(null);
+  const [chatModels, setChatModels] = useState<Record<string, any>>({});
+  const [embeddingModels, setEmbeddingModels] = useState<Record<string, any>>(
+    {},
+  );
   const [selectedChatModelProvider, setSelectedChatModelProvider] = useState<
     string | null
   >(null);
@@ -118,7 +122,7 @@ const SettingsDialog = ({
         const chatModel =
           localStorage.getItem('chatModel') ||
           (data.chatModelProviders &&
-            data.chatModelProviders[chatModelProvider]?.[0]) ||
+            data.chatModelProviders[chatModelProvider]?.[0].name) ||
           '';
         const embeddingModelProvider =
           localStorage.getItem('embeddingModelProvider') ||
@@ -127,7 +131,7 @@ const SettingsDialog = ({
         const embeddingModel =
           localStorage.getItem('embeddingModel') ||
           (data.embeddingModelProviders &&
-            data.embeddingModelProviders[embeddingModelProvider]?.[0]) ||
+            data.embeddingModelProviders[embeddingModelProvider]?.[0].name) ||
           '';
 
         setSelectedChatModelProvider(chatModelProvider);
@@ -136,6 +140,8 @@ const SettingsDialog = ({
         setSelectedEmbeddingModel(embeddingModel);
         setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
         setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseURL') || '');
+        setChatModels(data.chatModelProviders || {});
+        setEmbeddingModels(data.embeddingModelProviders || {});
         setIsLoading(false);
       };
 
@@ -229,7 +235,8 @@ const SettingsDialog = ({
                               setSelectedChatModel('');
                             } else {
                               setSelectedChatModel(
-                                config.chatModelProviders[e.target.value][0],
+                                config.chatModelProviders[e.target.value][0]
+                                  .name,
                               );
                             }
                           }}
@@ -264,8 +271,8 @@ const SettingsDialog = ({
                               return chatModelProvider
                                 ? chatModelProvider.length > 0
                                   ? chatModelProvider.map((model) => ({
-                                      value: model,
-                                      label: model,
+                                      value: model.name,
+                                      label: model.displayName,
                                     }))
                                   : [
                                       {
@@ -341,7 +348,8 @@ const SettingsDialog = ({
                           onChange={(e) => {
                             setSelectedEmbeddingModelProvider(e.target.value);
                             setSelectedEmbeddingModel(
-                              config.embeddingModelProviders[e.target.value][0],
+                              config.embeddingModelProviders[e.target.value][0]
+                                .name,
                             );
                           }}
                           options={Object.keys(
@@ -374,8 +382,8 @@ const SettingsDialog = ({
                             return embeddingModelProvider
                               ? embeddingModelProvider.length > 0
                                 ? embeddingModelProvider.map((model) => ({
-                                    label: model,
-                                    value: model,
+                                    label: model.displayName,
+                                    value: model.name,
                                   }))
                                 : [
                                     {

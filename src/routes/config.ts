@@ -10,38 +10,54 @@ import {
   getOpenaiApiKey,
   updateConfig,
 } from '../config';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
 router.get('/', async (_, res) => {
-  const config = {};
+  try {
+    const config = {};
 
-  const [chatModelProviders, embeddingModelProviders] = await Promise.all([
-    getAvailableChatModelProviders(),
-    getAvailableEmbeddingModelProviders(),
-  ]);
+    const [chatModelProviders, embeddingModelProviders] = await Promise.all([
+      getAvailableChatModelProviders(),
+      getAvailableEmbeddingModelProviders(),
+    ]);
 
-  config['chatModelProviders'] = {};
-  config['embeddingModelProviders'] = {};
+    config['chatModelProviders'] = {};
+    config['embeddingModelProviders'] = {};
 
-  for (const provider in chatModelProviders) {
-    config['chatModelProviders'][provider] = Object.keys(
-      chatModelProviders[provider],
-    );
+    for (const provider in chatModelProviders) {
+      config['chatModelProviders'][provider] = Object.keys(
+        chatModelProviders[provider],
+      ).map((model) => {
+        return {
+          name: model,
+          displayName: chatModelProviders[provider][model].displayName,
+        };
+      });
+    }
+
+    for (const provider in embeddingModelProviders) {
+      config['embeddingModelProviders'][provider] = Object.keys(
+        embeddingModelProviders[provider],
+      ).map((model) => {
+        return {
+          name: model,
+          displayName: embeddingModelProviders[provider][model].displayName,
+        };
+      });
+    }
+
+    config['openaiApiKey'] = getOpenaiApiKey();
+    config['ollamaApiUrl'] = getOllamaApiEndpoint();
+    config['anthropicApiKey'] = getAnthropicApiKey();
+    config['groqApiKey'] = getGroqApiKey();
+
+    res.status(200).json(config);
+  } catch (err: any) {
+    res.status(500).json({ message: 'An error has occurred.' });
+    logger.error(`Error getting config: ${err.message}`);
   }
-
-  for (const provider in embeddingModelProviders) {
-    config['embeddingModelProviders'][provider] = Object.keys(
-      embeddingModelProviders[provider],
-    );
-  }
-
-  config['openaiApiKey'] = getOpenaiApiKey();
-  config['ollamaApiUrl'] = getOllamaApiEndpoint();
-  config['anthropicApiKey'] = getAnthropicApiKey();
-  config['groqApiKey'] = getGroqApiKey();
-
-  res.status(200).json(config);
 });
 
 router.post('/', async (req, res) => {

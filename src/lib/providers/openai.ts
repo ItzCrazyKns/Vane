@@ -9,31 +9,46 @@ export const loadOpenAIChatModels = async () => {
 
   try {
     const chatModels = {
-      'GPT-3.5 turbo': new ChatOpenAI({
-        openAIApiKey,
-        modelName: 'gpt-3.5-turbo',
-        temperature: 0.7,
-      }),
-      'GPT-4': new ChatOpenAI({
-        openAIApiKey,
-        modelName: 'gpt-4',
-        temperature: 0.7,
-      }),
-      'GPT-4 turbo': new ChatOpenAI({
-        openAIApiKey,
-        modelName: 'gpt-4-turbo',
-        temperature: 0.7,
-      }),
-      'GPT-4 omni': new ChatOpenAI({
-        openAIApiKey,
-        modelName: 'gpt-4o',
-        temperature: 0.7,
-      }),
-      'GPT-4 omni mini': new ChatOpenAI({
-        openAIApiKey,
-        modelName: 'gpt-4o-mini',
-        temperature: 0.7,
-      }),
+      'gpt-3.5-turbo': {
+        displayName: 'GPT-3.5 Turbo',
+        model: new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-3.5-turbo',
+          temperature: 0.7,
+        }),
+      },
+      'gpt-4': {
+        displayName: 'GPT-4',
+        model: new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-4',
+          temperature: 0.7,
+        }),
+      },
+      'gpt-4-turbo': {
+        displayName: 'GPT-4 turbo',
+        model: new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-4-turbo',
+          temperature: 0.7,
+        }),
+      },
+      'gpt-4o': {
+        displayName: 'GPT-4 omni',
+        model: new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-4o',
+          temperature: 0.7,
+        }),
+      },
+      'gpt-4o-mini': {
+        displayName: 'GPT-4 omni mini',
+        model: new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-4o-mini',
+          temperature: 0.7,
+        }),
+      },
     };
 
     return chatModels;
@@ -50,14 +65,20 @@ export const loadOpenAIEmbeddingsModels = async () => {
 
   try {
     const embeddingModels = {
-      'Text embedding 3 small': new OpenAIEmbeddings({
-        openAIApiKey,
-        modelName: 'text-embedding-3-small',
-      }),
-      'Text embedding 3 large': new OpenAIEmbeddings({
-        openAIApiKey,
-        modelName: 'text-embedding-3-large',
-      }),
+      'text-embedding-3-small': {
+        displayName: 'Text Embedding 3 Small',
+        model: new OpenAIEmbeddings({
+          openAIApiKey,
+          modelName: 'text-embedding-3-small',
+        }),
+      },
+      'text-embedding-3-large': {
+        displayName: 'Text Embedding 3 Large',
+        model: new OpenAIEmbeddings({
+          openAIApiKey,
+          modelName: 'text-embedding-3-large',
+        }),
+      },
     };
 
     return embeddingModels;
