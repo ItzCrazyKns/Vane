@@ -28,7 +28,7 @@ type WSMessage = {
   history: Array<[string, string]>;
 };
 
-const searchHandlers = {
+export const searchHandlers = {
   webSearch: handleWebSearch,
   academicSearch: handleAcademicSearch,
   writingAssistant: handleWritingAssistant,
