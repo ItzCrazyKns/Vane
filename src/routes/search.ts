@@ -24,7 +24,7 @@ interface embeddingModel {
   model: string;
 }
 
-interface RequestBody {
+interface ChatRequestBody {
   focusMode: string;
   chatModel?: chatModel;
   embeddingModel?: embeddingModel;
@@ -34,7 +34,7 @@ interface RequestBody {
 
 router.post('/', async (req, res) => {
   try {
-    const body: RequestBody = req.body;
+    const body: ChatRequestBody = req.body;
 
     if (!body.focusMode || !body.query) {
       return res.status(400).json({ message: 'Missing focus mode or query' });
