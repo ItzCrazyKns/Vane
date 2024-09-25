@@ -6,7 +6,9 @@ Perplexica’s Search API makes it easy to use our AI-powered search engine. You
 
 ## Endpoint
 
-### **POST** `/api/search`
+### **POST** `http://localhost:3001/api/search`
+
+**Note**: Replace `3001` with any other port if you've changed the default PORT
 
 ### Request
 
