@@ -37,7 +37,7 @@ The API accepts a JSON object in the request body, where you define the focus mo
 
 ### Request Parameters
 
-- **`chatModel`** (object, optional): Defines the chat model to be used for the query.
+- **`chatModel`** (object, optional): Defines the chat model to be used for the query. For model details you can send a GET request at `http://localhost:3001/api/models`.
 
   - `provider`: Specifies the provider for the chat model (e.g., `openai`, `ollama`).
   - `model`: The specific model from the chosen provider (e.g., `gpt-4o-mini`).
@@ -45,7 +45,8 @@ The API accepts a JSON object in the request body, where you define the focus mo
     - `customOpenAIBaseURL`: If you’re using a custom OpenAI instance, provide the base URL.
     - `customOpenAIKey`: The API key for a custom OpenAI instance.
 
-- **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching.
+- **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching. For model details you can send a GET request at `http://localhost:3001/api/models`.
+
 
   - `provider`: The provider for the embedding model (e.g., `openai`).
   - `model`: The specific embedding model (e.g., `text-embedding-3-large`).
