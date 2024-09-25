@@ -28,7 +28,10 @@ The API accepts a JSON object in the request body, where you define the focus mo
   },
   "focusMode": "webSearch",
   "query": "What is Perplexica",
-  "history": []
+  "history": [
+    ["human", "Hi, how are you?"],
+    ["assistant", "I am doing well, how can I help you today?"]
+  ]
 }
 ```
 
