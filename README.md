@@ -129,7 +129,7 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 
 ## Using Perplexica's API
 
-Perplexica also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, customize models, and get results tailored to your needs.
+Perplexica also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, use multiple models and get answers to your queries.
 
 For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
 
