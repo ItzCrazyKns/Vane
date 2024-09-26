@@ -9,6 +9,45 @@ export const loadGroqChatModels = async () => {
 
   try {
     const chatModels = {
+      'llama-3.2-3b-preview': {
+        displayName: 'Llama 3.2 3B',
+        model: new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'llama-3.2-3b-preview',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+      },
+      'llama-3.2-11b-text-preview': {
+        displayName: 'Llama 3.2 11B Text',
+        model: new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'llama-3.2-11b-text-preview',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+      },
+      'llama-3.2-90b-text-preview': {
+        displayName: 'Llama 3.2 90B Text',
+        model: new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'llama-3.2-90b-text-preview',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+      },
       'llama-3.1-70b-versatile': {
         displayName: 'Llama 3.1 70B',
         model: new ChatOpenAI(
