@@ -13,9 +13,9 @@ services:
     build:
       context: .
       dockerfile: backend.dockerfile
-      args:
-        - SEARXNG_API_URL=http://searxng:8080
     image: itzcrazykns1337/perplexica-backend:main
+    environment:
+      - SEARXNG_API_URL=http://searxng:8080
     depends_on:
       - searxng
     ports:
