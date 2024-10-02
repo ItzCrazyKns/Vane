@@ -30,7 +30,7 @@ jobs:
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Build and push Docker image
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
           docker build -f backend.dockerfile -t itzcrazykns1337/perplexica-backend:main .
           docker build -f app.dockerfile -t itzcrazykns1337/perplexica-frontend:main .
