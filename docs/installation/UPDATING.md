@@ -10,15 +10,21 @@ To update Perplexica to the latest version, follow these steps:
    git clone https://github.com/ItzCrazyKns/Perplexica.git
 ```
 
-2. Navigate to the Project Directory
+2. Navigate to the Project Directory.
 
-3. Update and Rebuild Docker Containers:
+3. Pull latest images from registry.
 
 ```bash
-docker compose up -d --build
+docker compose pull
 ```
 
-4. Once the command completes running go to http://localhost:3000 and verify the latest changes.
+4. Update and Recreate containers.
+
+```bash
+docker compose up -d
+```
+
+5. Once the command completes running go to http://localhost:3000 and verify the latest changes.
 
 ## For non Docker users
 
