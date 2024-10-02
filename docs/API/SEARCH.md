@@ -47,7 +47,6 @@ The API accepts a JSON object in the request body, where you define the focus mo
 
 - **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching. For model details you can send a GET request at `http://localhost:3001/api/models`.
 
-
   - `provider`: The provider for the embedding model (e.g., `openai`).
   - `model`: The specific embedding model (e.g., `text-embedding-3-large`).
 
