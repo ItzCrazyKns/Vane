@@ -1,4 +1,4 @@
-name: Build & Push Docker Image
+name: Build & Push Docker Images
 
 on:
   push:
@@ -10,7 +10,9 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        service: [backend, app]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -31,16 +33,38 @@ jobs:
         id: version
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image for ${{ matrix.service }}
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
           docker buildx create --use
-          docker buildx build --platform linux/amd64,linux/arm64 -f backend.dockerfile -t itzcrazykns1337/perplexica-backend:main --push .
-          docker buildx build --platform linux/amd64,linux/arm64 -f app.dockerfile -t itzcrazykns1337/perplexica-frontend:main --push .
+          if [[ "${{ matrix.service }}" == "backend" ]]; then \
+            DOCKERFILE=backend.dockerfile; \
+            IMAGE_NAME=perplexica-backend; \
+          else \
+            DOCKERFILE=app.dockerfile; \
+            IMAGE_NAME=perplexica-frontend; \
+          fi
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:main \
+            --cache-to=type=inline \
+            -f $DOCKERFILE \
+            -t itzcrazykns1337/${IMAGE_NAME}:main \
+            --push .
 
-      - name: Build and push release Docker image
+      - name: Build and push release Docker image for ${{ matrix.service }}
         if: github.event_name == 'release'
         run: |
           docker buildx create --use
-          docker buildx build --platform linux/amd64,linux/arm64 -f backend.dockerfile -t itzcrazykns1337/perplexica-backend:${{ env.RELEASE_VERSION }} --push .
-          docker buildx build --platform linux/amd64,linux/arm64 -f app.dockerfile -t itzcrazykns1337/perplexica-frontend:${{ env.RELEASE_VERSION }} --push .
+          if [[ "${{ matrix.service }}" == "backend" ]]; then \
+            DOCKERFILE=backend.dockerfile; \
+            IMAGE_NAME=perplexica-backend; \
+          else \
+            DOCKERFILE=app.dockerfile; \
+            IMAGE_NAME=perplexica-frontend; \
+          fi
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }} \
+            --cache-to=type=inline \
+            -f $DOCKERFILE \
+            -t itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }} \
+            --push .
