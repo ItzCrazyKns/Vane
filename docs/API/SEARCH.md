@@ -26,6 +26,7 @@ The API accepts a JSON object in the request body, where you define the focus mo
     "provider": "openai",
     "model": "text-embedding-3-large"
   },
+  "optimizationMode": "speed",
   "focusMode": "webSearch",
   "query": "What is Perplexica",
   "history": [
@@ -37,7 +38,7 @@ The API accepts a JSON object in the request body, where you define the focus mo
 
 ### Request Parameters
 
-- **`chatModel`** (object, optional): Defines the chat model to be used for the query. For model details you can send a GET request at `http://localhost:3001/api/models`.
+- **`chatModel`** (object, optional): Defines the chat model to be used for the query. For model details you can send a GET request at `http://localhost:3001/api/models`. Make sure to use the key value (For example "gpt-4o-mini" instead of the display name "GPT 4 omni mini").
 
   - `provider`: Specifies the provider for the chat model (e.g., `openai`, `ollama`).
   - `model`: The specific model from the chosen provider (e.g., `gpt-4o-mini`).
@@ -45,7 +46,7 @@ The API accepts a JSON object in the request body, where you define the focus mo
     - `customOpenAIBaseURL`: If you’re using a custom OpenAI instance, provide the base URL.
     - `customOpenAIKey`: The API key for a custom OpenAI instance.
 
-- **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching. For model details you can send a GET request at `http://localhost:3001/api/models`.
+- **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching. For model details you can send a GET request at `http://localhost:3001/api/models`. Make sure to use the key value (For example "text-embedding-3-large" instead of the display name "Text Embedding 3 Large").
 
   - `provider`: The provider for the embedding model (e.g., `openai`).
   - `model`: The specific embedding model (e.g., `text-embedding-3-large`).
@@ -54,9 +55,15 @@ The API accepts a JSON object in the request body, where you define the focus mo
 
   - `webSearch`, `academicSearch`, `writingAssistant`, `wolframAlphaSearch`, `youtubeSearch`, `redditSearch`.
 
+- **`optimizationMode`** (string, optional): Specifies the optimization mode to control the balance between performance and quality. Available modes:
+
+  - `speed`: Prioritize speed and return the fastest answer.
+  - `balanced`: Provide a balanced answer with good speed and reasonable quality.
+
 - **`query`** (string, required): The search query or question.
 
 - **`history`** (array, optional): An array of message pairs representing the conversation history. Each pair consists of a role (either 'human' or 'assistant') and the message content. This allows the system to use the context of the conversation to refine results. Example:
+
   ```json
   [
     ["human", "What is Perplexica?"],

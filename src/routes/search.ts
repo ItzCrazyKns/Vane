@@ -25,6 +25,7 @@ interface embeddingModel {
 }
 
 interface ChatRequestBody {
+  optimizationMode: 'speed' | 'balanced';
   focusMode: string;
   chatModel?: chatModel;
   embeddingModel?: embeddingModel;
@@ -41,6 +42,7 @@ router.post('/', async (req, res) => {
     }
 
     body.history = body.history || [];
+    body.optimizationMode = body.optimizationMode || 'balanced';
 
     const history: BaseMessage[] = body.history.map((msg) => {
       if (msg[0] === 'human') {
@@ -119,7 +121,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Invalid focus mode' });
     }
 
-    const emitter = searchHandler(body.query, history, llm, embeddings);
+    const emitter = searchHandler(body.query, history, llm, embeddings, body.optimizationMode);
 
     let message = '';
     let sources = [];
