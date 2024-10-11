@@ -22,7 +22,7 @@ type Message = {
 
 type WSMessage = {
   message: Message;
-  copilot: boolean;
+  optimizationMode: string;
   type: string;
   focusMode: string;
   history: Array<[string, string]>;
@@ -138,6 +138,7 @@ export const handleMessage = async (
           history,
           llm,
           embeddings,
+          parsedWSMessage.optimizationMode,
         );
 
         handleEmitterEvents(emitter, ws, id, parsedMessage.chatId);

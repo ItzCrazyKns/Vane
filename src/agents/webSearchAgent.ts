@@ -216,12 +216,34 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
         await Promise.all(
           docGroups.map(async (doc) => {
             const res = await llm.invoke(`
-            You are a text summarizer. You need to summarize the text provided inside the \`text\` XML block. 
-            You need to summarize the text into 1 or 2 sentences capturing the main idea of the text.
-            You need to make sure that you don't miss any point while summarizing the text.
-            You will also be given a \`query\` XML block which will contain the query of the user. Try to answer the query in the summary from the text provided.
-            If the query says Summarize then you just need to summarize the text without answering the query.
-            Only return the summarized text without any other messages, text or XML block.
+            You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
+            text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
+            If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
+            
+            - **Journalistic tone**: The summary should sound professional and journalistic, not too casual or vague.
+            - **Thorough and detailed**: Ensure that every key point from the text is captured and that the summary directly answers the query.
+            - **Not too lengthy, but detailed**: The summary should be informative but not excessively long. Focus on providing detailed information in a concise format.
+
+            The text will be shared inside the \`text\` XML tag, and the query inside the \`query\` XML tag.
+
+            <example>
+            <text>
+            Docker is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers. 
+            It was first released in 2013 and is developed by Docker, Inc. Docker is designed to make it easier to create, deploy, and run applications 
+            by using containers.
+            </text>
+
+            <query>
+            What is Docker and how does it work?
+            </query>
+
+            Response:
+            Docker is a revolutionary platform-as-a-service product developed by Docker, Inc., that uses container technology to make application 
+            deployment more efficient. It allows developers to package their software with all necessary dependencies, making it easier to run in 
+            any environment. Released in 2013, Docker has transformed the way applications are built, deployed, and managed.
+            </example>
+
+            Everything below is the actual data you will be working with. Good luck!
 
             <query>
             ${question}
@@ -273,6 +295,7 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
 const createBasicWebSearchAnsweringChain = (
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const basicWebSearchRetrieverChain = createBasicWebSearchRetrieverChain(llm);
 
@@ -301,27 +324,33 @@ const createBasicWebSearchAnsweringChain = (
       (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
 
-    const [docEmbeddings, queryEmbedding] = await Promise.all([
-      embeddings.embedDocuments(docsWithContent.map((doc) => doc.pageContent)),
-      embeddings.embedQuery(query),
-    ]);
+    if (optimizationMode === 'speed') {
+      return docsWithContent.slice(0, 15);
+    } else if (optimizationMode === 'balanced') {
+      const [docEmbeddings, queryEmbedding] = await Promise.all([
+        embeddings.embedDocuments(
+          docsWithContent.map((doc) => doc.pageContent),
+        ),
+        embeddings.embedQuery(query),
+      ]);
 
-    const similarity = docEmbeddings.map((docEmbedding, i) => {
-      const sim = computeSimilarity(queryEmbedding, docEmbedding);
+      const similarity = docEmbeddings.map((docEmbedding, i) => {
+        const sim = computeSimilarity(queryEmbedding, docEmbedding);
 
-      return {
-        index: i,
-        similarity: sim,
-      };
-    });
+        return {
+          index: i,
+          similarity: sim,
+        };
+      });
 
-    const sortedDocs = similarity
-      .filter((sim) => sim.similarity > 0.3)
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 15)
-      .map((sim) => docsWithContent[sim.index]);
+      const sortedDocs = similarity
+        .filter((sim) => sim.similarity > 0.3)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 15)
+        .map((sim) => docsWithContent[sim.index]);
 
-    return sortedDocs;
+      return sortedDocs;
+    }
   };
 
   return RunnableSequence.from([
@@ -358,6 +387,7 @@ const basicWebSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const emitter = new eventEmitter();
 
@@ -365,6 +395,7 @@ const basicWebSearch = (
     const basicWebSearchAnsweringChain = createBasicWebSearchAnsweringChain(
       llm,
       embeddings,
+      optimizationMode,
     );
 
     const stream = basicWebSearchAnsweringChain.streamEvents(
@@ -394,8 +425,15 @@ const handleWebSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
-  const emitter = basicWebSearch(message, history, llm, embeddings);
+  const emitter = basicWebSearch(
+    message,
+    history,
+    llm,
+    embeddings,
+    optimizationMode,
+  );
   return emitter;
 };
 

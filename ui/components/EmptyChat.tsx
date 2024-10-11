@@ -4,10 +4,14 @@ const EmptyChat = ({
   sendMessage,
   focusMode,
   setFocusMode,
+  optimizationMode,
+  setOptimizationMode,
 }: {
   sendMessage: (message: string) => void;
   focusMode: string;
   setFocusMode: (mode: string) => void;
+  optimizationMode: string;
+  setOptimizationMode: (mode: string) => void;
 }) => {
   return (
     <div className="relative">
@@ -19,6 +23,8 @@ const EmptyChat = ({
           sendMessage={sendMessage}
           focusMode={focusMode}
           setFocusMode={setFocusMode}
+          optimizationMode={optimizationMode}
+          setOptimizationMode={setOptimizationMode}
         />
       </div>
     </div>

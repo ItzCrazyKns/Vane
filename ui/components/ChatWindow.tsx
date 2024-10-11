@@ -278,6 +278,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [focusMode, setFocusMode] = useState('webSearch');
+  const [optimizationMode, setOptimizationMode] = useState('speed');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
@@ -346,6 +347,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           content: message,
         },
         focusMode: focusMode,
+        optimizationMode: optimizationMode,
         history: [...chatHistory, ['human', message]],
       }),
     );
@@ -508,6 +510,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             sendMessage={sendMessage}
             focusMode={focusMode}
             setFocusMode={setFocusMode}
+            optimizationMode={optimizationMode}
+            setOptimizationMode={setOptimizationMode}
           />
         )}
       </div>

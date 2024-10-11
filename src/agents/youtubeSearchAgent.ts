@@ -138,6 +138,7 @@ const createBasicYoutubeSearchRetrieverChain = (llm: BaseChatModel) => {
 const createBasicYoutubeSearchAnsweringChain = (
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const basicYoutubeSearchRetrieverChain =
     createBasicYoutubeSearchRetrieverChain(llm);
@@ -163,27 +164,33 @@ const createBasicYoutubeSearchAnsweringChain = (
       (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
 
-    const [docEmbeddings, queryEmbedding] = await Promise.all([
-      embeddings.embedDocuments(docsWithContent.map((doc) => doc.pageContent)),
-      embeddings.embedQuery(query),
-    ]);
+    if (optimizationMode === 'speed') {
+      return docsWithContent.slice(0, 15);
+    } else {
+      const [docEmbeddings, queryEmbedding] = await Promise.all([
+        embeddings.embedDocuments(
+          docsWithContent.map((doc) => doc.pageContent),
+        ),
+        embeddings.embedQuery(query),
+      ]);
 
-    const similarity = docEmbeddings.map((docEmbedding, i) => {
-      const sim = computeSimilarity(queryEmbedding, docEmbedding);
+      const similarity = docEmbeddings.map((docEmbedding, i) => {
+        const sim = computeSimilarity(queryEmbedding, docEmbedding);
 
-      return {
-        index: i,
-        similarity: sim,
-      };
-    });
+        return {
+          index: i,
+          similarity: sim,
+        };
+      });
 
-    const sortedDocs = similarity
-      .filter((sim) => sim.similarity > 0.3)
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 15)
-      .map((sim) => docsWithContent[sim.index]);
+      const sortedDocs = similarity
+        .filter((sim) => sim.similarity > 0.3)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 15)
+        .map((sim) => docsWithContent[sim.index]);
 
-    return sortedDocs;
+      return sortedDocs;
+    }
   };
 
   return RunnableSequence.from([
@@ -220,12 +227,13 @@ const basicYoutubeSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const emitter = new eventEmitter();
 
   try {
     const basicYoutubeSearchAnsweringChain =
-      createBasicYoutubeSearchAnsweringChain(llm, embeddings);
+      createBasicYoutubeSearchAnsweringChain(llm, embeddings, optimizationMode);
 
     const stream = basicYoutubeSearchAnsweringChain.streamEvents(
       {
@@ -254,8 +262,15 @@ const handleYoutubeSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
-  const emitter = basicYoutubeSearch(message, history, llm, embeddings);
+  const emitter = basicYoutubeSearch(
+    message,
+    history,
+    llm,
+    embeddings,
+    optimizationMode,
+  );
   return emitter;
 };
 
