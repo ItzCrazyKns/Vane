@@ -1,5 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-import { Dialog, Transition } from '@headlessui/react';
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from '@headlessui/react';
 import { Document } from '@langchain/core/documents';
 import { Fragment, useState } from 'react';
 
@@ -74,7 +80,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
         <Dialog as="div" className="relative z-50" onClose={closeModal}>
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
+              <TransitionChild
                 as={Fragment}
                 enter="ease-out duration-200"
                 enterFrom="opacity-0 scale-95"
@@ -83,10 +89,10 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                 leaveFrom="opacity-100 scale-200"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title className="text-lg font-medium leading-6 dark:text-white">
+                <DialogPanel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
+                  <DialogTitle className="text-lg font-medium leading-6 dark:text-white">
                     Sources
-                  </Dialog.Title>
+                  </DialogTitle>
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
                     {sources.map((source, i) => (
                       <a
@@ -122,8 +128,8 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                       </a>
                     ))}
                   </div>
-                </Dialog.Panel>
-              </Transition.Child>
+                </DialogPanel>
+              </TransitionChild>
             </div>
           </div>
         </Dialog>

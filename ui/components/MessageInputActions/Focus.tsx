@@ -7,7 +7,12 @@ import {
   SwatchBook,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Popover, Transition } from '@headlessui/react';
+import {
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+  Transition,
+} from '@headlessui/react';
 import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
 import { Fragment } from 'react';
 
@@ -70,10 +75,10 @@ const Focus = ({
   setFocusMode: (mode: string) => void;
 }) => {
   return (
-    <Popover className="fixed w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
-      <Popover.Button
+    <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
+      <PopoverButton
         type="button"
-        className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
+        className=" text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
         {focusMode !== 'webSearch' ? (
           <div className="flex flex-row items-center space-x-1">
@@ -86,7 +91,7 @@ const Focus = ({
         ) : (
           <ScanEye />
         )}
-      </Popover.Button>
+      </PopoverButton>
       <Transition
         as={Fragment}
         enter="transition ease-out duration-150"
@@ -96,10 +101,10 @@ const Focus = ({
         leaveFrom="opacity-100 translate-y-0"
         leaveTo="opacity-0 translate-y-1"
       >
-        <Popover.Panel className="absolute z-10 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
+        <PopoverPanel className="absolute z-10 w-64 md:w-[500px] left-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-4 max-h-[200px] md:max-h-none overflow-y-auto">
             {focusModes.map((mode, i) => (
-              <Popover.Button
+              <PopoverButton
                 onClick={() => setFocusMode(mode.key)}
                 key={i}
                 className={cn(
@@ -123,10 +128,10 @@ const Focus = ({
                 <p className="text-black/70 dark:text-white/70 text-xs">
                   {mode.description}
                 </p>
-              </Popover.Button>
+              </PopoverButton>
             ))}
           </div>
-        </Popover.Panel>
+        </PopoverPanel>
       </Transition>
     </Popover>
   );
