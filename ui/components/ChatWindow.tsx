@@ -473,11 +473,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
   };
 
   useEffect(() => {
-    if (isReady && initialMessage) {
+    if (isReady && initialMessage && ws?.readyState === 1) {
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, initialMessage]);
+  }, [isReady, initialMessage, ws?.readyState]);
 
   if (hasError) {
     return (
