@@ -144,8 +144,8 @@ For more details, check out the full documentation [here](https://github.com/Itz
 - [x] History Saving features
 - [x] Introducing various Focus Modes
 - [x] Adding API support
+- [x] Adding Discover
 - [ ] Finalizing Copilot Mode
-- [ ] Adding Discover
 
 ## Support Us
 
