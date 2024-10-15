@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([
       getAvailableChatModelProviders(),
       getAvailableEmbeddingModelProviders(),
-    ]); 
+    ]);
 
     Object.keys(chatModelProviders).forEach((provider) => {
       Object.keys(chatModelProviders[provider]).forEach((model) => {

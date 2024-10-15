@@ -115,11 +115,7 @@ const createBasicAcademicSearchRetrieverChain = (llm: BaseChatModel) => {
 
       const res = await searchSearxng(input, {
         language: 'en',
-        engines: [
-          'arxiv',
-          'google scholar',
-          'pubmed',
-        ],
+        engines: ['arxiv', 'google scholar', 'pubmed'],
       });
 
       const documents = res.results.map(
