@@ -1,7 +1,7 @@
 'use client';
 
 import DeleteChat from '@/components/DeleteChat';
-import { formatTimeDifference } from '@/lib/utils';
+import { cn, formatTimeDifference } from '@/lib/utils';
 import { BookOpenText, ClockIcon, Delete, ScanEye } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -58,13 +58,12 @@ const Page = () => {
     </div>
   ) : (
     <div>
-      <div className="fixed z-40 top-0 left-0 right-0 lg:pl-[104px] lg:pr-6 lg:px-8 px-4 py-4 lg:py-6 border-b border-light-200 dark:border-dark-200">
-        <div className="flex flex-row items-center space-x-2 max-w-screen-lg lg:mx-auto">
+      <div className="flex flex-col pt-4">
+        <div className="flex items-center">
           <BookOpenText />
-          <h2 className="text-black dark:text-white lg:text-3xl lg:font-medium">
-            Library
-          </h2>
+          <h1 className="text-3xl font-medium p-2">Library</h1>
         </div>
+        <hr className="border-t border-[#2B2C2C] my-4 w-full" />
       </div>
       {chats.length === 0 && (
         <div className="flex flex-row items-center justify-center min-h-screen">
@@ -74,10 +73,15 @@ const Page = () => {
         </div>
       )}
       {chats.length > 0 && (
-        <div className="flex flex-col pt-16 lg:pt-24">
+        <div className="flex flex-col pb-20 lg:pb-2">
           {chats.map((chat, i) => (
             <div
-              className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
+              className={cn(
+                'flex flex-col space-y-4 py-6',
+                i !== chats.length - 1
+                  ? 'border-b border-white-200 dark:border-dark-200'
+                  : '',
+              )}
               key={i}
             >
               <Link
