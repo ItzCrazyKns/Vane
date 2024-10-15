@@ -167,7 +167,6 @@ const createBasicAcademicSearchAnsweringChain = (
     if (optimizationMode === 'speed') {
       return docsWithContent.slice(0, 15);
     } else if (optimizationMode === 'balanced') {
-      console.log('Balanced mode');
       const [docEmbeddings, queryEmbedding] = await Promise.all([
         embeddings.embedDocuments(
           docsWithContent.map((doc) => doc.pageContent),

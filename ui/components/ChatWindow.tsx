@@ -171,11 +171,22 @@ const useSocket = (
           }
         }, 10000);
 
-        ws.onopen = () => {
-          console.log('[DEBUG] open');
-          clearTimeout(timeoutId);
-          setIsWSReady(true);
-        };
+        ws.addEventListener('message', (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === 'signal' && data.data === 'open') {
+            const interval = setInterval(() => {
+              if (ws.readyState === 1) {
+                setIsWSReady(true);
+                clearInterval(interval);
+              }
+            }, 5);
+            clearTimeout(timeoutId);
+            console.log('[DEBUG] opened');
+          }
+          if (data.type === 'error') {
+            toast.error(data.data);
+          }
+        });
 
         ws.onerror = () => {
           clearTimeout(timeoutId);
@@ -188,13 +199,6 @@ const useSocket = (
           setError(true);
           console.log('[DEBUG] closed');
         };
-
-        ws.addEventListener('message', (e) => {
-          const data = JSON.parse(e.data);
-          if (data.type === 'error') {
-            toast.error(data.data);
-          }
-        });
 
         setWs(ws);
       };
@@ -325,6 +329,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   useEffect(() => {
     if (isMessagesLoaded && isWSReady) {
       setIsReady(true);
+      console.log('[DEBUG] ready');
     }
   }, [isMessagesLoaded, isWSReady]);
 
@@ -477,7 +482,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, initialMessage, ws?.readyState]);
+  }, [ws?.readyState, isReady, initialMessage, isWSReady]);
 
   if (hasError) {
     return (

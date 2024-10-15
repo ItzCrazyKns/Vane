@@ -78,6 +78,18 @@ export const handleConnection = async (
       ws.close();
     }
 
+    const interval = setInterval(() => {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(
+          JSON.stringify({
+            type: 'signal',
+            data: 'open',
+          }),
+        );
+        clearInterval(interval);
+      }
+    }, 5);
+
     ws.on(
       'message',
       async (message) =>
