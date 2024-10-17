@@ -13,6 +13,7 @@
   - [Ollama Connection Errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [Using Perplexica's API](#using-perplexicas-api)
+- [Expose Perplexica to a network](#expose-perplexica-to-network)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
@@ -132,6 +133,10 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 Perplexica also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, use multiple models and get answers to your queries.
 
 For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
+
+## Expose Perplexica to network
+
+You can access Perplexica over your home network by following our networking guide [here](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
 
 ## One-Click Deployment
 
