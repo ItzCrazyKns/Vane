@@ -1,4 +1,4 @@
-FROM node:slim
+FROM node:20-buster
 
 WORKDIR /home/perplexica
 
