@@ -333,8 +333,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isWSReady]);
 
-  const sendMessage = async (message: string) => {
+  const sendMessage = async (message: string, messageId?: string) => {
     if (loading) return;
+
     setLoading(true);
     setMessageAppeared(false);
 
@@ -342,12 +343,13 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let recievedMessage = '';
     let added = false;
 
-    const messageId = crypto.randomBytes(7).toString('hex');
+    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
 
     ws?.send(
       JSON.stringify({
         type: 'message',
         message: {
+          messageId: messageId,
           chatId: chatId!,
           content: message,
         },
@@ -474,7 +476,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
-    sendMessage(message.content);
+    sendMessage(message.content, message.messageId);
   };
 
   useEffect(() => {
