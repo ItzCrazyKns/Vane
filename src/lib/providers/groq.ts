@@ -22,12 +22,12 @@ export const loadGroqChatModels = async () => {
           },
         ),
       },
-      'llama-3.2-11b-text-preview': {
-        displayName: 'Llama 3.2 11B Text',
+      'llama-3.2-11b-vision-preview': {
+        displayName: 'Llama 3.2 11B Vision',
         model: new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'llama-3.2-11b-text-preview',
+            modelName: 'llama-3.2-11b-vision-preview',
             temperature: 0.7,
           },
           {
@@ -35,12 +35,12 @@ export const loadGroqChatModels = async () => {
           },
         ),
       },
-      'llama-3.2-90b-text-preview': {
-        displayName: 'Llama 3.2 90B Text',
+      'llama-3.2-90b-vision-preview': {
+        displayName: 'Llama 3.2 90B Vision',
         model: new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'llama-3.2-90b-text-preview',
+            modelName: 'llama-3.2-90b-vision-preview',
             temperature: 0.7,
           },
           {
