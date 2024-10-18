@@ -128,7 +128,9 @@ const SettingsDialog = ({
         const chatModel =
           localStorage.getItem('chatModel') ||
           (data.chatModelProviders &&
-            data.chatModelProviders[chatModelProvider]?.[0].name) ||
+          data.chatModelProviders[chatModelProvider]?.length > 0
+            ? data.chatModelProviders[chatModelProvider][0].name
+            : undefined) ||
           '';
         const embeddingModelProvider =
           localStorage.getItem('embeddingModelProvider') ||
