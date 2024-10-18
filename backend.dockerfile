@@ -10,6 +10,8 @@ COPY yarn.lock /home/perplexica/
 
 RUN mkdir /home/perplexica/data
 
+RUN yarn config set registry https://registry.npmjs.org/
+
 RUN yarn install --frozen-lockfile
 RUN yarn build
 
