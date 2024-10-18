@@ -1,4 +1,4 @@
-FROM node:20-buster
+FROM node:18-slim
 
 WORKDIR /home/perplexica
 
@@ -10,7 +10,7 @@ COPY yarn.lock /home/perplexica/
 
 RUN mkdir /home/perplexica/data
 
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --network-timeout 600000
 RUN yarn build
 
 CMD ["yarn", "start"]
