@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:18-slim
 
 ARG NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
 ARG NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
@@ -9,7 +9,7 @@ WORKDIR /home/perplexica
 
 COPY ui /home/perplexica/
 
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --network-timeout 600000
 RUN yarn build
 
 CMD ["yarn", "start"]
