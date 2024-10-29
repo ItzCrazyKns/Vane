@@ -63,10 +63,6 @@ const Navbar = ({
           size={17}
           className="active:scale-95 transition duration-100 cursor-pointer"
         />
-        {/* <Trash
-          size={17}
-          className='text-red-400 active:scale-95 transition duration-100 cursor-pointer'
-        /> */}
         <DeleteChat redirect chatId={chatId} chats={[]} setChats={() => {}} />
       </div>
     </div>
