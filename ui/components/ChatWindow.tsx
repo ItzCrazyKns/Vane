@@ -318,6 +318,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         console.log('[DEBUG] closed');
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const messagesRef = useRef<Message[]>([]);
