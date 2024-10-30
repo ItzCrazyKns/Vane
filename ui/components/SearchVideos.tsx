@@ -26,10 +26,10 @@ declare module 'yet-another-react-lightbox' {
 
 const Searchvideos = ({
   query,
-  chat_history,
+  chatHistory,
 }: {
   query: string;
-  chat_history: Message[];
+  chatHistory: Message[];
 }) => {
   const [videos, setVideos] = useState<Video[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,6 +46,9 @@ const Searchvideos = ({
             const chatModelProvider = localStorage.getItem('chatModelProvider');
             const chatModel = localStorage.getItem('chatModel');
 
+            const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
+            const customOpenAIKey = localStorage.getItem('openAIApiKey');
+
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/videos`,
               {
@@ -55,9 +58,15 @@ const Searchvideos = ({
                 },
                 body: JSON.stringify({
                   query: query,
-                  chat_history: chat_history,
-                  chat_model_provider: chatModelProvider,
-                  chat_model: chatModel,
+                  chatHistory: chatHistory,
+                  chatModel: {
+                    provider: chatModelProvider,
+                    model: chatModel,
+                    ...(chatModelProvider === 'custom_openai' && {
+                      customOpenAIBaseURL: customOpenAIBaseURL,
+                      customOpenAIKey: customOpenAIKey,
+                    }),
+                  },
                 }),
               },
             );

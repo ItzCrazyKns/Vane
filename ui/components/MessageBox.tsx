@@ -186,10 +186,10 @@ const MessageBox = ({
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
             <SearchImages
               query={history[messageIndex - 1].content}
-              chat_history={history.slice(0, messageIndex - 1)}
+              chatHistory={history.slice(0, messageIndex - 1)}
             />
             <SearchVideos
-              chat_history={history.slice(0, messageIndex - 1)}
+              chatHistory={history.slice(0, messageIndex - 1)}
               query={history[messageIndex - 1].content}
             />
           </div>
