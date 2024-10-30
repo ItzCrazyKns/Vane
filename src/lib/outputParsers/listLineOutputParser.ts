@@ -23,7 +23,7 @@ class LineListOutputParser extends BaseOutputParser<string[]> {
     const startKeyIndex = text.indexOf(`<${this.key}>`);
     const endKeyIndex = text.indexOf(`</${this.key}>`);
 
-    if (startKeyIndex === -1 || endKeyIndex === -1) {
+    if (startKeyIndex === -1 && endKeyIndex === -1) {
       return [];
     }
 
