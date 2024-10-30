@@ -11,7 +11,6 @@ import {
 import { Fragment, useState } from 'react';
 import { toast } from 'sonner';
 import { Chat } from '@/app/library/page';
-import { useRouter } from 'next/navigation';
 
 const DeleteChat = ({
   chatId,
@@ -26,8 +25,6 @@ const DeleteChat = ({
 }) => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const router = useRouter();
 
   const handleDelete = async () => {
     setLoading(true);
@@ -51,7 +48,7 @@ const DeleteChat = ({
       setChats(newChats);
 
       if (redirect) {
-        router.push('/');
+        window.location.href = '/';
       }
     } catch (err: any) {
       toast.error(err.message);
