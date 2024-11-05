@@ -40,6 +40,8 @@ const EmptyChatMessageInput = ({
 
     document.addEventListener('keydown', handleKeyDown);
 
+    inputRef.current?.focus();
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
