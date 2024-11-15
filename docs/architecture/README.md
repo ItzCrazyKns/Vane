@@ -1,4 +1,4 @@
-## Perplexica's Architecture
+# Perplexica's Architecture
 
 Perplexica's architecture consists of the following key components:
 
