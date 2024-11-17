@@ -1,6 +1,6 @@
 # 🚀 Perplexica - An AI-powered search engine 🔎 <!-- omit in toc -->
 
-![preview](.assets/perplexica-screenshot.png?)
+![preview](.assets/perplexica-screenshot.png)
 
 ## Table of Contents <!-- omit in toc -->
 
