@@ -83,6 +83,7 @@ const Page = () => {
                 href={`/?q=Summary: ${item.url}`}
                 key={i}
                 className="max-w-sm rounded-lg overflow-hidden bg-light-secondary dark:bg-dark-secondary hover:-translate-y-[1px] transition duration-200"
+                target="_blank"
               >
                 <img
                   className="object-cover w-full aspect-video"
