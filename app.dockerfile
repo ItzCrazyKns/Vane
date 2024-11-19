@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:20.18.0-alpine
 
 ARG NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
 ARG NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
