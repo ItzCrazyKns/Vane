@@ -337,7 +337,7 @@ const createBasicWebSearchAnsweringChain = (
     }
 
     if (query.toLocaleLowerCase() === 'summarize') {
-      return docs;
+      return docs.slice(0, 15)
     }
 
     const docsWithContent = docs.filter(
