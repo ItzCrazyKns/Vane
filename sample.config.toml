@@ -1,6 +1,7 @@
 [GENERAL]
 PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
+KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
 
 [API_KEYS]
 OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
