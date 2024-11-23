@@ -20,10 +20,12 @@ import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
 import logger from '../utils/logger';
 import LineListOutputParser from '../lib/outputParsers/listLineOutputParser';
-import { getDocumentsFromLinks } from '../lib/linkDocument';
 import LineOutputParser from '../lib/outputParsers/lineOutputParser';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
 import { ChatOpenAI } from '@langchain/openai';
+import path from 'path';
+import fs from 'fs';
+import { getDocumentsFromLinks } from '../utils/documents';
 
 const basicSearchRetrieverPrompt = `
 You are an AI question rephraser. You will be given a conversation and a follow-up question,  you will have to rephrase the follow up question so it is a standalone question and can be used by another LLM to search the web for information to answer it.
@@ -316,6 +318,7 @@ const createBasicWebSearchAnsweringChain = (
   llm: BaseChatModel,
   embeddings: Embeddings,
   optimizationMode: 'speed' | 'balanced' | 'quality',
+  fileIds: string[],
 ) => {
   const basicWebSearchRetrieverChain = createBasicWebSearchRetrieverChain(llm);
 
@@ -336,8 +339,32 @@ const createBasicWebSearchAnsweringChain = (
       return docs;
     }
 
+    const filesData = fileIds
+      .map((file) => {
+        const filePath = path.join(process.cwd(), 'uploads', file);
+
+        const contentPath = filePath + '-extracted.json';
+        const embeddingsPath = filePath + '-embeddings.json';
+
+        const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
+        const embeddings = JSON.parse(fs.readFileSync(embeddingsPath, 'utf8'));
+
+        const fileSimilaritySearchObject = content.contents.map(
+          (c: string, i) => {
+            return {
+              fileName: content.title,
+              content: c,
+              embeddings: embeddings.embeddings[i],
+            };
+          },
+        );
+
+        return fileSimilaritySearchObject;
+      })
+      .flat();
+
     if (query.toLocaleLowerCase() === 'summarize') {
-      return docs.slice(0, 15)
+      return docs.slice(0, 15);
     }
 
     const docsWithContent = docs.filter(
@@ -345,7 +372,43 @@ const createBasicWebSearchAnsweringChain = (
     );
 
     if (optimizationMode === 'speed') {
-      return docsWithContent.slice(0, 15);
+      if (filesData.length > 0) {
+        const [queryEmbedding] = await Promise.all([
+          embeddings.embedQuery(query),
+        ]);
+
+        const fileDocs = filesData.map((fileData) => {
+          return new Document({
+            pageContent: fileData.content,
+            metadata: {
+              title: fileData.fileName,
+              url: `File`,
+            },
+          });
+        });
+
+        const similarity = filesData.map((fileData, i) => {
+          const sim = computeSimilarity(queryEmbedding, fileData.embeddings);
+
+          return {
+            index: i,
+            similarity: sim,
+          };
+        });
+
+        const sortedDocs = similarity
+          .filter((sim) => sim.similarity > 0.3)
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, 8)
+          .map((sim) => fileDocs[sim.index]);
+
+        return [
+          ...sortedDocs,
+          ...docsWithContent.slice(0, 15 - sortedDocs.length),
+        ];
+      } else {
+        return docsWithContent.slice(0, 15);
+      }
     } else if (optimizationMode === 'balanced') {
       const [docEmbeddings, queryEmbedding] = await Promise.all([
         embeddings.embedDocuments(
@@ -353,6 +416,20 @@ const createBasicWebSearchAnsweringChain = (
         ),
         embeddings.embedQuery(query),
       ]);
+
+      docsWithContent.push(
+        ...filesData.map((fileData) => {
+          return new Document({
+            pageContent: fileData.content,
+            metadata: {
+              title: fileData.fileName,
+              url: `File`,
+            },
+          });
+        }),
+      );
+
+      docEmbeddings.push(...filesData.map((fileData) => fileData.embeddings));
 
       const similarity = docEmbeddings.map((docEmbedding, i) => {
         const sim = computeSimilarity(queryEmbedding, docEmbedding);
@@ -408,6 +485,7 @@ const basicWebSearch = (
   llm: BaseChatModel,
   embeddings: Embeddings,
   optimizationMode: 'speed' | 'balanced' | 'quality',
+  fileIds: string[],
 ) => {
   const emitter = new eventEmitter();
 
@@ -416,6 +494,7 @@ const basicWebSearch = (
       llm,
       embeddings,
       optimizationMode,
+      fileIds,
     );
 
     const stream = basicWebSearchAnsweringChain.streamEvents(
@@ -446,6 +525,7 @@ const handleWebSearch = (
   llm: BaseChatModel,
   embeddings: Embeddings,
   optimizationMode: 'speed' | 'balanced' | 'quality',
+  fileIds: string[],
 ) => {
   const emitter = basicWebSearch(
     message,
@@ -453,6 +533,7 @@ const handleWebSearch = (
     llm,
     embeddings,
     optimizationMode,
+    fileIds,
   );
   return emitter;
 };

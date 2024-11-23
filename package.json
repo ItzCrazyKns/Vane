@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npm run db:push && node dist/app.js",
     "build": "tsc",
-    "dev": "nodemon src/app.ts",
+    "dev": "nodemon --ignore uploads/ src/app.ts ",
     "db:push": "drizzle-kit push sqlite",
     "format": "prettier . --check",
     "format:write": "prettier . --write"
@@ -16,6 +16,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/html-to-text": "^9.0.4",
+    "@types/multer": "^1.4.12",
     "@types/pdf-parse": "^1.1.4",
     "@types/readable-stream": "^4.0.11",
     "@types/ws": "^8.5.12",
@@ -41,6 +42,8 @@
     "express": "^4.19.2",
     "html-to-text": "^9.0.5",
     "langchain": "^0.1.30",
+    "mammoth": "^1.8.0",
+    "multer": "^1.4.5-lts.1",
     "pdf-parse": "^1.1.1",
     "winston": "^3.13.0",
     "ws": "^8.17.1",

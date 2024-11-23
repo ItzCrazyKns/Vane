@@ -9,6 +9,7 @@ COPY package.json /home/perplexica/
 COPY yarn.lock /home/perplexica/
 
 RUN mkdir /home/perplexica/data
+RUN mkdir /home/perplexica/uploads
 
 RUN yarn install --frozen-lockfile --network-timeout 600000
 RUN yarn build
