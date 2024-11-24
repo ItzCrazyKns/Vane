@@ -2,6 +2,7 @@ import { Settings } from 'lucide-react';
 import EmptyChatMessageInput from './EmptyChatMessageInput';
 import SettingsDialog from './SettingsDialog';
 import { useState } from 'react';
+import { File } from './ChatWindow';
 
 const EmptyChat = ({
   sendMessage,
@@ -9,12 +10,20 @@ const EmptyChat = ({
   setFocusMode,
   optimizationMode,
   setOptimizationMode,
+  fileIds,
+  setFileIds,
+  files,
+  setFiles,
 }: {
   sendMessage: (message: string) => void;
   focusMode: string;
   setFocusMode: (mode: string) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
+  fileIds: string[];
+  setFileIds: (fileIds: string[]) => void;
+  files: File[];
+  setFiles: (files: File[]) => void;
 }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -37,6 +46,10 @@ const EmptyChat = ({
           setFocusMode={setFocusMode}
           optimizationMode={optimizationMode}
           setOptimizationMode={setOptimizationMode}
+          fileIds={fileIds}
+          setFileIds={setFileIds}
+          files={files}
+          setFiles={setFiles}
         />
       </div>
     </div>

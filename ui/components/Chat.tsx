@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from 'react';
 import MessageInput from './MessageInput';
-import { Message } from './ChatWindow';
+import { File, Message } from './ChatWindow';
 import MessageBox from './MessageBox';
 import MessageBoxLoading from './MessageBoxLoading';
 
@@ -12,12 +12,20 @@ const Chat = ({
   sendMessage,
   messageAppeared,
   rewrite,
+  fileIds,
+  setFileIds,
+  files,
+  setFiles,
 }: {
   messages: Message[];
   sendMessage: (message: string) => void;
   loading: boolean;
   messageAppeared: boolean;
   rewrite: (messageId: string) => void;
+  fileIds: string[];
+  setFileIds: (fileIds: string[]) => void;
+  files: File[];
+  setFiles: (files: File[]) => void;
 }) => {
   const [dividerWidth, setDividerWidth] = useState(0);
   const dividerRef = useRef<HTMLDivElement | null>(null);
@@ -78,7 +86,14 @@ const Chat = ({
           className="bottom-24 lg:bottom-10 fixed z-40"
           style={{ width: dividerWidth }}
         >
-          <MessageInput loading={loading} sendMessage={sendMessage} />
+          <MessageInput
+            loading={loading}
+            sendMessage={sendMessage}
+            fileIds={fileIds}
+            setFileIds={setFileIds}
+            files={files}
+            setFiles={setFiles}
+          />
         </div>
       )}
     </div>

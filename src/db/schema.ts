@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 
 export const messages = sqliteTable('messages', {
@@ -11,9 +12,17 @@ export const messages = sqliteTable('messages', {
   }),
 });
 
+interface File {
+  name: string;
+  fileId: string;
+}
+
 export const chats = sqliteTable('chats', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   createdAt: text('createdAt').notNull(),
   focusMode: text('focusMode').notNull(),
+  files: text('files', { mode: 'json' })
+    .$type<File[]>()
+    .default(sql`'[]'`),
 });

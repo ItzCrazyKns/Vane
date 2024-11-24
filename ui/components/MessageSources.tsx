@@ -7,6 +7,7 @@ import {
   TransitionChild,
 } from '@headlessui/react';
 import { Document } from '@langchain/core/documents';
+import { File } from 'lucide-react';
 import { Fragment, useState } from 'react';
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
@@ -36,13 +37,19 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
           </p>
           <div className="flex flex-row items-center justify-between">
             <div className="flex flex-row items-center space-x-1">
-              <img
-                src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
-                width={16}
-                height={16}
-                alt="favicon"
-                className="rounded-lg h-4 w-4"
-              />
+              {source.metadata.url === 'File' ? (
+                <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
+                  <File size={12} className="text-white/70" />
+                </div>
+              ) : (
+                <img
+                  src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                  width={16}
+                  height={16}
+                  alt="favicon"
+                  className="rounded-lg h-4 w-4"
+                />
+              )}
               <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
                 {source.metadata.url.replace(/.+\/\/|www.|\..+/g, '')}
               </p>
@@ -60,16 +67,21 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
           className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
         >
           <div className="flex flex-row items-center space-x-1">
-            {sources.slice(3, 6).map((source, i) => (
-              <img
-                src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
-                width={16}
-                height={16}
-                alt="favicon"
-                className="rounded-lg h-4 w-4"
-                key={i}
-              />
-            ))}
+            {sources.slice(3, 6).map((source, i) => {
+              return source.metadata.url === 'File' ? (
+                <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
+                  <File size={12} className="text-white/70" />
+                </div>
+              ) : (
+                <img
+                  src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                  width={16}
+                  height={16}
+                  alt="favicon"
+                  className="rounded-lg h-4 w-4"
+                />
+              );
+            })}
           </div>
           <p className="text-xs text-black/50 dark:text-white/50">
             View {sources.length - 3} more
@@ -106,13 +118,19 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                         </p>
                         <div className="flex flex-row items-center justify-between">
                           <div className="flex flex-row items-center space-x-1">
-                            <img
-                              src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
-                              width={16}
-                              height={16}
-                              alt="favicon"
-                              className="rounded-lg h-4 w-4"
-                            />
+                            {source.metadata.url === 'File' ? (
+                              <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
+                                <File size={12} className="text-white/70" />
+                              </div>
+                            ) : (
+                              <img
+                                src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                                width={16}
+                                height={16}
+                                alt="favicon"
+                                className="rounded-lg h-4 w-4"
+                              />
+                            )}
                             <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
                               {source.metadata.url.replace(
                                 /.+\/\/|www.|\..+/g,

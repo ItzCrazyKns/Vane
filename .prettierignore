@@ -36,3 +36,6 @@ coverage
 
 # Ignore all files with the .DS_Store extension (macOS specific)
 .DS_Store
+
+# Ignore all files in uploads directory
+uploads

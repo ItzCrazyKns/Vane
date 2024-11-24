@@ -11,7 +11,7 @@
     "format:write": "prettier . --write"
   },
   "dependencies": {
-    "@headlessui/react": "^2.1.9",
+    "@headlessui/react": "^2.2.0",
     "@icons-pack/react-simple-icons": "^9.4.0",
     "@langchain/openai": "^0.0.25",
     "@tailwindcss/typography": "^0.5.12",

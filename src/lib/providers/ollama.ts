@@ -6,7 +6,7 @@ import { ChatOllama } from '@langchain/community/chat_models/ollama';
 export const loadOllamaChatModels = async () => {
   const ollamaEndpoint = getOllamaApiEndpoint();
   const keepAlive = getKeepAlive();
-  
+
   if (!ollamaEndpoint) return {};
 
   try {
@@ -25,7 +25,7 @@ export const loadOllamaChatModels = async () => {
           baseUrl: ollamaEndpoint,
           model: model.model,
           temperature: 0.7,
-          keepAlive: keepAlive
+          keepAlive: keepAlive,
         }),
       };
 
