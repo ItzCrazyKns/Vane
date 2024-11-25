@@ -108,6 +108,11 @@ export const handleMessage = async (
     const parsedWSMessage = JSON.parse(message) as WSMessage;
     const parsedMessage = parsedWSMessage.message;
 
+    if (parsedWSMessage.files.length > 0) {
+      /* TODO: Implement uploads in other classes/single meta class system*/
+      parsedWSMessage.focusMode = 'webSearch';
+    }
+
     const humanMessageId =
       parsedMessage.messageId ?? crypto.randomBytes(7).toString('hex');
     const aiMessageId = crypto.randomBytes(7).toString('hex');
