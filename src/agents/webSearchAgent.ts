@@ -485,7 +485,7 @@ const basicWebSearch = (
   llm: BaseChatModel,
   embeddings: Embeddings,
   optimizationMode: 'speed' | 'balanced' | 'quality',
-  fileIds: string[],
+  fileIds: string[] = [],
 ) => {
   const emitter = new eventEmitter();
 
