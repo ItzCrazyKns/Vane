@@ -63,6 +63,7 @@ interface SettingsType {
   openaiApiKey: string;
   groqApiKey: string;
   anthropicApiKey: string;
+  geminiApiKey: string;
   ollamaApiUrl: string;
 }
 
@@ -472,6 +473,22 @@ const SettingsDialog = ({
                           setConfig({
                             ...config,
                             anthropicApiKey: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Gemini API Key
+                      </p>
+                      <Input
+                        type="text"
+                        placeholder="Gemini API key"
+                        defaultValue={config.geminiApiKey}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            geminiApiKey: e.target.value,
                           })
                         }
                       />
