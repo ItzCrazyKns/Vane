@@ -3,7 +3,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableChatModelProviders } from '../lib/providers';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
-import handleVideoSearch from '../agents/videoSearchAgent';
+import handleVideoSearch from '../chains/videoSearchAgent';
 import { ChatOpenAI } from '@langchain/openai';
 
 const router = express.Router();

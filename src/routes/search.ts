@@ -1,7 +1,7 @@
 import express from 'express';
 import logger from '../utils/logger';
-import { BaseChatModel } from 'langchain/chat_models/base';
-import { Embeddings } from 'langchain/embeddings/base';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { Embeddings } from '@langchain/core/embeddings';
 import { ChatOpenAI } from '@langchain/openai';
 import {
   getAvailableChatModelProviders,
@@ -9,6 +9,7 @@ import {
 } from '../lib/providers';
 import { searchHandlers } from '../websocket/messageHandler';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { MetaSearchAgentType } from '../search/metaSearchAgent';
 
 const router = express.Router();
 
@@ -115,18 +116,19 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Invalid model selected' });
     }
 
-    const searchHandler = searchHandlers[body.focusMode];
+    const searchHandler: MetaSearchAgentType = searchHandlers[body.focusMode];
 
     if (!searchHandler) {
       return res.status(400).json({ message: 'Invalid focus mode' });
     }
 
-    const emitter = searchHandler(
+    const emitter = await searchHandler.searchAndAnswer(
       body.query,
       history,
       llm,
       embeddings,
       body.optimizationMode,
+      [],
     );
 
     let message = '';

@@ -1,11 +1,5 @@
 import { EventEmitter, WebSocket } from 'ws';
 import { BaseMessage, AIMessage, HumanMessage } from '@langchain/core/messages';
-import handleWebSearch from '../agents/webSearchAgent';
-import handleAcademicSearch from '../agents/academicSearchAgent';
-import handleWritingAssistant from '../agents/writingAssistant';
-import handleWolframAlphaSearch from '../agents/wolframAlphaSearchAgent';
-import handleYoutubeSearch from '../agents/youtubeSearchAgent';
-import handleRedditSearch from '../agents/redditSearchAgent';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
 import logger from '../utils/logger';
@@ -14,6 +8,10 @@ import { chats, messages as messagesSchema } from '../db/schema';
 import { eq, asc, gt } from 'drizzle-orm';
 import crypto from 'crypto';
 import { getFileDetails } from '../utils/files';
+import MetaSearchAgent, {
+  MetaSearchAgentType,
+} from '../search/metaSearchAgent';
+import prompts from '../prompts';
 
 type Message = {
   messageId: string;
@@ -23,7 +21,7 @@ type Message = {
 
 type WSMessage = {
   message: Message;
-  optimizationMode: string;
+  optimizationMode: 'speed' | 'balanced' | 'quality';
   type: string;
   focusMode: string;
   history: Array<[string, string]>;
@@ -31,12 +29,60 @@ type WSMessage = {
 };
 
 export const searchHandlers = {
-  webSearch: handleWebSearch,
-  academicSearch: handleAcademicSearch,
-  writingAssistant: handleWritingAssistant,
-  wolframAlphaSearch: handleWolframAlphaSearch,
-  youtubeSearch: handleYoutubeSearch,
-  redditSearch: handleRedditSearch,
+  webSearch: new MetaSearchAgent({
+    activeEngines: [],
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    responsePrompt: prompts.webSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0.3,
+    searchWeb: true,
+    summarizer: true,
+  }),
+  academicSearch: new MetaSearchAgent({
+    activeEngines: ['arxiv', 'google scholar', 'pubmed'],
+    queryGeneratorPrompt: prompts.academicSearchRetrieverPrompt,
+    responsePrompt: prompts.academicSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0,
+    searchWeb: true,
+    summarizer: false,
+  }),
+  writingAssistant: new MetaSearchAgent({
+    activeEngines: [],
+    queryGeneratorPrompt: '',
+    responsePrompt: prompts.writingAssistantPrompt,
+    rerank: true,
+    rerankThreshold: 0,
+    searchWeb: false,
+    summarizer: false,
+  }),
+  wolframAlphaSearch: new MetaSearchAgent({
+    activeEngines: ['wolframalpha'],
+    queryGeneratorPrompt: prompts.wolframAlphaSearchRetrieverPrompt,
+    responsePrompt: prompts.wolframAlphaSearchResponsePrompt,
+    rerank: false,
+    rerankThreshold: 0,
+    searchWeb: true,
+    summarizer: false,
+  }),
+  youtubeSearch: new MetaSearchAgent({
+    activeEngines: ['youtube'],
+    queryGeneratorPrompt: prompts.youtubeSearchRetrieverPrompt,
+    responsePrompt: prompts.youtubeSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0.3,
+    searchWeb: true,
+    summarizer: false,
+  }),
+  redditSearch: new MetaSearchAgent({
+    activeEngines: ['reddit'],
+    queryGeneratorPrompt: prompts.redditSearchRetrieverPrompt,
+    responsePrompt: prompts.redditSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0.3,
+    searchWeb: true,
+    summarizer: false,
+  }),
 };
 
 const handleEmitterEvents = (
@@ -139,59 +185,64 @@ export const handleMessage = async (
     });
 
     if (parsedWSMessage.type === 'message') {
-      const handler = searchHandlers[parsedWSMessage.focusMode];
+      const handler: MetaSearchAgentType =
+        searchHandlers[parsedWSMessage.focusMode];
 
       if (handler) {
-        const emitter = handler(
-          parsedMessage.content,
-          history,
-          llm,
-          embeddings,
-          parsedWSMessage.optimizationMode,
-          parsedWSMessage.files,
-        );
+        try {
+          const emitter = await handler.searchAndAnswer(
+            parsedMessage.content,
+            history,
+            llm,
+            embeddings,
+            parsedWSMessage.optimizationMode,
+            parsedWSMessage.files,
+          );
 
-        handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId);
+          handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId);
 
-        const chat = await db.query.chats.findFirst({
-          where: eq(chats.id, parsedMessage.chatId),
-        });
+          const chat = await db.query.chats.findFirst({
+            where: eq(chats.id, parsedMessage.chatId),
+          });
 
-        if (!chat) {
-          await db
-            .insert(chats)
-            .values({
-              id: parsedMessage.chatId,
-              title: parsedMessage.content,
-              createdAt: new Date().toString(),
-              focusMode: parsedWSMessage.focusMode,
-              files: parsedWSMessage.files.map(getFileDetails),
-            })
-            .execute();
-        }
+          if (!chat) {
+            await db
+              .insert(chats)
+              .values({
+                id: parsedMessage.chatId,
+                title: parsedMessage.content,
+                createdAt: new Date().toString(),
+                focusMode: parsedWSMessage.focusMode,
+                files: parsedWSMessage.files.map(getFileDetails),
+              })
+              .execute();
+          }
 
-        const messageExists = await db.query.messages.findFirst({
-          where: eq(messagesSchema.messageId, humanMessageId),
-        });
+          const messageExists = await db.query.messages.findFirst({
+            where: eq(messagesSchema.messageId, humanMessageId),
+          });
 
-        if (!messageExists) {
-          await db
-            .insert(messagesSchema)
-            .values({
-              content: parsedMessage.content,
-              chatId: parsedMessage.chatId,
-              messageId: humanMessageId,
-              role: 'user',
-              metadata: JSON.stringify({
-                createdAt: new Date(),
-              }),
-            })
-            .execute();
-        } else {
-          await db
-            .delete(messagesSchema)
-            .where(gt(messagesSchema.id, messageExists.id))
-            .execute();
+          if (!messageExists) {
+            await db
+              .insert(messagesSchema)
+              .values({
+                content: parsedMessage.content,
+                chatId: parsedMessage.chatId,
+                messageId: humanMessageId,
+                role: 'user',
+                metadata: JSON.stringify({
+                  createdAt: new Date(),
+                }),
+              })
+              .execute();
+          } else {
+            await db
+              .delete(messagesSchema)
+              .where(gt(messagesSchema.id, messageExists.id))
+              .execute();
+          }
+        } catch (err) {
+          console.log(err);
         }
       } else {
         ws.send(

@@ -1,5 +1,5 @@
 import express from 'express';
-import generateSuggestions from '../agents/suggestionGeneratorAgent';
+import generateSuggestions from '../chains/suggestionGeneratorAgent';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableChatModelProviders } from '../lib/providers';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
