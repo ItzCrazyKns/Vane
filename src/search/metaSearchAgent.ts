@@ -236,6 +236,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       RunnableMap.from({
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
+        date: () => new Date().toISOString(),
         context: RunnableLambda.from(async (input: BasicChainInput) => {
           const processedHistory = formatChatHistoryAsString(
             input.chat_history,
