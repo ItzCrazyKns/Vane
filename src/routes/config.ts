@@ -54,7 +54,7 @@ router.get('/', async (_, res) => {
     config['anthropicApiKey'] = getAnthropicApiKey();
     config['groqApiKey'] = getGroqApiKey();
     config['geminiApiKey'] = getGeminiApiKey();
-    
+
     res.status(200).json(config);
   } catch (err: any) {
     res.status(500).json({ message: 'An error has occurred.' });
