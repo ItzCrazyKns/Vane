@@ -9,12 +9,20 @@ export const loadAnthropicChatModels = async () => {
 
   try {
     const chatModels = {
-      'claude-3-5-sonnet-20240620': {
+      'claude-3-5-sonnet-20241022': {
         displayName: 'Claude 3.5 Sonnet',
         model: new ChatAnthropic({
           temperature: 0.7,
           anthropicApiKey: anthropicApiKey,
-          model: 'claude-3-5-sonnet-20240620',
+          model: 'claude-3-5-sonnet-20241022',
+        }),
+      },
+      'claude-3-5-haiku-20241022': {
+        displayName: 'Claude 3.5 Haiku',
+        model: new ChatAnthropic({
+          temperature: 0.7,
+          anthropicApiKey: anthropicApiKey,
+          model: 'claude-3-5-haiku-20241022',
         }),
       },
       'claude-3-opus-20240229': {
