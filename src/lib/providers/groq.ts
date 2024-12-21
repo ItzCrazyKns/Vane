@@ -9,6 +9,19 @@ export const loadGroqChatModels = async () => {
 
   try {
     const chatModels = {
+      'llama-3.3-70b-versatile': {
+        displayName: 'Llama 3.3 70B',
+        model: new ChatOpenAI(
+          {
+            openAIApiKey: groqApiKey,
+            modelName: 'llama-3.3-70b-versatile',
+            temperature: 0.7,
+          },
+          {
+            baseURL: 'https://api.groq.com/openai/v1',
+          },
+        ),
+      },
       'llama-3.2-3b-preview': {
         displayName: 'Llama 3.2 3B',
         model: new ChatOpenAI(
@@ -41,19 +54,6 @@ export const loadGroqChatModels = async () => {
           {
             openAIApiKey: groqApiKey,
             modelName: 'llama-3.2-90b-vision-preview',
-            temperature: 0.7,
-          },
-          {
-            baseURL: 'https://api.groq.com/openai/v1',
-          },
-        ),
-      },
-      'llama-3.1-70b-versatile': {
-        displayName: 'Llama 3.1 70B',
-        model: new ChatOpenAI(
-          {
-            openAIApiKey: groqApiKey,
-            modelName: 'llama-3.1-70b-versatile',
             temperature: 0.7,
           },
           {
@@ -106,19 +106,6 @@ export const loadGroqChatModels = async () => {
           {
             openAIApiKey: groqApiKey,
             modelName: 'mixtral-8x7b-32768',
-            temperature: 0.7,
-          },
-          {
-            baseURL: 'https://api.groq.com/openai/v1',
-          },
-        ),
-      },
-      'gemma-7b-it': {
-        displayName: 'Gemma 7B',
-        model: new ChatOpenAI(
-          {
-            openAIApiKey: groqApiKey,
-            modelName: 'gemma-7b-it',
             temperature: 0.7,
           },
           {
