@@ -43,6 +43,14 @@ const useSocket = (
         let embeddingModelProvider = localStorage.getItem(
           'embeddingModelProvider',
         );
+        let openAIBaseURL =
+          chatModelProvider === 'custom_openai'
+            ? localStorage.getItem('openAIBaseURL')
+            : null;
+        let openAIPIKey =
+          chatModelProvider === 'custom_openai'
+            ? localStorage.getItem('openAIApiKey')
+            : null;
 
         const providers = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/models`,
@@ -62,16 +70,18 @@ const useSocket = (
           if (!chatModel || !chatModelProvider) {
             const chatModelProviders = providers.chatModelProviders;
 
-            chatModelProvider = Object.keys(chatModelProviders)[0];
+            chatModelProvider =
+              chatModelProvider || Object.keys(chatModelProviders)[0];
 
             if (chatModelProvider === 'custom_openai') {
               toast.error(
-                'Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL',
+                'Seems like you are using the custom OpenAI provider, please open the settings and enter a model name to use.',
               );
               setError(true);
               return;
             } else {
               chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+
               if (
                 !chatModelProviders ||
                 Object.keys(chatModelProviders).length === 0
@@ -108,18 +118,42 @@ const useSocket = (
 
           if (
             Object.keys(chatModelProviders).length > 0 &&
-            !chatModelProviders[chatModelProvider]
+            (((!openAIBaseURL || !openAIPIKey) &&
+              chatModelProvider === 'custom_openai') ||
+              !chatModelProviders[chatModelProvider])
           ) {
-            chatModelProvider = Object.keys(chatModelProviders)[0];
+            const chatModelProvidersKeys = Object.keys(chatModelProviders);
+            chatModelProvider =
+              chatModelProvidersKeys.find(
+                (key) => Object.keys(chatModelProviders[key]).length > 0,
+              ) || chatModelProvidersKeys[0];
+
+            if (
+              chatModelProvider === 'custom_openai' &&
+              (!openAIBaseURL || !openAIPIKey)
+            ) {
+              toast.error(
+                'Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL',
+              );
+              setError(true);
+              return;
+            }
+
             localStorage.setItem('chatModelProvider', chatModelProvider);
           }
 
           if (
             chatModelProvider &&
-            chatModelProvider != 'custom_openai' &&
+            (!openAIBaseURL || !openAIPIKey) &&
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
-            chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+            chatModel = Object.keys(
+              chatModelProviders[
+                Object.keys(chatModelProviders[chatModelProvider]).length > 0
+                  ? chatModelProvider
+                  : Object.keys(chatModelProviders)[0]
+              ],
+            )[0];
             localStorage.setItem('chatModel', chatModel);
           }
 
