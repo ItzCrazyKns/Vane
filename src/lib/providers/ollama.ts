@@ -2,6 +2,7 @@ import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import { getKeepAlive, getOllamaApiEndpoint } from '../../config';
 import logger from '../../utils/logger';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
+import axios from 'axios';
 
 export const loadOllamaChatModels = async () => {
   const ollamaEndpoint = getOllamaApiEndpoint();
@@ -10,13 +11,13 @@ export const loadOllamaChatModels = async () => {
   if (!ollamaEndpoint) return {};
 
   try {
-    const response = await fetch(`${ollamaEndpoint}/api/tags`, {
+    const response = await axios.get(`${ollamaEndpoint}/api/tags`, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    const { models: ollamaModels } = (await response.json()) as any;
+    const { models: ollamaModels } = response.data;
 
     const chatModels = ollamaModels.reduce((acc, model) => {
       acc[model.model] = {
@@ -45,13 +46,13 @@ export const loadOllamaEmbeddingsModels = async () => {
   if (!ollamaEndpoint) return {};
 
   try {
-    const response = await fetch(`${ollamaEndpoint}/api/tags`, {
+    const response = await axios.get(`${ollamaEndpoint}/api/tags`, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    const { models: ollamaModels } = (await response.json()) as any;
+    const { models: ollamaModels } = response.data;
 
     const embeddingsModels = ollamaModels.reduce((acc, model) => {
       acc[model.model] = {
