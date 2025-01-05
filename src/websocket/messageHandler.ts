@@ -5,7 +5,7 @@ import type { Embeddings } from '@langchain/core/embeddings';
 import logger from '../utils/logger';
 import db from '../db';
 import { chats, messages as messagesSchema } from '../db/schema';
-import { eq, asc, gt } from 'drizzle-orm';
+import { eq, asc, gt, and } from 'drizzle-orm';
 import crypto from 'crypto';
 import { getFileDetails } from '../utils/files';
 import MetaSearchAgent, {
@@ -238,7 +238,7 @@ export const handleMessage = async (
           } else {
             await db
               .delete(messagesSchema)
-              .where(gt(messagesSchema.id, messageExists.id))
+              .where(and(gt(messagesSchema.id, messageExists.id), eq(messagesSchema.chatId, parsedMessage.chatId)))
               .execute();
           }
         } catch (err) {
