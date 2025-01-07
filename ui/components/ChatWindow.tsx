@@ -236,7 +236,6 @@ const useSocket = (
                 setIsWSReady(true);
                 retryCountRef.current = 0;
                 setError(false);
-                toast.success('Connection restored');
                 clearInterval(interval);
               }
             }, 5);
