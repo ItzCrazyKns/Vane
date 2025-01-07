@@ -73,7 +73,10 @@ const useSocket = (
             },
           },
         ).then(async (res) => {
-          if (!res.ok) throw new Error(`Failed to fetch models: ${res.status} ${res.statusText}`);
+          if (!res.ok)
+            throw new Error(
+              `Failed to fetch models: ${res.status} ${res.statusText}`,
+            );
           return res.json();
         });
 
@@ -262,7 +265,6 @@ const useSocket = (
             attemptReconnect();
           }
         };
-
       } catch (error) {
         console.debug(new Date(), 'ws:error', error);
         attemptReconnect();
@@ -274,12 +276,17 @@ const useSocket = (
       if (retryCountRef.current > MAX_RETRIES) {
         console.debug(new Date(), 'ws:max_retries');
         setError(true);
-        toast.error('Unable to connect to server after multiple attempts. Please refresh the page to try again.');
+        toast.error(
+          'Unable to connect to server after multiple attempts. Please refresh the page to try again.',
+        );
         return;
       }
 
       const backoffDelay = getBackoffDelay(retryCountRef.current);
-      console.debug(new Date(), `ws:retry attempt=${retryCountRef.current}/${MAX_RETRIES} delay=${backoffDelay}ms`);
+      console.debug(
+        new Date(),
+        `ws:retry attempt=${retryCountRef.current}/${MAX_RETRIES} delay=${backoffDelay}ms`,
+      );
 
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
