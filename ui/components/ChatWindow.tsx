@@ -237,8 +237,11 @@ const useSocket = (
             const interval = setInterval(() => {
               if (ws.readyState === 1) {
                 setIsWSReady(true);
-                retryCountRef.current = 0;
                 setError(false);
+                if (retryCountRef.current > 0) {
+                  toast.success('Connection restored.');
+                }
+                retryCountRef.current = 0;
                 clearInterval(interval);
               }
             }, 5);
