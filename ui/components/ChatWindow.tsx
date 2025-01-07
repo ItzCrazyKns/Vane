@@ -270,12 +270,14 @@ const useSocket = (
         };
       } catch (error) {
         console.debug(new Date(), 'ws:error', error);
+        setIsWSReady(false);
         attemptReconnect();
       }
     };
 
     const attemptReconnect = () => {
       retryCountRef.current += 1;
+
       if (retryCountRef.current > MAX_RETRIES) {
         console.debug(new Date(), 'ws:max_retries');
         setError(true);
@@ -303,14 +305,14 @@ const useSocket = (
     connectWs();
 
     return () => {
-      isCleaningUpRef.current = true;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.close();
+        isCleaningUpRef.current = true;
+        console.debug(new Date(), 'ws:cleanup');
       }
-      console.debug(new Date(), 'ws:cleanup');
     };
   }, [url, setIsWSReady, setError]);
 
@@ -456,6 +458,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
     if (isMessagesLoaded && isWSReady) {
       setIsReady(true);
       console.debug(new Date(), 'app:ready');
+    } else {
+      setIsReady(false);
     }
   }, [isMessagesLoaded, isWSReady]);
 
