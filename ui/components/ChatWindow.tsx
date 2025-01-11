@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import Error from 'next/error';
+import { Settings } from 'lucide-react';
+import SettingsDialog from './SettingsDialog';
 
 export type Message = {
   messageId: string;
@@ -344,6 +346,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [notFound, setNotFound] = useState(false);
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   useEffect(() => {
     if (
       chatId &&
@@ -548,10 +552,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   if (hasError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="dark:text-white/70 text-black/70 text-sm">
-          Failed to connect to the server. Please try again later.
-        </p>
+      <div className="relative">
+        <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
+          <Settings
+            className="cursor-pointer lg:hidden"
+            onClick={() => setIsSettingsOpen(true)}
+          />
+        </div>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <p className="dark:text-white/70 text-black/70 text-sm">
+            Failed to connect to the server. Please try again later.
+          </p>
+        </div>
+        <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen} />
       </div>
     );
   }
