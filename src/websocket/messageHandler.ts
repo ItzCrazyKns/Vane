@@ -238,7 +238,12 @@ export const handleMessage = async (
           } else {
             await db
               .delete(messagesSchema)
-              .where(and(gt(messagesSchema.id, messageExists.id), eq(messagesSchema.chatId, parsedMessage.chatId)))
+              .where(
+                and(
+                  gt(messagesSchema.id, messageExists.id),
+                  eq(messagesSchema.chatId, parsedMessage.chatId),
+                ),
+              )
               .execute();
           }
         } catch (err) {
