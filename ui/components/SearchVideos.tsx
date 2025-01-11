@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { PlayCircle, PlayIcon, PlusIcon, VideoIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Lightbox, { GenericSlide, VideoSlide } from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { Message } from './ChatWindow';
@@ -35,6 +35,8 @@ const Searchvideos = ({
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [slides, setSlides] = useState<VideoSlide[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const videoRefs = useRef<(HTMLIFrameElement | null)[]>([]);
 
   return (
     <>
@@ -182,18 +184,39 @@ const Searchvideos = ({
             open={open}
             close={() => setOpen(false)}
             slides={slides}
+            index={currentIndex}
+            on={{
+              view: ({ index }) => {
+                const previousIframe = videoRefs.current[currentIndex];
+                if (previousIframe?.contentWindow) {
+                  previousIframe.contentWindow.postMessage(
+                    '{"event":"command","func":"pauseVideo","args":""}',
+                    '*',
+                  );
+                }
+
+                setCurrentIndex(index);
+              },
+            }}
             render={{
-              slide: ({ slide }) =>
-                slide.type === 'video-slide' ? (
+              slide: ({ slide }) => {
+                const index = slides.findIndex((s) => s === slide);
+                return slide.type === 'video-slide' ? (
                   <div className="h-full w-full flex flex-row items-center justify-center">
                     <iframe
-                      src={slide.iframe_src}
+                      src={`${slide.iframe_src}${slide.iframe_src.includes('?') ? '&' : '?'}enablejsapi=1`}
+                      ref={(el) => {
+                        if (el) {
+                          videoRefs.current[index] = el;
+                        }
+                      }}
                       className="aspect-video max-h-[95vh] w-[95vw] rounded-2xl md:w-[80vw]"
                       allowFullScreen
                       allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                     />
                   </div>
-                ) : null,
+                ) : null;
+              },
             }}
           />
         </>

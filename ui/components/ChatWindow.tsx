@@ -9,9 +9,9 @@ import crypto from 'crypto';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
-import Error from 'next/error';
 import { Settings } from 'lucide-react';
 import SettingsDialog from './SettingsDialog';
+import NextError from 'next/error';
 
 export type Message = {
   messageId: string;
@@ -34,11 +34,24 @@ const useSocket = (
   setIsWSReady: (ready: boolean) => void,
   setError: (error: boolean) => void,
 ) => {
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryCountRef = useRef(0);
+  const isCleaningUpRef = useRef(false);
+  const MAX_RETRIES = 3;
+  const INITIAL_BACKOFF = 1000; // 1 second
+
+  const getBackoffDelay = (retryCount: number) => {
+    return Math.min(INITIAL_BACKOFF * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
+  };
 
   useEffect(() => {
-    if (!ws) {
-      const connectWs = async () => {
+    const connectWs = async () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
+
+      try {
         let chatModel = localStorage.getItem('chatModel');
         let chatModelProvider = localStorage.getItem('chatModelProvider');
         let embeddingModel = localStorage.getItem('embeddingModel');
@@ -61,7 +74,13 @@ const useSocket = (
               'Content-Type': 'application/json',
             },
           },
-        ).then(async (res) => await res.json());
+        ).then(async (res) => {
+          if (!res.ok)
+            throw new Error(
+              `Failed to fetch models: ${res.status} ${res.statusText}`,
+            );
+          return res.json();
+        });
 
         if (
           !chatModel ||
@@ -204,6 +223,7 @@ const useSocket = (
         wsURL.search = searchParams.toString();
 
         const ws = new WebSocket(wsURL.toString());
+        wsRef.current = ws;
 
         const timeoutId = setTimeout(() => {
           if (ws.readyState !== 1) {
@@ -219,11 +239,16 @@ const useSocket = (
             const interval = setInterval(() => {
               if (ws.readyState === 1) {
                 setIsWSReady(true);
+                setError(false);
+                if (retryCountRef.current > 0) {
+                  toast.success('Connection restored.');
+                }
+                retryCountRef.current = 0;
                 clearInterval(interval);
               }
             }, 5);
             clearTimeout(timeoutId);
-            console.log('[DEBUG] opened');
+            console.debug(new Date(), 'ws:connected');
           }
           if (data.type === 'error') {
             toast.error(data.data);
@@ -232,24 +257,68 @@ const useSocket = (
 
         ws.onerror = () => {
           clearTimeout(timeoutId);
-          setError(true);
+          setIsWSReady(false);
           toast.error('WebSocket connection error.');
         };
 
         ws.onclose = () => {
           clearTimeout(timeoutId);
-          setError(true);
-          console.log('[DEBUG] closed');
+          setIsWSReady(false);
+          console.debug(new Date(), 'ws:disconnected');
+          if (!isCleaningUpRef.current) {
+            toast.error('Connection lost. Attempting to reconnect...');
+            attemptReconnect();
+          }
         };
+      } catch (error) {
+        console.debug(new Date(), 'ws:error', error);
+        setIsWSReady(false);
+        attemptReconnect();
+      }
+    };
 
-        setWs(ws);
-      };
+    const attemptReconnect = () => {
+      retryCountRef.current += 1;
 
-      connectWs();
-    }
-  }, [ws, url, setIsWSReady, setError]);
+      if (retryCountRef.current > MAX_RETRIES) {
+        console.debug(new Date(), 'ws:max_retries');
+        setError(true);
+        toast.error(
+          'Unable to connect to server after multiple attempts. Please refresh the page to try again.',
+        );
+        return;
+      }
 
-  return ws;
+      const backoffDelay = getBackoffDelay(retryCountRef.current);
+      console.debug(
+        new Date(),
+        `ws:retry attempt=${retryCountRef.current}/${MAX_RETRIES} delay=${backoffDelay}ms`,
+      );
+
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+
+      reconnectTimeoutRef.current = setTimeout(() => {
+        connectWs();
+      }, backoffDelay);
+    };
+
+    connectWs();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+        isCleaningUpRef.current = true;
+        console.debug(new Date(), 'ws:cleanup');
+      }
+    };
+  }, [url, setIsWSReady, setError]);
+
+  return wsRef.current;
 };
 
 const loadMessages = async (
@@ -293,7 +362,7 @@ const loadMessages = async (
     return [msg.role, msg.content];
   }) as [string, string][];
 
-  console.log('[DEBUG] messages loaded');
+  console.debug(new Date(), 'app:messages_loaded');
 
   document.title = messages[0].content;
 
@@ -377,7 +446,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     return () => {
       if (ws?.readyState === 1) {
         ws.close();
-        console.log('[DEBUG] closed');
+        console.debug(new Date(), 'ws:cleanup');
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -392,12 +461,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
   useEffect(() => {
     if (isMessagesLoaded && isWSReady) {
       setIsReady(true);
-      console.log('[DEBUG] ready');
+      console.debug(new Date(), 'app:ready');
+    } else {
+      setIsReady(false);
     }
   }, [isMessagesLoaded, isWSReady]);
 
   const sendMessage = async (message: string, messageId?: string) => {
     if (loading) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      toast.error('Cannot send message while disconnected');
+      return;
+    }
 
     setLoading(true);
     setMessageAppeared(false);
@@ -408,7 +483,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
 
-    ws?.send(
+    ws.send(
       JSON.stringify({
         type: 'message',
         message: {
@@ -571,7 +646,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   return isReady ? (
     notFound ? (
-      <Error statusCode={404} />
+      <NextError statusCode={404} />
     ) : (
       <div>
         {messages.length > 0 ? (
