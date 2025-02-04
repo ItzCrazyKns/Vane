@@ -36,6 +36,22 @@ export const loadGeminiChatModels = async () => {
           apiKey: geminiApiKey,
         }),
       },
+      'gemini-2.0-flash-exp': {
+        displayName: 'Gemini 2.0 Flash Exp',
+        model: new ChatGoogleGenerativeAI({
+          modelName: 'gemini-2.0-flash-exp',
+          temperature: 0.7,
+          apiKey: geminiApiKey,
+        }),
+      },
+      'gemini-2.0-flash-thinking-exp-01-21': {
+        displayName: 'Gemini 2.0 Flash Thinking Exp 01-21',
+        model: new ChatGoogleGenerativeAI({
+          modelName: 'gemini-2.0-flash-thinking-exp-01-21',
+          temperature: 0.7,
+          apiKey: geminiApiKey,
+        }),
+      },
     };
 
     return chatModels;
