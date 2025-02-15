@@ -10,6 +10,9 @@ import {
   getGeminiApiKey,
   getOpenaiApiKey,
   updateConfig,
+  getCustomOpenaiApiUrl,
+  getCustomOpenaiApiKey,
+  getCustomOpenaiModelName,
 } from '../config';
 import logger from '../utils/logger';
 
@@ -54,6 +57,9 @@ router.get('/', async (_, res) => {
     config['anthropicApiKey'] = getAnthropicApiKey();
     config['groqApiKey'] = getGroqApiKey();
     config['geminiApiKey'] = getGeminiApiKey();
+    config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
+    config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
+    config['customOpenaiModelName'] = getCustomOpenaiModelName();
 
     res.status(200).json(config);
   } catch (err: any) {
@@ -66,14 +72,27 @@ router.post('/', async (req, res) => {
   const config = req.body;
 
   const updatedConfig = {
-    API_KEYS: {
-      OPENAI: config.openaiApiKey,
-      GROQ: config.groqApiKey,
-      ANTHROPIC: config.anthropicApiKey,
-      GEMINI: config.geminiApiKey,
-    },
-    API_ENDPOINTS: {
-      OLLAMA: config.ollamaApiUrl,
+    MODELS: {
+      OPENAI: {
+        API_KEY: config.openaiApiKey,
+      },
+      GROQ: {
+        API_KEY: config.groqApiKey,
+      },
+      ANTHROPIC: {
+        API_KEY: config.anthropicApiKey,
+      },
+      GEMINI: {
+        API_KEY: config.geminiApiKey,
+      },
+      OLLAMA: {
+        API_URL: config.ollamaApiUrl,
+      },
+      CUSTOM_OPENAI: {
+        API_URL: config.customOpenaiApiUrl,
+        API_KEY: config.customOpenaiApiKey,
+        MODEL_NAME: config.customOpenaiModelName,
+      },
     },
   };
 

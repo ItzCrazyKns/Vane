@@ -10,14 +10,19 @@ import {
 import { searchHandlers } from '../websocket/messageHandler';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { MetaSearchAgentType } from '../search/metaSearchAgent';
+import {
+  getCustomOpenaiApiKey,
+  getCustomOpenaiApiUrl,
+  getCustomOpenaiModelName,
+} from '../config';
 
 const router = express.Router();
 
 interface chatModel {
   provider: string;
   model: string;
-  customOpenAIBaseURL?: string;
   customOpenAIKey?: string;
+  customOpenAIBaseURL?: string;
 }
 
 interface embeddingModel {
@@ -78,21 +83,12 @@ router.post('/', async (req, res) => {
     let embeddings: Embeddings | undefined;
 
     if (body.chatModel?.provider === 'custom_openai') {
-      if (
-        !body.chatModel?.customOpenAIBaseURL ||
-        !body.chatModel?.customOpenAIKey
-      ) {
-        return res
-          .status(400)
-          .json({ message: 'Missing custom OpenAI base URL or key' });
-      }
-
       llm = new ChatOpenAI({
-        modelName: body.chatModel.model,
-        openAIApiKey: body.chatModel.customOpenAIKey,
+        modelName: body.chatModel?.model || getCustomOpenaiModelName(),
+        openAIApiKey: body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
         temperature: 0.7,
         configuration: {
-          baseURL: body.chatModel.customOpenAIBaseURL,
+          baseURL: body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
         },
       }) as unknown as BaseChatModel;
     } else if (

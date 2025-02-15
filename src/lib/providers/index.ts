@@ -4,6 +4,12 @@ import { loadOpenAIChatModels, loadOpenAIEmbeddingsModels } from './openai';
 import { loadAnthropicChatModels } from './anthropic';
 import { loadTransformersEmbeddingsModels } from './transformers';
 import { loadGeminiChatModels, loadGeminiEmbeddingsModels } from './gemini';
+import {
+  getCustomOpenaiApiKey,
+  getCustomOpenaiApiUrl,
+  getCustomOpenaiModelName,
+} from '../../config';
+import { ChatOpenAI } from '@langchain/openai';
 
 const chatModelProviders = {
   openai: loadOpenAIChatModels,
@@ -30,7 +36,27 @@ export const getAvailableChatModelProviders = async () => {
     }
   }
 
-  models['custom_openai'] = {};
+  const customOpenAiApiKey = getCustomOpenaiApiKey();
+  const customOpenAiApiUrl = getCustomOpenaiApiUrl();
+  const customOpenAiModelName = getCustomOpenaiModelName();
+
+  models['custom_openai'] = {
+    ...(customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName
+      ? {
+          [customOpenAiModelName]: {
+            displayName: customOpenAiModelName,
+            model: new ChatOpenAI({
+              openAIApiKey: customOpenAiApiKey,
+              modelName: customOpenAiModelName,
+              temperature: 0.7,
+              configuration: {
+                baseURL: customOpenAiApiUrl,
+              },
+            }),
+          },
+        }
+      : {}),
+  };
 
   return models;
 };

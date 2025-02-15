@@ -5,14 +5,17 @@ import { getAvailableChatModelProviders } from '../lib/providers';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
 import { ChatOpenAI } from '@langchain/openai';
+import {
+  getCustomOpenaiApiKey,
+  getCustomOpenaiApiUrl,
+  getCustomOpenaiModelName,
+} from '../config';
 
 const router = express.Router();
 
 interface ChatModel {
   provider: string;
   model: string;
-  customOpenAIBaseURL?: string;
-  customOpenAIKey?: string;
 }
 
 interface SuggestionsBody {
@@ -43,21 +46,12 @@ router.post('/', async (req, res) => {
     let llm: BaseChatModel | undefined;
 
     if (body.chatModel?.provider === 'custom_openai') {
-      if (
-        !body.chatModel?.customOpenAIBaseURL ||
-        !body.chatModel?.customOpenAIKey
-      ) {
-        return res
-          .status(400)
-          .json({ message: 'Missing custom OpenAI base URL or key' });
-      }
-
       llm = new ChatOpenAI({
-        modelName: body.chatModel.model,
-        openAIApiKey: body.chatModel.customOpenAIKey,
+        modelName: getCustomOpenaiModelName(),
+        openAIApiKey: getCustomOpenaiApiKey(),
         temperature: 0.7,
         configuration: {
-          baseURL: body.chatModel.customOpenAIBaseURL,
+          baseURL: getCustomOpenaiApiUrl(),
         },
       }) as unknown as BaseChatModel;
     } else if (
