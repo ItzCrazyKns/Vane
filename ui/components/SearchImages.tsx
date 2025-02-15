@@ -27,6 +27,7 @@ const SearchImages = ({
     <>
       {!loading && images === null && (
         <button
+          id="search-images"
           onClick={async () => {
             setLoading(true);
 

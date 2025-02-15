@@ -42,6 +42,7 @@ const Searchvideos = ({
     <>
       {!loading && videos === null && (
         <button
+          id="search-videos"
           onClick={async () => {
             setLoading(true);
 

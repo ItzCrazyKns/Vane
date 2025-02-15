@@ -58,14 +58,17 @@ const useSocket = (
         let embeddingModelProvider = localStorage.getItem(
           'embeddingModelProvider',
         );
-        let openAIBaseURL =
-          chatModelProvider === 'custom_openai'
-            ? localStorage.getItem('openAIBaseURL')
-            : null;
-        let openAIPIKey =
-          chatModelProvider === 'custom_openai'
-            ? localStorage.getItem('openAIApiKey')
-            : null;
+
+        const autoImageSearch = localStorage.getItem('autoImageSearch');
+        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
+
+        if (!autoImageSearch) {
+          localStorage.setItem('autoImageSearch', 'true');
+        }
+
+        if (!autoVideoSearch) {
+          localStorage.setItem('autoVideoSearch', 'false');
+        }
 
         const providers = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/models`,
@@ -594,6 +597,17 @@ const ChatWindow = ({ id }: { id?: string }) => {
               return msg;
             }),
           );
+        }
+
+        const autoImageSearch = localStorage.getItem('autoImageSearch');
+        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
+
+        if (autoImageSearch === 'true') {
+          document.getElementById('search-images')?.click();
+        }
+
+        if (autoVideoSearch === 'true') {
+          document.getElementById('search-videos')?.click();
         }
       }
     };
