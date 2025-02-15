@@ -65,7 +65,7 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
         const splittedText = await splitter.splitText(parsedText);
         const title = res.data
           .toString('utf8')
-          .match(/<title>(.*?)<\/title>/)?.[1];
+          .match(/<title.*>(.*?)<\/title>/)?.[1];
 
         const linkDocs = splittedText.map((text) => {
           return new Document({
