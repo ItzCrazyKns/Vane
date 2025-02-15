@@ -1,8 +1,7 @@
 'use client';
 import { useTheme } from 'next-themes';
-import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Select } from '../SettingsDialog';
+import Select from '../ui/Select';
 
 type Theme = 'dark' | 'light' | 'system';
 

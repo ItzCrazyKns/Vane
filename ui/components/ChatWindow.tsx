@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import { Settings } from 'lucide-react';
-import SettingsDialog from './SettingsDialog';
+import Link from 'next/link';
 import NextError from 'next/error';
 
 export type Message = {
@@ -40,6 +40,7 @@ const useSocket = (
   const isCleaningUpRef = useRef(false);
   const MAX_RETRIES = 3;
   const INITIAL_BACKOFF = 1000; // 1 second
+  const isConnectionErrorRef = useRef(false);
 
   const getBackoffDelay = (retryCount: number) => {
     return Math.min(INITIAL_BACKOFF * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
@@ -97,21 +98,13 @@ const useSocket = (
             chatModelProvider =
               chatModelProvider || Object.keys(chatModelProviders)[0];
 
-            if (chatModelProvider === 'custom_openai') {
-              toast.error(
-                'Seems like you are using the custom OpenAI provider, please open the settings and enter a model name to use.',
-              );
-              setError(true);
-              return;
-            } else {
-              chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+            chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
 
-              if (
-                !chatModelProviders ||
-                Object.keys(chatModelProviders).length === 0
-              )
-                return toast.error('No chat models available');
-            }
+            if (
+              !chatModelProviders ||
+              Object.keys(chatModelProviders).length === 0
+            )
+              return toast.error('No chat models available');
           }
 
           if (!embeddingModel || !embeddingModelProvider) {
@@ -142,9 +135,7 @@ const useSocket = (
 
           if (
             Object.keys(chatModelProviders).length > 0 &&
-            (((!openAIBaseURL || !openAIPIKey) &&
-              chatModelProvider === 'custom_openai') ||
-              !chatModelProviders[chatModelProvider])
+            !chatModelProviders[chatModelProvider]
           ) {
             const chatModelProvidersKeys = Object.keys(chatModelProviders);
             chatModelProvider =
@@ -152,23 +143,11 @@ const useSocket = (
                 (key) => Object.keys(chatModelProviders[key]).length > 0,
               ) || chatModelProvidersKeys[0];
 
-            if (
-              chatModelProvider === 'custom_openai' &&
-              (!openAIBaseURL || !openAIPIKey)
-            ) {
-              toast.error(
-                'Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL',
-              );
-              setError(true);
-              return;
-            }
-
             localStorage.setItem('chatModelProvider', chatModelProvider);
           }
 
           if (
             chatModelProvider &&
-            (!openAIBaseURL || !openAIPIKey) &&
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
             chatModel = Object.keys(
@@ -254,6 +233,8 @@ const useSocket = (
             console.debug(new Date(), 'ws:connected');
           }
           if (data.type === 'error') {
+            isConnectionErrorRef.current = true;
+            setError(true);
             toast.error(data.data);
           }
         });
@@ -268,7 +249,7 @@ const useSocket = (
           clearTimeout(timeoutId);
           setIsWSReady(false);
           console.debug(new Date(), 'ws:disconnected');
-          if (!isCleaningUpRef.current) {
+          if (!isCleaningUpRef.current && !isConnectionErrorRef.current) {
             toast.error('Connection lost. Attempting to reconnect...');
             attemptReconnect();
           }
@@ -643,17 +624,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
     return (
       <div className="relative">
         <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
-          <Settings
-            className="cursor-pointer lg:hidden"
-            onClick={() => setIsSettingsOpen(true)}
-          />
+          <Link href="/settings">
+            <Settings className="cursor-pointer lg:hidden" />
+          </Link>
         </div>
         <div className="flex flex-col items-center justify-center min-h-screen">
           <p className="dark:text-white/70 text-black/70 text-sm">
             Failed to connect to the server. Please try again later.
           </p>
         </div>
-        <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen} />
       </div>
     );
   }
