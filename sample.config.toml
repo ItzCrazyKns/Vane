@@ -3,12 +3,25 @@ PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
 
-[API_KEYS]
-OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
-GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
-ANTHROPIC = "" # Anthropic API key - sk-ant-1234567890abcdef1234567890abcdef
-GEMINI = "" # Gemini API key - sk-1234567890abcdef1234567890abcdef
+[MODELS]
+[MODELS.OPENAI]
+API_KEY = ""
+
+[MODELS.GROQ]
+API_KEY = ""
+
+[MODELS.ANTHROPIC]
+API_KEY = ""
+
+[MODELS.GEMINI]
+API_KEY = ""
+
+[MODELS.CUSTOM_OPENAI]
+API_KEY = ""
+API_URL = ""
+
+[MODELS.OLLAMA]
+API_URL = "" # Ollama API URL - http://host.docker.internal:11434
 
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
-OLLAMA = "" # Ollama API URL - http://host.docker.internal:11434
