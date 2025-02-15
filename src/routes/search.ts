@@ -85,10 +85,12 @@ router.post('/', async (req, res) => {
     if (body.chatModel?.provider === 'custom_openai') {
       llm = new ChatOpenAI({
         modelName: body.chatModel?.model || getCustomOpenaiModelName(),
-        openAIApiKey: body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
+        openAIApiKey:
+          body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
         temperature: 0.7,
         configuration: {
-          baseURL: body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
+          baseURL:
+            body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
         },
       }) as unknown as BaseChatModel;
     } else if (

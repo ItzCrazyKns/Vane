@@ -223,11 +223,11 @@ const Page = () => {
         setChatModels(data.chatModelProviders || {});
         setEmbeddingModels(data.embeddingModelProviders || {});
 
-        const currentProvider = selectedChatModelProvider;
-        const newProviders = Object.keys(data.chatModelProviders || {});
+        const currentChatProvider = selectedChatModelProvider;
+        const newChatProviders = Object.keys(data.chatModelProviders || {});
 
-        if (!currentProvider && newProviders.length > 0) {
-          const firstProvider = newProviders[0];
+        if (!currentChatProvider && newChatProviders.length > 0) {
+          const firstProvider = newChatProviders[0];
           const firstModel = data.chatModelProviders[firstProvider]?.[0]?.name;
 
           if (firstModel) {
@@ -237,11 +237,11 @@ const Page = () => {
             localStorage.setItem('chatModel', firstModel);
           }
         } else if (
-          currentProvider &&
+          currentChatProvider &&
           (!data.chatModelProviders ||
-            !data.chatModelProviders[currentProvider] ||
-            !Array.isArray(data.chatModelProviders[currentProvider]) ||
-            data.chatModelProviders[currentProvider].length === 0)
+            !data.chatModelProviders[currentChatProvider] ||
+            !Array.isArray(data.chatModelProviders[currentChatProvider]) ||
+            data.chatModelProviders[currentChatProvider].length === 0)
         ) {
           const firstValidProvider = Object.entries(
             data.chatModelProviders || {},
@@ -267,6 +267,55 @@ const Page = () => {
           }
         }
 
+        const currentEmbeddingProvider = selectedEmbeddingModelProvider;
+        const newEmbeddingProviders = Object.keys(
+          data.embeddingModelProviders || {},
+        );
+
+        if (!currentEmbeddingProvider && newEmbeddingProviders.length > 0) {
+          const firstProvider = newEmbeddingProviders[0];
+          const firstModel =
+            data.embeddingModelProviders[firstProvider]?.[0]?.name;
+
+          if (firstModel) {
+            setSelectedEmbeddingModelProvider(firstProvider);
+            setSelectedEmbeddingModel(firstModel);
+            localStorage.setItem('embeddingModelProvider', firstProvider);
+            localStorage.setItem('embeddingModel', firstModel);
+          }
+        } else if (
+          currentEmbeddingProvider &&
+          (!data.embeddingModelProviders ||
+            !data.embeddingModelProviders[currentEmbeddingProvider] ||
+            !Array.isArray(
+              data.embeddingModelProviders[currentEmbeddingProvider],
+            ) ||
+            data.embeddingModelProviders[currentEmbeddingProvider].length === 0)
+        ) {
+          const firstValidProvider = Object.entries(
+            data.embeddingModelProviders || {},
+          ).find(
+            ([_, models]) => Array.isArray(models) && models.length > 0,
+          )?.[0];
+
+          if (firstValidProvider) {
+            setSelectedEmbeddingModelProvider(firstValidProvider);
+            setSelectedEmbeddingModel(
+              data.embeddingModelProviders[firstValidProvider][0].name,
+            );
+            localStorage.setItem('embeddingModelProvider', firstValidProvider);
+            localStorage.setItem(
+              'embeddingModel',
+              data.embeddingModelProviders[firstValidProvider][0].name,
+            );
+          } else {
+            setSelectedEmbeddingModelProvider(null);
+            setSelectedEmbeddingModel(null);
+            localStorage.removeItem('embeddingModelProvider');
+            localStorage.removeItem('embeddingModel');
+          }
+        }
+
         setConfig(data);
       }
 
@@ -278,6 +327,10 @@ const Page = () => {
         localStorage.setItem('chatModelProvider', value);
       } else if (key === 'chatModel') {
         localStorage.setItem('chatModel', value);
+      } else if (key === 'embeddingModelProvider') {
+        localStorage.setItem('embeddingModelProvider', value);
+      } else if (key === 'embeddingModel') {
+        localStorage.setItem('embeddingModel', value);
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -436,7 +489,6 @@ const Page = () => {
                         const value = e.target.value;
                         setSelectedChatModelProvider(value);
                         saveConfig('chatModelProvider', value);
-                        // Auto-select first model of new provider
                         const firstModel =
                           config.chatModelProviders[value]?.[0]?.name;
                         if (firstModel) {
@@ -554,6 +606,81 @@ const Page = () => {
                     </div>
                   </div>
                 )}
+
+              {config.embeddingModelProviders && (
+                <div className="flex flex-col space-y-4 mt-4 pt-4 border-t border-light-200 dark:border-dark-200">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-black/70 dark:text-white/70 text-sm">
+                      Embedding Model Provider
+                    </p>
+                    <Select
+                      value={selectedEmbeddingModelProvider ?? undefined}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedEmbeddingModelProvider(value);
+                        saveConfig('embeddingModelProvider', value);
+                        const firstModel =
+                          config.embeddingModelProviders[value]?.[0]?.name;
+                        if (firstModel) {
+                          setSelectedEmbeddingModel(firstModel);
+                          saveConfig('embeddingModel', firstModel);
+                        }
+                      }}
+                      options={Object.keys(config.embeddingModelProviders).map(
+                        (provider) => ({
+                          value: provider,
+                          label:
+                            provider.charAt(0).toUpperCase() +
+                            provider.slice(1),
+                        }),
+                      )}
+                    />
+                  </div>
+
+                  {selectedEmbeddingModelProvider && (
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Embedding Model
+                      </p>
+                      <Select
+                        value={selectedEmbeddingModel ?? undefined}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setSelectedEmbeddingModel(value);
+                          saveConfig('embeddingModel', value);
+                        }}
+                        options={(() => {
+                          const embeddingModelProvider =
+                            config.embeddingModelProviders[
+                              selectedEmbeddingModelProvider
+                            ];
+                          return embeddingModelProvider
+                            ? embeddingModelProvider.length > 0
+                              ? embeddingModelProvider.map((model) => ({
+                                  value: model.name,
+                                  label: model.displayName,
+                                }))
+                              : [
+                                  {
+                                    value: '',
+                                    label: 'No models available',
+                                    disabled: true,
+                                  },
+                                ]
+                            : [
+                                {
+                                  value: '',
+                                  label:
+                                    'Invalid provider, please check backend logs',
+                                  disabled: true,
+                                },
+                              ];
+                        })()}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </SettingsSection>
 
             <SettingsSection title="API Keys">
