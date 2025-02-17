@@ -563,12 +563,16 @@ const Page = () => {
                       <Input
                         type="text"
                         placeholder="Model name"
-                        defaultValue={config.customOpenaiModelName}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
+                        value={config.customOpenaiModelName}
+                        isSaving={savingStates['customOpenaiModelName']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
                             customOpenaiModelName: e.target.value,
-                          })
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('customOpenaiModelName', value)
                         }
                       />
                     </div>
@@ -579,12 +583,16 @@ const Page = () => {
                       <Input
                         type="text"
                         placeholder="Custom OpenAI API Key"
-                        defaultValue={config.customOpenaiApiKey}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
+                        value={config.customOpenaiApiKey}
+                        isSaving={savingStates['customOpenaiApiKey']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
                             customOpenaiApiKey: e.target.value,
-                          })
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('customOpenaiApiKey', value)
                         }
                       />
                     </div>
@@ -595,12 +603,16 @@ const Page = () => {
                       <Input
                         type="text"
                         placeholder="Custom OpenAI Base URL"
-                        defaultValue={config.customOpenaiApiUrl}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
+                        value={config.customOpenaiApiUrl}
+                        isSaving={savingStates['customOpenaiApiUrl']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
                             customOpenaiApiUrl: e.target.value,
-                          })
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('customOpenaiApiUrl', value)
                         }
                       />
                     </div>
