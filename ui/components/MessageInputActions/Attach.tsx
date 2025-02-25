@@ -145,7 +145,7 @@ const Attach = ({
                   <div className="bg-dark-100 flex items-center justify-center w-10 h-10 rounded-md">
                     <File size={16} className="text-white/70" />
                   </div>
-                  <p className="text-white/70 text-sm">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
                     {file.fileName.length > 25
                       ? file.fileName.replace(/\.\w+$/, '').substring(0, 25) +
                         '...' +
