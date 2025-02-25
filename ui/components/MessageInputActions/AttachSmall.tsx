@@ -82,7 +82,7 @@ const AttachSmall = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current.click()}
-                  className="flex flex-row items-center space-x-1 text-white/70 hover:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
                 >
                   <input
                     type="file"
@@ -100,7 +100,7 @@ const AttachSmall = ({
                     setFiles([]);
                     setFileIds([]);
                   }}
-                  className="flex flex-row items-center space-x-1 text-white/70 hover:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
                 >
                   <Trash size={14} />
                   <p className="text-xs">Clear</p>
