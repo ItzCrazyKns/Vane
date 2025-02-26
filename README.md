@@ -44,7 +44,7 @@ Want to know more about its architecture and how it works? You can read it [here
   - **Normal Mode:** Processes your query and performs a web search.
 - **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 6 focus modes:
   - **All Mode:** Searches the entire web to find the best results.
-  - **Writing Assistant Mode:** Helpful for writing tasks that does not require searching the web.
+  - **Writing Assistant Mode:** Helpful for writing tasks that do not require searching the web.
   - **Academic Search Mode:** Finds articles and papers, ideal for academic research.
   - **YouTube Search Mode:** Finds YouTube videos based on the search query.
   - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
