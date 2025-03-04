@@ -9,7 +9,7 @@
    </a>
 
 ### [Warp, the AI Devtool that lives in your terminal](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=fzf)
-[Available for MacOS, Linux, & Windows](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=fzf)<br>
+[Available for MacOS, Linux, & Windows](https://www.warp.dev/perplexica)<br>
 
 </div>
 
