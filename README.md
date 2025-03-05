@@ -14,7 +14,7 @@
 
 </div>
 
-<hr/><br/>
+<hr/>
 
 [![Discord](https://dcbadge.vercel.app/api/server/26aArMy8tT?style=flat&compact=true)](https://discord.gg/26aArMy8tT)
 
