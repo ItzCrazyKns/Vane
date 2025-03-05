@@ -5,14 +5,16 @@
    <br>
    <br>
    <a href="https://www.warp.dev/perplexica">
-      <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/ab8dd143-b0fd-4904-bdc5-dd7ecac94eae">
+      <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/775dd593-9b5f-40f1-bf48-479faff4c27b">
    </a>
 
 ### [Warp, the AI Devtool that lives in your terminal](https://www.warp.dev/perplexica)
 
-[Available for MacOS, Linux, & Windows](https://www.warp.dev/perplexica)<br>
+[Available for MacOS, Linux, & Windows](https://www.warp.dev/perplexica)
 
 </div>
+
+<hr/><br/>
 
 [![Discord](https://dcbadge.vercel.app/api/server/26aArMy8tT?style=flat&compact=true)](https://discord.gg/26aArMy8tT)
 
