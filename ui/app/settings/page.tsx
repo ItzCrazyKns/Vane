@@ -188,7 +188,7 @@ const Page = () => {
       } as SettingsType;
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/config`,
+        `/api/config`,
         {
           method: 'POST',
           headers: {

@@ -109,9 +109,9 @@ const mergeConfigs = (current: any, update: any): any => {
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
   const mergedConfig = mergeConfigs(currentConfig, config);
-
+  console.log(mergedConfig);
   fs.writeFileSync(
-    path.join(__dirname, `../${configFileName}`),
+    path.join(path.join(process.cwd(), `${configFileName}`)),
     toml.stringify(mergedConfig),
   );
 };
