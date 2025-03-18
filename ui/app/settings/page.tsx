@@ -187,16 +187,13 @@ const Page = () => {
         [key]: value,
       } as SettingsType;
 
-      const response = await fetch(
-        `/api/config`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updatedConfig),
+      const response = await fetch(`/api/config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      );
+        body: JSON.stringify(updatedConfig),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to update config');

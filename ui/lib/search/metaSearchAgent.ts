@@ -414,7 +414,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       return sortedDocs;
     }
 
-    return []
+    return [];
   }
 
   private processDocs(docs: Document[]) {

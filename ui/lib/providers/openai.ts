@@ -1,6 +1,6 @@
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai'
-import { getOpenaiApiKey } from '../config'
-import { ChatModelProvider, EmbeddingModelProvider } from '.'
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { getOpenaiApiKey } from '../config';
+import { ChatModel, EmbeddingModel } from '.';
 
 const openaiChatModels: Record<string, string>[] = [
   {
@@ -22,67 +22,67 @@ const openaiChatModels: Record<string, string>[] = [
   {
     displayName: 'GPT-4 omni mini',
     key: 'gpt-4o-mini',
-  }
-]
+  },
+];
 
 const openaiEmbeddingModels: Record<string, string>[] = [
-    {
-        displayName: 'Text Embedding 3 Small',
-        key: 'text-embedding-3-small',
-    }, 
-    {
-        displayName: 'Text Embedding 3 Large',
-        key: 'text-embedding-3-large',
-    }
-]
+  {
+    displayName: 'Text Embedding 3 Small',
+    key: 'text-embedding-3-small',
+  },
+  {
+    displayName: 'Text Embedding 3 Large',
+    key: 'text-embedding-3-large',
+  },
+];
 
 export const loadOpenAIChatModels = async () => {
-    const openaiApiKey = getOpenaiApiKey()
+  const openaiApiKey = getOpenaiApiKey();
 
-    if (!openaiApiKey) return {}
+  if (!openaiApiKey) return {};
 
-    try {
-        const chatModels: Record<string, ChatModelProvider> = {}
+  try {
+    const chatModels: Record<string, ChatModel> = {};
 
-        openaiChatModels.forEach(model => {
-            chatModels[model.key] = {
-                displayName: model.displayName,
-                model: new ChatOpenAI({
-                    openAIApiKey: openaiApiKey,
-                    modelName: model.key,
-                    temperature: 0.7
-                })
-            }
-        })
+    openaiChatModels.forEach((model) => {
+      chatModels[model.key] = {
+        displayName: model.displayName,
+        model: new ChatOpenAI({
+          openAIApiKey: openaiApiKey,
+          modelName: model.key,
+          temperature: 0.7,
+        }),
+      };
+    });
 
-        return chatModels
-    } catch(err) {
-        console.error(`Error loading OpenAI models: ${err}`)
-        return {}
-    }
-}
+    return chatModels;
+  } catch (err) {
+    console.error(`Error loading OpenAI models: ${err}`);
+    return {};
+  }
+};
 
 export const loadOpenAIEmbeddingModels = async () => {
-    const openaiApiKey = getOpenaiApiKey()
+  const openaiApiKey = getOpenaiApiKey();
 
-    if (!openaiApiKey) return {}
+  if (!openaiApiKey) return {};
 
-    try {
-        const embeddingModels: Record<string, EmbeddingModelProvider> = {}
+  try {
+    const embeddingModels: Record<string, EmbeddingModel> = {};
 
-        openaiEmbeddingModels.forEach(model => {
-            embeddingModels[model.key] = {
-                displayName: model.displayName,
-                model: new OpenAIEmbeddings({
-                    openAIApiKey: openaiApiKey,
-                    modelName: model.key,
-                })
-            }
-        })
+    openaiEmbeddingModels.forEach((model) => {
+      embeddingModels[model.key] = {
+        displayName: model.displayName,
+        model: new OpenAIEmbeddings({
+          openAIApiKey: openaiApiKey,
+          modelName: model.key,
+        }),
+      };
+    });
 
-        return embeddingModels
-    } catch(err) {
-        console.error(`Error loading OpenAI embeddings models: ${err}`)
-        return {}
-    }
-}
+    return embeddingModels;
+  } catch (err) {
+    console.error(`Error loading OpenAI embeddings models: ${err}`);
+    return {};
+  }
+};

@@ -79,7 +79,10 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
 
         docs.push(...linkDocs);
       } catch (err) {
-        console.error("An error occurred while getting documents from links: ", err);
+        console.error(
+          'An error occurred while getting documents from links: ',
+          err,
+        );
         docs.push(
           new Document({
             pageContent: `Failed to retrieve content from the link: ${err}`,
