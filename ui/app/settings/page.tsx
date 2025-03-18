@@ -116,7 +116,7 @@ const Page = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       setIsLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+      const res = await fetch(`/api/config`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -208,7 +208,7 @@ const Page = () => {
         key.toLowerCase().includes('api') ||
         key.toLowerCase().includes('url')
       ) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+        const res = await fetch(`/api/config`, {
           headers: {
             'Content-Type': 'application/json',
           },
