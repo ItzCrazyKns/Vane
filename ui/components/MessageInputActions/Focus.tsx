@@ -45,25 +45,13 @@ const focusModes = [
     key: 'youtubeSearch',
     title: 'Youtube',
     description: 'Search and watch videos',
-    icon: (
-      <SiYoutube
-        className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
-      />
-    ),
+    icon: <SiYoutube className="h-5 w-auto mr-0.5" />,
   },
   {
     key: 'redditSearch',
     title: 'Reddit',
     description: 'Search for discussions and opinions',
-    icon: (
-      <SiReddit
-        className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
-      />
-    ),
+    icon: <SiReddit className="h-5 w-auto mr-0.5" />,
   },
 ];
 
