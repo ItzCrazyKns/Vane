@@ -193,10 +193,12 @@ const MessageBox = ({
             <SearchImages
               query={history[messageIndex - 1].content}
               chatHistory={history.slice(0, messageIndex - 1)}
+              messageId={message.messageId}
             />
             <SearchVideos
               chatHistory={history.slice(0, messageIndex - 1)}
               query={history[messageIndex - 1].content}
+              messageId={message.messageId}
             />
           </div>
         </div>
