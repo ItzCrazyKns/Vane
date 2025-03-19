@@ -22,7 +22,7 @@ export interface EmbeddingModel {
   model: Embeddings;
 }
 
-const chatModelProviders: Record<
+export const chatModelProviders: Record<
   string,
   () => Promise<Record<string, ChatModel>>
 > = {
@@ -30,16 +30,16 @@ const chatModelProviders: Record<
   ollama: loadOllamaChatModels,
   groq: loadGroqChatModels,
   anthropic: loadAnthropicChatModels,
-  gemini: loadGeminiChatModels
+  gemini: loadGeminiChatModels,
 };
 
-const embeddingModelProviders: Record<
+export const embeddingModelProviders: Record<
   string,
   () => Promise<Record<string, EmbeddingModel>>
 > = {
   openai: loadOpenAIEmbeddingModels,
   ollama: loadOllamaEmbeddingModels,
-  gemini: loadGeminiEmbeddingModels
+  gemini: loadGeminiEmbeddingModels,
 };
 
 export const getAvailableChatModelProviders = async () => {

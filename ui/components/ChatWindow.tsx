@@ -29,29 +29,24 @@ export interface File {
   fileId: string;
 }
 
-const useSocket = (
-  url: string,
-  setIsWSReady: (ready: boolean) => void,
-  setError: (error: boolean) => void,
+interface ChatModelProvider {
+  name: string;
+  provider: string;
+}
+
+interface EmbeddingModelProvider {
+  name: string;
+  provider: string;
+}
+
+const checkConfig = async (
+  setChatModelProvider: (provider: ChatModelProvider) => void,
+  setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
+  setIsConfigReady: (ready: boolean) => void,
+  setHasError: (hasError: boolean) => void,
 ) => {
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
-  const retryCountRef = useRef(0);
-  const isCleaningUpRef = useRef(false);
-  const MAX_RETRIES = 3;
-  const INITIAL_BACKOFF = 1000; // 1 second
-  const isConnectionErrorRef = useRef(false);
-
-  const getBackoffDelay = (retryCount: number) => {
-    return Math.min(INITIAL_BACKOFF * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
-  };
-
   useEffect(() => {
-    const connectWs = async () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-      }
-
+    const checkConfig = async () => {
       try {
         let chatModel = localStorage.getItem('chatModel');
         let chatModelProvider = localStorage.getItem('chatModelProvider');
@@ -71,14 +66,11 @@ const useSocket = (
           localStorage.setItem('autoVideoSearch', 'false');
         }
 
-        const providers = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/models`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+        const providers = await fetch(`/api/models`, {
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ).then(async (res) => {
+        }).then(async (res) => {
           if (!res.ok)
             throw new Error(
               `Failed to fetch models: ${res.status} ${res.statusText}`,
@@ -182,127 +174,30 @@ const useSocket = (
           }
         }
 
-        const wsURL = new URL(url);
-        const searchParams = new URLSearchParams({});
-
-        searchParams.append('chatModel', chatModel!);
-        searchParams.append('chatModelProvider', chatModelProvider);
-
-        if (chatModelProvider === 'custom_openai') {
-          searchParams.append(
-            'openAIApiKey',
-            localStorage.getItem('openAIApiKey')!,
-          );
-          searchParams.append(
-            'openAIBaseURL',
-            localStorage.getItem('openAIBaseURL')!,
-          );
-        }
-
-        searchParams.append('embeddingModel', embeddingModel!);
-        searchParams.append('embeddingModelProvider', embeddingModelProvider);
-
-        wsURL.search = searchParams.toString();
-
-        const ws = new WebSocket(wsURL.toString());
-        wsRef.current = ws;
-
-        const timeoutId = setTimeout(() => {
-          if (ws.readyState !== 1) {
-            toast.error(
-              'Failed to connect to the server. Please try again later.',
-            );
-          }
-        }, 10000);
-
-        ws.addEventListener('message', (e) => {
-          const data = JSON.parse(e.data);
-          if (data.type === 'signal' && data.data === 'open') {
-            const interval = setInterval(() => {
-              if (ws.readyState === 1) {
-                setIsWSReady(true);
-                setError(false);
-                if (retryCountRef.current > 0) {
-                  toast.success('Connection restored.');
-                }
-                retryCountRef.current = 0;
-                clearInterval(interval);
-              }
-            }, 5);
-            clearTimeout(timeoutId);
-            console.debug(new Date(), 'ws:connected');
-          }
-          if (data.type === 'error') {
-            isConnectionErrorRef.current = true;
-            setError(true);
-            toast.error(data.data);
-          }
+        setChatModelProvider({
+          name: chatModel!,
+          provider: chatModelProvider,
         });
 
-        ws.onerror = () => {
-          clearTimeout(timeoutId);
-          setIsWSReady(false);
-          toast.error('WebSocket connection error.');
-        };
+        setEmbeddingModelProvider({
+          name: embeddingModel!,
+          provider: embeddingModelProvider,
+        });
 
-        ws.onclose = () => {
-          clearTimeout(timeoutId);
-          setIsWSReady(false);
-          console.debug(new Date(), 'ws:disconnected');
-          if (!isCleaningUpRef.current && !isConnectionErrorRef.current) {
-            toast.error('Connection lost. Attempting to reconnect...');
-            attemptReconnect();
-          }
-        };
-      } catch (error) {
-        console.debug(new Date(), 'ws:error', error);
-        setIsWSReady(false);
-        attemptReconnect();
-      }
-    };
-
-    const attemptReconnect = () => {
-      retryCountRef.current += 1;
-
-      if (retryCountRef.current > MAX_RETRIES) {
-        console.debug(new Date(), 'ws:max_retries');
-        setError(true);
-        toast.error(
-          'Unable to connect to server after multiple attempts. Please refresh the page to try again.',
+        setIsConfigReady(true);
+      } catch (err) {
+        console.error(
+          'An error occurred while checking the configuration:',
+          err,
         );
-        return;
-      }
-
-      const backoffDelay = getBackoffDelay(retryCountRef.current);
-      console.debug(
-        new Date(),
-        `ws:retry attempt=${retryCountRef.current}/${MAX_RETRIES} delay=${backoffDelay}ms`,
-      );
-
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-
-      reconnectTimeoutRef.current = setTimeout(() => {
-        connectWs();
-      }, backoffDelay);
-    };
-
-    connectWs();
-
-    return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-        isCleaningUpRef.current = true;
-        console.debug(new Date(), 'ws:cleanup');
+        setIsConfigReady(false);
+        setHasError(true);
       }
     };
-  }, [url, setIsWSReady, setError]);
 
-  return wsRef.current;
+    checkConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 };
 
 const loadMessages = async (
@@ -315,15 +210,12 @@ const loadMessages = async (
   setFiles: (files: File[]) => void,
   setFileIds: (fileIds: string[]) => void,
 ) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+  const res = await fetch(`/api/chats/${chatId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
     },
-  );
+  });
 
   if (res.status === 404) {
     setNotFound(true);
@@ -373,13 +265,27 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [chatId, setChatId] = useState<string | undefined>(id);
   const [newChatCreated, setNewChatCreated] = useState(false);
 
+  const [chatModelProvider, setChatModelProvider] = useState<ChatModelProvider>(
+    {
+      name: '',
+      provider: '',
+    },
+  );
+
+  const [embeddingModelProvider, setEmbeddingModelProvider] =
+    useState<EmbeddingModelProvider>({
+      name: '',
+      provider: '',
+    });
+
+  const [isConfigReady, setIsConfigReady] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
-  const [isWSReady, setIsWSReady] = useState(false);
-  const ws = useSocket(
-    process.env.NEXT_PUBLIC_WS_URL!,
-    setIsWSReady,
+  checkConfig(
+    setChatModelProvider,
+    setEmbeddingModelProvider,
+    setIsConfigReady,
     setHasError,
   );
 
@@ -398,8 +304,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
-
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (
@@ -426,16 +330,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (ws?.readyState === 1) {
-        ws.close();
-        console.debug(new Date(), 'ws:cleanup');
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const messagesRef = useRef<Message[]>([]);
 
   useEffect(() => {
@@ -443,18 +337,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
   }, [messages]);
 
   useEffect(() => {
-    if (isMessagesLoaded && isWSReady) {
+    if (isMessagesLoaded && isConfigReady) {
       setIsReady(true);
       console.debug(new Date(), 'app:ready');
     } else {
       setIsReady(false);
     }
-  }, [isMessagesLoaded, isWSReady]);
+  }, [isMessagesLoaded, isConfigReady]);
 
   const sendMessage = async (message: string, messageId?: string) => {
     if (loading) return;
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      toast.error('Cannot send message while disconnected');
+    if (!isConfigReady) {
+      toast.error('Cannot send message before the configuration is ready');
       return;
     }
 
@@ -467,18 +361,27 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
 
-    ws.send(
+    console.log(
       JSON.stringify({
-        type: 'message',
+        content: message,
         message: {
           messageId: messageId,
           chatId: chatId!,
           content: message,
         },
+        chatId: chatId!,
         files: fileIds,
         focusMode: focusMode,
         optimizationMode: optimizationMode,
-        history: [...chatHistory, ['human', message]],
+        history: chatHistory,
+        chatModel: {
+          name: chatModelProvider.name,
+          provider: chatModelProvider.provider,
+        },
+        embeddingModel: {
+          name: embeddingModelProvider.name,
+          provider: embeddingModelProvider.provider,
+        },
       }),
     );
 
@@ -493,9 +396,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       },
     ]);
 
-    const messageHandler = async (e: MessageEvent) => {
-      const data = JSON.parse(e.data);
-
+    const messageHandler = async (data: any) => {
       if (data.type === 'error') {
         toast.error(data.data);
         setLoading(false);
@@ -558,7 +459,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
           ['assistant', recievedMessage],
         ]);
 
-        ws?.removeEventListener('message', messageHandler);
         setLoading(false);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
@@ -584,16 +484,72 @@ const ChatWindow = ({ id }: { id?: string }) => {
         const autoVideoSearch = localStorage.getItem('autoVideoSearch');
 
         if (autoImageSearch === 'true') {
-          document.getElementById('search-images')?.click();
+          document
+            .getElementById(`search-images-${lastMsg.messageId}`)
+            ?.click();
         }
 
         if (autoVideoSearch === 'true') {
-          document.getElementById('search-videos')?.click();
+          document
+            .getElementById(`search-videos-${lastMsg.messageId}`)
+            ?.click();
         }
       }
     };
 
-    ws?.addEventListener('message', messageHandler);
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content: message,
+        message: {
+          messageId: messageId,
+          chatId: chatId!,
+          content: message,
+        },
+        chatId: chatId!,
+        files: fileIds,
+        focusMode: focusMode,
+        optimizationMode: optimizationMode,
+        history: chatHistory,
+        chatModel: {
+          name: chatModelProvider.name,
+          provider: chatModelProvider.provider,
+        },
+        embeddingModel: {
+          name: embeddingModelProvider.name,
+          provider: embeddingModelProvider.provider,
+        },
+      }),
+    });
+
+    if (!res.body) throw new Error('No response body');
+
+    const reader = res.body?.getReader();
+    const decoder = new TextDecoder('utf-8');
+
+    let partialChunk = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      partialChunk += decoder.decode(value, { stream: true });
+
+      try {
+        const messages = partialChunk.split('\n');
+        for (const msg of messages) {
+          if (!msg.trim()) continue;
+          const json = JSON.parse(msg);
+          messageHandler(json);
+        }
+        partialChunk = '';
+      } catch (error) {
+        console.warn('Incomplete JSON, waiting for next chunk...');
+      }
+    }
   };
 
   const rewrite = (messageId: string) => {
@@ -614,11 +570,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
   };
 
   useEffect(() => {
-    if (isReady && initialMessage && ws?.readyState === 1) {
+    if (isReady && initialMessage && isConfigReady) {
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ws?.readyState, isReady, initialMessage, isWSReady]);
+  }, [isConfigReady, isReady, initialMessage]);
 
   if (hasError) {
     return (
