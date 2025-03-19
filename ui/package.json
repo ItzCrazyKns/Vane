@@ -8,18 +8,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format:write": "prettier . --write"
+    "format:write": "prettier . --write",
+    "db:push": "drizzle-kit push sqlite"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@iarna/toml": "^2.2.5",
-    "@icons-pack/react-simple-icons": "^9.4.0",
+    "@icons-pack/react-simple-icons": "^12.3.0",
     "@langchain/openai": "^0.0.25",
     "@tailwindcss/typography": "^0.5.12",
     "axios": "^1.8.3",
+    "better-sqlite3": "^11.9.1",
     "clsx": "^2.1.0",
     "compute-cosine-similarity": "^1.1.0",
     "compute-dot": "^1.1.0",
+    "drizzle-orm": "^0.40.1",
     "html-to-text": "^9.0.5",
     "langchain": "^0.1.30",
     "lucide-react": "^0.363.0",
@@ -38,12 +41,14 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
     "@types/html-to-text": "^9.0.4",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
+    "drizzle-kit": "^0.30.5",
     "eslint": "^8",
     "eslint-config-next": "14.1.4",
     "postcss": "^8",
