@@ -27,9 +27,11 @@ declare module 'yet-another-react-lightbox' {
 const Searchvideos = ({
   query,
   chatHistory,
+  messageId,
 }: {
   query: string;
   chatHistory: Message[];
+  messageId: string;
 }) => {
   const [videos, setVideos] = useState<Video[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,7 @@ const Searchvideos = ({
     <>
       {!loading && videos === null && (
         <button
-          id="search-videos"
+          id={`search-videos-${messageId}`}
           onClick={async () => {
             setLoading(true);
 
@@ -52,27 +54,24 @@ const Searchvideos = ({
             const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
             const customOpenAIKey = localStorage.getItem('openAIApiKey');
 
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/videos`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  query: query,
-                  chatHistory: chatHistory,
-                  chatModel: {
-                    provider: chatModelProvider,
-                    model: chatModel,
-                    ...(chatModelProvider === 'custom_openai' && {
-                      customOpenAIBaseURL: customOpenAIBaseURL,
-                      customOpenAIKey: customOpenAIKey,
-                    }),
-                  },
-                }),
+            const res = await fetch(`/api/videos`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
               },
-            );
+              body: JSON.stringify({
+                query: query,
+                chatHistory: chatHistory,
+                chatModel: {
+                  provider: chatModelProvider,
+                  model: chatModel,
+                  ...(chatModelProvider === 'custom_openai' && {
+                    customOpenAIBaseURL: customOpenAIBaseURL,
+                    customOpenAIKey: customOpenAIKey,
+                  }),
+                },
+              }),
+            });
 
             const data = await res.json();
 
