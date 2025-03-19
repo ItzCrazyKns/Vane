@@ -1,0 +1,41 @@
+# Ignore all files in the node_modules directory
+node_modules
+
+# Ignore all files in the .next directory (Next.js build output)
+.next
+
+# Ignore all files in the .out directory (TypeScript build output)
+.out
+
+# Ignore all files in the .cache directory (Prettier cache)
+.cache
+
+# Ignore all files in the .vscode directory (Visual Studio Code settings)
+.vscode
+
+# Ignore all files in the .idea directory (IntelliJ IDEA settings)
+.idea
+
+# Ignore all files in the dist directory (build output)
+dist
+
+# Ignore all files in the build directory (build output)
+build
+
+# Ignore all files in the coverage directory (test coverage reports)
+coverage
+
+# Ignore all files with the .log extension
+*.log
+
+# Ignore all files with the .tmp extension
+*.tmp
+
+# Ignore all files with the .swp extension
+*.swp
+
+# Ignore all files with the .DS_Store extension (macOS specific)
+.DS_Store
+
+# Ignore all files in uploads directory
+uploads
