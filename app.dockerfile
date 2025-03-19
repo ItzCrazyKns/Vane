@@ -1,13 +1,20 @@
 FROM node:20.18.0-alpine
 
-ARG NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
-ARG NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-
 WORKDIR /home/perplexica
 
-COPY ui /home/perplexica/
+COPY src /home/perplexica/src
+COPY public /home/perplexica/public
+COPY package.json /home/perplexica/package.json
+COPY yarn.lock /home/perplexica/yarn.lock
+COPY tsconfig.json /home/perplexica/tsconfig.json
+COPY next.config.mjs /home/perplexica/next.config.mjs
+COPY next-env.d.ts /home/perplexica/next-env.d.ts
+COPY postcss.config.js /home/perplexica/postcss.config.js
+COPY drizzle.config.ts /home/perplexica/drizzle.config.ts
+COPY tailwind.config.ts /home/perplexica/tailwind.config.ts
+
+RUN mkdir /home/perplexica/data
+RUN mkdir /home/perplexica/uploads
 
 RUN yarn install --frozen-lockfile
 RUN yarn build

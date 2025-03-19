@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getSearxngApiEndpoint } from '../config';
+import { getSearxngApiEndpoint } from './config';
 
 interface SearxngSearchOptions {
   categories?: string[];
@@ -30,11 +30,12 @@ export const searchSearxng = async (
 
   if (opts) {
     Object.keys(opts).forEach((key) => {
-      if (Array.isArray(opts[key])) {
-        url.searchParams.append(key, opts[key].join(','));
+      const value = opts[key as keyof SearxngSearchOptions];
+      if (Array.isArray(value)) {
+        url.searchParams.append(key, value.join(','));
         return;
       }
-      url.searchParams.append(key, opts[key]);
+      url.searchParams.append(key, value as string);
     });
   }
 
