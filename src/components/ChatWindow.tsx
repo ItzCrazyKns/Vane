@@ -343,30 +343,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
 
-    console.log(
-      JSON.stringify({
-        content: message,
-        message: {
-          messageId: messageId,
-          chatId: chatId!,
-          content: message,
-        },
-        chatId: chatId!,
-        files: fileIds,
-        focusMode: focusMode,
-        optimizationMode: optimizationMode,
-        history: chatHistory,
-        chatModel: {
-          name: chatModelProvider.name,
-          provider: chatModelProvider.provider,
-        },
-        embeddingModel: {
-          name: embeddingModelProvider.name,
-          provider: embeddingModelProvider.provider,
-        },
-      }),
-    );
-
     setMessages((prevMessages) => [
       ...prevMessages,
       {
@@ -445,6 +421,21 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
+        const autoImageSearch = localStorage.getItem('autoImageSearch');
+        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
+
+        if (autoImageSearch === 'true') {
+          document
+            .getElementById(`search-images-${lastMsg.messageId}`)
+            ?.click();
+        }
+
+        if (autoVideoSearch === 'true') {
+          document
+            .getElementById(`search-videos-${lastMsg.messageId}`)
+            ?.click();
+        }
+
         if (
           lastMsg.role === 'assistant' &&
           lastMsg.sources &&
@@ -460,21 +451,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
               return msg;
             }),
           );
-        }
-
-        const autoImageSearch = localStorage.getItem('autoImageSearch');
-        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
-
-        if (autoImageSearch === 'true') {
-          document
-            .getElementById(`search-images-${lastMsg.messageId}`)
-            ?.click();
-        }
-
-        if (autoVideoSearch === 'true') {
-          document
-            .getElementById(`search-videos-${lastMsg.messageId}`)
-            ?.click();
         }
       }
     };
