@@ -6,7 +6,6 @@ const configFileName = 'config.toml';
 
 interface Config {
   GENERAL: {
-    PORT: number;
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
   };
@@ -45,8 +44,6 @@ const loadConfig = () =>
   toml.parse(
     fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
   ) as any as Config;
-
-export const getPort = () => loadConfig().GENERAL.PORT;
 
 export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
