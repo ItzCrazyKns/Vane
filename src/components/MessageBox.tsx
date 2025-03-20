@@ -12,13 +12,18 @@ import {
   Layers3,
   Plus,
 } from 'lucide-react';
-import Markdown from 'markdown-to-jsx';
+import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
+import ThinkBox from './ThinkBox';
+
+const ThinkTagProcessor = ({ children }: { children: React.ReactNode }) => {
+  return <ThinkBox content={children as string} />;
+};
 
 const MessageBox = ({
   message,
@@ -44,26 +49,47 @@ const MessageBox = ({
 
   useEffect(() => {
     const regex = /\[(\d+)\]/g;
+    let processedMessage = message.content;
+
+    if (message.role === 'assistant' && message.content.includes('<think>')) {
+      const openThinkTag = processedMessage.match(/<think>/g)?.length || 0;
+      const closeThinkTag = processedMessage.match(/<\/think>/g)?.length || 0;
+
+      if (openThinkTag > closeThinkTag) {
+        processedMessage += '</think> <a> </a>'; // The extra <a> </a> is to prevent the the think component from looking bad
+      }
+    }
 
     if (
       message.role === 'assistant' &&
       message?.sources &&
       message.sources.length > 0
     ) {
-      return setParsedMessage(
-        message.content.replace(
+      setParsedMessage(
+        processedMessage.replace(
           regex,
           (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+            `<a href="${
+              message.sources?.[number - 1]?.metadata?.url
+            }" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
         ),
       );
+      return;
     }
 
     setSpeechMessage(message.content.replace(regex, ''));
-    setParsedMessage(message.content);
+    setParsedMessage(processedMessage);
   }, [message.content, message.sources, message.role]);
 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
+
+  const markdownOverrides: MarkdownToJSX.Options = {
+    overrides: {
+      think: {
+        component: ThinkTagProcessor,
+      },
+    },
+  };
 
   return (
     <div>
@@ -111,11 +137,13 @@ const MessageBox = ({
                   Answer
                 </h3>
               </div>
+
               <Markdown
                 className={cn(
                   'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
                   'max-w-none break-words text-black dark:text-white',
                 )}
+                options={markdownOverrides}
               >
                 {parsedMessage}
               </Markdown>
