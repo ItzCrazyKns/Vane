@@ -125,35 +125,40 @@ export const POST = async (req: Request) => {
       [],
     );
 
-    return new Promise((resolve, reject) => {
-      let message = '';
-      let sources: any[] = [];
+    return new Promise(
+      (
+        resolve: (value: Response) => void,
+        reject: (value: Response) => void,
+      ) => {
+        let message = '';
+        let sources: any[] = [];
 
-      emitter.on('data', (data) => {
-        try {
-          const parsedData = JSON.parse(data);
-          if (parsedData.type === 'response') {
-            message += parsedData.data;
-          } else if (parsedData.type === 'sources') {
-            sources = parsedData.data;
+        emitter.on('data', (data) => {
+          try {
+            const parsedData = JSON.parse(data);
+            if (parsedData.type === 'response') {
+              message += parsedData.data;
+            } else if (parsedData.type === 'sources') {
+              sources = parsedData.data;
+            }
+          } catch (error) {
+            reject(
+              Response.json({ message: 'Error parsing data' }, { status: 500 }),
+            );
           }
-        } catch (error) {
+        });
+
+        emitter.on('end', () => {
+          resolve(Response.json({ message, sources }, { status: 200 }));
+        });
+
+        emitter.on('error', (error) => {
           reject(
-            Response.json({ message: 'Error parsing data' }, { status: 500 }),
+            Response.json({ message: 'Search error', error }, { status: 500 }),
           );
-        }
-      });
-
-      emitter.on('end', () => {
-        resolve(Response.json({ message, sources }, { status: 200 }));
-      });
-
-      emitter.on('error', (error) => {
-        reject(
-          Response.json({ message: 'Search error', error }, { status: 500 }),
-        );
-      });
-    });
+        });
+      },
+    );
   } catch (err: any) {
     console.error(`Error in getting search results: ${err.message}`);
     return Response.json(
