@@ -59,7 +59,7 @@ export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
 export const getSearxngApiEndpoint = () =>
-  loadConfig().API_ENDPOINTS.SEARXNG || process.env.SEARXNG_API_URL;
+  process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 
