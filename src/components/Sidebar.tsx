@@ -16,8 +16,6 @@ const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
   const navLinks = [
     {
       icon: Home,
