@@ -1,32 +1,43 @@
 # How to Contribute to Perplexica
 
-Hey there, thanks for deciding to contribute to Perplexica. Anything you help with will support the development of Perplexica and will make it better. Let's walk you through the key aspects to ensure your contributions are effective and in harmony with the project's setup.
+Thanks for your interest in contributing to Perplexica! Your help makes this project better. This guide explains how to contribute effectively.
+
+Perplexica is a modern AI chat application with advanced search capabilities.
 
 ## Project Structure
 
-Perplexica's design consists of two main domains:
+Perplexica's codebase is organized as follows:
 
-- **Frontend (`ui` directory)**: This is a Next.js application holding all user interface components. It's a self-contained environment that manages everything the user interacts with.
-- **Backend (root and `src` directory)**: The backend logic is situated in the `src` folder, but the root directory holds the main `package.json` for backend dependency management.
-  - All of the focus modes are created using the Meta Search Agent class present in `src/search/metaSearchAgent.ts`. The main logic behind Perplexica lies there.
+- **UI Components and Pages**:
+  - **Components (`src/components`)**: Reusable UI components.
+  - **Pages and Routes (`src/app`)**: Next.js app directory structure with page components.
+    - Main app routes include: home (`/`), chat (`/c`), discover (`/discover`), library (`/library`), and settings (`/settings`).
+  - **API Routes (`src/app/api`)**: API endpoints implemented with Next.js API routes.
+    - `/api/chat`: Handles chat interactions.
+    - `/api/search`: Provides direct access to Perplexica's search capabilities.
+    - Other endpoints for models, files, and suggestions.
+- **Backend Logic (`src/lib`)**: Contains all the backend functionality including search, database, and API logic.
+  - The search functionality is present inside `src/lib/search` directory.
+  - All of the focus modes are implemented using the Meta Search Agent class in `src/lib/search/metaSearchAgent.ts`.
+  - Database functionality is in `src/lib/db`.
+  - Chat model and embedding model providers are managed in `src/lib/providers`.
+  - Prompt templates and LLM chain definitions are in `src/lib/prompts` and `src/lib/chains` respectively.
+
+## API Documentation
+
+Perplexica exposes several API endpoints for programmatic access, including:
+
+- **Search API**: Access Perplexica's advanced search capabilities directly via the `/api/search` endpoint. For detailed documentation, see `docs/api/search.md`.
 
 ## Setting Up Your Environment
 
 Before diving into coding, setting up your local environment is key. Here's what you need to do:
 
-### Backend
-
 1. In the root directory, locate the `sample.config.toml` file.
-2. Rename it to `config.toml` and fill in the necessary configuration fields specific to the backend.
-3. Run `npm install` to install dependencies.
-4. Run `npm run db:push` to set up the local sqlite.
-5. Use `npm run dev` to start the backend in development mode.
-
-### Frontend
-
-1. Navigate to the `ui` folder and repeat the process of renaming `.env.example` to `.env`, making sure to provide the frontend-specific variables.
-2. Execute `npm install` within the `ui` directory to get the frontend dependencies ready.
-3. Launch the frontend development server with `npm run dev`.
+2. Rename it to `config.toml` and fill in the necessary configuration fields.
+3. Run `npm install` to install all dependencies.
+4. Run `npm run db:push` to set up the local sqlite database.
+5. Use `npm run dev` to start the application in development mode.
 
 **Please note**: Docker configurations are present for setting up production environments, whereas `npm run dev` is used for development purposes.
 
