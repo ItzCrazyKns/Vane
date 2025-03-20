@@ -1,22 +1,27 @@
+FROM node:20.18.0-alpine AS builder
+
+WORKDIR /home/perplexica
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
+
+COPY tsconfig.json next.config.mjs next-env.d.ts postcss.config.js drizzle.config.ts tailwind.config.ts ./
+COPY src ./src
+COPY public ./public
+
+RUN mkdir -p /home/perplexica/data
+RUN yarn build
+
 FROM node:20.18.0-alpine
 
 WORKDIR /home/perplexica
 
-COPY src /home/perplexica/src
-COPY public /home/perplexica/public
-COPY package.json /home/perplexica/package.json
-COPY yarn.lock /home/perplexica/yarn.lock
-COPY tsconfig.json /home/perplexica/tsconfig.json
-COPY next.config.mjs /home/perplexica/next.config.mjs
-COPY next-env.d.ts /home/perplexica/next-env.d.ts
-COPY postcss.config.js /home/perplexica/postcss.config.js
-COPY drizzle.config.ts /home/perplexica/drizzle.config.ts
-COPY tailwind.config.ts /home/perplexica/tailwind.config.ts
+COPY --from=builder /home/perplexica/public ./public
+COPY --from=builder /home/perplexica/.next/static ./public/_next/static
 
-RUN mkdir /home/perplexica/data
+COPY --from=builder /home/perplexica/.next/standalone ./
+COPY --from=builder /home/perplexica/data ./data
+
 RUN mkdir /home/perplexica/uploads
 
-RUN yarn install --frozen-lockfile
-RUN yarn build
-
-CMD ["yarn", "start"]
+CMD ["node", "server.js"]
