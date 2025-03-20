@@ -109,14 +109,13 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 1. Install SearXNG and allow `JSON` format in the SearXNG settings.
 2. Clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. Ensure you complete all required fields in this file.
-3. Rename the `.env.example` file to `.env` in the `ui` folder and fill in all necessary fields.
-4. After populating the configuration and environment files, run `npm i` in both the `ui` folder and the root directory.
-5. Install the dependencies and then execute `npm run build` in both the `ui` folder and the root directory.
-6. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
+3. After populating the configuration run `npm i`.
+4. Install the dependencies and then execute `npm run build`.
+5. Finally, start the app by running `npm rum start`
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
-See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like exposing it your network, etc.
+See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like updating, etc.
 
 ### Ollama Connection Errors
 

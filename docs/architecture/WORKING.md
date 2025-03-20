@@ -4,7 +4,7 @@ Curious about how Perplexica works? Don't worry, we'll cover it here. Before we 
 
 We'll understand how Perplexica works by taking an example of a scenario where a user asks: "How does an A.C. work?". We'll break down the process into steps to make it easier to understand. The steps are as follows:
 
-1. The message is sent via WS to the backend server where it invokes the chain. The chain will depend on your focus mode. For this example, let's assume we use the "webSearch" focus mode.
+1. The message is sent to the `/api/chat` route where it invokes the chain. The chain will depend on your focus mode. For this example, let's assume we use the "webSearch" focus mode.
 2. The chain is now invoked; first, the message is passed to another chain where it first predicts (using the chat history and the question) whether there is a need for sources and searching the web. If there is, it will generate a query (in accordance with the chat history) for searching the web that we'll take up later. If not, the chain will end there, and then the answer generator chain, also known as the response generator, will be started.
 3. The query returned by the first chain is passed to SearXNG to search the web for information.
 4. After the information is retrieved, it is based on keyword-based search. We then convert the information into embeddings and the query as well, then we perform a similarity search to find the most relevant sources to answer the query.

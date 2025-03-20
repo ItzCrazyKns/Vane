@@ -9,7 +9,7 @@ class LineOutputParser extends BaseOutputParser<string> {
 
   constructor(args?: LineOutputParserArgs) {
     super();
-    this.key = args.key ?? this.key;
+    this.key = args?.key ?? this.key;
   }
 
   static lc_name() {

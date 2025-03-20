@@ -9,41 +9,21 @@ services:
       - perplexica-network
     restart: unless-stopped
 
-  perplexica-backend:
-    build:
-      context: .
-      dockerfile: backend.dockerfile
-    image: itzcrazykns1337/perplexica-backend:main
-    environment:
-      - SEARXNG_API_URL=http://searxng:8080
-    depends_on:
-      - searxng
-    ports:
-      - 3001:3001
-    volumes:
-      - backend-dbstore:/home/perplexica/data
-      - uploads:/home/perplexica/uploads
-      - ./config.toml:/home/perplexica/config.toml
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    networks:
-      - perplexica-network
-    restart: unless-stopped
-
-  perplexica-frontend:
+  app:
+    image: itzcrazykns1337/perplexica:main
     build:
       context: .
       dockerfile: app.dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-        - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
-    image: itzcrazykns1337/perplexica-frontend:main
-    depends_on:
-      - perplexica-backend
+    environment:
+      - SEARXNG_API_URL=http://searxng:8080
     ports:
       - 3000:3000
     networks:
       - perplexica-network
+    volumes:
+      - backend-dbstore:/home/perplexica/data
+      - uploads:/home/perplexica/uploads
+      - ./config.toml:/home/perplexica/config.toml
     restart: unless-stopped
 
 networks:

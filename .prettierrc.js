@@ -6,7 +6,6 @@ const config = {
   endOfLine: 'auto',
   singleQuote: true,
   tabWidth: 2,
-  semi: true,
 };
 
 module.exports = config;

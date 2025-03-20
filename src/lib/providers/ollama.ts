@@ -1,74 +1,73 @@
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { getKeepAlive, getOllamaApiEndpoint } from '../../config';
-import logger from '../../utils/logger';
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import axios from 'axios';
+import { getKeepAlive, getOllamaApiEndpoint } from '../config';
+import { ChatModel, EmbeddingModel } from '.';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
+import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 
 export const loadOllamaChatModels = async () => {
-  const ollamaEndpoint = getOllamaApiEndpoint();
-  const keepAlive = getKeepAlive();
+  const ollamaApiEndpoint = getOllamaApiEndpoint();
 
-  if (!ollamaEndpoint) return {};
+  if (!ollamaApiEndpoint) return {};
 
   try {
-    const response = await axios.get(`${ollamaEndpoint}/api/tags`, {
+    const res = await axios.get(`${ollamaApiEndpoint}/api/tags`, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    const { models: ollamaModels } = response.data;
+    const { models } = res.data;
 
-    const chatModels = ollamaModels.reduce((acc, model) => {
-      acc[model.model] = {
+    const chatModels: Record<string, ChatModel> = {};
+
+    models.forEach((model: any) => {
+      chatModels[model.model] = {
         displayName: model.name,
         model: new ChatOllama({
-          baseUrl: ollamaEndpoint,
+          baseUrl: ollamaApiEndpoint,
           model: model.model,
           temperature: 0.7,
-          keepAlive: keepAlive,
+          keepAlive: getKeepAlive(),
         }),
       };
-
-      return acc;
-    }, {});
+    });
 
     return chatModels;
   } catch (err) {
-    logger.error(`Error loading Ollama models: ${err}`);
+    console.error(`Error loading Ollama models: ${err}`);
     return {};
   }
 };
 
-export const loadOllamaEmbeddingsModels = async () => {
-  const ollamaEndpoint = getOllamaApiEndpoint();
+export const loadOllamaEmbeddingModels = async () => {
+  const ollamaApiEndpoint = getOllamaApiEndpoint();
 
-  if (!ollamaEndpoint) return {};
+  if (!ollamaApiEndpoint) return {};
 
   try {
-    const response = await axios.get(`${ollamaEndpoint}/api/tags`, {
+    const res = await axios.get(`${ollamaApiEndpoint}/api/tags`, {
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    const { models: ollamaModels } = response.data;
+    const { models } = res.data;
 
-    const embeddingsModels = ollamaModels.reduce((acc, model) => {
-      acc[model.model] = {
+    const embeddingModels: Record<string, EmbeddingModel> = {};
+
+    models.forEach((model: any) => {
+      embeddingModels[model.model] = {
         displayName: model.name,
         model: new OllamaEmbeddings({
-          baseUrl: ollamaEndpoint,
+          baseUrl: ollamaApiEndpoint,
           model: model.model,
         }),
       };
+    });
 
-      return acc;
-    }, {});
-
-    return embeddingsModels;
+    return embeddingModels;
   } catch (err) {
-    logger.error(`Error loading Ollama embeddings model: ${err}`);
+    console.error(`Error loading Ollama embeddings models: ${err}`);
     return {};
   }
 };

@@ -1,5 +1,4 @@
 [GENERAL]
-PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
 
@@ -24,4 +23,4 @@ MODEL_NAME = ""
 API_URL = "" # Ollama API URL - http://host.docker.internal:11434
 
 [API_ENDPOINTS]
-SEARXNG = "http://localhost:32768" # SearxNG API URL
+SEARXNG = "" # SearxNG API URL - http://localhost:32768

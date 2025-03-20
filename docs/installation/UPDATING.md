@@ -39,11 +39,8 @@ To update Perplexica to the latest version, follow these steps:
 2. Navigate to the project directory.
 
 3. Check for changes in the configuration files. If the `sample.config.toml` file contains new fields, delete your existing `config.toml` file, rename `sample.config.toml` to `config.toml`, and update the configuration accordingly.
-
-4. Execute `npm i` in both the `ui` folder and the root directory.
-
-5. Once the packages are updated, execute `npm run build` in both the `ui` folder and the root directory.
-
-6. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
+4. After populating the configuration run `npm i`.
+5. Install the dependencies and then execute `npm run build`.
+6. Finally, start the app by running `npm rum start`
 
 ---

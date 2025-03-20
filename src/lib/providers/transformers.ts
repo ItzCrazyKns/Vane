@@ -1,4 +1,3 @@
-import logger from '../../utils/logger';
 import { HuggingFaceTransformersEmbeddings } from '../huggingfaceTransformer';
 
 export const loadTransformersEmbeddingsModels = async () => {
@@ -26,7 +25,7 @@ export const loadTransformersEmbeddingsModels = async () => {
 
     return embeddingModels;
   } catch (err) {
-    logger.error(`Error loading Transformers embeddings model: ${err}`);
+    console.error(`Error loading Transformers embeddings model: ${err}`);
     return {};
   }
 };

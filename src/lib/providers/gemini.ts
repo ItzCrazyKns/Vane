@@ -1,9 +1,42 @@
-import {
-  ChatGoogleGenerativeAI,
-  GoogleGenerativeAIEmbeddings,
-} from '@langchain/google-genai';
-import { getGeminiApiKey } from '../../config';
-import logger from '../../utils/logger';
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { getGeminiApiKey } from '../config';
+import { ChatModel, EmbeddingModel } from '.';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { Embeddings } from '@langchain/core/embeddings';
+
+const geminiChatModels: Record<string, string>[] = [
+  {
+    displayName: 'Gemini 2.0 Flash',
+    key: 'gemini-2.0-flash',
+  },
+  {
+    displayName: 'Gemini 2.0 Flash-Lite',
+    key: 'gemini-2.0-flash-lite',
+  },
+  {
+    displayName: 'Gemini 2.0 Pro Experimental',
+    key: 'gemini-2.0-pro-exp-02-05',
+  },
+  {
+    displayName: 'Gemini 1.5 Flash',
+    key: 'gemini-1.5-flash',
+  },
+  {
+    displayName: 'Gemini 1.5 Flash-8B',
+    key: 'gemini-1.5-flash-8b',
+  },
+  {
+    displayName: 'Gemini 1.5 Pro',
+    key: 'gemini-1.5-pro',
+  },
+];
+
+const geminiEmbeddingModels: Record<string, string>[] = [
+  {
+    displayName: 'Gemini Embedding',
+    key: 'gemini-embedding-exp',
+  },
+];
 
 export const loadGeminiChatModels = async () => {
   const geminiApiKey = getGeminiApiKey();
@@ -11,75 +44,53 @@ export const loadGeminiChatModels = async () => {
   if (!geminiApiKey) return {};
 
   try {
-    const chatModels = {
-      'gemini-1.5-flash': {
-        displayName: 'Gemini 1.5 Flash',
-        model: new ChatGoogleGenerativeAI({
-          modelName: 'gemini-1.5-flash',
+    const chatModels: Record<string, ChatModel> = {};
+
+    geminiChatModels.forEach((model) => {
+      chatModels[model.key] = {
+        displayName: model.displayName,
+        model: new ChatOpenAI({
+          openAIApiKey: geminiApiKey,
+          modelName: model.key,
           temperature: 0.7,
-          apiKey: geminiApiKey,
-        }),
-      },
-      'gemini-1.5-flash-8b': {
-        displayName: 'Gemini 1.5 Flash 8B',
-        model: new ChatGoogleGenerativeAI({
-          modelName: 'gemini-1.5-flash-8b',
-          temperature: 0.7,
-          apiKey: geminiApiKey,
-        }),
-      },
-      'gemini-1.5-pro': {
-        displayName: 'Gemini 1.5 Pro',
-        model: new ChatGoogleGenerativeAI({
-          modelName: 'gemini-1.5-pro',
-          temperature: 0.7,
-          apiKey: geminiApiKey,
-        }),
-      },
-      'gemini-2.0-flash-exp': {
-        displayName: 'Gemini 2.0 Flash Exp',
-        model: new ChatGoogleGenerativeAI({
-          modelName: 'gemini-2.0-flash-exp',
-          temperature: 0.7,
-          apiKey: geminiApiKey,
-        }),
-      },
-      'gemini-2.0-flash-thinking-exp-01-21': {
-        displayName: 'Gemini 2.0 Flash Thinking Exp 01-21',
-        model: new ChatGoogleGenerativeAI({
-          modelName: 'gemini-2.0-flash-thinking-exp-01-21',
-          temperature: 0.7,
-          apiKey: geminiApiKey,
-        }),
-      },
-    };
+          configuration: {
+            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+          },
+        }) as unknown as BaseChatModel,
+      };
+    });
 
     return chatModels;
   } catch (err) {
-    logger.error(`Error loading Gemini models: ${err}`);
+    console.error(`Error loading Gemini models: ${err}`);
     return {};
   }
 };
 
-export const loadGeminiEmbeddingsModels = async () => {
+export const loadGeminiEmbeddingModels = async () => {
   const geminiApiKey = getGeminiApiKey();
 
   if (!geminiApiKey) return {};
 
   try {
-    const embeddingModels = {
-      'text-embedding-004': {
-        displayName: 'Text Embedding',
-        model: new GoogleGenerativeAIEmbeddings({
-          apiKey: geminiApiKey,
-          modelName: 'text-embedding-004',
-        }),
-      },
-    };
+    const embeddingModels: Record<string, EmbeddingModel> = {};
+
+    geminiEmbeddingModels.forEach((model) => {
+      embeddingModels[model.key] = {
+        displayName: model.displayName,
+        model: new OpenAIEmbeddings({
+          openAIApiKey: geminiApiKey,
+          modelName: model.key,
+          configuration: {
+            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+          },
+        }) as unknown as Embeddings,
+      };
+    });
 
     return embeddingModels;
   } catch (err) {
-    logger.error(`Error loading Gemini embeddings model: ${err}`);
+    console.error(`Error loading OpenAI embeddings models: ${err}`);
     return {};
   }
 };

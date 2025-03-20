@@ -1,33 +1,51 @@
-import { loadGroqChatModels } from './groq';
-import { loadOllamaChatModels, loadOllamaEmbeddingsModels } from './ollama';
-import { loadOpenAIChatModels, loadOpenAIEmbeddingsModels } from './openai';
-import { loadAnthropicChatModels } from './anthropic';
-import { loadTransformersEmbeddingsModels } from './transformers';
-import { loadGeminiChatModels, loadGeminiEmbeddingsModels } from './gemini';
+import { Embeddings } from '@langchain/core/embeddings';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { loadOpenAIChatModels, loadOpenAIEmbeddingModels } from './openai';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
-} from '../../config';
+} from '../config';
 import { ChatOpenAI } from '@langchain/openai';
+import { loadOllamaChatModels, loadOllamaEmbeddingModels } from './ollama';
+import { loadGroqChatModels } from './groq';
+import { loadAnthropicChatModels } from './anthropic';
+import { loadGeminiChatModels, loadGeminiEmbeddingModels } from './gemini';
+import { loadTransformersEmbeddingsModels } from './transformers';
 
-const chatModelProviders = {
+export interface ChatModel {
+  displayName: string;
+  model: BaseChatModel;
+}
+
+export interface EmbeddingModel {
+  displayName: string;
+  model: Embeddings;
+}
+
+export const chatModelProviders: Record<
+  string,
+  () => Promise<Record<string, ChatModel>>
+> = {
   openai: loadOpenAIChatModels,
-  groq: loadGroqChatModels,
   ollama: loadOllamaChatModels,
+  groq: loadGroqChatModels,
   anthropic: loadAnthropicChatModels,
   gemini: loadGeminiChatModels,
 };
 
-const embeddingModelProviders = {
-  openai: loadOpenAIEmbeddingsModels,
-  local: loadTransformersEmbeddingsModels,
-  ollama: loadOllamaEmbeddingsModels,
-  gemini: loadGeminiEmbeddingsModels,
+export const embeddingModelProviders: Record<
+  string,
+  () => Promise<Record<string, EmbeddingModel>>
+> = {
+  openai: loadOpenAIEmbeddingModels,
+  ollama: loadOllamaEmbeddingModels,
+  gemini: loadGeminiEmbeddingModels,
+  transformers: loadTransformersEmbeddingsModels,
 };
 
 export const getAvailableChatModelProviders = async () => {
-  const models = {};
+  const models: Record<string, Record<string, ChatModel>> = {};
 
   for (const provider in chatModelProviders) {
     const providerModels = await chatModelProviders[provider]();
@@ -52,7 +70,7 @@ export const getAvailableChatModelProviders = async () => {
               configuration: {
                 baseURL: customOpenAiApiUrl,
               },
-            }),
+            }) as unknown as BaseChatModel,
           },
         }
       : {}),
@@ -62,7 +80,7 @@ export const getAvailableChatModelProviders = async () => {
 };
 
 export const getAvailableEmbeddingModelProviders = async () => {
-  const models = {};
+  const models: Record<string, Record<string, EmbeddingModel>> = {};
 
   for (const provider in embeddingModelProviders) {
     const providerModels = await embeddingModelProviders[provider]();

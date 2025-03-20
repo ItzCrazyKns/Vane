@@ -1,89 +1,90 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
-import { getOpenaiApiKey } from '../../config';
-import logger from '../../utils/logger';
+import { getOpenaiApiKey } from '../config';
+import { ChatModel, EmbeddingModel } from '.';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { Embeddings } from '@langchain/core/embeddings';
+
+const openaiChatModels: Record<string, string>[] = [
+  {
+    displayName: 'GPT-3.5 Turbo',
+    key: 'gpt-3.5-turbo',
+  },
+  {
+    displayName: 'GPT-4',
+    key: 'gpt-4',
+  },
+  {
+    displayName: 'GPT-4 turbo',
+    key: 'gpt-4-turbo',
+  },
+  {
+    displayName: 'GPT-4 omni',
+    key: 'gpt-4o',
+  },
+  {
+    displayName: 'GPT-4 omni mini',
+    key: 'gpt-4o-mini',
+  },
+];
+
+const openaiEmbeddingModels: Record<string, string>[] = [
+  {
+    displayName: 'Text Embedding 3 Small',
+    key: 'text-embedding-3-small',
+  },
+  {
+    displayName: 'Text Embedding 3 Large',
+    key: 'text-embedding-3-large',
+  },
+];
 
 export const loadOpenAIChatModels = async () => {
-  const openAIApiKey = getOpenaiApiKey();
+  const openaiApiKey = getOpenaiApiKey();
 
-  if (!openAIApiKey) return {};
+  if (!openaiApiKey) return {};
 
   try {
-    const chatModels = {
-      'gpt-3.5-turbo': {
-        displayName: 'GPT-3.5 Turbo',
+    const chatModels: Record<string, ChatModel> = {};
+
+    openaiChatModels.forEach((model) => {
+      chatModels[model.key] = {
+        displayName: model.displayName,
         model: new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-3.5-turbo',
+          openAIApiKey: openaiApiKey,
+          modelName: model.key,
           temperature: 0.7,
-        }),
-      },
-      'gpt-4': {
-        displayName: 'GPT-4',
-        model: new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-4',
-          temperature: 0.7,
-        }),
-      },
-      'gpt-4-turbo': {
-        displayName: 'GPT-4 turbo',
-        model: new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-4-turbo',
-          temperature: 0.7,
-        }),
-      },
-      'gpt-4o': {
-        displayName: 'GPT-4 omni',
-        model: new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-4o',
-          temperature: 0.7,
-        }),
-      },
-      'gpt-4o-mini': {
-        displayName: 'GPT-4 omni mini',
-        model: new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-4o-mini',
-          temperature: 0.7,
-        }),
-      },
-    };
+        }) as unknown as BaseChatModel,
+      };
+    });
 
     return chatModels;
   } catch (err) {
-    logger.error(`Error loading OpenAI models: ${err}`);
+    console.error(`Error loading OpenAI models: ${err}`);
     return {};
   }
 };
 
-export const loadOpenAIEmbeddingsModels = async () => {
-  const openAIApiKey = getOpenaiApiKey();
+export const loadOpenAIEmbeddingModels = async () => {
+  const openaiApiKey = getOpenaiApiKey();
 
-  if (!openAIApiKey) return {};
+  if (!openaiApiKey) return {};
 
   try {
-    const embeddingModels = {
-      'text-embedding-3-small': {
-        displayName: 'Text Embedding 3 Small',
+    const embeddingModels: Record<string, EmbeddingModel> = {};
+
+    openaiEmbeddingModels.forEach((model) => {
+      embeddingModels[model.key] = {
+        displayName: model.displayName,
         model: new OpenAIEmbeddings({
-          openAIApiKey,
-          modelName: 'text-embedding-3-small',
-        }),
-      },
-      'text-embedding-3-large': {
-        displayName: 'Text Embedding 3 Large',
-        model: new OpenAIEmbeddings({
-          openAIApiKey,
-          modelName: 'text-embedding-3-large',
-        }),
-      },
-    };
+          openAIApiKey: openaiApiKey,
+          modelName: model.key,
+        }) as unknown as Embeddings,
+      };
+    });
 
     return embeddingModels;
   } catch (err) {
-    logger.error(`Error loading OpenAI embeddings model: ${err}`);
+    console.error(`Error loading OpenAI embeddings models: ${err}`);
     return {};
   }
 };
