@@ -49,10 +49,6 @@ const groqChatModels: Record<string, string>[] = [
     key: 'deepseek-r1-distill-qwen-32b',
   },
   {
-    displayName: 'DeepSeek R1 Distill Llama 70B SpecDec (Preview)',
-    key: 'deepseek-r1-distill-llama-70b-specdec',
-  },
-  {
     displayName: 'DeepSeek R1 Distill Llama 70B (Preview)',
     key: 'deepseek-r1-distill-llama-70b',
   },
