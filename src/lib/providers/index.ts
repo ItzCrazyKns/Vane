@@ -11,6 +11,7 @@ import { loadOllamaChatModels, loadOllamaEmbeddingModels } from './ollama';
 import { loadGroqChatModels } from './groq';
 import { loadAnthropicChatModels } from './anthropic';
 import { loadGeminiChatModels, loadGeminiEmbeddingModels } from './gemini';
+import { loadTransformersEmbeddingsModels } from './transformers';
 
 export interface ChatModel {
   displayName: string;
@@ -40,6 +41,7 @@ export const embeddingModelProviders: Record<
   openai: loadOpenAIEmbeddingModels,
   ollama: loadOllamaEmbeddingModels,
   gemini: loadGeminiEmbeddingModels,
+  transformers: loadTransformersEmbeddingsModels,
 };
 
 export const getAvailableChatModelProviders = async () => {
