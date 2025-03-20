@@ -5,8 +5,8 @@
   "author": "ItzCrazyKns",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "npm run db:push && next start",
+    "build": "npm run db:push && next build",
+    "start": "next start",
     "lint": "next lint",
     "format:write": "prettier . --write",
     "db:push": "drizzle-kit push"
