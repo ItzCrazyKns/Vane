@@ -1,4 +1,4 @@
-FROM node:20.18.0-alpine AS builder
+FROM node:20.18.0-slim AS builder
 
 WORKDIR /home/perplexica
 
@@ -12,7 +12,7 @@ COPY public ./public
 RUN mkdir -p /home/perplexica/data
 RUN yarn build
 
-FROM node:20.18.0-alpine
+FROM node:20.18.0-slim
 
 WORKDIR /home/perplexica
 
