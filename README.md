@@ -153,7 +153,7 @@ For more details, check out the full documentation [here](https://github.com/Itz
 
 ## Expose Perplexica to network
 
-You can access Perplexica over your home network by following our networking guide [here](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
+Perplexica runs on Next.js and handles all API requests. It works right away on the same network and stays accessible even with port forwarding.
 
 ## One-Click Deployment
 
