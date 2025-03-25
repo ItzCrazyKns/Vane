@@ -1,4 +1,7 @@
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import {
+  ChatGoogleGenerativeAI,
+  GoogleGenerativeAIEmbeddings,
+} from '@langchain/google-genai';
 import { getGeminiApiKey } from '../config';
 import { ChatModel, EmbeddingModel } from '.';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
@@ -49,13 +52,10 @@ export const loadGeminiChatModels = async () => {
     geminiChatModels.forEach((model) => {
       chatModels[model.key] = {
         displayName: model.displayName,
-        model: new ChatOpenAI({
-          openAIApiKey: geminiApiKey,
+        model: new ChatGoogleGenerativeAI({
+          apiKey: geminiApiKey,
           modelName: model.key,
           temperature: 0.7,
-          configuration: {
-            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-          },
         }) as unknown as BaseChatModel,
       };
     });
@@ -78,12 +78,9 @@ export const loadGeminiEmbeddingModels = async () => {
     geminiEmbeddingModels.forEach((model) => {
       embeddingModels[model.key] = {
         displayName: model.displayName,
-        model: new OpenAIEmbeddings({
-          openAIApiKey: geminiApiKey,
+        model: new GoogleGenerativeAIEmbeddings({
+          apiKey: geminiApiKey,
           modelName: model.key,
-          configuration: {
-            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-          },
         }) as unknown as Embeddings,
       };
     });

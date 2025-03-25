@@ -1,4 +1,4 @@
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatModel } from '.';
 import { getAnthropicApiKey } from '../config';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
@@ -45,13 +45,10 @@ export const loadAnthropicChatModels = async () => {
     anthropicChatModels.forEach((model) => {
       chatModels[model.key] = {
         displayName: model.displayName,
-        model: new ChatOpenAI({
-          openAIApiKey: anthropicApiKey,
+        model: new ChatAnthropic({
+          apiKey: anthropicApiKey,
           modelName: model.key,
           temperature: 0.7,
-          configuration: {
-            baseURL: 'https://api.anthropic.com/v1/',
-          },
         }) as unknown as BaseChatModel,
       };
     });

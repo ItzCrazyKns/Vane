@@ -12,6 +12,19 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
+"@anthropic-ai/sdk@^0.37.0":
+  version "0.37.0"
+  resolved "https://registry.yarnpkg.com/@anthropic-ai/sdk/-/sdk-0.37.0.tgz#0018127404ecb9b8a12968068e0c4b3e8bbd6386"
+  integrity sha512-tHjX2YbkUBwEgg0JZU3EFSSAQPoK4qQR/NFYa8Vtzd5UAyXzZksCw2In69Rml4R/TyHPBfRYaLK35XiOe33pjw==
+  dependencies:
+    "@types/node" "^18.11.18"
+    "@types/node-fetch" "^2.6.4"
+    abort-controller "^3.0.0"
+    agentkeepalive "^4.2.1"
+    form-data-encoder "1.7.2"
+    formdata-node "^4.3.2"
+    node-fetch "^2.6.7"
+
 "@anthropic-ai/sdk@^0.9.1":
   version "0.9.1"
   resolved "https://registry.yarnpkg.com/@anthropic-ai/sdk/-/sdk-0.9.1.tgz#b2d2b7bf05c90dce502c9a2e869066870f69ba88"
@@ -374,6 +387,11 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.8.tgz#21a907684723bbbaa5f0974cf7730bd797eb8e62"
   integrity sha512-kym7SodPp8/wloecOpcmSnWJsK7M0E5Wg8UcFA+uO4B9s5d0ywXOEro/8HM9x0rW+TljRzul/14UYz3TleT3ig==
 
+"@google/generative-ai@^0.24.0":
+  version "0.24.0"
+  resolved "https://registry.yarnpkg.com/@google/generative-ai/-/generative-ai-0.24.0.tgz#4d27af7d944c924a27a593c17ad1336535d53846"
+  integrity sha512-fnEITCGEB7NdX0BhoYZ/cq/7WPZ1QS5IzJJfC3Tg/OwkvBetMiVJciyaan297OvE4B9Jg1xvo0zIazX/9sGu1Q==
+
 "@headlessui/react@^2.2.0":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@headlessui/react/-/react-2.2.0.tgz#a8e32f0899862849a1ce1615fa280e7891431ab7"
@@ -575,6 +593,16 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@langchain/anthropic@^0.3.15":
+  version "0.3.15"
+  resolved "https://registry.yarnpkg.com/@langchain/anthropic/-/anthropic-0.3.15.tgz#0244cdb345cb492eb40aedd681881ebadfbb73f2"
+  integrity sha512-Ar2viYcZ64idgV7EtCBCb36tIkNtPAhQRxSaMTWPHGspFgMfvwRoleVri9e90sCpjpS9xhlHsIQ0LlUS/Atsrw==
+  dependencies:
+    "@anthropic-ai/sdk" "^0.37.0"
+    fast-xml-parser "^4.4.1"
+    zod "^3.22.4"
+    zod-to-json-schema "^3.22.4"
+
 "@langchain/community@^0.3.36":
   version "0.3.36"
   resolved "https://registry.yarnpkg.com/@langchain/community/-/community-0.3.36.tgz#e4c13b8f928b17e0f9257395f43be2246dfada40"
@@ -639,6 +667,14 @@
     uuid "^9.0.0"
     zod "^3.22.4"
     zod-to-json-schema "^3.22.3"
+
+"@langchain/google-genai@^0.1.12":
+  version "0.1.12"
+  resolved "https://registry.yarnpkg.com/@langchain/google-genai/-/google-genai-0.1.12.tgz#6727253bda6f0d87cd74cf0bb6b1e0f398f60f32"
+  integrity sha512-0Ea0E2g63ejCuormVxbuoyJQ5BYN53i2/fb6WP8bMKzyh+y43R13V8JqOtr3e/GmgNyv3ou/VeaZjx7KAvu/0g==
+  dependencies:
+    "@google/generative-ai" "^0.24.0"
+    zod-to-json-schema "^3.22.4"
 
 "@langchain/openai@>=0.1.0 <0.5.0", "@langchain/openai@>=0.2.0 <0.5.0":
   version "0.4.5"
@@ -2368,6 +2404,13 @@ fast-levenshtein@^2.0.6:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==
+
+fast-xml-parser@^4.4.1:
+  version "4.5.3"
+  resolved "https://registry.yarnpkg.com/fast-xml-parser/-/fast-xml-parser-4.5.3.tgz#c54d6b35aa0f23dc1ea60b6c884340c006dc6efb"
+  integrity sha512-RKihhV+SHsIUGXObeVy9AXiBbFwkVk7Syp8XgwN5U3JV416+Gwp/GO9i0JYKmikykgz/UHRrrV4ROuZEo/T0ig==
+  dependencies:
+    strnum "^1.1.1"
 
 fastq@^1.6.0:
   version "1.17.1"
@@ -4458,6 +4501,11 @@ strip-json-comments@~2.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==
 
+strnum@^1.1.1:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/strnum/-/strnum-1.1.2.tgz#57bca4fbaa6f271081715dbc9ed7cee5493e28e4"
+  integrity sha512-vrN+B7DBIoTTZjnPNewwhx6cBA/H+IS7rfW68n7XxC1y7uoiGQBxaKzqucGUgavX15dJgiGztLJ8vxuEzwqBdA==
+
 styled-jsx@5.1.6:
   version "5.1.6"
   resolved "https://registry.yarnpkg.com/styled-jsx/-/styled-jsx-5.1.6.tgz#83b90c077e6c6a80f7f5e8781d0f311b2fe41499"
@@ -4954,6 +5002,11 @@ zod-to-json-schema@^3.22.3, zod-to-json-schema@^3.22.5:
   version "3.22.5"
   resolved "https://registry.yarnpkg.com/zod-to-json-schema/-/zod-to-json-schema-3.22.5.tgz#3646e81cfc318dbad2a22519e5ce661615418673"
   integrity sha512-+akaPo6a0zpVCCseDed504KBJUQpEW5QZw7RMneNmKw+fGaML1Z9tUNLnHHAC8x6dzVRO1eB2oEMyZRnuBZg7Q==
+
+zod-to-json-schema@^3.22.4:
+  version "3.24.5"
+  resolved "https://registry.yarnpkg.com/zod-to-json-schema/-/zod-to-json-schema-3.24.5.tgz#d1095440b147fb7c2093812a53c54df8d5df50a3"
+  integrity sha512-/AuWwMP+YqiPbsJx5D6TfgRTc4kTLjsh5SOcd4bLsfUg2RcEXrFMJl1DGgdHy2aCfsIA/cr/1JM0xcB2GZji8g==
 
 zod@^3.22.3, zod@^3.22.4:
   version "3.22.4"
