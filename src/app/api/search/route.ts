@@ -166,7 +166,6 @@ export const POST = async (req: Request) => {
 
     const encoder = new TextEncoder();
     
-    // Create an AbortController to handle cancellation
     const abortController = new AbortController();
     const { signal } = abortController;
     
@@ -174,27 +173,21 @@ export const POST = async (req: Request) => {
       start(controller) {
         let sources: any[] = [];
 
-        // Send an initial message to keep the connection alive
         controller.enqueue(encoder.encode("data: " + JSON.stringify({
           type: 'init',
           data: 'Stream connected'
         }) + "\n\n"));
 
-        // Set up cleanup function for when client disconnects
         signal.addEventListener('abort', () => {
-          // Remove all listeners from emitter to prevent memory leaks
           emitter.removeAllListeners();
           
-          // Close the controller if it's still active
           try {
             controller.close();
           } catch (error) {
-            // Controller might already be closed
           }
         });
 
         emitter.on('data', (data: string) => {
-          // Check if request has been cancelled before processing
           if (signal.aborted) return;
           
           try {
@@ -218,7 +211,6 @@ export const POST = async (req: Request) => {
         });
 
         emitter.on('end', () => {
-          // Check if request has been cancelled before processing
           if (signal.aborted) return;
           
           controller.enqueue(encoder.encode("data: " + JSON.stringify({
@@ -228,7 +220,6 @@ export const POST = async (req: Request) => {
         });
 
         emitter.on('error', (error: any) => {
-          // Check if request has been cancelled before processing
           if (signal.aborted) return;
           
           controller.error(error);
