@@ -59,9 +59,9 @@ export const GET = async (req: Request) => {
 
     return Response.json({ ...config }, { status: 200 });
   } catch (err) {
-    console.error('An error ocurred while getting config:', err);
+    console.error('An error occurred while getting config:', err);
     return Response.json(
-      { message: 'An error ocurred while getting config' },
+      { message: 'An error occurred while getting config' },
       { status: 500 },
     );
   }
@@ -100,9 +100,9 @@ export const POST = async (req: Request) => {
 
     return Response.json({ message: 'Config updated' }, { status: 200 });
   } catch (err) {
-    console.error('An error ocurred while updating config:', err);
+    console.error('An error occurred while updating config:', err);
     return Response.json(
-      { message: 'An error ocurred while updating config' },
+      { message: 'An error occurred while updating config' },
       { status: 500 },
     );
   }

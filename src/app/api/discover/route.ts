@@ -48,7 +48,7 @@ export const GET = async (req: Request) => {
       },
     );
   } catch (err) {
-    console.error(`An error ocurred in discover route: ${err}`);
+    console.error(`An error occurred in discover route: ${err}`);
     return Response.json(
       {
         message: 'An error has occurred',
