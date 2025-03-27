@@ -166,6 +166,7 @@ export const POST = async (req: Request) => {
 
     const encoder = new TextEncoder();
     
+    // Create an AbortController to handle cancellation
     const abortController = new AbortController();
     const { signal } = abortController;
     
@@ -173,37 +174,43 @@ export const POST = async (req: Request) => {
       start(controller) {
         let sources: any[] = [];
 
-        controller.enqueue(encoder.encode("data: " + JSON.stringify({
+        // Send an initial message to keep the connection alive
+        controller.enqueue(encoder.encode(JSON.stringify({
           type: 'init',
           data: 'Stream connected'
-        }) + "\n\n"));
+        }) + '\n'));
 
+        // Set up cleanup function for when client disconnects
         signal.addEventListener('abort', () => {
+          // Remove all listeners from emitter to prevent memory leaks
           emitter.removeAllListeners();
           
+          // Close the controller if it's still active
           try {
             controller.close();
           } catch (error) {
+            // Controller might already be closed
           }
         });
 
         emitter.on('data', (data: string) => {
+          // Check if request has been cancelled before processing
           if (signal.aborted) return;
           
           try {
             const parsedData = JSON.parse(data);
             
             if (parsedData.type === 'response') {
-              controller.enqueue(encoder.encode("data: " + JSON.stringify({
+              controller.enqueue(encoder.encode(JSON.stringify({
                 type: 'response',
                 data: parsedData.data
-              }) + "\n\n"));
+              }) + '\n'));
             } else if (parsedData.type === 'sources') {
               sources = parsedData.data;
-              controller.enqueue(encoder.encode("data: " + JSON.stringify({
+              controller.enqueue(encoder.encode(JSON.stringify({
                 type: 'sources',
                 data: sources
-              }) + "\n\n"));
+              }) + '\n'));
             }
           } catch (error) {
             controller.error(error);
@@ -211,21 +218,22 @@ export const POST = async (req: Request) => {
         });
 
         emitter.on('end', () => {
+          // Check if request has been cancelled before processing
           if (signal.aborted) return;
           
-          controller.enqueue(encoder.encode("data: " + JSON.stringify({
+          controller.enqueue(encoder.encode(JSON.stringify({
             type: 'done'
-          }) + "\n\n"));
+          }) + '\n'));
           controller.close();
         });
 
         emitter.on('error', (error: any) => {
+          // Check if request has been cancelled before processing
           if (signal.aborted) return;
           
           controller.error(error);
         });
       },
-      
       cancel() {
         abortController.abort();
       }
@@ -233,7 +241,7 @@ export const POST = async (req: Request) => {
 
     return new Response(stream, {
       headers: {
-        'Content-Type': 'text/event-stream',
+        'Content-Type': 'application/json',
         'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
       },
