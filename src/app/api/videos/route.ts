@@ -74,9 +74,9 @@ export const POST = async (req: Request) => {
 
     return Response.json({ videos }, { status: 200 });
   } catch (err) {
-    console.error(`An error ocurred while searching videos: ${err}`);
+    console.error(`An error occurred while searching videos: ${err}`);
     return Response.json(
-      { message: 'An error ocurred while searching videos' },
+      { message: 'An error occurred while searching videos' },
       { status: 500 },
     );
   }

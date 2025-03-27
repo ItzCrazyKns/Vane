@@ -34,7 +34,7 @@ export const GET = async (req: Request) => {
       },
     );
   } catch (err) {
-    console.error('An error ocurred while fetching models', err);
+    console.error('An error occurred while fetching models', err);
     return Response.json(
       {
         message: 'An error has occurred.',

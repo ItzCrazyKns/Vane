@@ -72,9 +72,9 @@ export const POST = async (req: Request) => {
 
     return Response.json({ suggestions }, { status: 200 });
   } catch (err) {
-    console.error(`An error ocurred while generating suggestions: ${err}`);
+    console.error(`An error occurred while generating suggestions: ${err}`);
     return Response.json(
-      { message: 'An error ocurred while generating suggestions' },
+      { message: 'An error occurred while generating suggestions' },
       { status: 500 },
     );
   }
