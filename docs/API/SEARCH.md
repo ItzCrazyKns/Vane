@@ -32,7 +32,8 @@ The API accepts a JSON object in the request body, where you define the focus mo
   "history": [
     ["human", "Hi, how are you?"],
     ["assistant", "I am doing well, how can I help you today?"]
-  ]
+  ],
+  "stream": false
 }
 ```
 
@@ -71,11 +72,13 @@ The API accepts a JSON object in the request body, where you define the focus mo
   ]
   ```
 
+- **`stream`** (boolean, optional): When set to `true`, enables streaming responses. Default is `false`.
+
 ### Response
 
 The response from the API includes both the final message and the sources used to generate that message.
 
-#### Example Response
+#### Standard Response (stream: false)
 
 ```json
 {
@@ -99,6 +102,28 @@ The response from the API includes both the final message and the sources used t
   ]
 }
 ```
+
+#### Streaming Response (stream: true)
+
+When streaming is enabled, the API returns a stream of newline-delimited JSON objects. Each line contains a complete, valid JSON object. The response has Content-Type: application/json.
+
+Example of streamed response objects:
+
+```
+{"type":"init","data":"Stream connected"}
+{"type":"sources","data":[{"pageContent":"...","metadata":{"title":"...","url":"..."}},...]}
+{"type":"response","data":"Perplexica is an "}
+{"type":"response","data":"innovative, open-source "}
+{"type":"response","data":"AI-powered search engine..."}
+{"type":"done"}
+```
+
+Clients should process each line as a separate JSON object. The different message types include:
+
+- **`init`**: Initial connection message
+- **`sources`**: All sources used for the response
+- **`response`**: Chunks of the generated answer text
+- **`done`**: Indicates the stream is complete
 
 ### Fields in the Response
 

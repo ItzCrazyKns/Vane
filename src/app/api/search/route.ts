@@ -33,6 +33,7 @@ interface ChatRequestBody {
   embeddingModel?: embeddingModel;
   query: string;
   history: Array<[string, string]>;
+  stream?: boolean;
 }
 
 export const POST = async (req: Request) => {
@@ -48,6 +49,7 @@ export const POST = async (req: Request) => {
 
     body.history = body.history || [];
     body.optimizationMode = body.optimizationMode || 'balanced';
+    body.stream = body.stream || false;
 
     const history: BaseMessage[] = body.history.map((msg) => {
       return msg[0] === 'human'
@@ -125,40 +127,137 @@ export const POST = async (req: Request) => {
       [],
     );
 
-    return new Promise(
-      (
-        resolve: (value: Response) => void,
-        reject: (value: Response) => void,
-      ) => {
-        let message = '';
+    if (!body.stream) {
+      return new Promise(
+        (
+          resolve: (value: Response) => void,
+          reject: (value: Response) => void,
+        ) => {
+          let message = '';
+          let sources: any[] = [];
+
+          emitter.on('data', (data: string) => {
+            try {
+              const parsedData = JSON.parse(data);
+              if (parsedData.type === 'response') {
+                message += parsedData.data;
+              } else if (parsedData.type === 'sources') {
+                sources = parsedData.data;
+              }
+            } catch (error) {
+              reject(
+                Response.json(
+                  { message: 'Error parsing data' },
+                  { status: 500 },
+                ),
+              );
+            }
+          });
+
+          emitter.on('end', () => {
+            resolve(Response.json({ message, sources }, { status: 200 }));
+          });
+
+          emitter.on('error', (error: any) => {
+            reject(
+              Response.json(
+                { message: 'Search error', error },
+                { status: 500 },
+              ),
+            );
+          });
+        },
+      );
+    }
+
+    const encoder = new TextEncoder();
+
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
+    const stream = new ReadableStream({
+      start(controller) {
         let sources: any[] = [];
 
-        emitter.on('data', (data) => {
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              type: 'init',
+              data: 'Stream connected',
+            }) + '\n',
+          ),
+        );
+
+        signal.addEventListener('abort', () => {
+          emitter.removeAllListeners();
+
+          try {
+            controller.close();
+          } catch (error) {}
+        });
+
+        emitter.on('data', (data: string) => {
+          if (signal.aborted) return;
+
           try {
             const parsedData = JSON.parse(data);
+
             if (parsedData.type === 'response') {
-              message += parsedData.data;
+              controller.enqueue(
+                encoder.encode(
+                  JSON.stringify({
+                    type: 'response',
+                    data: parsedData.data,
+                  }) + '\n',
+                ),
+              );
             } else if (parsedData.type === 'sources') {
               sources = parsedData.data;
+              controller.enqueue(
+                encoder.encode(
+                  JSON.stringify({
+                    type: 'sources',
+                    data: sources,
+                  }) + '\n',
+                ),
+              );
             }
           } catch (error) {
-            reject(
-              Response.json({ message: 'Error parsing data' }, { status: 500 }),
-            );
+            controller.error(error);
           }
         });
 
         emitter.on('end', () => {
-          resolve(Response.json({ message, sources }, { status: 200 }));
+          if (signal.aborted) return;
+
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                type: 'done',
+              }) + '\n',
+            ),
+          );
+          controller.close();
         });
 
-        emitter.on('error', (error) => {
-          reject(
-            Response.json({ message: 'Search error', error }, { status: 500 }),
-          );
+        emitter.on('error', (error: any) => {
+          if (signal.aborted) return;
+
+          controller.error(error);
         });
       },
-    );
+      cancel() {
+        abortController.abort();
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+      },
+    });
   } catch (err: any) {
     console.error(`Error in getting search results: ${err.message}`);
     return Response.json(
