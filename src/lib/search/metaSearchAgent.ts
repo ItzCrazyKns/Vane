@@ -33,6 +33,7 @@ export interface MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
+    systemInstructions: string,
   ) => Promise<eventEmitter>;
 }
 
@@ -236,9 +237,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
     fileIds: string[],
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
+    systemInstructions: string,
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
+        systemInstructions: () => systemInstructions,
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
         date: () => new Date().toISOString(),
@@ -468,6 +471,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
+    systemInstructions: string,
   ) {
     const emitter = new eventEmitter();
 
@@ -476,6 +480,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       fileIds,
       embeddings,
       optimizationMode,
+      systemInstructions,
     );
 
     const stream = answeringChain.streamEvents(

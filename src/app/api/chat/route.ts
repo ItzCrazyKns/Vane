@@ -49,6 +49,7 @@ type Body = {
   files: Array<string>;
   chatModel: ChatModel;
   embeddingModel: EmbeddingModel;
+  systemInstructions: string;
 };
 
 const handleEmitterEvents = async (
@@ -278,6 +279,7 @@ export const POST = async (req: Request) => {
       embedding,
       body.optimizationMode,
       body.files,
+      body.systemInstructions,
     );
 
     const responseStream = new TransformStream();
