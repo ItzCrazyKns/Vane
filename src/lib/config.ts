@@ -28,6 +28,9 @@ interface Config {
     DEEPSEEK: {
       API_KEY: string;
     };
+    LM_STUDIO: {
+      API_URL: string;
+    };
     CUSTOM_OPENAI: {
       API_URL: string;
       API_KEY: string;
@@ -76,6 +79,8 @@ export const getCustomOpenaiApiUrl = () =>
 
 export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
+
+export const getLMStudioApiEndpoint = () => loadConfig().MODELS.LM_STUDIO.API_URL;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {

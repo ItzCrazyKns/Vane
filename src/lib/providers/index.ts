@@ -13,6 +13,7 @@ import { loadAnthropicChatModels } from './anthropic';
 import { loadGeminiChatModels, loadGeminiEmbeddingModels } from './gemini';
 import { loadTransformersEmbeddingsModels } from './transformers';
 import { loadDeepseekChatModels } from './deepseek';
+import { loadLMStudioChatModels, loadLMStudioEmbeddingsModels } from './lmstudio';
 
 export interface ChatModel {
   displayName: string;
@@ -34,6 +35,7 @@ export const chatModelProviders: Record<
   anthropic: loadAnthropicChatModels,
   gemini: loadGeminiChatModels,
   deepseek: loadDeepseekChatModels,
+  lmstudio: loadLMStudioChatModels,
 };
 
 export const embeddingModelProviders: Record<
@@ -44,6 +46,7 @@ export const embeddingModelProviders: Record<
   ollama: loadOllamaEmbeddingModels,
   gemini: loadGeminiEmbeddingModels,
   transformers: loadTransformersEmbeddingsModels,
+  lmstudio: loadLMStudioEmbeddingsModels,
 };
 
 export const getAvailableChatModelProviders = async () => {
