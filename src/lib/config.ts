@@ -1,6 +1,13 @@
-import fs from 'fs';
-import path from 'path';
 import toml from '@iarna/toml';
+
+// Use dynamic imports for Node.js modules to prevent client-side errors
+let fs: any;
+let path: any;
+if (typeof window === 'undefined') {
+  // We're on the server
+  fs = require('fs');
+  path = require('path');
+}
 
 const configFileName = 'config.toml';
 
@@ -46,10 +53,17 @@ type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-const loadConfig = () =>
-  toml.parse(
-    fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
-  ) as any as Config;
+const loadConfig = () => {
+  // Server-side only
+  if (typeof window === 'undefined') {
+    return toml.parse(
+      fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
+    ) as any as Config;
+  }
+  
+  // Client-side fallback - settings will be loaded via API
+  return {} as Config;
+};
 
 export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
@@ -114,10 +128,13 @@ const mergeConfigs = (current: any, update: any): any => {
 };
 
 export const updateConfig = (config: RecursivePartial<Config>) => {
-  const currentConfig = loadConfig();
-  const mergedConfig = mergeConfigs(currentConfig, config);
-  fs.writeFileSync(
-    path.join(path.join(process.cwd(), `${configFileName}`)),
-    toml.stringify(mergedConfig),
-  );
+  // Server-side only
+  if (typeof window === 'undefined') {
+    const currentConfig = loadConfig();
+    const mergedConfig = mergeConfigs(currentConfig, config);
+    fs.writeFileSync(
+      path.join(path.join(process.cwd(), `${configFileName}`)),
+      toml.stringify(mergedConfig),
+    );
+  }
 };

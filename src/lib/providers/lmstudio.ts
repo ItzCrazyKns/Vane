@@ -1,6 +1,11 @@
 import { getKeepAlive, getLMStudioApiEndpoint } from '../config';
 import axios from 'axios';
 import { ChatModel, EmbeddingModel } from '.';
+
+export const PROVIDER_INFO = {
+  key: 'lmstudio',
+  displayName: 'LM Studio'
+};
 import { ChatOpenAI } from '@langchain/openai';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';

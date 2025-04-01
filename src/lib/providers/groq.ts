@@ -1,6 +1,11 @@
 import { ChatOpenAI } from '@langchain/openai';
 import { getGroqApiKey } from '../config';
 import { ChatModel } from '.';
+
+export const PROVIDER_INFO = {
+  key: 'groq',
+  displayName: 'Groq'
+};
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const groqChatModels: Record<string, string>[] = [

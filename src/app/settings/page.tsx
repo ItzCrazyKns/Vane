@@ -7,6 +7,7 @@ import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
 import { ImagesIcon, VideoIcon } from 'lucide-react';
 import Link from 'next/link';
+import { PROVIDER_METADATA } from '@/lib/providers';
 
 interface SettingsType {
   chatModelProviders: {
@@ -547,9 +548,8 @@ const Page = () => {
                       options={Object.keys(config.chatModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label:
-                            provider.charAt(0).toUpperCase() +
-                            provider.slice(1),
+                          label: (PROVIDER_METADATA as any)[provider]?.displayName || 
+                            provider.charAt(0).toUpperCase() + provider.slice(1),
                         }),
                       )}
                     />
@@ -689,9 +689,8 @@ const Page = () => {
                       options={Object.keys(config.embeddingModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label:
-                            provider.charAt(0).toUpperCase() +
-                            provider.slice(1),
+                          label: (PROVIDER_METADATA as any)[provider]?.displayName || 
+                            provider.charAt(0).toUpperCase() + provider.slice(1),
                         }),
                       )}
                     />

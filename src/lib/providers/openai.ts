@@ -1,6 +1,11 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { getOpenaiApiKey } from '../config';
 import { ChatModel, EmbeddingModel } from '.';
+
+export const PROVIDER_INFO = {
+  key: 'openai',
+  displayName: 'OpenAI'
+};
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Embeddings } from '@langchain/core/embeddings';
 
