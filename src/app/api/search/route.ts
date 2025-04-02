@@ -125,7 +125,7 @@ export const POST = async (req: Request) => {
       embeddings,
       body.optimizationMode,
       [],
-      "",
+      '',
     );
 
     if (!body.stream) {
