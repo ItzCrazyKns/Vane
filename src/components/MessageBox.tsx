@@ -48,6 +48,7 @@ const MessageBox = ({
   const [speechMessage, setSpeechMessage] = useState(message.content);
 
   useEffect(() => {
+    const citationRegex = /\[([^\]]+)\]/g;
     const regex = /\[(\d+)\]/g;
     let processedMessage = message.content;
 
@@ -67,12 +68,45 @@ const MessageBox = ({
     ) {
       setParsedMessage(
         processedMessage.replace(
-          regex,
-          (_, number) =>
-            `<a href="${
-              message.sources?.[number - 1]?.metadata?.url
-            }" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
-        ),
+          citationRegex, // Use the updated regex
+          (match, capturedContent) => { // match is the full "[1,2,3]", capturedContent is "1,2,3"
+            // Split the captured content by comma, trim whitespace, and filter out non-digits
+            const numbers = capturedContent
+              .split(',')
+              .map(numStr => numStr.trim())
+              .filter(numStr => /^\d+$/.test(numStr)); // Ensure it's only digits
+
+            // If no valid numbers found after split/filter (e.g., "[]" or "[abc]"), return original match
+            if (numbers.length === 0) {
+              return match;
+            }
+
+            // Generate an HTML link for each valid number found
+            const linksHtml = numbers.map(numStr => {
+              const number = parseInt(numStr, 10); // Convert string to integer for array indexing
+
+              // Basic validation: Ensure it's a positive number
+              if (isNaN(number) || number <= 0) {
+                // Return the original number part as text if invalid for lookup
+                return `[${numStr}]`;
+              }
+
+              // Get the corresponding source, adjusting for 0-based index
+              const source = message.sources?.[number - 1];
+              const url = source?.metadata?.url;
+
+              // If URL exists, create the link
+              if (url) {
+                return `<a href="${url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${numStr}</a>`;
+              } else {
+                // If no URL found for this number, return the number styled similarly but red
+                return `<span className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 text-xs relative font-medium text-red-600 dark:text-red-400">${numStr}</span>`;
+              }
+            }).join(''); // Join the generated links (or fallback text) together without separators
+
+            return linksHtml;
+          }
+        )
       );
       return;
     }
