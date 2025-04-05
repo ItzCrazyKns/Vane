@@ -1,0 +1,2 @@
+ALTER TABLE chats ADD COLUMN userSessionId TEXT;
+ALTER TABLE chats ADD COLUMN timestamp TEXT;

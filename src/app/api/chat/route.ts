@@ -17,6 +17,7 @@ const messageSchema = z.object({
   messageId: z.string().min(1, 'Message ID is required'),
   chatId: z.string().min(1, 'Chat ID is required'),
   content: z.string().min(1, 'Message content is required'),
+  userSessionId: z.string().optional(),
 });
 
 const chatModelSchema: z.ZodType<ModelWithProvider> = z.object({
@@ -183,7 +184,7 @@ const handleHistorySave = async (
   });
 
   const fileData = files.map(getFileDetails);
-
+  let currentDate = new Date();
   if (!chat) {
     await db
       .insert(chats)
@@ -193,6 +194,8 @@ const handleHistorySave = async (
         createdAt: new Date().toString(),
         focusMode: focusMode,
         files: fileData,
+        userSessionId: message.userSessionId,
+        timestamp: currentDate.toISOString(),
       })
       .execute();
   } else if (JSON.stringify(chat.files ?? []) != JSON.stringify(fileData)) {
