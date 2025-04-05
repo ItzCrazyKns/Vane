@@ -33,6 +33,7 @@ The API accepts a JSON object in the request body, where you define the focus mo
     ["human", "Hi, how are you?"],
     ["assistant", "I am doing well, how can I help you today?"]
   ],
+  "systemInstructions": "Focus on providing technical details about Perplexica's architecture.",
   "stream": false
 }
 ```
@@ -62,6 +63,8 @@ The API accepts a JSON object in the request body, where you define the focus mo
   - `balanced`: Provide a balanced answer with good speed and reasonable quality.
 
 - **`query`** (string, required): The search query or question.
+
+- **`systemInstructions`** (string, optional): Custom instructions provided by the user to guide the AI's response. These instructions are treated as user preferences and have lower priority than the system's core instructions. For example, you can specify a particular writing style, format, or focus area.
 
 - **`history`** (array, optional): An array of message pairs representing the conversation history. Each pair consists of a role (either 'human' or 'assistant') and the message content. This allows the system to use the context of the conversation to refine results. Example:
 
