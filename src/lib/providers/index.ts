@@ -12,6 +12,7 @@ import { loadGroqChatModels } from './groq';
 import { loadAnthropicChatModels } from './anthropic';
 import { loadGeminiChatModels, loadGeminiEmbeddingModels } from './gemini';
 import { loadTransformersEmbeddingsModels } from './transformers';
+import { loadDeepseekChatModels } from './deepseek';
 
 export interface ChatModel {
   displayName: string;
@@ -32,6 +33,7 @@ export const chatModelProviders: Record<
   groq: loadGroqChatModels,
   anthropic: loadAnthropicChatModels,
   gemini: loadGeminiChatModels,
+  deepseek: loadDeepseekChatModels,
 };
 
 export const embeddingModelProviders: Record<

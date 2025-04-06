@@ -7,6 +7,7 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getDeepseekApiKey,
   updateConfig,
 } from '@/lib/config';
 import {
@@ -53,6 +54,7 @@ export const GET = async (req: Request) => {
     config['anthropicApiKey'] = getAnthropicApiKey();
     config['groqApiKey'] = getGroqApiKey();
     config['geminiApiKey'] = getGeminiApiKey();
+    config['deepseekApiKey'] = getDeepseekApiKey();
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
@@ -87,6 +89,9 @@ export const POST = async (req: Request) => {
         },
         OLLAMA: {
           API_URL: config.ollamaApiUrl,
+        },
+        DEEPSEEK: {
+          API_KEY: config.deepseekApiKey,
         },
         CUSTOM_OPENAI: {
           API_URL: config.customOpenaiApiUrl,
