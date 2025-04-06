@@ -48,6 +48,7 @@ const MessageBox = ({
   const [speechMessage, setSpeechMessage] = useState(message.content);
 
   useEffect(() => {
+    const citationRegex = /\[([^\]]+)\]/g;
     const regex = /\[(\d+)\]/g;
     let processedMessage = message.content;
 
@@ -67,11 +68,33 @@ const MessageBox = ({
     ) {
       setParsedMessage(
         processedMessage.replace(
-          regex,
-          (_, number) =>
-            `<a href="${
-              message.sources?.[number - 1]?.metadata?.url
-            }" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+          citationRegex,
+          (_, capturedContent: string) => {
+            const numbers = capturedContent
+              .split(',')
+              .map((numStr) => numStr.trim())
+
+            const linksHtml = numbers
+              .map((numStr) => {
+                const number = parseInt(numStr);
+
+                if (isNaN(number) || number <= 0) {
+                  return `[${numStr}]`;
+                }
+
+                const source = message.sources?.[number - 1];
+                const url = source?.metadata?.url;
+
+                if (url) {
+                  return `<a href="${url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${numStr}</a>`;
+                } else {
+                  return `[${numStr}]`;
+                }
+              })
+              .join('');
+
+            return linksHtml;
+          },
         ),
       );
       return;
