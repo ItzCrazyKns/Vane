@@ -25,6 +25,9 @@ interface Config {
     OLLAMA: {
       API_URL: string;
     };
+    DEEPSEEK: {
+      API_KEY: string;
+    };
     CUSTOM_OPENAI: {
       API_URL: string;
       API_KEY: string;
@@ -62,6 +65,8 @@ export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
+
+export const getDeepseekApiKey = () => loadConfig().MODELS.DEEPSEEK.API_KEY;
 
 export const getCustomOpenaiApiKey = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;
