@@ -72,7 +72,7 @@ const MessageBox = ({
           (_, capturedContent: string) => {
             const numbers = capturedContent
               .split(',')
-              .map((numStr) => numStr.trim())
+              .map((numStr) => numStr.trim());
 
             const linksHtml = numbers
               .map((numStr) => {
