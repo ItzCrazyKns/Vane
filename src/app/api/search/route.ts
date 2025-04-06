@@ -34,6 +34,7 @@ interface ChatRequestBody {
   query: string;
   history: Array<[string, string]>;
   stream?: boolean;
+  systemInstructions?: string;
 }
 
 export const POST = async (req: Request) => {
@@ -125,7 +126,7 @@ export const POST = async (req: Request) => {
       embeddings,
       body.optimizationMode,
       [],
-      '',
+      body.systemInstructions || '',
     );
 
     if (!body.stream) {
