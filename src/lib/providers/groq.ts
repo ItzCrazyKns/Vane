@@ -77,7 +77,7 @@ const groqChatModels: Record<string, string>[] = [
     key: 'meta-llama/llama-4-maverick-17b-128e-instruct',
   }, */
   {
-    displayName: 'Llama 4 Maverick 17B 16E Instruct (Preview)',
+    displayName: 'Llama 4 Scout 17B 16E Instruct (Preview)',
     key: 'meta-llama/llama-4-scout-17b-16e-instruct',
   },
 ];
