@@ -40,8 +40,12 @@ const geminiChatModels: Record<string, string>[] = [
 
 const geminiEmbeddingModels: Record<string, string>[] = [
   {
-    displayName: 'Gemini Embedding',
-    key: 'gemini-embedding-exp',
+    displayName: 'Text Embedding 004',
+    key: 'models/text-embedding-004',
+  },
+  {
+    displayName: 'Embedding 001',
+    key: 'models/embedding-001',
   },
 ];
 
