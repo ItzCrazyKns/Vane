@@ -72,6 +72,14 @@ const groqChatModels: Record<string, string>[] = [
     displayName: 'Llama 3.2 90B Vision Preview (Preview)',
     key: 'llama-3.2-90b-vision-preview',
   },
+  {
+    displayName: 'Llama 4 Maverick 17B 128E Instruct (Preview)',
+    key: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+  },
+  {
+    displayName: 'Llama 4 Maverick 17B 16E Instruct (Preview)',
+    key: 'meta-llama/llama-4-scout-17b-16e-instruct',
+  },
 ];
 
 export const loadGroqChatModels = async () => {
