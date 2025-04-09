@@ -97,6 +97,7 @@ const MessageBox = ({
           },
         ),
       );
+      setSpeechMessage(message.content.replace(regex, ''));
       return;
     }
 
