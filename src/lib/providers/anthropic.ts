@@ -4,7 +4,7 @@ import { getAnthropicApiKey } from '../config';
 
 export const PROVIDER_INFO = {
   key: 'anthropic',
-  displayName: 'Anthropic'
+  displayName: 'Anthropic',
 };
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 

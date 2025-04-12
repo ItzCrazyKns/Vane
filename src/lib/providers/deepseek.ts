@@ -5,7 +5,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 export const PROVIDER_INFO = {
   key: 'deepseek',
-  displayName: 'Deepseek AI'
+  displayName: 'Deepseek AI',
 };
 
 const deepseekChatModels: Record<string, string>[] = [

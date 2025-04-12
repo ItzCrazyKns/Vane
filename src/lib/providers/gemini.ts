@@ -7,7 +7,7 @@ import { ChatModel, EmbeddingModel } from '.';
 
 export const PROVIDER_INFO = {
   key: 'gemini',
-  displayName: 'Google Gemini'
+  displayName: 'Google Gemini',
 };
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Embeddings } from '@langchain/core/embeddings';

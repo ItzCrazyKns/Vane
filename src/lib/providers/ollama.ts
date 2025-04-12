@@ -4,7 +4,7 @@ import { ChatModel, EmbeddingModel } from '.';
 
 export const PROVIDER_INFO = {
   key: 'ollama',
-  displayName: 'Ollama'
+  displayName: 'Ollama',
 };
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';

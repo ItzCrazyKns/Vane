@@ -4,7 +4,7 @@ import { ChatModel, EmbeddingModel } from '.';
 
 export const PROVIDER_INFO = {
   key: 'lmstudio',
-  displayName: 'LM Studio'
+  displayName: 'LM Studio',
 };
 import { ChatOpenAI } from '@langchain/openai';
 import { OpenAIEmbeddings } from '@langchain/openai';
@@ -16,14 +16,12 @@ interface LMStudioModel {
   name?: string;
 }
 
-const ensureV1Endpoint = (endpoint: string): string => 
+const ensureV1Endpoint = (endpoint: string): string =>
   endpoint.endsWith('/v1') ? endpoint : `${endpoint}/v1`;
 
 const checkServerAvailability = async (endpoint: string): Promise<boolean> => {
   try {
-    const keepAlive = getKeepAlive();
     await axios.get(`${ensureV1Endpoint(endpoint)}/models`, {
-      timeout: parseInt(keepAlive) * 1000 || 5000,
       headers: { 'Content-Type': 'application/json' },
     });
     return true;
@@ -34,14 +32,12 @@ const checkServerAvailability = async (endpoint: string): Promise<boolean> => {
 
 export const loadLMStudioChatModels = async () => {
   const endpoint = getLMStudioApiEndpoint();
-  const keepAlive = getKeepAlive();
-  
+
   if (!endpoint) return {};
-  if (!await checkServerAvailability(endpoint)) return {};
+  if (!(await checkServerAvailability(endpoint))) return {};
 
   try {
     const response = await axios.get(`${ensureV1Endpoint(endpoint)}/models`, {
-      timeout: parseInt(keepAlive) * 1000 || 5000,
       headers: { 'Content-Type': 'application/json' },
     });
 
@@ -58,7 +54,7 @@ export const loadLMStudioChatModels = async () => {
           modelName: model.id,
           temperature: 0.7,
           streaming: true,
-          maxRetries: 3
+          maxRetries: 3,
         }) as unknown as BaseChatModel,
       };
     });
@@ -72,14 +68,12 @@ export const loadLMStudioChatModels = async () => {
 
 export const loadLMStudioEmbeddingsModels = async () => {
   const endpoint = getLMStudioApiEndpoint();
-  const keepAlive = getKeepAlive();
-  
+
   if (!endpoint) return {};
-  if (!await checkServerAvailability(endpoint)) return {};
+  if (!(await checkServerAvailability(endpoint))) return {};
 
   try {
     const response = await axios.get(`${ensureV1Endpoint(endpoint)}/models`, {
-      timeout: parseInt(keepAlive) * 1000 || 5000,
       headers: { 'Content-Type': 'application/json' },
     });
 

@@ -21,6 +21,7 @@ interface SettingsType {
   anthropicApiKey: string;
   geminiApiKey: string;
   ollamaApiUrl: string;
+  lmStudioApiUrl: string;
   deepseekApiKey: string;
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
@@ -548,8 +549,10 @@ const Page = () => {
                       options={Object.keys(config.chatModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label: (PROVIDER_METADATA as any)[provider]?.displayName || 
-                            provider.charAt(0).toUpperCase() + provider.slice(1),
+                          label:
+                            (PROVIDER_METADATA as any)[provider]?.displayName ||
+                            provider.charAt(0).toUpperCase() +
+                              provider.slice(1),
                         }),
                       )}
                     />
@@ -689,8 +692,10 @@ const Page = () => {
                       options={Object.keys(config.embeddingModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label: (PROVIDER_METADATA as any)[provider]?.displayName || 
-                            provider.charAt(0).toUpperCase() + provider.slice(1),
+                          label:
+                            (PROVIDER_METADATA as any)[provider]?.displayName ||
+                            provider.charAt(0).toUpperCase() +
+                              provider.slice(1),
                         }),
                       )}
                     />

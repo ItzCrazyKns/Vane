@@ -1,19 +1,45 @@
 import { Embeddings } from '@langchain/core/embeddings';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { loadOpenAIChatModels, loadOpenAIEmbeddingModels, PROVIDER_INFO as OpenAIInfo, PROVIDER_INFO } from './openai';
+import {
+  loadOpenAIChatModels,
+  loadOpenAIEmbeddingModels,
+  PROVIDER_INFO as OpenAIInfo,
+  PROVIDER_INFO,
+} from './openai';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '../config';
 import { ChatOpenAI } from '@langchain/openai';
-import { loadOllamaChatModels, loadOllamaEmbeddingModels, PROVIDER_INFO as OllamaInfo } from './ollama';
+import {
+  loadOllamaChatModels,
+  loadOllamaEmbeddingModels,
+  PROVIDER_INFO as OllamaInfo,
+} from './ollama';
 import { loadGroqChatModels, PROVIDER_INFO as GroqInfo } from './groq';
-import { loadAnthropicChatModels, PROVIDER_INFO as AnthropicInfo } from './anthropic';
-import { loadGeminiChatModels, loadGeminiEmbeddingModels, PROVIDER_INFO as GeminiInfo } from './gemini';
-import { loadTransformersEmbeddingsModels, PROVIDER_INFO as TransformersInfo } from './transformers';
-import { loadDeepseekChatModels, PROVIDER_INFO as DeepseekInfo } from './deepseek';
-import { loadLMStudioChatModels, loadLMStudioEmbeddingsModels, PROVIDER_INFO as LMStudioInfo } from './lmstudio';
+import {
+  loadAnthropicChatModels,
+  PROVIDER_INFO as AnthropicInfo,
+} from './anthropic';
+import {
+  loadGeminiChatModels,
+  loadGeminiEmbeddingModels,
+  PROVIDER_INFO as GeminiInfo,
+} from './gemini';
+import {
+  loadTransformersEmbeddingsModels,
+  PROVIDER_INFO as TransformersInfo,
+} from './transformers';
+import {
+  loadDeepseekChatModels,
+  PROVIDER_INFO as DeepseekInfo,
+} from './deepseek';
+import {
+  loadLMStudioChatModels,
+  loadLMStudioEmbeddingsModels,
+  PROVIDER_INFO as LMStudioInfo,
+} from './lmstudio';
 
 export const PROVIDER_METADATA = {
   openai: OpenAIInfo,
@@ -26,8 +52,8 @@ export const PROVIDER_METADATA = {
   lmstudio: LMStudioInfo,
   custom_openai: {
     key: 'custom_openai',
-    displayName: 'Custom OpenAI'
-  }
+    displayName: 'Custom OpenAI',
+  },
 };
 
 export interface ChatModel {

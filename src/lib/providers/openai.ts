@@ -4,7 +4,7 @@ import { ChatModel, EmbeddingModel } from '.';
 
 export const PROVIDER_INFO = {
   key: 'openai',
-  displayName: 'OpenAI'
+  displayName: 'OpenAI',
 };
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Embeddings } from '@langchain/core/embeddings';

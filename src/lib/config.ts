@@ -60,7 +60,7 @@ const loadConfig = () => {
       fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
     ) as any as Config;
   }
-  
+
   // Client-side fallback - settings will be loaded via API
   return {} as Config;
 };
@@ -94,7 +94,8 @@ export const getCustomOpenaiApiUrl = () =>
 export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
 
-export const getLMStudioApiEndpoint = () => loadConfig().MODELS.LM_STUDIO.API_URL;
+export const getLMStudioApiEndpoint = () =>
+  loadConfig().MODELS.LM_STUDIO.API_URL;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {

@@ -2,7 +2,7 @@ import { HuggingFaceTransformersEmbeddings } from '../huggingfaceTransformer';
 
 export const PROVIDER_INFO = {
   key: 'transformers',
-  displayName: 'Hugging Face'
+  displayName: 'Hugging Face',
 };
 
 export const loadTransformersEmbeddingsModels = async () => {
