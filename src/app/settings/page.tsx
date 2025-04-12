@@ -862,6 +862,25 @@ const Page = () => {
                     onSave={(value) => saveConfig('deepseekApiKey', value)}
                   />
                 </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    LM Studio API URL
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="LM Studio API URL"
+                    value={config.lmStudioApiUrl}
+                    isSaving={savingStates['lmStudioApiUrl']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        lmStudioApiUrl: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('lmStudioApiUrl', value)}
+                  />
+                </div>
               </div>
             </SettingsSection>
           </div>
