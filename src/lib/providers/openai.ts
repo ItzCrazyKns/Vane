@@ -30,6 +30,18 @@ const openaiChatModels: Record<string, string>[] = [
     displayName: 'GPT-4 omni mini',
     key: 'gpt-4o-mini',
   },
+  {
+    displayName: 'GPT 4.1 nano',
+    key: 'gpt-4.1-nano',
+  },
+  {
+    displayName: 'GPT 4.1 mini',
+    key: 'gpt-4.1-mini',
+  },
+  {
+    displayName: 'GPT 4.1',
+    key: 'gpt-4.1',
+  },
 ];
 
 const openaiEmbeddingModels: Record<string, string>[] = [
