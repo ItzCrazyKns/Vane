@@ -143,7 +143,7 @@ const Page = () => {
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<
     string | null
   >(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
@@ -151,7 +151,6 @@ const Page = () => {
 
   useEffect(() => {
     const fetchConfig = async () => {
-      setIsLoading(true);
       const res = await fetch(`/api/config`, {
         headers: {
           'Content-Type': 'application/json',
