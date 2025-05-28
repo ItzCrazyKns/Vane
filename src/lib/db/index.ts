@@ -3,7 +3,8 @@ import Database from 'better-sqlite3';
 import * as schema from './schema';
 import path from 'path';
 
-const sqlite = new Database(path.join(process.cwd(), 'data/db.sqlite'));
+const DATA_DIR = process.env.DATA_DIR || process.cwd();
+const sqlite = new Database(path.join(DATA_DIR, './data/db.sqlite'));
 const db = drizzle(sqlite, {
   schema: schema,
 });
