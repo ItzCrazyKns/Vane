@@ -33,6 +33,7 @@
     "jspdf": "^3.0.1",
     "langchain": "^0.1.30",
     "lucide-react": "^0.363.0",
+    "mammoth": "^1.9.1",
     "markdown-to-jsx": "^7.7.2",
     "next": "^15.2.2",
     "next-themes": "^0.3.0",
