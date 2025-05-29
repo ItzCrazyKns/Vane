@@ -1,6 +1,11 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { getOpenaiApiKey } from '../config';
 import { ChatModel, EmbeddingModel } from '.';
+
+export const PROVIDER_INFO = {
+  key: 'openai',
+  displayName: 'OpenAI',
+};
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Embeddings } from '@langchain/core/embeddings';
 
@@ -24,6 +29,18 @@ const openaiChatModels: Record<string, string>[] = [
   {
     displayName: 'GPT-4 omni mini',
     key: 'gpt-4o-mini',
+  },
+  {
+    displayName: 'GPT 4.1 nano',
+    key: 'gpt-4.1-nano',
+  },
+  {
+    displayName: 'GPT 4.1 mini',
+    key: 'gpt-4.1-mini',
+  },
+  {
+    displayName: 'GPT 4.1',
+    key: 'gpt-4.1',
   },
 ];
 

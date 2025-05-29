@@ -1,6 +1,11 @@
 import axios from 'axios';
 import { getKeepAlive, getOllamaApiEndpoint } from '../config';
 import { ChatModel, EmbeddingModel } from '.';
+
+export const PROVIDER_INFO = {
+  key: 'ollama',
+  displayName: 'Ollama',
+};
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 

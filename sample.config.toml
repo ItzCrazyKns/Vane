@@ -25,5 +25,8 @@ API_URL = "" # Ollama API URL - http://host.docker.internal:11434
 [MODELS.DEEPSEEK]
 API_KEY = ""
 
+[MODELS.LM_STUDIO]
+API_URL = "" # LM Studio API URL - http://host.docker.internal:1234
+
 [API_ENDPOINTS]
 SEARXNG = "" # SearxNG API URL - http://localhost:32768

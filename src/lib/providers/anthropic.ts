@@ -1,6 +1,11 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatModel } from '.';
 import { getAnthropicApiKey } from '../config';
+
+export const PROVIDER_INFO = {
+  key: 'anthropic',
+  displayName: 'Anthropic',
+};
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const anthropicChatModels: Record<string, string>[] = [

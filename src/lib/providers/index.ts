@@ -1,18 +1,60 @@
 import { Embeddings } from '@langchain/core/embeddings';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { loadOpenAIChatModels, loadOpenAIEmbeddingModels } from './openai';
+import {
+  loadOpenAIChatModels,
+  loadOpenAIEmbeddingModels,
+  PROVIDER_INFO as OpenAIInfo,
+  PROVIDER_INFO,
+} from './openai';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '../config';
 import { ChatOpenAI } from '@langchain/openai';
-import { loadOllamaChatModels, loadOllamaEmbeddingModels } from './ollama';
-import { loadGroqChatModels } from './groq';
-import { loadAnthropicChatModels } from './anthropic';
-import { loadGeminiChatModels, loadGeminiEmbeddingModels } from './gemini';
-import { loadTransformersEmbeddingsModels } from './transformers';
-import { loadDeepseekChatModels } from './deepseek';
+import {
+  loadOllamaChatModels,
+  loadOllamaEmbeddingModels,
+  PROVIDER_INFO as OllamaInfo,
+} from './ollama';
+import { loadGroqChatModels, PROVIDER_INFO as GroqInfo } from './groq';
+import {
+  loadAnthropicChatModels,
+  PROVIDER_INFO as AnthropicInfo,
+} from './anthropic';
+import {
+  loadGeminiChatModels,
+  loadGeminiEmbeddingModels,
+  PROVIDER_INFO as GeminiInfo,
+} from './gemini';
+import {
+  loadTransformersEmbeddingsModels,
+  PROVIDER_INFO as TransformersInfo,
+} from './transformers';
+import {
+  loadDeepseekChatModels,
+  PROVIDER_INFO as DeepseekInfo,
+} from './deepseek';
+import {
+  loadLMStudioChatModels,
+  loadLMStudioEmbeddingsModels,
+  PROVIDER_INFO as LMStudioInfo,
+} from './lmstudio';
+
+export const PROVIDER_METADATA = {
+  openai: OpenAIInfo,
+  ollama: OllamaInfo,
+  groq: GroqInfo,
+  anthropic: AnthropicInfo,
+  gemini: GeminiInfo,
+  transformers: TransformersInfo,
+  deepseek: DeepseekInfo,
+  lmstudio: LMStudioInfo,
+  custom_openai: {
+    key: 'custom_openai',
+    displayName: 'Custom OpenAI',
+  },
+};
 
 export interface ChatModel {
   displayName: string;
@@ -34,6 +76,7 @@ export const chatModelProviders: Record<
   anthropic: loadAnthropicChatModels,
   gemini: loadGeminiChatModels,
   deepseek: loadDeepseekChatModels,
+  lmstudio: loadLMStudioChatModels,
 };
 
 export const embeddingModelProviders: Record<
@@ -44,6 +87,7 @@ export const embeddingModelProviders: Record<
   ollama: loadOllamaEmbeddingModels,
   gemini: loadGeminiEmbeddingModels,
   transformers: loadTransformersEmbeddingsModels,
+  lmstudio: loadLMStudioEmbeddingsModels,
 };
 
 export const getAvailableChatModelProviders = async () => {
