@@ -1,6 +1,5 @@
 import { Settings } from 'lucide-react';
 import EmptyChatMessageInput from './EmptyChatMessageInput';
-import { useEffect, useState } from 'react';
 import { File } from './ChatWindow';
 import Link from 'next/link';
 import WeatherWidget from './WeatherWidget';
