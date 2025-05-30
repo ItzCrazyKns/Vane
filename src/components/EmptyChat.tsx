@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { File } from './ChatWindow';
 import Link from 'next/link';
 import WeatherWidget from './WeatherWidget';
+import NewsArticleWidget from './NewsArticleWidget';
 
 const EmptyChat = ({
   sendMessage,
@@ -51,6 +52,9 @@ const EmptyChat = ({
         <div className="flex flex-col w-full gap-4 mt-2 sm:flex-row sm:justify-center">
           <div className="flex-1 max-w-xs">
             <WeatherWidget />
+          </div>
+          <div className="flex-1 max-w-xs">
+            <NewsArticleWidget />
           </div>
         </div>
       </div>
