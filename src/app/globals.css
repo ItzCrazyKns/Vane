@@ -11,3 +11,12 @@
     display: none;
   }
 }
+
+/* Add Fix for IOS to allow PWA and stop zooming on the page */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  select,
+  textarea,
+  input {
+    font-size: 16px !important;
+  }
+}
