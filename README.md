@@ -90,6 +90,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
    - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.
    - `ANTHROPIC`: Your Anthropic API key. **You only need to fill this if you wish to use Anthropic models**.
+   - `Gemini`: Your Gemini API key.  **You only need to fill this if you wish to use Google's models**.
 
      **Note**: You can change these after starting Perplexica from the settings dialog.
 
