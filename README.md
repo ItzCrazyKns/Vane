@@ -112,7 +112,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 2. Clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. Ensure you complete all required fields in this file.
 3. After populating the configuration run `npm i`.
 4. Install the dependencies and then execute `npm run build`.
-5. Finally, start the app by running `npm rum start`
+5. Finally, start the app by running `npm run start`
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
