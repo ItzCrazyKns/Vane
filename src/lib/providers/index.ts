@@ -36,6 +36,11 @@ import {
   PROVIDER_INFO as DeepseekInfo,
 } from './deepseek';
 import {
+  loadAimlApiChatModels,
+  loadAimlApiEmbeddingModels,
+  PROVIDER_INFO as AimlApiInfo,
+} from './aimlapi';
+import {
   loadLMStudioChatModels,
   loadLMStudioEmbeddingsModels,
   PROVIDER_INFO as LMStudioInfo,
@@ -49,6 +54,7 @@ export const PROVIDER_METADATA = {
   gemini: GeminiInfo,
   transformers: TransformersInfo,
   deepseek: DeepseekInfo,
+  aimlapi: AimlApiInfo,
   lmstudio: LMStudioInfo,
   custom_openai: {
     key: 'custom_openai',
@@ -76,6 +82,7 @@ export const chatModelProviders: Record<
   anthropic: loadAnthropicChatModels,
   gemini: loadGeminiChatModels,
   deepseek: loadDeepseekChatModels,
+  aimlapi: loadAimlApiChatModels,
   lmstudio: loadLMStudioChatModels,
 };
 
@@ -87,6 +94,7 @@ export const embeddingModelProviders: Record<
   ollama: loadOllamaEmbeddingModels,
   gemini: loadGeminiEmbeddingModels,
   transformers: loadTransformersEmbeddingsModels,
+  aimlapi: loadAimlApiEmbeddingModels,
   lmstudio: loadLMStudioEmbeddingsModels,
 };
 
