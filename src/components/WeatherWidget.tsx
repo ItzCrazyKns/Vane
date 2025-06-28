@@ -31,30 +31,40 @@ const WeatherWidget = () => {
         city: string;
       }) => void,
     ) => {
-      /* 
-          // Geolocation doesn't give city so we'll country using ipapi for now
-            if (navigator.geolocation) {
-            const result = await navigator.permissions.query({
-              name: 'geolocation',
-            })
-    
-            if (result.state === 'granted') {
-              navigator.geolocation.getCurrentPosition(position => {
-                callback({
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude,
-                })
-              })
-            } else if (result.state === 'prompt') {
-              callback(await getApproxLocation())
-              navigator.geolocation.getCurrentPosition(position => {})
-            } else if (result.state === 'denied') {
-              callback(await getApproxLocation())
-            }
-          } else {
-            callback(await getApproxLocation())
-          } */
-      callback(await getApproxLocation());
+      if (navigator.geolocation) {
+        const result = await navigator.permissions.query({
+          name: 'geolocation',
+        });
+
+        if (result.state === 'granted') {
+          navigator.geolocation.getCurrentPosition(async (position) => {
+            const res = await fetch(
+              `https://api-bdc.io/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`,
+              {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              },
+            );
+
+            const data = await res.json();
+
+            callback({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              city: data.locality,
+            });
+          });
+        } else if (result.state === 'prompt') {
+          callback(await getApproxLocation());
+          navigator.geolocation.getCurrentPosition((position) => {});
+        } else if (result.state === 'denied') {
+          callback(await getApproxLocation());
+        }
+      } else {
+        callback(await getApproxLocation());
+      }
     };
 
     getLocation(async (location) => {
