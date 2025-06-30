@@ -16,7 +16,7 @@
 
 <hr/>
 
-[![Discord](https://dcbadge.vercel.app/api/server/26aArMy8tT?style=flat&compact=true)](https://discord.gg/26aArMy8tT)
+[![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
 
 ![preview](.assets/perplexica-screenshot.png?)
 
