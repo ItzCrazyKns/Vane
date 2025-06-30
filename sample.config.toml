@@ -25,6 +25,9 @@ API_URL = "" # Ollama API URL - http://host.docker.internal:11434
 [MODELS.DEEPSEEK]
 API_KEY = ""
 
+[MODELS.AIMLAPI]
+API_KEY = "" # Required to use AI/ML API chat and embedding models
+
 [MODELS.LM_STUDIO]
 API_URL = "" # LM Studio API URL - http://host.docker.internal:1234
 

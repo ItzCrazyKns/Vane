@@ -35,6 +35,9 @@ interface Config {
     DEEPSEEK: {
       API_KEY: string;
     };
+    AIMLAPI: {
+      API_KEY: string;
+    };
     LM_STUDIO: {
       API_URL: string;
     };
@@ -84,6 +87,8 @@ export const getSearxngApiEndpoint = () =>
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 
 export const getDeepseekApiKey = () => loadConfig().MODELS.DEEPSEEK.API_KEY;
+
+export const getAimlApiKey = () => loadConfig().MODELS.AIMLAPI.API_KEY;
 
 export const getCustomOpenaiApiKey = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;
