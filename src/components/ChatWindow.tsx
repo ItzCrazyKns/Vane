@@ -83,13 +83,35 @@ const checkConfig = async (
       if (!chatModel || !chatModelProvider) {
         const chatModelProviders = providers.chatModelProviders;
 
+        if (
+          !chatModelProviders ||
+          Object.keys(chatModelProviders).length === 0
+        ) {
+          setHasError(true);
+          return toast.error('No chat model providers found');
+        } else if (
+          chatModelProviders.length === 1 &&
+          Object.keys(chatModelProviders['custom_openai']).length === 0
+        ) {
+          setHasError(true);
+          return toast.error(
+            "Seems like you're trying to use the custom OpenAI provider. Please configure it using the settings page or the config file to use it.",
+          );
+        }
+
         chatModelProvider =
-          chatModelProvider || Object.keys(chatModelProviders)[0];
+          chatModelProvider ||
+          Object.keys(chatModelProviders).find(
+            (v) => Object.keys(chatModelProviders[v]).length > 0,
+          ) ||
+          null;
+
+        if (!chatModelProvider) {
+          setHasError(true);
+          return toast.error('No chat models found.');
+        }
 
         chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
-
-        if (!chatModelProviders || Object.keys(chatModelProviders).length === 0)
-          return toast.error('No chat models available');
       }
 
       if (!embeddingModel || !embeddingModelProvider) {
@@ -123,7 +145,12 @@ const checkConfig = async (
         chatModelProvider =
           chatModelProvidersKeys.find(
             (key) => Object.keys(chatModelProviders[key]).length > 0,
-          ) || chatModelProvidersKeys[0];
+          ) || null;
+
+        if (!chatModelProvider) {
+          setHasError(true);
+          return toast.error('No chat models found.');
+        }
 
         localStorage.setItem('chatModelProvider', chatModelProvider);
       }
