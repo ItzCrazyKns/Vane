@@ -82,14 +82,29 @@ const checkConfig = async (
     ) {
       if (!chatModel || !chatModelProvider) {
         const chatModelProviders = providers.chatModelProviders;
+        const chatModelProvidersKeys = Object.keys(chatModelProviders);
 
-        chatModelProvider =
-          chatModelProvider || Object.keys(chatModelProviders)[0];
+        if (!chatModelProviders || chatModelProvidersKeys.length === 0) {
+          return toast.error('No chat models available');
+        } else {
+          chatModelProvider =
+            chatModelProvidersKeys.find(
+              (provider) =>
+                Object.keys(chatModelProviders[provider]).length > 0,
+            ) || chatModelProvidersKeys[0];
+        }
+
+        if (
+          chatModelProvider === 'custom_openai' &&
+          Object.keys(chatModelProviders[chatModelProvider]).length === 0
+        ) {
+          toast.error(
+            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
+          );
+          return setHasError(true);
+        }
 
         chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
-
-        if (!chatModelProviders || Object.keys(chatModelProviders).length === 0)
-          return toast.error('No chat models available');
       }
 
       if (!embeddingModel || !embeddingModelProvider) {
@@ -117,7 +132,8 @@ const checkConfig = async (
 
       if (
         Object.keys(chatModelProviders).length > 0 &&
-        !chatModelProviders[chatModelProvider]
+        (!chatModelProviders[chatModelProvider] ||
+          Object.keys(chatModelProviders[chatModelProvider]).length === 0)
       ) {
         const chatModelProvidersKeys = Object.keys(chatModelProviders);
         chatModelProvider =
@@ -132,6 +148,16 @@ const checkConfig = async (
         chatModelProvider &&
         !chatModelProviders[chatModelProvider][chatModel]
       ) {
+        if (
+          chatModelProvider === 'custom_openai' &&
+          Object.keys(chatModelProviders[chatModelProvider]).length === 0
+        ) {
+          toast.error(
+            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
+          );
+          return setHasError(true);
+        }
+
         chatModel = Object.keys(
           chatModelProviders[
             Object.keys(chatModelProviders[chatModelProvider]).length > 0
@@ -139,6 +165,7 @@ const checkConfig = async (
               : Object.keys(chatModelProviders)[0]
           ],
         )[0];
+
         localStorage.setItem('chatModel', chatModel);
       }
 
