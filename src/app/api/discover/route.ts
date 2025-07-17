@@ -36,6 +36,7 @@ export const GET = async (req: Request) => {
                   {
                     engines: ['bing news'],
                     pageno: 1,
+                    language: "en",
                   },
                 )
               ).results;
@@ -49,7 +50,11 @@ export const GET = async (req: Request) => {
       data = (
         await searchSearxng(
           `site:${articleWebsites[Math.floor(Math.random() * articleWebsites.length)]} ${topics[Math.floor(Math.random() * topics.length)]}`,
-          { engines: ['bing news'], pageno: 1 },
+          {
+            engines: ['bing news'],
+            pageno: 1,
+            language: "en"
+          },
         )
       ).results;
     }
