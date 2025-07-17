@@ -36,7 +36,7 @@ export const GET = async (req: Request) => {
                   {
                     engines: ['bing news'],
                     pageno: 1,
-                    language: "en",
+                    language: 'en',
                   },
                 )
               ).results;
@@ -53,7 +53,7 @@ export const GET = async (req: Request) => {
           {
             engines: ['bing news'],
             pageno: 1,
-            language: "en"
+            language: 'en',
           },
         )
       ).results;
