@@ -53,7 +53,7 @@ Want to know more about its architecture and how it works? You can read it [here
 
 ## Features
 
-- **Local LLMs**: You can make use local LLMs such as Llama3 and Mixtral using Ollama.
+- **Local LLMs**: You can utilize local LLMs such as Qwen, DeepSeek, Llama, and Mistral.
 - **Two Main Modes:**
   - **Copilot Mode:** (In development) Boosts search by generating different queries to find more relevant internet sources. Like normal search instead of just using the context by SearxNG, it visits the top matches and tries to find relevant sources to the user's query directly from the page.
   - **Normal Mode:** Processes your query and performs a web search.
@@ -87,6 +87,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
 
    - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
+   - `CUSTOM_OPENAI`: Your OpenAI-API-compliant local server URL, model name, and API key. You should run your local server with host set to `0.0.0.0`, take note of which port number it is running on, and then use that port number to set `API_URL = http://host.docker.internal:PORT_NUMBER`. You must specify the model name, such as `MODEL_NAME = "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q4_K_XL"`. Finally, set `API_KEY` to the appropriate value. If you have not defined an API key, just put anything you want in-between the quotation marks: `API_KEY = "whatever-you-want-but-not-blank"` **You only need to configure these settings if you want to use a local OpenAI-compliant server, such as Llama.cpp's [`llama-server`](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)**.
    - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
    - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.
    - `ANTHROPIC`: Your Anthropic API key. **You only need to fill this if you wish to use Anthropic models**.
@@ -120,7 +121,17 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like updating, etc.
 
-### Ollama Connection Errors
+### Troubleshooting
+
+#### Local OpenAI-API-Compliant Servers
+
+If Perplexica tells you that you haven't configured any chat model providers, ensure that:
+
+1. Your server is running on `0.0.0.0` (not `127.0.0.1`) and on the same port you put in the API URL.
+2. You have specified the correct model name loaded by your local LLM server.
+3. You have specified the correct API key, or if one is not defined, you have put *something* in the API key field and not left it empty.
+
+#### Ollama Connection Errors
 
 If you're encountering an Ollama connection error, it is likely due to the backend being unable to connect to Ollama's API. To fix this issue you can:
 
