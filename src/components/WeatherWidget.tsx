@@ -9,7 +9,9 @@ const WeatherWidget = () => {
     humidity: 0,
     windSpeed: 0,
     icon: '',
+    temperatureUnit: 'C',
   });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -73,6 +75,7 @@ const WeatherWidget = () => {
         body: JSON.stringify({
           lat: location.latitude,
           lng: location.longitude,
+          temperatureUnit: localStorage.getItem('temperatureUnit') ?? 'C',
         }),
       });
 
@@ -91,6 +94,7 @@ const WeatherWidget = () => {
         humidity: data.humidity,
         windSpeed: data.windSpeed,
         icon: data.icon,
+        temperatureUnit: data.temperatureUnit,
       });
       setLoading(false);
     });
@@ -125,7 +129,7 @@ const WeatherWidget = () => {
               className="h-10 w-auto"
             />
             <span className="text-base font-semibold text-black dark:text-white">
-              {data.temperature}°C
+              {data.temperature}°{data.temperatureUnit}
             </span>
           </div>
           <div className="flex flex-col justify-between flex-1 h-full py-1">

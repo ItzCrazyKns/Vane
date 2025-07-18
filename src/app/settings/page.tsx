@@ -148,6 +148,7 @@ const Page = () => {
   const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
+  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>('C');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -209,6 +210,8 @@ const Page = () => {
       );
 
       setSystemInstructions(localStorage.getItem('systemInstructions')!);
+
+      setTemperatureUnit(localStorage.getItem('temperatureUnit')! as 'C' | 'F');
 
       setIsLoading(false);
     };
@@ -368,6 +371,8 @@ const Page = () => {
         localStorage.setItem('embeddingModel', value);
       } else if (key === 'systemInstructions') {
         localStorage.setItem('systemInstructions', value);
+      } else if (key === 'temperatureUnit') {
+        localStorage.setItem('temperatureUnit', value.toString());
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -416,12 +421,34 @@ const Page = () => {
       ) : (
         config && (
           <div className="flex flex-col space-y-6 pb-28 lg:pb-8">
-            <SettingsSection title="Appearance">
+            <SettingsSection title="Preferences">
               <div className="flex flex-col space-y-1">
                 <p className="text-black/70 dark:text-white/70 text-sm">
                   Theme
                 </p>
                 <ThemeSwitcher />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <p className="text-black/70 dark:text-white/70 text-sm">
+                  Temperature Unit
+                </p>
+                <Select
+                  value={temperatureUnit ?? undefined}
+                  onChange={(e) => {
+                    setTemperatureUnit(e.target.value as 'C' | 'F');
+                    saveConfig('temperatureUnit', e.target.value);
+                  }}
+                  options={[
+                    {
+                      label: 'Celsius',
+                      value: 'C',
+                    },
+                    {
+                      label: 'Fahrenheit',
+                      value: 'F',
+                    },
+                  ]}
+                />
               </div>
             </SettingsSection>
 
@@ -516,7 +543,7 @@ const Page = () => {
             <SettingsSection title="System Instructions">
               <div className="flex flex-col space-y-4">
                 <Textarea
-                  value={systemInstructions}
+                  value={systemInstructions ?? undefined}
                   isSaving={savingStates['systemInstructions']}
                   onChange={(e) => {
                     setSystemInstructions(e.target.value);
