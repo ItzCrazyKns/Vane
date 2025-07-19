@@ -31,7 +31,7 @@ export const loadDeepseekChatModels = async () => {
       chatModels[model.key] = {
         displayName: model.displayName,
         model: new ChatOpenAI({
-          openAIApiKey: deepseekApiKey,
+          apiKey: deepseekApiKey,
           modelName: model.key,
           temperature: 0.7,
           configuration: {

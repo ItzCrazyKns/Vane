@@ -29,11 +29,14 @@ export const loadGroqChatModels = async () => {
       chatModels[model.id] = {
         displayName: model.id,
         model: new ChatOpenAI({
-          openAIApiKey: groqApiKey,
+          apiKey: groqApiKey,
           modelName: model.id,
           temperature: 0.7,
           configuration: {
             baseURL: 'https://api.groq.com/openai/v1',
+          },
+          metadata: {
+            'model-type': 'groq',
           },
         }) as unknown as BaseChatModel,
       };

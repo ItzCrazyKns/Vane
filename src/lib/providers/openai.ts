@@ -67,7 +67,7 @@ export const loadOpenAIChatModels = async () => {
       chatModels[model.key] = {
         displayName: model.displayName,
         model: new ChatOpenAI({
-          openAIApiKey: openaiApiKey,
+          apiKey: openaiApiKey,
           modelName: model.key,
           temperature: 0.7,
         }) as unknown as BaseChatModel,
@@ -93,7 +93,7 @@ export const loadOpenAIEmbeddingModels = async () => {
       embeddingModels[model.key] = {
         displayName: model.displayName,
         model: new OpenAIEmbeddings({
-          openAIApiKey: openaiApiKey,
+          apiKey: openaiApiKey,
           modelName: model.key,
         }) as unknown as Embeddings,
       };

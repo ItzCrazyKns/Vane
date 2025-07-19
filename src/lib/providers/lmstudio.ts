@@ -47,7 +47,7 @@ export const loadLMStudioChatModels = async () => {
       chatModels[model.id] = {
         displayName: model.name || model.id,
         model: new ChatOpenAI({
-          openAIApiKey: 'lm-studio',
+          apiKey: 'lm-studio',
           configuration: {
             baseURL: ensureV1Endpoint(endpoint),
           },
@@ -83,7 +83,7 @@ export const loadLMStudioEmbeddingsModels = async () => {
       embeddingsModels[model.id] = {
         displayName: model.name || model.id,
         model: new OpenAIEmbeddings({
-          openAIApiKey: 'lm-studio',
+          apiKey: 'lm-studio',
           configuration: {
             baseURL: ensureV1Endpoint(endpoint),
           },
