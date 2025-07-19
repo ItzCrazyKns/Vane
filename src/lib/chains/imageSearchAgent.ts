@@ -3,32 +3,18 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { PromptTemplate } from '@langchain/core/prompts';
+import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../searxng';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import LineOutputParser from '../outputParsers/lineOutputParser';
 
 const imageSearchChainPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search the web for images.
 You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
-
-Example:
-1. Follow up question: What is a cat?
-Rephrased: A cat
-
-2. Follow up question: What is a car? How does it works?
-Rephrased: Car working
-
-3. Follow up question: How does an AC work?
-Rephrased: AC working
-
-Conversation:
-{chat_history}
-
-Follow up question: {query}
-Rephrased question:
+Output only the rephrased query wrapped in an XML <query> element. Do not include any explanation or additional text.
 `;
 
 type ImageSearchChainInput = {
@@ -54,12 +40,48 @@ const createImageSearchChain = (llm: BaseChatModel) => {
         return input.query;
       },
     }),
-    PromptTemplate.fromTemplate(imageSearchChainPrompt),
+    ChatPromptTemplate.fromMessages([
+      ['system', imageSearchChainPrompt],
+      [
+        "user",
+        "<conversation>\n</conversation>\n<follow_up>\nWhat is a cat?\n</follow_up>"
+      ],
+      [
+        "assistant",
+        "<query>A cat</query>"
+      ],
+
+      [
+        "user",
+        "<conversation>\n</conversation>\n<follow_up>\nWhat is a car? How does it work?\n</follow_up>"
+      ],
+      [
+        "assistant",
+        "<query>Car working</query>"
+      ],
+      [
+        "user",
+        "<conversation>\n</conversation>\n<follow_up>\nHow does an AC work?\n</follow_up>"
+      ],
+      [
+        "assistant",
+        "<query>AC working</query>"
+      ],
+      [
+        'user',
+        '<conversation>{chat_history}</conversation>\n<follow_up>\n{query}\n</follow_up>'
+      ]
+    ]),
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {
-      input = input.replace(/<think>.*?<\/think>/g, '');
+      const queryParser = new LineOutputParser({
+        key: 'query'
+      })
 
+      return (await queryParser.parse(input))
+    }),
+    RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
         engines: ['bing images', 'google images'],
       });
