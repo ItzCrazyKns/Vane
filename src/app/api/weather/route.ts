@@ -1,7 +1,10 @@
 export const POST = async (req: Request) => {
   try {
-    const body: { lat: number; lng: number; temperatureUnit: 'C' | 'F' } =
-      await req.json();
+    const body: {
+      lat: number;
+      lng: number;
+      measureUnit: 'Imperial' | 'Metric';
+    } = await req.json();
 
     if (!body.lat || !body.lng) {
       return Response.json(
@@ -13,7 +16,9 @@ export const POST = async (req: Request) => {
     }
 
     const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${body.temperatureUnit === 'C' ? '' : '&temperature_unit=fahrenheit'}`,
+      `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${
+        body.measureUnit === 'Metric' ? '' : '&temperature_unit=fahrenheit'
+      }${body.measureUnit === 'Metric' ? '' : '&wind_speed_unit=mph'}`,
     );
 
     const data = await res.json();
@@ -35,13 +40,15 @@ export const POST = async (req: Request) => {
       windSpeed: number;
       icon: string;
       temperatureUnit: 'C' | 'F';
+      windSpeedUnit: 'm/s' | 'mph';
     } = {
       temperature: data.current.temperature_2m,
       condition: '',
       humidity: data.current.relative_humidity_2m,
       windSpeed: data.current.wind_speed_10m,
       icon: '',
-      temperatureUnit: body.temperatureUnit,
+      temperatureUnit: body.measureUnit === 'Metric' ? 'C' : 'F',
+      windSpeedUnit: body.measureUnit === 'Metric' ? 'm/s' : 'mph',
     };
 
     const code = data.current.weather_code;
