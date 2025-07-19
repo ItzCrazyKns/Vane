@@ -3,33 +3,19 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { PromptTemplate } from '@langchain/core/prompts';
+import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../searxng';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import LineOutputParser from '../outputParsers/lineOutputParser';
 
-const VideoSearchChainPrompt = `
-  You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.
-  You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
-  
-  Example:
-  1. Follow up question: How does a car work?
-  Rephrased: How does a car work?
-  
-  2. Follow up question: What is the theory of relativity?
-  Rephrased: What is theory of relativity
-  
-  3. Follow up question: How does an AC work?
-  Rephrased: How does an AC work
-  
-  Conversation:
-  {chat_history}
-  
-  Follow up question: {query}
-  Rephrased question:
-  `;
+const videoSearchChainPrompt = `
+You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.
+You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
+Output only the rephrased query wrapped in an XML <query> element. Do not include any explanation or additional text.
+`;
 
 type VideoSearchChainInput = {
   chat_history: BaseMessage[];
@@ -55,12 +41,46 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
         return input.query;
       },
     }),
-    PromptTemplate.fromTemplate(VideoSearchChainPrompt),
+    ChatPromptTemplate.fromMessages([
+      ['system', videoSearchChainPrompt],
+      [
+        'user',
+        '<conversation>\n</conversation>\n<follow_up>\nHow does a car work?\n</follow_up>'
+      ],
+      [
+        'assistant',
+        '<query>How does a car work?</query>'
+      ],
+      [
+        'user',
+        '<conversation>\n</conversation>\n<follow_up>\nWhat is the theory of relativity?\n</follow_up>'
+      ],
+      [
+        'assistant',
+        '<query>Theory of relativity</query>'
+      ],
+      [
+        'user',
+        '<conversation>\n</conversation>\n<follow_up>\nHow does an AC work?\n</follow_up>'
+      ],
+      [
+        'assistant',
+        '<query>AC working</query>'
+      ],
+      [
+        'user',
+        '<conversation>{chat_history}</conversation>\n<follow_up>\n{query}\n</follow_up>'
+      ]
+    ]),
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {
-      input = input.replace(/<think>.*?<\/think>/g, '');
-
+      const queryParser = new LineOutputParser({
+        key: 'query'
+      });
+      return (await queryParser.parse(input));
+    }),
+    RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
         engines: ['youtube'],
       });
@@ -92,8 +112,8 @@ const handleVideoSearch = (
   input: VideoSearchChainInput,
   llm: BaseChatModel,
 ) => {
-  const VideoSearchChain = createVideoSearchChain(llm);
-  return VideoSearchChain.invoke(input);
+  const videoSearchChain = createVideoSearchChain(llm);
+  return videoSearchChain.invoke(input);
 };
 
 export default handleVideoSearch;
