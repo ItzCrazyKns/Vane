@@ -6,8 +6,8 @@ export const PROVIDER_INFO = {
   key: 'ollama',
   displayName: 'Ollama',
 };
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
+import { ChatOllama } from '@langchain/ollama';
+import { OllamaEmbeddings } from '@langchain/ollama';
 
 export const loadOllamaChatModels = async () => {
   const ollamaApiEndpoint = getOllamaApiEndpoint();
