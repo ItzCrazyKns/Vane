@@ -38,7 +38,7 @@ export const loadAimlApiChatModels = async () => {
         chatModels[model.id] = {
           displayName: model.name || model.id,
           model: new ChatOpenAI({
-            openAIApiKey: apiKey,
+            apiKey: apiKey,
             modelName: model.id,
             temperature: 0.7,
             configuration: {
@@ -76,7 +76,7 @@ export const loadAimlApiEmbeddingModels = async () => {
         embeddingModels[model.id] = {
           displayName: model.name || model.id,
           model: new OpenAIEmbeddings({
-            openAIApiKey: apiKey,
+            apiKey: apiKey,
             modelName: model.id,
             configuration: {
               baseURL: API_URL,
