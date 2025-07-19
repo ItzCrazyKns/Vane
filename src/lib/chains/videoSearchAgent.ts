@@ -3,7 +3,7 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
@@ -45,40 +45,31 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
       ['system', videoSearchChainPrompt],
       [
         'user',
-        '<conversation>\n</conversation>\n<follow_up>\nHow does a car work?\n</follow_up>'
+        '<conversation>\n</conversation>\n<follow_up>\nHow does a car work?\n</follow_up>',
       ],
-      [
-        'assistant',
-        '<query>How does a car work?</query>'
-      ],
+      ['assistant', '<query>How does a car work?</query>'],
       [
         'user',
-        '<conversation>\n</conversation>\n<follow_up>\nWhat is the theory of relativity?\n</follow_up>'
+        '<conversation>\n</conversation>\n<follow_up>\nWhat is the theory of relativity?\n</follow_up>',
       ],
-      [
-        'assistant',
-        '<query>Theory of relativity</query>'
-      ],
+      ['assistant', '<query>Theory of relativity</query>'],
       [
         'user',
-        '<conversation>\n</conversation>\n<follow_up>\nHow does an AC work?\n</follow_up>'
+        '<conversation>\n</conversation>\n<follow_up>\nHow does an AC work?\n</follow_up>',
       ],
-      [
-        'assistant',
-        '<query>AC working</query>'
-      ],
+      ['assistant', '<query>AC working</query>'],
       [
         'user',
-        '<conversation>{chat_history}</conversation>\n<follow_up>\n{query}\n</follow_up>'
-      ]
+        '<conversation>{chat_history}</conversation>\n<follow_up>\n{query}\n</follow_up>',
+      ],
     ]),
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {
       const queryParser = new LineOutputParser({
-        key: 'query'
+        key: 'query',
       });
-      return (await queryParser.parse(input));
+      return await queryParser.parse(input);
     }),
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {

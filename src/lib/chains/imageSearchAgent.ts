@@ -3,7 +3,7 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
@@ -43,43 +43,34 @@ const createImageSearchChain = (llm: BaseChatModel) => {
     ChatPromptTemplate.fromMessages([
       ['system', imageSearchChainPrompt],
       [
-        "user",
-        "<conversation>\n</conversation>\n<follow_up>\nWhat is a cat?\n</follow_up>"
+        'user',
+        '<conversation>\n</conversation>\n<follow_up>\nWhat is a cat?\n</follow_up>',
       ],
-      [
-        "assistant",
-        "<query>A cat</query>"
-      ],
+      ['assistant', '<query>A cat</query>'],
 
       [
-        "user",
-        "<conversation>\n</conversation>\n<follow_up>\nWhat is a car? How does it work?\n</follow_up>"
+        'user',
+        '<conversation>\n</conversation>\n<follow_up>\nWhat is a car? How does it work?\n</follow_up>',
       ],
-      [
-        "assistant",
-        "<query>Car working</query>"
-      ],
-      [
-        "user",
-        "<conversation>\n</conversation>\n<follow_up>\nHow does an AC work?\n</follow_up>"
-      ],
-      [
-        "assistant",
-        "<query>AC working</query>"
-      ],
+      ['assistant', '<query>Car working</query>'],
       [
         'user',
-        '<conversation>{chat_history}</conversation>\n<follow_up>\n{query}\n</follow_up>'
-      ]
+        '<conversation>\n</conversation>\n<follow_up>\nHow does an AC work?\n</follow_up>',
+      ],
+      ['assistant', '<query>AC working</query>'],
+      [
+        'user',
+        '<conversation>{chat_history}</conversation>\n<follow_up>\n{query}\n</follow_up>',
+      ],
     ]),
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {
       const queryParser = new LineOutputParser({
-        key: 'query'
-      })
+        key: 'query',
+      });
 
-      return (await queryParser.parse(input))
+      return await queryParser.parse(input);
     }),
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
