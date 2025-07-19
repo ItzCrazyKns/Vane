@@ -10,6 +10,7 @@ const WeatherWidget = () => {
     windSpeed: 0,
     icon: '',
     temperatureUnit: 'C',
+    windSpeedUnit: 'm/s',
   });
 
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,7 @@ const WeatherWidget = () => {
         body: JSON.stringify({
           lat: location.latitude,
           lng: location.longitude,
-          temperatureUnit: localStorage.getItem('temperatureUnit') ?? 'C',
+          measureUnit: localStorage.getItem('measureUnit') ?? 'Metric',
         }),
       });
 
@@ -95,6 +96,7 @@ const WeatherWidget = () => {
         windSpeed: data.windSpeed,
         icon: data.icon,
         temperatureUnit: data.temperatureUnit,
+        windSpeedUnit: data.windSpeedUnit,
       });
       setLoading(false);
     });
@@ -139,7 +141,7 @@ const WeatherWidget = () => {
               </span>
               <span className="flex items-center text-xs text-black/60 dark:text-white/60">
                 <Wind className="w-3 h-3 mr-1" />
-                {data.windSpeed} km/h
+                {data.windSpeed} {data.windSpeedUnit}
               </span>
             </div>
             <span className="text-xs text-black/60 dark:text-white/60 mt-1">

@@ -148,7 +148,9 @@ const Page = () => {
   const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
-  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>('C');
+  const [measureUnit, setMeasureUnit] = useState<'Imperial' | 'Metric'>(
+    'Metric',
+  );
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -211,7 +213,9 @@ const Page = () => {
 
       setSystemInstructions(localStorage.getItem('systemInstructions')!);
 
-      setTemperatureUnit(localStorage.getItem('temperatureUnit')! as 'C' | 'F');
+      setMeasureUnit(
+        localStorage.getItem('measureUnit')! as 'Imperial' | 'Metric',
+      );
 
       setIsLoading(false);
     };
@@ -371,8 +375,8 @@ const Page = () => {
         localStorage.setItem('embeddingModel', value);
       } else if (key === 'systemInstructions') {
         localStorage.setItem('systemInstructions', value);
-      } else if (key === 'temperatureUnit') {
-        localStorage.setItem('temperatureUnit', value.toString());
+      } else if (key === 'measureUnit') {
+        localStorage.setItem('measureUnit', value.toString());
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -430,22 +434,22 @@ const Page = () => {
               </div>
               <div className="flex flex-col space-y-1">
                 <p className="text-black/70 dark:text-white/70 text-sm">
-                  Temperature Unit
+                  Measurement Units
                 </p>
                 <Select
-                  value={temperatureUnit ?? undefined}
+                  value={measureUnit ?? undefined}
                   onChange={(e) => {
-                    setTemperatureUnit(e.target.value as 'C' | 'F');
-                    saveConfig('temperatureUnit', e.target.value);
+                    setMeasureUnit(e.target.value as 'Imperial' | 'Metric');
+                    saveConfig('measureUnit', e.target.value);
                   }}
                   options={[
                     {
-                      label: 'Celsius',
-                      value: 'C',
+                      label: 'Metric',
+                      value: 'Metric',
                     },
                     {
-                      label: 'Fahrenheit',
-                      value: 'F',
+                      label: 'Imperial',
+                      value: 'Imperial',
                     },
                   ]}
                 />
