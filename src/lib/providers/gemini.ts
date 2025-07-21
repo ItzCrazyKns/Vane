@@ -108,7 +108,7 @@ export const loadGeminiEmbeddingModels = async () => {
 
     return embeddingModels;
   } catch (err) {
-    console.error(`Error loading OpenAI embeddings models: ${err}`);
+    console.error(`Error loading Gemini embeddings models: ${err}`);
     return {};
   }
 };
