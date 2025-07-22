@@ -1,8 +1,11 @@
-import { BaseMessage } from '@langchain/core/messages';
+import { BaseMessage, isAIMessage } from '@langchain/core/messages';
 
 const formatChatHistoryAsString = (history: BaseMessage[]) => {
   return history
-    .map((message) => `${message._getType()}: ${message.content}`)
+    .map(
+      (message) =>
+        `${isAIMessage(message) ? 'AI' : 'User:'}: ${message.content}`,
+    )
     .join('\n');
 };
 
