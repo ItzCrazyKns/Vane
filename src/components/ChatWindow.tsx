@@ -354,7 +354,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isConfigReady]);
 
-  const sendMessage = async (message: string, messageId?: string) => {
+  const sendMessage = async (
+    message: string,
+    messageId?: string,
+    rewrite = false,
+  ) => {
     if (loading) return;
     if (!isConfigReady) {
       toast.error('Cannot send message before the configuration is ready');
@@ -482,6 +486,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
     };
 
+    const messageIndex = messages.findIndex((m) => m.messageId === messageId);
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -498,7 +504,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
         files: fileIds,
         focusMode: focusMode,
         optimizationMode: optimizationMode,
-        history: chatHistory,
+        history: rewrite
+          ? chatHistory.slice(0, messageIndex === -1 ? undefined : messageIndex)
+          : chatHistory,
         chatModel: {
           name: chatModelProvider.name,
           provider: chatModelProvider.provider,
@@ -552,7 +560,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
-    sendMessage(message.content, message.messageId);
+    sendMessage(message.content, message.messageId, true);
   };
 
   useEffect(() => {
