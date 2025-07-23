@@ -1,15 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp, BrainCircuit } from 'lucide-react';
 
 interface ThinkBoxProps {
   content: string;
+  thinkingEnded: boolean;
 }
 
-const ThinkBox = ({ content }: ThinkBoxProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const ThinkBox = ({ content, thinkingEnded }: ThinkBoxProps) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  useEffect(() => {
+    if (thinkingEnded) {
+      setIsExpanded(false);
+    } else {
+      setIsExpanded(true);
+    }
+  }, [thinkingEnded]);
 
   return (
     <div className="my-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200 overflow-hidden">
