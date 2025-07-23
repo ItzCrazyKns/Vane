@@ -81,8 +81,7 @@ export const POST = async (req: Request) => {
     if (body.chatModel?.provider === 'custom_openai') {
       llm = new ChatOpenAI({
         modelName: body.chatModel?.name || getCustomOpenaiModelName(),
-        apiKey:
-          body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
+        apiKey: body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
         temperature: 0.7,
         configuration: {
           baseURL:
