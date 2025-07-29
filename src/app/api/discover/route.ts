@@ -60,6 +60,7 @@ export const GET = async (req: Request) => {
       )
         .map((result) => result)
         .flat()
+        .sort(() => Math.random() - 0.5);
     } else {
       data = (
         await searchSearxng(
