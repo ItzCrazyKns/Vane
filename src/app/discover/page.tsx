@@ -43,7 +43,6 @@ const Page = () => {
 
   const fetchArticles = async (topic: string) => {
     setLoading(true);
-    console.log(topic);
     try {
       const res = await fetch(`/api/discover?topic=${topic}`, {
         method: 'GET',

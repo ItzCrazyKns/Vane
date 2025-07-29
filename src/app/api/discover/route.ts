@@ -1,37 +1,52 @@
 import { searchSearxng } from '@/lib/searxng';
 
-const articleWebsites = [
-  'yahoo.com',
-  'www.exchangewire.com',
-  'businessinsider.com',
-  /* 'wired.com',
-  'mashable.com',
-  'theverge.com',
-  'gizmodo.com',
-  'cnet.com',
-  'venturebeat.com', */
-];
+const websitesForTopic = {
+  tech: {
+    query: ['technology news', 'latest tech', 'AI', 'science and innovation'],
+    links: ['techcrunch.com', 'wired.com', 'theverge.com'],
+  },
+  finance: {
+    query: ['finance news', 'economy', 'stock market', 'investing'],
+    links: ['bloomberg.com', 'cnbc.com', 'marketwatch.com'],
+  },
+  art: {
+    query: ['art news', 'culture', 'modern art', 'cultural events'],
+    links: ['artnews.com', 'hyperallergic.com', 'theartnewspaper.com'],
+  },
+  sports: {
+    query: ['sports news', 'latest sports', 'cricket football tennis'],
+    links: ['espn.com', 'bbc.com/sport', 'skysports.com'],
+  },
+  entertainment: {
+    query: ['entertainment news', 'movies', 'TV shows', 'celebrities'],
+    links: ['hollywoodreporter.com', 'variety.com', 'deadline.com'],
+  },
+};
 
-const topics = ['AI', 'tech']; /* TODO: Add UI to customize this */
+type Topic = keyof typeof websitesForTopic;
 
 export const GET = async (req: Request) => {
   try {
     const params = new URL(req.url).searchParams;
+
     const mode: 'normal' | 'preview' =
       (params.get('mode') as 'normal' | 'preview') || 'normal';
+    const topic: Topic = (params.get('topic') as Topic) || 'tech';
+
+    const selectedTopic = websitesForTopic[topic];
 
     let data = [];
 
     if (mode === 'normal') {
       data = (
         await Promise.all([
-          ...new Array(articleWebsites.length * topics.length)
+          ...new Array(selectedTopic.links.length * selectedTopic.query.length)
             .fill(0)
             .map(async (_, i) => {
               return (
                 await searchSearxng(
-                  `site:${articleWebsites[i % articleWebsites.length]} ${
-                    topics[i % topics.length]
+                  `site:${selectedTopic.links[i % selectedTopic.links.length]} ${
+                    selectedTopic.query[i % selectedTopic.query.length]
                   }`,
                   {
                     engines: ['bing news'],
@@ -45,11 +60,10 @@ export const GET = async (req: Request) => {
       )
         .map((result) => result)
         .flat()
-        .sort(() => Math.random() - 0.5);
     } else {
       data = (
         await searchSearxng(
-          `site:${articleWebsites[Math.floor(Math.random() * articleWebsites.length)]} ${topics[Math.floor(Math.random() * topics.length)]}`,
+          `site:${selectedTopic.links[Math.floor(Math.random() * selectedTopic.links.length)]} ${selectedTopic.query[Math.floor(Math.random() * selectedTopic.query.length)]}`,
           {
             engines: ['bing news'],
             pageno: 1,
