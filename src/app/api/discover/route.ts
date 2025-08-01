@@ -38,28 +38,30 @@ export const GET = async (req: Request) => {
     let data = [];
 
     if (mode === 'normal') {
+      const seenUrls = new Set();
+
       data = (
-        await Promise.all([
-          ...new Array(selectedTopic.links.length * selectedTopic.query.length)
-            .fill(0)
-            .map(async (_, i) => {
+        await Promise.all(
+          selectedTopic.links.flatMap((link) =>
+            selectedTopic.query.map(async (query) => {
               return (
-                await searchSearxng(
-                  `site:${selectedTopic.links[i % selectedTopic.links.length]} ${
-                    selectedTopic.query[i % selectedTopic.query.length]
-                  }`,
-                  {
-                    engines: ['bing news'],
-                    pageno: 1,
-                    language: 'en',
-                  },
-                )
+                await searchSearxng(`site:${link} ${query}`, {
+                  engines: ['bing news'],
+                  pageno: 1,
+                  language: 'en',
+                })
               ).results;
             }),
-        ])
+          ),
+        )
       )
-        .map((result) => result)
         .flat()
+        .filter((item) => {
+          const url = item.url?.toLowerCase().trim();
+          if (seenUrls.has(url)) return false;
+          seenUrls.add(url);
+          return true;
+        })
         .sort(() => Math.random() - 0.5);
     } else {
       data = (
