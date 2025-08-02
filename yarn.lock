@@ -653,6 +653,14 @@
     "@google/generative-ai" "^0.24.0"
     uuid "^11.1.0"
 
+"@langchain/groq@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@langchain/groq/-/groq-0.2.3.tgz#3bfcbfc827cf469df3a1b5bb9799f4b0212b4625"
+  integrity sha512-r+yjysG36a0IZxTlCMr655Feumfb4IrOyA0jLLq4l7gEhVyMpYXMwyE6evseyU2LRP+7qOPbGRVpGqAIK0MsUA==
+  dependencies:
+    groq-sdk "^0.19.0"
+    zod "^3.22.4"
+
 "@langchain/ollama@^0.2.3":
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@langchain/ollama/-/ollama-0.2.3.tgz#4868e66db4fc480f08c42fc652274abbab0416f0"
@@ -2731,6 +2739,19 @@ graphql@^16.11.0:
   version "16.11.0"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.11.0.tgz#96d17f66370678027fdf59b2d4c20b4efaa8a633"
   integrity sha512-mS1lbMsxgQj6hge1XZ6p7GPhbrtFwUFYi3wRzXAC/FmYnyXMTvvI3td3rjmQ2u8ewXueaSvRPWaEcgVVOT9Jnw==
+
+groq-sdk@^0.19.0:
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/groq-sdk/-/groq-sdk-0.19.0.tgz#564ce018172dc3e2e2793398e0227a035a357d09"
+  integrity sha512-vdh5h7ORvwvOvutA80dKF81b0gPWHxu6K/GOJBOM0n6p6CSqAVLhFfeS79Ef0j/yCycDR09jqY7jkYz9dLiS6w==
+  dependencies:
+    "@types/node" "^18.11.18"
+    "@types/node-fetch" "^2.6.4"
+    abort-controller "^3.0.0"
+    agentkeepalive "^4.2.1"
+    form-data-encoder "1.7.2"
+    formdata-node "^4.3.2"
+    node-fetch "^2.6.7"
 
 guid-typescript@^1.0.9:
   version "1.0.9"

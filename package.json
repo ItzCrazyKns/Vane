@@ -19,6 +19,7 @@
     "@langchain/community": "^0.3.49",
     "@langchain/core": "^0.3.66",
     "@langchain/google-genai": "^0.2.15",
+    "@langchain/groq": "^0.2.3",
     "@langchain/ollama": "^0.2.3",
     "@langchain/openai": "^0.6.2",
     "@langchain/textsplitters": "^0.1.0",
