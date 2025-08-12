@@ -42,6 +42,18 @@ const openaiChatModels: Record<string, string>[] = [
     displayName: 'GPT 4.1',
     key: 'gpt-4.1',
   },
+  {
+    displayName: 'GPT 5 nano',
+    key: 'gpt-5-nano',
+  },
+  {
+    displayName: 'GPT 5 mini',
+    key: 'gpt-5-mini',
+  },
+  {
+    displayName: 'GPT 5',
+    key: 'gpt-5',
+  },
 ];
 
 const openaiEmbeddingModels: Record<string, string>[] = [
@@ -69,7 +81,7 @@ export const loadOpenAIChatModels = async () => {
         model: new ChatOpenAI({
           apiKey: openaiApiKey,
           modelName: model.key,
-          temperature: 0.7,
+          temperature: model.key.includes('gpt-5') ? 1 : 0.7,
         }) as unknown as BaseChatModel,
       };
     });

@@ -10,6 +10,18 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const anthropicChatModels: Record<string, string>[] = [
   {
+    displayName: 'Claude 4.1 Opus',
+    key: 'claude-opus-4-1-20250805',
+  },
+  {
+    displayName: 'Claude 4 Opus',
+    key: 'claude-opus-4-20250514',
+  },
+  {
+    displayName: 'Claude 4 Sonnet',
+    key: 'claude-sonnet-4-20250514',
+  },
+  {
     displayName: 'Claude 3.7 Sonnet',
     key: 'claude-3-7-sonnet-20250219',
   },
