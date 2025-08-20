@@ -8,20 +8,11 @@ import {
 import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { File as FileType } from '../ChatWindow';
+import { useChat } from '@/lib/hooks/useChat';
 
-const Attach = ({
-  fileIds,
-  setFileIds,
-  showText,
-  files,
-  setFiles,
-}: {
-  fileIds: string[];
-  setFileIds: (fileIds: string[]) => void;
-  showText?: boolean;
-  files: FileType[];
-  setFiles: (files: FileType[]) => void;
-}) => {
+const Attach = ({ showText }: { showText?: boolean }) => {
+  const { files, setFiles, setFileIds, fileIds } = useChat();
+
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();
 

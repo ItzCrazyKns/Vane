@@ -15,6 +15,7 @@ import {
 } from '@headlessui/react';
 import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
 import { Fragment } from 'react';
+import { useChat } from '@/lib/hooks/useChat';
 
 const focusModes = [
   {
@@ -55,13 +56,9 @@ const focusModes = [
   },
 ];
 
-const Focus = ({
-  focusMode,
-  setFocusMode,
-}: {
-  focusMode: string;
-  setFocusMode: (mode: string) => void;
-}) => {
+const Focus = () => {
+  const { focusMode, setFocusMode } = useChat();
+
   return (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg mt-[6.5px]">
       <PopoverButton

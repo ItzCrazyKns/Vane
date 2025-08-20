@@ -6,22 +6,11 @@ import Attach from './MessageInputActions/Attach';
 import CopilotToggle from './MessageInputActions/Copilot';
 import { File } from './ChatWindow';
 import AttachSmall from './MessageInputActions/AttachSmall';
+import { useChat } from '@/lib/hooks/useChat';
 
-const MessageInput = ({
-  sendMessage,
-  loading,
-  fileIds,
-  setFileIds,
-  files,
-  setFiles,
-}: {
-  sendMessage: (message: string) => void;
-  loading: boolean;
-  fileIds: string[];
-  setFileIds: (fileIds: string[]) => void;
-  files: File[];
-  setFiles: (files: File[]) => void;
-}) => {
+const MessageInput = () => {
+  const { loading, sendMessage } = useChat();
+
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
@@ -79,14 +68,7 @@ const MessageInput = ({
         mode === 'multi' ? 'flex-col rounded-lg' : 'flex-row rounded-full',
       )}
     >
-      {mode === 'single' && (
-        <AttachSmall
-          fileIds={fileIds}
-          setFileIds={setFileIds}
-          files={files}
-          setFiles={setFiles}
-        />
-      )}
+      {mode === 'single' && <AttachSmall />}
       <TextareaAutosize
         ref={inputRef}
         value={message}
@@ -113,12 +95,7 @@ const MessageInput = ({
       )}
       {mode === 'multi' && (
         <div className="flex flex-row items-center justify-between w-full pt-2">
-          <AttachSmall
-            fileIds={fileIds}
-            setFileIds={setFileIds}
-            files={files}
-            setFiles={setFiles}
-          />
+          <AttachSmall />
           <div className="flex flex-row items-center space-x-4">
             <CopilotToggle
               copilotEnabled={copilotEnabled}
