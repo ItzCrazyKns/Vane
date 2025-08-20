@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getKeepAlive, getOllamaApiEndpoint } from '../config';
+import { getKeepAlive, getOllamaApiEndpoint, getOllamaApiKey } from '../config';
 import { ChatModel, EmbeddingModel } from '.';
 
 export const PROVIDER_INFO = {
@@ -11,6 +11,7 @@ import { OllamaEmbeddings } from '@langchain/ollama';
 
 export const loadOllamaChatModels = async () => {
   const ollamaApiEndpoint = getOllamaApiEndpoint();
+  const ollamaApiKey = getOllamaApiKey();
 
   if (!ollamaApiEndpoint) return {};
 
@@ -33,6 +34,9 @@ export const loadOllamaChatModels = async () => {
           model: model.model,
           temperature: 0.7,
           keepAlive: getKeepAlive(),
+          ...(ollamaApiKey
+            ? { headers: { Authorization: `Bearer ${ollamaApiKey}` } }
+            : {}),
         }),
       };
     });
@@ -46,6 +50,7 @@ export const loadOllamaChatModels = async () => {
 
 export const loadOllamaEmbeddingModels = async () => {
   const ollamaApiEndpoint = getOllamaApiEndpoint();
+  const ollamaApiKey = getOllamaApiKey();
 
   if (!ollamaApiEndpoint) return {};
 
@@ -66,6 +71,9 @@ export const loadOllamaEmbeddingModels = async () => {
         model: new OllamaEmbeddings({
           baseUrl: ollamaApiEndpoint,
           model: model.model,
+          ...(ollamaApiKey
+            ? { headers: { Authorization: `Bearer ${ollamaApiKey}` } }
+            : {}),
         }),
       };
     });
