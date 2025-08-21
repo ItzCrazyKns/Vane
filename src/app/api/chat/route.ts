@@ -1,11 +1,7 @@
-import prompts from '@/lib/prompts';
-import MetaSearchAgent from '@/lib/search/metaSearchAgent';
 import crypto from 'crypto';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { EventEmitter } from 'stream';
 import {
-  chatModelProviders,
-  embeddingModelProviders,
   getAvailableChatModelProviders,
   getAvailableEmbeddingModelProviders,
 } from '@/lib/providers';
@@ -138,6 +134,8 @@ const handleHistorySave = async (
     where: eq(chats.id, message.chatId),
   });
 
+  const fileData = files.map(getFileDetails);
+
   if (!chat) {
     await db
       .insert(chats)
@@ -146,9 +144,16 @@ const handleHistorySave = async (
         title: message.content,
         createdAt: new Date().toString(),
         focusMode: focusMode,
-        files: files.map(getFileDetails),
+        files: fileData,
       })
       .execute();
+  } else if (JSON.stringify(chat.files ?? []) != JSON.stringify(fileData)) {
+    db
+      .update(chats)
+      .set({
+        files: files.map(getFileDetails),
+      })
+      .where(eq(chats.id, message.chatId));
   }
 
   const messageExists = await db.query.messages.findFirst({
