@@ -148,8 +148,7 @@ const handleHistorySave = async (
       })
       .execute();
   } else if (JSON.stringify(chat.files ?? []) != JSON.stringify(fileData)) {
-    db
-      .update(chats)
+    db.update(chats)
       .set({
         files: files.map(getFileDetails),
       })
