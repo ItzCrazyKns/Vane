@@ -1,15 +1,40 @@
 'use client';
 
-import { Message } from '@/components/ChatWindow';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {
+  AssistantMessage,
+  ChatTurn,
+  Message,
+  SourceMessage,
+  SuggestionMessage,
+  UserMessage,
+} from '@/components/ChatWindow';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import crypto from 'crypto';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { Document } from '@langchain/core/documents';
 import { getSuggestions } from '../actions';
+
+export type Section = {
+  userMessage: UserMessage;
+  assistantMessage: AssistantMessage | undefined;
+  parsedAssistantMessage: string | undefined;
+  speechMessage: string | undefined;
+  sourceMessage: SourceMessage | undefined;
+  thinkingEnded: boolean;
+  suggestions?: string[];
+};
 
 type ChatContext = {
   messages: Message[];
+  chatTurns: ChatTurn[];
+  sections: Section[];
   chatHistory: [string, string][];
   files: File[];
   fileIds: string[];
@@ -242,22 +267,23 @@ const loadMessages = async (
 
   const data = await res.json();
 
-  const messages = data.messages.map((msg: any) => {
-    return {
-      ...msg,
-      ...JSON.parse(msg.metadata),
-    };
-  }) as Message[];
+  const messages = data.messages as Message[];
 
   setMessages(messages);
 
-  const history = messages.map((msg) => {
+  const chatTurns = messages.filter(
+    (msg): msg is ChatTurn => msg.role === 'user' || msg.role === 'assistant',
+  );
+
+  const history = chatTurns.map((msg) => {
     return [msg.role, msg.content];
   }) as [string, string][];
 
   console.debug(new Date(), 'app:messages_loaded');
 
-  document.title = messages[0].content;
+  if (chatTurns.length > 0) {
+    document.title = chatTurns[0].content;
+  }
 
   const files = data.chat.files.map((file: any) => {
     return {
@@ -287,6 +313,8 @@ export const chatContext = createContext<ChatContext>({
   loading: false,
   messageAppeared: false,
   messages: [],
+  chatTurns: [],
+  sections: [],
   notFound: false,
   optimizationMode: '',
   rewrite: () => {},
@@ -345,6 +373,122 @@ export const ChatProvider = ({
 
   const messagesRef = useRef<Message[]>([]);
 
+  const chatTurns = useMemo((): ChatTurn[] => {
+    return messages.filter(
+      (msg): msg is ChatTurn => msg.role === 'user' || msg.role === 'assistant',
+    );
+  }, [messages]);
+
+  const sections = useMemo<Section[]>(() => {
+    const sections: Section[] = [];
+
+    messages.forEach((msg, i) => {
+      if (msg.role === 'user') {
+        const nextUserMessageIndex = messages.findIndex(
+          (m, j) => j > i && m.role === 'user',
+        );
+
+        const aiMessage = messages.find(
+          (m, j) =>
+            j > i &&
+            m.role === 'assistant' &&
+            (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
+        ) as AssistantMessage | undefined;
+
+        const sourceMessage = messages.find(
+          (m, j) =>
+            j > i &&
+            m.role === 'source' &&
+            (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
+        ) as SourceMessage | undefined;
+
+        let thinkingEnded = false;
+        let processedMessage = aiMessage?.content ?? '';
+        let speechMessage = aiMessage?.content ?? '';
+        let suggestions: string[] = [];
+
+        if (aiMessage) {
+          const citationRegex = /\[([^\]]+)\]/g;
+          const regex = /\[(\d+)\]/g;
+
+          if (processedMessage.includes('<think>')) {
+            const openThinkTag =
+              processedMessage.match(/<think>/g)?.length || 0;
+            const closeThinkTag =
+              processedMessage.match(/<\/think>/g)?.length || 0;
+
+            if (openThinkTag > closeThinkTag) {
+              processedMessage += '</think> <a> </a>';
+            }
+          }
+
+          if (aiMessage.content.includes('</think>')) {
+            thinkingEnded = true;
+          }
+
+          if (sourceMessage && sourceMessage.sources.length > 0) {
+            processedMessage = processedMessage.replace(
+              citationRegex,
+              (_, capturedContent: string) => {
+                const numbers = capturedContent
+                  .split(',')
+                  .map((numStr) => numStr.trim());
+
+                const linksHtml = numbers
+                  .map((numStr) => {
+                    const number = parseInt(numStr);
+
+                    if (isNaN(number) || number <= 0) {
+                      return `[${numStr}]`;
+                    }
+
+                    const source = sourceMessage.sources?.[number - 1];
+                    const url = source?.metadata?.url;
+
+                    if (url) {
+                      return `<a href="${url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${numStr}</a>`;
+                    } else {
+                      return ``;
+                    }
+                  })
+                  .join('');
+
+                return linksHtml;
+              },
+            );
+            speechMessage = aiMessage.content.replace(regex, '');
+          } else {
+            processedMessage = processedMessage.replace(regex, '');
+            speechMessage = aiMessage.content.replace(regex, '');
+          }
+
+          const suggestionMessage = messages.find(
+            (m, j) =>
+              j > i &&
+              m.role === 'suggestion' &&
+              (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
+          ) as SuggestionMessage | undefined;
+
+          if (suggestionMessage && suggestionMessage.suggestions.length > 0) {
+            suggestions = suggestionMessage.suggestions;
+          }
+        }
+
+        sections.push({
+          userMessage: msg,
+          assistantMessage: aiMessage,
+          sourceMessage: sourceMessage,
+          parsedAssistantMessage: processedMessage,
+          speechMessage,
+          thinkingEnded,
+          suggestions: suggestions,
+        });
+      }
+    });
+
+    return sections;
+  }, [messages]);
+
   useEffect(() => {
     checkConfig(
       setChatModelProvider,
@@ -395,16 +539,21 @@ export const ChatProvider = ({
 
   const rewrite = (messageId: string) => {
     const index = messages.findIndex((msg) => msg.messageId === messageId);
+    const chatTurnsIndex = chatTurns.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
 
     if (index === -1) return;
 
-    const message = messages[index - 1];
+    const message = chatTurns[chatTurnsIndex - 1];
 
     setMessages((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+      return [
+        ...prev.slice(0, messages.length > 2 ? messages.indexOf(message) : 0),
+      ];
     });
     setChatHistory((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+      return [...prev.slice(0, chatTurns.length > 2 ? chatTurnsIndex - 1 : 0)];
     });
 
     sendMessage(message.content, message.messageId, true);
@@ -433,8 +582,7 @@ export const ChatProvider = ({
     if (messages.length <= 1) {
       window.history.replaceState(null, '', `/c/${chatId}`);
     }
- 
-    let sources: Document[] | undefined = undefined;
+
     let recievedMessage = '';
     let added = false;
 
@@ -459,22 +607,19 @@ export const ChatProvider = ({
       }
 
       if (data.type === 'sources') {
-        sources = data.data;
-        if (!added) {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              content: '',
-              messageId: data.messageId,
-              chatId: chatId!,
-              role: 'assistant',
-              sources: sources,
-              createdAt: new Date(),
-            },
-          ]);
-          added = true;
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            messageId: data.messageId,
+            chatId: chatId!,
+            role: 'source',
+            sources: data.data,
+            createdAt: new Date(),
+          },
+        ]);
+        if (data.data.length > 0) {
+          setMessageAppeared(true);
         }
-        setMessageAppeared(true);
       }
 
       if (data.type === 'message') {
@@ -486,7 +631,6 @@ export const ChatProvider = ({
               messageId: data.messageId,
               chatId: chatId!,
               role: 'assistant',
-              sources: sources,
               createdAt: new Date(),
             },
           ]);
@@ -495,7 +639,10 @@ export const ChatProvider = ({
 
         setMessages((prev) =>
           prev.map((message) => {
-            if (message.messageId === data.messageId) {
+            if (
+              message.messageId === data.messageId &&
+              message.role === 'assistant'
+            ) {
               return { ...message, content: message.content + data.data };
             }
 
@@ -533,21 +680,34 @@ export const ChatProvider = ({
             ?.click();
         }
 
-        if (
-          lastMsg.role === 'assistant' &&
-          lastMsg.sources &&
-          lastMsg.sources.length > 0 &&
-          !lastMsg.suggestions
-        ) {
+        /* Check if there are sources after message id's index and no suggestions */
+
+        const userMessageIndex = messagesRef.current.findIndex(
+          (msg) => msg.messageId === messageId && msg.role === 'user',
+        );
+
+        const sourceMessageIndex = messagesRef.current.findIndex(
+          (msg, i) => i > userMessageIndex && msg.role === 'source',
+        );
+
+        const suggestionMessageIndex = messagesRef.current.findIndex(
+          (msg, i) => i > userMessageIndex && msg.role === 'suggestion',
+        );
+
+        if (sourceMessageIndex != -1 && suggestionMessageIndex == -1) {
           const suggestions = await getSuggestions(messagesRef.current);
-          setMessages((prev) =>
-            prev.map((msg) => {
-              if (msg.messageId === lastMsg.messageId) {
-                return { ...msg, suggestions: suggestions };
-              }
-              return msg;
-            }),
-          );
+          setMessages((prev) => {
+            return [
+              ...prev,
+              {
+                role: 'suggestion',
+                suggestions: suggestions,
+                chatId: chatId!,
+                createdAt: new Date(),
+                messageId: crypto.randomBytes(7).toString('hex'),
+              },
+            ];
+          });
         }
       }
     };
@@ -616,6 +776,8 @@ export const ChatProvider = ({
     <chatContext.Provider
       value={{
         messages,
+        chatTurns,
+        sections,
         chatHistory,
         files,
         fileIds,
