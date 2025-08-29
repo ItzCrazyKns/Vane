@@ -430,6 +430,10 @@ export const ChatProvider = ({
     setLoading(true);
     setMessageAppeared(false);
 
+    if (messages.length <= 1) {
+      window.history.replaceState(null, '', `/c/${chatId}`);
+    }
+ 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
     let added = false;
