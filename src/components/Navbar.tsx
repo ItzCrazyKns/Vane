@@ -10,7 +10,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import jsPDF from 'jspdf';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChat, Section } from '@/lib/hooks/useChat';
 
 const downloadFile = (filename: string, content: string, type: string) => {
   const blob = new Blob([content], { type });
@@ -26,19 +26,37 @@ const downloadFile = (filename: string, content: string, type: string) => {
   }, 0);
 };
 
-const exportAsMarkdown = (messages: Message[], title: string) => {
-  const date = new Date(messages[0]?.createdAt || Date.now()).toLocaleString();
+const exportAsMarkdown = (sections: Section[], title: string) => {
+  const date = new Date(
+    sections[0]?.userMessage?.createdAt || Date.now(),
+  ).toLocaleString();
   let md = `# 💬 Chat Export: ${title}\n\n`;
   md += `*Exported on: ${date}*\n\n---\n`;
-  messages.forEach((msg, idx) => {
-    md += `\n---\n`;
-    md += `**${msg.role === 'user' ? '🧑 User' : '🤖 Assistant'}**  
+
+  sections.forEach((section, idx) => {
+    if (section.userMessage) {
+      md += `\n---\n`;
+      md += `**🧑 User**  
 `;
-    md += `*${new Date(msg.createdAt).toLocaleString()}*\n\n`;
-    md += `> ${msg.content.replace(/\n/g, '\n> ')}\n`;
-    if (msg.sources && msg.sources.length > 0) {
+      md += `*${new Date(section.userMessage.createdAt).toLocaleString()}*\n\n`;
+      md += `> ${section.userMessage.content.replace(/\n/g, '\n> ')}\n`;
+    }
+
+    if (section.assistantMessage) {
+      md += `\n---\n`;
+      md += `**🤖 Assistant**  
+`;
+      md += `*${new Date(section.assistantMessage.createdAt).toLocaleString()}*\n\n`;
+      md += `> ${section.assistantMessage.content.replace(/\n/g, '\n> ')}\n`;
+    }
+
+    if (
+      section.sourceMessage &&
+      section.sourceMessage.sources &&
+      section.sourceMessage.sources.length > 0
+    ) {
       md += `\n**Citations:**\n`;
-      msg.sources.forEach((src: any, i: number) => {
+      section.sourceMessage.sources.forEach((src: any, i: number) => {
         const url = src.metadata?.url || '';
         md += `- [${i + 1}] [${url}](${url})\n`;
       });
@@ -48,9 +66,11 @@ const exportAsMarkdown = (messages: Message[], title: string) => {
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
 };
 
-const exportAsPDF = (messages: Message[], title: string) => {
+const exportAsPDF = (sections: Section[], title: string) => {
   const doc = new jsPDF();
-  const date = new Date(messages[0]?.createdAt || Date.now()).toLocaleString();
+  const date = new Date(
+    sections[0]?.userMessage?.createdAt || Date.now(),
+  ).toLocaleString();
   let y = 15;
   const pageHeight = doc.internal.pageSize.height;
   doc.setFontSize(18);
@@ -64,57 +84,109 @@ const exportAsPDF = (messages: Message[], title: string) => {
   doc.line(10, y, 200, y);
   y += 6;
   doc.setTextColor(30);
-  messages.forEach((msg, idx) => {
-    if (y > pageHeight - 30) {
-      doc.addPage();
-      y = 15;
-    }
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${msg.role === 'user' ? 'User' : 'Assistant'}`, 10, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text(`${new Date(msg.createdAt).toLocaleString()}`, 40, y);
-    y += 6;
-    doc.setTextColor(30);
-    doc.setFontSize(12);
-    const lines = doc.splitTextToSize(msg.content, 180);
-    for (let i = 0; i < lines.length; i++) {
-      if (y > pageHeight - 20) {
+
+  sections.forEach((section, idx) => {
+    if (section.userMessage) {
+      if (y > pageHeight - 30) {
         doc.addPage();
         y = 15;
       }
-      doc.text(lines[i], 12, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text('User', 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(
+        `${new Date(section.userMessage.createdAt).toLocaleString()}`,
+        40,
+        y,
+      );
       y += 6;
-    }
-    if (msg.sources && msg.sources.length > 0) {
-      doc.setFontSize(11);
-      doc.setTextColor(80);
-      if (y > pageHeight - 20) {
-        doc.addPage();
-        y = 15;
-      }
-      doc.text('Citations:', 12, y);
-      y += 5;
-      msg.sources.forEach((src: any, i: number) => {
-        const url = src.metadata?.url || '';
-        if (y > pageHeight - 15) {
+      doc.setTextColor(30);
+      doc.setFontSize(12);
+      const userLines = doc.splitTextToSize(section.userMessage.content, 180);
+      for (let i = 0; i < userLines.length; i++) {
+        if (y > pageHeight - 20) {
           doc.addPage();
           y = 15;
         }
-        doc.text(`- [${i + 1}] ${url}`, 15, y);
-        y += 5;
-      });
+        doc.text(userLines[i], 12, y);
+        y += 6;
+      }
+      y += 6;
+      doc.setDrawColor(230);
+      if (y > pageHeight - 10) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.line(10, y, 200, y);
+      y += 4;
+    }
+
+    if (section.assistantMessage) {
+      if (y > pageHeight - 30) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.text('Assistant', 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(
+        `${new Date(section.assistantMessage.createdAt).toLocaleString()}`,
+        40,
+        y,
+      );
+      y += 6;
       doc.setTextColor(30);
+      doc.setFontSize(12);
+      const assistantLines = doc.splitTextToSize(
+        section.assistantMessage.content,
+        180,
+      );
+      for (let i = 0; i < assistantLines.length; i++) {
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          y = 15;
+        }
+        doc.text(assistantLines[i], 12, y);
+        y += 6;
+      }
+
+      if (
+        section.sourceMessage &&
+        section.sourceMessage.sources &&
+        section.sourceMessage.sources.length > 0
+      ) {
+        doc.setFontSize(11);
+        doc.setTextColor(80);
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          y = 15;
+        }
+        doc.text('Citations:', 12, y);
+        y += 5;
+        section.sourceMessage.sources.forEach((src: any, i: number) => {
+          const url = src.metadata?.url || '';
+          if (y > pageHeight - 15) {
+            doc.addPage();
+            y = 15;
+          }
+          doc.text(`- [${i + 1}] ${url}`, 15, y);
+          y += 5;
+        });
+        doc.setTextColor(30);
+      }
+      y += 6;
+      doc.setDrawColor(230);
+      if (y > pageHeight - 10) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.line(10, y, 200, y);
+      y += 4;
     }
-    y += 6;
-    doc.setDrawColor(230);
-    if (y > pageHeight - 10) {
-      doc.addPage();
-      y = 15;
-    }
-    doc.line(10, y, 200, y);
-    y += 4;
   });
   doc.save(`${title || 'chat'}.pdf`);
 };
@@ -123,29 +195,29 @@ const Navbar = () => {
   const [title, setTitle] = useState<string>('');
   const [timeAgo, setTimeAgo] = useState<string>('');
 
-  const { messages, chatId } = useChat();
+  const { sections, chatId } = useChat();
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (sections.length > 0 && sections[0].userMessage) {
       const newTitle =
-        messages[0].content.length > 20
-          ? `${messages[0].content.substring(0, 20).trim()}...`
-          : messages[0].content;
+        sections[0].userMessage.content.length > 20
+          ? `${sections[0].userMessage.content.substring(0, 20).trim()}...`
+          : sections[0].userMessage.content;
       setTitle(newTitle);
       const newTimeAgo = formatTimeDifference(
         new Date(),
-        messages[0].createdAt,
+        sections[0].userMessage.createdAt,
       );
       setTimeAgo(newTimeAgo);
     }
-  }, [messages]);
+  }, [sections]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (messages.length > 0) {
+      if (sections.length > 0 && sections[0].userMessage) {
         const newTimeAgo = formatTimeDifference(
           new Date(),
-          messages[0].createdAt,
+          sections[0].userMessage.createdAt,
         );
         setTimeAgo(newTimeAgo);
       }
@@ -187,14 +259,14 @@ const Navbar = () => {
               <div className="flex flex-col py-3 px-3 gap-2">
                 <button
                   className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsMarkdown(messages, title || '')}
+                  onClick={() => exportAsMarkdown(sections, title || '')}
                 >
                   <FileText size={17} className="text-[#24A0ED]" />
                   Export as Markdown
                 </button>
                 <button
                   className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsPDF(messages, title || '')}
+                  onClick={() => exportAsPDF(sections, title || '')}
                 >
                   <FileDown size={17} className="text-[#24A0ED]" />
                   Export as PDF

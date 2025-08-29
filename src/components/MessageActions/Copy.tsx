@@ -1,12 +1,13 @@
 import { Check, ClipboardList } from 'lucide-react';
 import { Message } from '../ChatWindow';
 import { useState } from 'react';
+import { Section } from '@/lib/hooks/useChat';
 
 const Copy = ({
-  message,
+  section,
   initialMessage,
 }: {
-  message: Message;
+  section: Section;
   initialMessage: string;
 }) => {
   const [copied, setCopied] = useState(false);
@@ -14,7 +15,7 @@ const Copy = ({
   return (
     <button
       onClick={() => {
-        const contentToCopy = `${initialMessage}${message.sources && message.sources.length > 0 && `\n\nCitations:\n${message.sources?.map((source: any, i: any) => `[${i + 1}] ${source.metadata.url}`).join(`\n`)}`}`;
+        const contentToCopy = `${initialMessage}${section?.sourceMessage?.sources && section.sourceMessage.sources.length > 0 && `\n\nCitations:\n${section.sourceMessage.sources?.map((source: any, i: any) => `[${i + 1}] ${source.metadata.url}`).join(`\n`)}`}`;
         navigator.clipboard.writeText(contentToCopy);
         setCopied(true);
         setTimeout(() => setCopied(false), 1000);

@@ -9,15 +9,39 @@ import Link from 'next/link';
 import NextError from 'next/error';
 import { useChat } from '@/lib/hooks/useChat';
 
-export type Message = {
-  messageId: string;
+export interface BaseMessage {
   chatId: string;
+  messageId: string;
   createdAt: Date;
+}
+
+export interface AssistantMessage extends BaseMessage {
+  role: 'assistant';
   content: string;
-  role: 'user' | 'assistant';
   suggestions?: string[];
-  sources?: Document[];
-};
+}
+
+export interface UserMessage extends BaseMessage {
+  role: 'user';
+  content: string;
+}
+
+export interface SourceMessage extends BaseMessage {
+  role: 'source';
+  sources: Document[];
+}
+
+export interface SuggestionMessage extends BaseMessage {
+  role: 'suggestion';
+  suggestions: string[];
+}
+
+export type Message =
+  | AssistantMessage
+  | UserMessage
+  | SourceMessage
+  | SuggestionMessage;
+export type ChatTurn = UserMessage | AssistantMessage;
 
 export interface File {
   fileName: string;

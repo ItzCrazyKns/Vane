@@ -2,13 +2,12 @@
 
 import { Fragment, useEffect, useRef, useState } from 'react';
 import MessageInput from './MessageInput';
-import { File, Message } from './ChatWindow';
 import MessageBox from './MessageBox';
 import MessageBoxLoading from './MessageBoxLoading';
 import { useChat } from '@/lib/hooks/useChat';
 
 const Chat = () => {
-  const { messages, loading, messageAppeared } = useChat();
+  const { sections, chatTurns, loading, messageAppeared } = useChat();
 
   const [dividerWidth, setDividerWidth] = useState(0);
   const dividerRef = useRef<HTMLDivElement | null>(null);
@@ -35,30 +34,29 @@ const Chat = () => {
       messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    if (messages.length === 1) {
-      document.title = `${messages[0].content.substring(0, 30)} - Perplexica`;
+    if (chatTurns.length === 1) {
+      document.title = `${chatTurns[0].content.substring(0, 30)} - Perplexica`;
     }
 
-    if (messages[messages.length - 1]?.role == 'user') {
+    if (chatTurns[chatTurns.length - 1]?.role === 'user') {
       scroll();
     }
-  }, [messages]);
+  }, [chatTurns]);
 
   return (
     <div className="flex flex-col space-y-6 pt-8 pb-44 lg:pb-32 sm:mx-4 md:mx-8">
-      {messages.map((msg, i) => {
-        const isLast = i === messages.length - 1;
+      {sections.map((section, i) => {
+        const isLast = i === sections.length - 1;
 
         return (
-          <Fragment key={msg.messageId}>
+          <Fragment key={section.userMessage.messageId}>
             <MessageBox
-              key={i}
-              message={msg}
-              messageIndex={i}
+              section={section}
+              sectionIndex={i}
               dividerRef={isLast ? dividerRef : undefined}
               isLast={isLast}
             />
-            {!isLast && msg.role === 'assistant' && (
+            {!isLast && (
               <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
             )}
           </Fragment>
