@@ -28,7 +28,7 @@ const Chat = () => {
     return () => {
       window.removeEventListener('resize', updateDividerWidth);
     };
-  });
+  }, []);
 
   useEffect(() => {
     const scroll = () => {
