@@ -20,6 +20,7 @@ import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
 import { useChat, Section } from '@/lib/hooks/useChat';
+import Citation from './Citation';
 
 const ThinkTagProcessor = ({
   children,
@@ -46,7 +47,6 @@ const MessageBox = ({
 }) => {
   const { loading, chatTurns, sendMessage, rewrite } = useChat();
 
-  // Use the pre-processed data from section
   const parsedMessage = section.parsedAssistantMessage || '';
   const speechMessage = section.speechMessage || '';
   const thinkingEnded = section.thinkingEnded;
@@ -60,6 +60,9 @@ const MessageBox = ({
         props: {
           thinkingEnded: thinkingEnded,
         },
+      },
+      citation: {
+        component: Citation,
       },
     },
   };

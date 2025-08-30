@@ -446,7 +446,7 @@ export const ChatProvider = ({
                     const url = source?.metadata?.url;
 
                     if (url) {
-                      return `<a href="${url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${numStr}</a>`;
+                      return `<citation href="${url}">${numStr}</citation>`;
                     } else {
                       return ``;
                     }
