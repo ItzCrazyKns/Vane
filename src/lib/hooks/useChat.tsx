@@ -686,15 +686,15 @@ export const ChatProvider = ({
           (msg) => msg.messageId === messageId && msg.role === 'user',
         );
 
-        const sourceMessageIndex = messagesRef.current.findIndex(
+        const sourceMessage = messagesRef.current.find(
           (msg, i) => i > userMessageIndex && msg.role === 'source',
-        );
+        ) as SourceMessage | undefined;
 
         const suggestionMessageIndex = messagesRef.current.findIndex(
           (msg, i) => i > userMessageIndex && msg.role === 'suggestion',
         );
 
-        if (sourceMessageIndex != -1 && suggestionMessageIndex == -1) {
+        if (sourceMessage && sourceMessage.sources.length > 0 && suggestionMessageIndex == -1) {
           const suggestions = await getSuggestions(messagesRef.current);
           setMessages((prev) => {
             return [
