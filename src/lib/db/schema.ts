@@ -6,14 +6,14 @@ export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
   role: text('type', { enum: ['assistant', 'user', 'source'] }).notNull(),
   chatId: text('chatId').notNull(),
-  createdAt: text('createdAt').notNull(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
   messageId: text('messageId').notNull(),
 
   content: text('content'),
 
   sources: text('sources', {
     mode: 'json',
-  }).$type<Document[]>(),
+  }).$type<Document[]>().default(sql`'[]'`),
 });
 
 interface File {
