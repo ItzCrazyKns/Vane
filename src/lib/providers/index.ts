@@ -121,7 +121,7 @@ export const getAvailableChatModelProviders = async () => {
               apiKey: customOpenAiApiKey,
               modelName: customOpenAiModelName,
               ...((() => {
-                const temperatureRestrictedModels = ['gpt-5-nano', 'o1', 'o3-mini', 'o4-mini'];
+                const temperatureRestrictedModels = ['gpt-5-nano','gpt-5','gpt-5-mini','o1', 'o3', 'o3-mini', 'o4-mini'];
                 const isTemperatureRestricted = temperatureRestrictedModels.some(restrictedModel => customOpenAiModelName.includes(restrictedModel));
                 return isTemperatureRestricted ? {} : { temperature: 0.7 };
               })()),
