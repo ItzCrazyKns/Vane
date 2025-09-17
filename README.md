@@ -54,6 +54,7 @@ Want to know more about its architecture and how it works? You can read it [here
 
 ## Features
 
+- **Local LLMs**: You can utilize local LLMs such as Qwen, DeepSeek, Llama, and Mistral.
 - **Two Main Modes:**
   - **Copilot Mode:** (In development) Boosts search by generating different queries to find more relevant internet sources. Like normal search instead of just using the context by SearxNG, it visits the top matches and tries to find relevant sources to the user's query directly from the page.
   - **Normal Mode:** Processes your query and performs a web search.
