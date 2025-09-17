@@ -32,7 +32,7 @@ API_KEY = "" # Required to use AI/ML API chat and embedding models
 API_URL = "" # LM Studio API URL - http://host.docker.internal:1234
 
 [MODELS.LEMONADE]
-API_URL = "" # Lemonade API URL - http://localhost:8000
+API_URL = "" # Lemonade API URL - http://host.docker.internal:8000
 API_KEY = "" # Optional API key for Lemonade
 
 [API_ENDPOINTS]

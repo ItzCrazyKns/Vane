@@ -54,7 +54,6 @@ Want to know more about its architecture and how it works? You can read it [here
 
 ## Features
 
-- **Local LLMs**: You can utilize local LLMs such as Qwen, DeepSeek, Llama, Mistral, and Lemonade.
 - **Two Main Modes:**
   - **Copilot Mode:** (In development) Boosts search by generating different queries to find more relevant internet sources. Like normal search instead of just using the context by SearxNG, it visits the top matches and tries to find relevant sources to the user's query directly from the page.
   - **Normal Mode:** Processes your query and performs a web search.
@@ -91,7 +90,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    - `CUSTOM_OPENAI`: Your OpenAI-API-compliant local server URL, model name, and API key. You should run your local server with host set to `0.0.0.0`, take note of which port number it is running on, and then use that port number to set `API_URL = http://host.docker.internal:PORT_NUMBER`. You must specify the model name, such as `MODEL_NAME = "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q4_K_XL"`. Finally, set `API_KEY` to the appropriate value. If you have not defined an API key, just put anything you want in-between the quotation marks: `API_KEY = "whatever-you-want-but-not-blank"` **You only need to configure these settings if you want to use a local OpenAI-compliant server, such as Llama.cpp's [`llama-server`](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)**.
    - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
    - `LEMONADE`: Your Lemonade API URL. Since Lemonade runs directly on your local machine (not in Docker), you should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Lemonade on port 8000, use `http://host.docker.internal:8000`. For other ports, adjust accordingly. **You need to fill this if you wish to use Lemonade's models**.
-   - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.
+   - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.`
    - `ANTHROPIC`: Your Anthropic API key. **You only need to fill this if you wish to use Anthropic models**.
    - `Gemini`: Your Gemini API key. **You only need to fill this if you wish to use Google's models**.
    - `DEEPSEEK`: Your Deepseek API key. **Only needed if you want Deepseek models.**
