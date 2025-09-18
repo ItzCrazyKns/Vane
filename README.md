@@ -29,6 +29,7 @@
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
   - [Ollama Connection Errors](#ollama-connection-errors)
+  - [Lemonade Connection Errors](#lemonade-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [Using Perplexica's API](#using-perplexicas-api)
 - [Expose Perplexica to a network](#expose-perplexica-to-network)
@@ -89,7 +90,8 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
    - `CUSTOM_OPENAI`: Your OpenAI-API-compliant local server URL, model name, and API key. You should run your local server with host set to `0.0.0.0`, take note of which port number it is running on, and then use that port number to set `API_URL = http://host.docker.internal:PORT_NUMBER`. You must specify the model name, such as `MODEL_NAME = "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q4_K_XL"`. Finally, set `API_KEY` to the appropriate value. If you have not defined an API key, just put anything you want in-between the quotation marks: `API_KEY = "whatever-you-want-but-not-blank"` **You only need to configure these settings if you want to use a local OpenAI-compliant server, such as Llama.cpp's [`llama-server`](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)**.
    - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
-   - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.
+   - `LEMONADE`: Your Lemonade API URL. Since Lemonade runs directly on your local machine (not in Docker), you should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Lemonade on port 8000, use `http://host.docker.internal:8000`. For other ports, adjust accordingly. **You need to fill this if you wish to use Lemonade's models**.
+   - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.`
    - `ANTHROPIC`: Your Anthropic API key. **You only need to fill this if you wish to use Anthropic models**.
    - `Gemini`: Your Gemini API key. **You only need to fill this if you wish to use Google's models**.
    - `DEEPSEEK`: Your Deepseek API key. **Only needed if you want Deepseek models.**
@@ -149,6 +151,25 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
+
+#### Lemonade Connection Errors
+
+If you're encountering a Lemonade connection error, it is likely due to the backend being unable to connect to Lemonade's API. To fix this issue you can:
+
+1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
+2. **Update API URL Based on OS:**
+
+   - **Windows:** Use `http://host.docker.internal:8000`
+   - **Mac:** Use `http://host.docker.internal:8000`
+   - **Linux:** Use `http://<private_ip_of_host>:8000`
+
+   Adjust the port number if you're using a different one.
+
+3. **Ensure Lemonade Server is Running:**
+
+   - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
+   - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
+   - Ensure that the port (default is 8000) is not blocked by your firewall.
 
 ## Using as a Search Engine
 

@@ -23,6 +23,8 @@ interface SettingsType {
   ollamaApiUrl: string;
   ollamaApiKey: string;
   lmStudioApiUrl: string;
+  lemonadeApiUrl: string;
+  lemonadeApiKey: string;
   deepseekApiKey: string;
   aimlApiKey: string;
   customOpenaiApiKey: string;
@@ -949,6 +951,48 @@ const Page = () => {
                       }));
                     }}
                     onSave={(value) => saveConfig('lmStudioApiUrl', value)}
+                  />
+                </div>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="Lemonade">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Lemonade API URL
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Lemonade API URL"
+                    value={config.lemonadeApiUrl}
+                    isSaving={savingStates['lemonadeApiUrl']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        lemonadeApiUrl: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('lemonadeApiUrl', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Lemonade API Key (Optional)
+                  </p>
+                  <Input
+                    type="password"
+                    placeholder="Lemonade API Key"
+                    value={config.lemonadeApiKey}
+                    isSaving={savingStates['lemonadeApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        lemonadeApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('lemonadeApiKey', value)}
                   />
                 </div>
               </div>

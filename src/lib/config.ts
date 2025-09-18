@@ -42,6 +42,10 @@ interface Config {
     LM_STUDIO: {
       API_URL: string;
     };
+    LEMONADE: {
+      API_URL: string;
+      API_KEY: string;
+    };
     CUSTOM_OPENAI: {
       API_URL: string;
       API_KEY: string;
@@ -104,6 +108,11 @@ export const getCustomOpenaiModelName = () =>
 
 export const getLMStudioApiEndpoint = () =>
   loadConfig().MODELS.LM_STUDIO.API_URL;
+
+export const getLemonadeApiEndpoint = () =>
+  loadConfig().MODELS.LEMONADE.API_URL;
+
+export const getLemonadeApiKey = () => loadConfig().MODELS.LEMONADE.API_KEY;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {
