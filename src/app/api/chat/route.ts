@@ -17,36 +17,10 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { ChatApiBody as Body, Message, safeValidateBody } from './validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-type Message = {
-  messageId: string;
-  chatId: string;
-  content: string;
-};
-
-type ChatModel = {
-  provider: string;
-  name: string;
-};
-
-type EmbeddingModel = {
-  provider: string;
-  name: string;
-};
-
-type Body = {
-  message: Message;
-  optimizationMode: 'speed' | 'balanced' | 'quality';
-  focusMode: string;
-  history: Array<[string, string]>;
-  files: Array<string>;
-  chatModel: ChatModel;
-  embeddingModel: EmbeddingModel;
-  systemInstructions: string;
-};
 
 const handleEmitterEvents = async (
   stream: EventEmitter,
@@ -187,7 +161,17 @@ const handleHistorySave = async (
 
 export const POST = async (req: Request) => {
   try {
-    const body = (await req.json()) as Body;
+    const reqBody = (await req.json()) as Body;
+
+    const parseBody = safeValidateBody(reqBody);
+    if (!parseBody.success) {
+      return Response.json(
+        { message: 'Invalid request body', error: parseBody.error },
+        { status: 400 },
+      );
+    }
+
+    const body = parseBody.data as Body;
     const { message } = body;
 
     if (message.content === '') {
