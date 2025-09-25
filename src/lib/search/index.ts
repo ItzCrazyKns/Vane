@@ -31,7 +31,7 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
   }),
   wolframAlphaSearch: new MetaSearchAgent({
     activeEngines: ['wolframalpha'],
-   queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
     responsePrompt: prompts.webSearchResponsePrompt,
     queryGeneratorFewShots: prompts.webSearchRetrieverFewShots,
     rerank: false,

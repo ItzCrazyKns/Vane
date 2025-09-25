@@ -694,7 +694,11 @@ export const ChatProvider = ({
           (msg, i) => i > userMessageIndex && msg.role === 'suggestion',
         );
 
-        if (sourceMessage && sourceMessage.sources.length > 0 && suggestionMessageIndex == -1) {
+        if (
+          sourceMessage &&
+          sourceMessage.sources.length > 0 &&
+          suggestionMessageIndex == -1
+        ) {
           const suggestions = await getSuggestions(messagesRef.current);
           setMessages((prev) => {
             return [

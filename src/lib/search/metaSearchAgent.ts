@@ -67,7 +67,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
       ChatPromptTemplate.fromMessages([
         ['system', this.config.queryGeneratorPrompt],
         ...this.config.queryGeneratorFewShots,
-        ['user', `
+        [
+          'user',
+          `
         <conversation>
         {chat_history}
         </conversation>
@@ -75,7 +77,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
         <query>
         {query}
         </query>
-       `]
+       `,
+        ],
       ]),
       llm,
       this.strParser,
@@ -87,9 +90,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
         const questionOutputParser = new LineOutputParser({
           key: 'question',
         });
-        
+
         const links = await linksOutputParser.parse(input);
-        let question = await questionOutputParser.parse(input) ?? input;
+        let question = (await questionOutputParser.parse(input)) ?? input;
 
         if (question === 'not_needed') {
           return { query: '', docs: [] };

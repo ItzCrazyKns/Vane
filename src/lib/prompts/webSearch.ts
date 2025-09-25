@@ -1,4 +1,4 @@
-import { BaseMessageLike } from "@langchain/core/messages";
+import { BaseMessageLike } from '@langchain/core/messages';
 
 export const webSearchRetrieverPrompt = `
 You are an AI question rephraser. You will be given a conversation and a follow-up question,  you will have to rephrase the follow up question so it is a standalone question and can be used by another LLM to search the web for information to answer it.
@@ -16,13 +16,13 @@ export const webSearchRetrieverFewShots: BaseMessageLike[] = [
 </conversation>
 <query>
 What is the capital of France
-</query>`
+</query>`,
   ],
   [
     'assistant',
     `<question>
 Capital of france
-</question>`
+</question>`,
   ],
   [
     'user',
@@ -30,13 +30,13 @@ Capital of france
 </conversation>
 <query>
 Hi, how are you?
-</query>`
+</query>`,
   ],
   [
     'assistant',
     `<question>
 not_needed
-</question>`
+</question>`,
   ],
   [
     'user',
@@ -44,13 +44,13 @@ not_needed
 </conversation>
 <query>
 What is Docker?
-</query>`
+</query>`,
   ],
   [
     'assistant',
     `<question>
 What is Docker
-</question>`
+</question>`,
   ],
   [
     'user',
@@ -58,7 +58,7 @@ What is Docker
 </conversation>
 <query>
 Can you tell me what is X from https://example.com
-</query>`
+</query>`,
   ],
   [
     'assistant',
@@ -67,7 +67,7 @@ What is X?
 </question>
 <links>
 https://example.com
-</links>`
+</links>`,
   ],
   [
     'user',
@@ -75,7 +75,7 @@ https://example.com
 </conversation>
 <query>
 Summarize the content from https://example.com
-</query>`
+</query>`,
   ],
   [
     'assistant',
@@ -84,8 +84,8 @@ summarize
 </question>
 <links>
 https://example.com
-</links>`
-  ]
+</links>`,
+  ],
 ];
 
 export const webSearchResponsePrompt = `

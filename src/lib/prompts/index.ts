@@ -1,6 +1,9 @@
-import { webSearchResponsePrompt, webSearchRetrieverFewShots, webSearchRetrieverPrompt } from './webSearch';
+import {
+  webSearchResponsePrompt,
+  webSearchRetrieverFewShots,
+  webSearchRetrieverPrompt,
+} from './webSearch';
 import { writingAssistantPrompt } from './writingAssistant';
-
 
 export default {
   webSearchResponsePrompt,
