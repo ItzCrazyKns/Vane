@@ -27,7 +27,7 @@ const NewsArticleWidget = () => {
   }, []);
 
   return (
-    <div className="bg-light-secondary dark:bg-dark-secondary rounded-xl border border-light-200 dark:border-dark-200 shadow-sm flex flex-row items-center w-full h-24 min-h-[96px] max-h-[96px] px-3 py-2 gap-3 overflow-hidden">
+    <div className="bg-light-secondary dark:bg-dark-secondary rounded-2xl border border-light-200 dark:border-dark-200 shadow-sm shadow-light-200/10 dark:shadow-black/25 flex flex-row items-stretch w-full h-24 min-h-[96px] max-h-[96px] p-0 overflow-hidden">
       {loading ? (
         <>
           <div className="animate-pulse flex flex-row items-center w-full h-full">
@@ -43,22 +43,24 @@ const NewsArticleWidget = () => {
       ) : article ? (
         <a
           href={`/?q=Summary: ${article.url}`}
-          className="flex flex-row items-center w-full h-full group"
+          className="flex flex-row items-stretch w-full h-full relative overflow-hidden group"
         >
-          <img
-            className="object-cover rounded-lg w-16 min-w-16 max-w-16 h-16 min-h-16 max-h-16 border border-light-200 dark:border-dark-200 bg-light-200 dark:bg-dark-200 group-hover:opacity-90 transition"
-            src={
-              new URL(article.thumbnail).origin +
-              new URL(article.thumbnail).pathname +
-              `?id=${new URL(article.thumbnail).searchParams.get('id')}`
-            }
-            alt={article.title}
-          />
-          <div className="flex flex-col justify-center flex-1 h-full pl-3 w-0">
-            <div className="font-bold text-xs text-black dark:text-white leading-tight truncate overflow-hidden whitespace-nowrap">
+          <div className="relative w-24 min-w-24 max-w-24 h-full overflow-hidden">
+            <img
+              className="object-cover w-full h-full bg-light-200 dark:bg-dark-200 group-hover:scale-110 transition-transform duration-300"
+              src={
+                new URL(article.thumbnail).origin +
+                new URL(article.thumbnail).pathname +
+                `?id=${new URL(article.thumbnail).searchParams.get('id')}`
+              }
+              alt={article.title}
+            />
+          </div>
+          <div className="flex flex-col justify-center flex-1 px-3 py-2">
+            <div className="font-semibold text-xs text-black dark:text-white leading-tight line-clamp-2 mb-1">
               {article.title}
             </div>
-            <p className="text-black/70 dark:text-white/70 text-xs leading-snug truncate overflow-hidden whitespace-nowrap">
+            <p className="text-black/60 dark:text-white/60 text-[10px] leading-relaxed line-clamp-2">
               {article.content}
             </p>
           </div>
