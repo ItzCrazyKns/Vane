@@ -27,6 +27,10 @@ const openaiChatModels: Record<string, string>[] = [
     key: 'gpt-4o',
   },
   {
+    displayName: 'GPT-4o (2024-05-13)',
+    key: 'gpt-4o-2024-05-13',
+  },
+  {
     displayName: 'GPT-4 omni mini',
     key: 'gpt-4o-mini',
   },
@@ -47,12 +51,28 @@ const openaiChatModels: Record<string, string>[] = [
     key: 'gpt-5-nano',
   },
   {
-    displayName: 'GPT 5 mini',
+    displayName: 'GPT 5',
+    key: 'gpt-5',
+  },
+  {
+    displayName: 'GPT 5 Mini',
     key: 'gpt-5-mini',
   },
   {
-    displayName: 'GPT 5',
-    key: 'gpt-5',
+    displayName: 'o1',
+    key: 'o1',
+  },
+  {
+    displayName: 'o3',
+    key: 'o3',
+  },
+  {
+    displayName: 'o3 Mini',
+    key: 'o3-mini',
+  },
+  {
+    displayName: 'o4 Mini',
+    key: 'o4-mini',
   },
 ];
 
@@ -76,13 +96,23 @@ export const loadOpenAIChatModels = async () => {
     const chatModels: Record<string, ChatModel> = {};
 
     openaiChatModels.forEach((model) => {
+      // Models that only support temperature = 1
+      const temperatureRestrictedModels = ['gpt-5-nano','gpt-5','gpt-5-mini','o1', 'o3', 'o3-mini', 'o4-mini'];
+      const isTemperatureRestricted = temperatureRestrictedModels.some(restrictedModel => model.key.includes(restrictedModel));
+
+      const modelConfig: any = {
+        apiKey: openaiApiKey,
+        modelName: model.key,
+      };
+
+      // Only add temperature if the model supports it
+      if (!isTemperatureRestricted) {
+        modelConfig.temperature = 0.7;
+      }
+
       chatModels[model.key] = {
         displayName: model.displayName,
-        model: new ChatOpenAI({
-          apiKey: openaiApiKey,
-          modelName: model.key,
-          temperature: model.key.includes('gpt-5') ? 1 : 0.7,
-        }) as unknown as BaseChatModel,
+        model: new ChatOpenAI(modelConfig) as unknown as BaseChatModel,
       };
     });
 

@@ -10,6 +10,8 @@ import {
   getDeepseekApiKey,
   getAimlApiKey,
   getLMStudioApiEndpoint,
+  getLemonadeApiEndpoint,
+  getLemonadeApiKey,
   updateConfig,
   getOllamaApiKey,
 } from '@/lib/config';
@@ -56,6 +58,8 @@ export const GET = async (req: Request) => {
     config['ollamaApiUrl'] = getOllamaApiEndpoint();
     config['ollamaApiKey'] = getOllamaApiKey();
     config['lmStudioApiUrl'] = getLMStudioApiEndpoint();
+    config['lemonadeApiUrl'] = getLemonadeApiEndpoint();
+    config['lemonadeApiKey'] = getLemonadeApiKey();
     config['anthropicApiKey'] = getAnthropicApiKey();
     config['groqApiKey'] = getGroqApiKey();
     config['geminiApiKey'] = getGeminiApiKey();
@@ -105,6 +109,10 @@ export const POST = async (req: Request) => {
         },
         LM_STUDIO: {
           API_URL: config.lmStudioApiUrl,
+        },
+        LEMONADE: {
+          API_URL: config.lemonadeApiUrl,
+          API_KEY: config.lemonadeApiKey,
         },
         CUSTOM_OPENAI: {
           API_URL: config.customOpenaiApiUrl,

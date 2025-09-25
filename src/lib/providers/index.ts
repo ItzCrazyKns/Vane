@@ -45,6 +45,11 @@ import {
   loadLMStudioEmbeddingsModels,
   PROVIDER_INFO as LMStudioInfo,
 } from './lmstudio';
+import {
+  loadLemonadeChatModels,
+  loadLemonadeEmbeddingModels,
+  PROVIDER_INFO as LemonadeInfo,
+} from './lemonade';
 
 export const PROVIDER_METADATA = {
   openai: OpenAIInfo,
@@ -56,6 +61,7 @@ export const PROVIDER_METADATA = {
   deepseek: DeepseekInfo,
   aimlapi: AimlApiInfo,
   lmstudio: LMStudioInfo,
+  lemonade: LemonadeInfo,
   custom_openai: {
     key: 'custom_openai',
     displayName: 'Custom OpenAI',
@@ -84,6 +90,7 @@ export const chatModelProviders: Record<
   deepseek: loadDeepseekChatModels,
   aimlapi: loadAimlApiChatModels,
   lmstudio: loadLMStudioChatModels,
+  lemonade: loadLemonadeChatModels,
 };
 
 export const embeddingModelProviders: Record<
@@ -96,6 +103,7 @@ export const embeddingModelProviders: Record<
   transformers: loadTransformersEmbeddingsModels,
   aimlapi: loadAimlApiEmbeddingModels,
   lmstudio: loadLMStudioEmbeddingsModels,
+  lemonade: loadLemonadeEmbeddingModels,
 };
 
 export const getAvailableChatModelProviders = async () => {
@@ -120,7 +128,11 @@ export const getAvailableChatModelProviders = async () => {
             model: new ChatOpenAI({
               apiKey: customOpenAiApiKey,
               modelName: customOpenAiModelName,
-              temperature: 0.7,
+              ...((() => {
+                const temperatureRestrictedModels = ['gpt-5-nano','gpt-5','gpt-5-mini','o1', 'o3', 'o3-mini', 'o4-mini'];
+                const isTemperatureRestricted = temperatureRestrictedModels.some(restrictedModel => customOpenAiModelName.includes(restrictedModel));
+                return isTemperatureRestricted ? {} : { temperature: 0.7 };
+              })()),
               configuration: {
                 baseURL: customOpenAiApiUrl,
               },
