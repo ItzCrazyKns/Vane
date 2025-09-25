@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'PP Editorial';
+  src: url('/fonts/pp-ed-ul.otf') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   .overflow-hidden-scrollable {
     -ms-overflow-style: none;
