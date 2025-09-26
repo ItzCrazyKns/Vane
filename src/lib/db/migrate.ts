@@ -15,33 +15,41 @@ db.exec(`
 `);
 
 function sanitizeSql(content: string) {
-    return content
-        .split(/\r?\n/)
-        .filter((l) => !l.trim().startsWith('-->') && !l.includes('statement-breakpoint'))
-        .join('\n');
+  return content
+    .split(/\r?\n/)
+    .filter(
+      (l) => !l.trim().startsWith('-->') && !l.includes('statement-breakpoint'),
+    )
+    .join('\n');
 }
 
 fs.readdirSync(migrationsFolder)
-    .filter((f) => f.endsWith('.sql'))
-    .sort()
-    .forEach((file) => {
-        const filePath = path.join(migrationsFolder, file);
-        let content = fs.readFileSync(filePath, 'utf-8');
-        content = sanitizeSql(content);
+  .filter((f) => f.endsWith('.sql'))
+  .sort()
+  .forEach((file) => {
+    const filePath = path.join(migrationsFolder, file);
+    let content = fs.readFileSync(filePath, 'utf-8');
+    content = sanitizeSql(content);
 
-        const migrationName = file.split('_')[0] || file;
+    const migrationName = file.split('_')[0] || file;
 
-        const already = db.prepare('SELECT 1 FROM ran_migrations WHERE name = ?').get(migrationName);
-        if (already) {
-            console.log(`Skipping already-applied migration: ${file}`);
-            return;
-        }
+    const already = db
+      .prepare('SELECT 1 FROM ran_migrations WHERE name = ?')
+      .get(migrationName);
+    if (already) {
+      console.log(`Skipping already-applied migration: ${file}`);
+      return;
+    }
 
-        try {
-            if (migrationName === '0001') {
-                const messages = db.prepare('SELECT id, type, metadata, content, chatId, messageId FROM messages').all();
+    try {
+      if (migrationName === '0001') {
+        const messages = db
+          .prepare(
+            'SELECT id, type, metadata, content, chatId, messageId FROM messages',
+          )
+          .all();
 
-                db.exec(`
+        db.exec(`
                     CREATE TABLE IF NOT EXISTS messages_with_sources (
                         id INTEGER PRIMARY KEY,
                         type TEXT NOT NULL,
@@ -53,37 +61,58 @@ fs.readdirSync(migrationsFolder)
                     );
                 `);
 
-                const insertMessage = db.prepare(`
+        const insertMessage = db.prepare(`
                     INSERT INTO messages_with_sources (type, chatId, createdAt, messageId, content, sources)
                     VALUES (?, ?, ?, ?, ?, ?)
                 `);
 
-                messages.forEach((msg: any) => {
-                    if (msg.type === 'user') {
-                        msg.metadata = JSON.parse(msg.metadata || '{}');
-                        insertMessage.run('user', msg.chatId, msg.metadata['createdAt'], msg.messageId, msg.content, '[]');
-                    } else if (msg.type === 'assistant') {
-                        msg.metadata = JSON.parse(msg.metadata || '{}');
-                        insertMessage.run('assistant', msg.chatId, msg.metadata['createdAt'], msg.messageId, msg.content, '[]');
-                        const sources = msg.metadata['sources'] || '[]'
-                        if (sources && sources.length > 0) {
-                            insertMessage.run('source', msg.chatId, msg.metadata['createdAt'], `${msg.messageId}-source`, '', JSON.stringify(sources));
-                        }
-                    }
-                });
-
-                db.exec('DROP TABLE messages;');
-                db.exec('ALTER TABLE messages_with_sources RENAME TO messages;');
-
-            } else {
-                db.exec(content);
+        messages.forEach((msg: any) => {
+          if (msg.type === 'user') {
+            msg.metadata = JSON.parse(msg.metadata || '{}');
+            insertMessage.run(
+              'user',
+              msg.chatId,
+              msg.metadata['createdAt'],
+              msg.messageId,
+              msg.content,
+              '[]',
+            );
+          } else if (msg.type === 'assistant') {
+            msg.metadata = JSON.parse(msg.metadata || '{}');
+            insertMessage.run(
+              'assistant',
+              msg.chatId,
+              msg.metadata['createdAt'],
+              msg.messageId,
+              msg.content,
+              '[]',
+            );
+            const sources = msg.metadata['sources'] || '[]';
+            if (sources && sources.length > 0) {
+              insertMessage.run(
+                'source',
+                msg.chatId,
+                msg.metadata['createdAt'],
+                `${msg.messageId}-source`,
+                '',
+                JSON.stringify(sources),
+              );
             }
+          }
+        });
 
-            db.prepare('INSERT OR IGNORE INTO ran_migrations (name) VALUES (?)').run(migrationName);
-            console.log(`Applied migration: ${file}`);
+        db.exec('DROP TABLE messages;');
+        db.exec('ALTER TABLE messages_with_sources RENAME TO messages;');
+      } else {
+        db.exec(content);
+      }
 
-        } catch (err) {
-            console.error(`Failed to apply migration ${file}:`, err);
-            throw err;
-        }
-    });
+      db.prepare('INSERT OR IGNORE INTO ran_migrations (name) VALUES (?)').run(
+        migrationName,
+      );
+      console.log(`Applied migration: ${file}`);
+    } catch (err) {
+      console.error(`Failed to apply migration ${file}:`, err);
+      throw err;
+    }
+  });

@@ -97,8 +97,18 @@ export const loadOpenAIChatModels = async () => {
 
     openaiChatModels.forEach((model) => {
       // Models that only support temperature = 1
-      const temperatureRestrictedModels = ['gpt-5-nano','gpt-5','gpt-5-mini','o1', 'o3', 'o3-mini', 'o4-mini'];
-      const isTemperatureRestricted = temperatureRestrictedModels.some(restrictedModel => model.key.includes(restrictedModel));
+      const temperatureRestrictedModels = [
+        'gpt-5-nano',
+        'gpt-5',
+        'gpt-5-mini',
+        'o1',
+        'o3',
+        'o3-mini',
+        'o4-mini',
+      ];
+      const isTemperatureRestricted = temperatureRestrictedModels.some(
+        (restrictedModel) => model.key.includes(restrictedModel),
+      );
 
       const modelConfig: any = {
         apiKey: openaiApiKey,

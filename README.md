@@ -131,7 +131,7 @@ If Perplexica tells you that you haven't configured any chat model providers, en
 
 1. Your server is running on `0.0.0.0` (not `127.0.0.1`) and on the same port you put in the API URL.
 2. You have specified the correct model name loaded by your local LLM server.
-3. You have specified the correct API key, or if one is not defined, you have put *something* in the API key field and not left it empty.
+3. You have specified the correct API key, or if one is not defined, you have put _something_ in the API key field and not left it empty.
 
 #### Ollama Connection Errors
 
@@ -196,7 +196,6 @@ Perplexica runs on Next.js and handles all API requests. It works right away on 
 [![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
 [![Run on ClawCloud](https://raw.githubusercontent.com/ClawCloud/Run-Template/refs/heads/main/Run-on-ClawCloud.svg)](https://template.run.claw.cloud/?referralCode=U11MRQ8U9RM4&openapp=system-fastdeploy%3FtemplateName%3Dperplexica)
 [![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostinger.com/vps/docker-hosting?compose_url=https://raw.githubusercontent.com/ItzCrazyKns/Perplexica/refs/heads/master/docker-compose.yaml)
-
 
 ## Upcoming Features
 
