@@ -36,7 +36,7 @@ Before diving into coding, setting up your local environment is key. Here's what
 1. In the root directory, locate the `sample.config.toml` file.
 2. Rename it to `config.toml` and fill in the necessary configuration fields.
 3. Run `npm install` to install all dependencies.
-4. Run `npm run db:push` to set up the local sqlite database.
+4. Run `npm run db:migrate` to set up the local sqlite database.
 5. Use `npm run dev` to start the application in development mode.
 
 **Please note**: Docker configurations are present for setting up production environments, whereas `npm run dev` is used for development purposes.
