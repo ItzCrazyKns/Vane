@@ -70,11 +70,7 @@ const MessageBox = ({
   return (
     <div className="space-y-6">
       <div
-        className={cn(
-          'w-full',
-          sectionIndex === 0 ? 'pt-16' : 'pt-8',
-          'break-words',
-        )}
+        className={'w-full pt-8 break-words'}
       >
         <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
           {section.userMessage.content}
