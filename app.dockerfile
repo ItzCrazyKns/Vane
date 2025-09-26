@@ -1,4 +1,6 @@
-FROM node:20.18.0-slim AS builder
+FROM node:24.5.0-slim AS builder
+
+RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/perplexica
 
@@ -8,6 +10,7 @@ RUN yarn install --frozen-lockfile --network-timeout 600000
 COPY tsconfig.json next.config.mjs next-env.d.ts postcss.config.js drizzle.config.ts tailwind.config.ts ./
 COPY src ./src
 COPY public ./public
+COPY drizzle ./drizzle
 
 RUN mkdir -p /home/perplexica/data
 RUN yarn build
@@ -15,7 +18,9 @@ RUN yarn build
 RUN yarn add --dev @vercel/ncc
 RUN yarn ncc build ./src/lib/db/migrate.ts -o migrator
 
-FROM node:20.18.0-slim
+FROM node:24.5.0-slim
+
+RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/perplexica
 
@@ -32,4 +37,6 @@ RUN mkdir /home/perplexica/uploads
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
-CMD ["./entrypoint.sh"]
+RUN sed -i 's/\r$//' ./entrypoint.sh || true
+
+CMD ["/home/perplexica/entrypoint.sh"]
