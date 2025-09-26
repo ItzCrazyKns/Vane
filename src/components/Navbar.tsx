@@ -228,54 +228,91 @@ const Navbar = () => {
   }, []);
 
   return (
-    <div className="mx-auto max-w-screen-2xl fixed z-40 top-0 left-0 right-0 px-4 lg:pr-6 lg:px-8 flex flex-row items-center justify-between w-full py-4 text-sm text-black dark:text-white/70 border-b bg-light-primary dark:bg-dark-primary border-light-100 dark:border-dark-200">
-      <a
-        href="/"
-        className="active:scale-95 transition duration-100 cursor-pointer lg:hidden"
-      >
-        <Edit size={17} />
-      </a>
-      <div className="hidden lg:flex flex-row items-center justify-center space-x-2">
-        <Clock size={17} />
-        <p className="text-xs">{timeAgo} ago</p>
-      </div>
-      <p className="hidden lg:flex">{title}</p>
+    <div className="sticky top-0 z-40 bg-light-primary/95 dark:bg-dark-primary/95 backdrop-blur-sm border-b border-light-200/50 dark:border-dark-200/30">
+      <div className="px-4 lg:px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center min-w-0">
+            <a
+              href="/"
+              className="lg:hidden mr-3 p-2 -ml-2 rounded-lg hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+            >
+              <Edit size={18} className="text-black/70 dark:text-white/70" />
+            </a>
+            <div className="hidden lg:flex items-center gap-2 text-black/50 dark:text-white/50 min-w-0">
+              <Clock size={14} />
+              <span className="text-xs whitespace-nowrap">{timeAgo} ago</span>
+            </div>
+          </div>
 
-      <div className="flex flex-row items-center space-x-4">
-        <Popover className="relative">
-          <PopoverButton className="active:scale-95 transition duration-100 cursor-pointer p-2 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary">
-            <Share size={17} />
-          </PopoverButton>
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="opacity-0 translate-y-1"
-            enterTo="opacity-100 translate-y-0"
-            leave="transition ease-in duration-75"
-            leaveFrom="opacity-100 translate-y-0"
-            leaveTo="opacity-0 translate-y-1"
-          >
-            <PopoverPanel className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 z-50">
-              <div className="flex flex-col py-3 px-3 gap-2">
-                <button
-                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsMarkdown(sections, title || '')}
-                >
-                  <FileText size={17} className="text-[#24A0ED]" />
-                  Export as Markdown
-                </button>
-                <button
-                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsPDF(sections, title || '')}
-                >
-                  <FileDown size={17} className="text-[#24A0ED]" />
-                  Export as PDF
-                </button>
-              </div>
-            </PopoverPanel>
-          </Transition>
-        </Popover>
-        <DeleteChat redirect chatId={chatId!} chats={[]} setChats={() => {}} />
+          <div className="flex-1 mx-4 min-w-0">
+            <h1 className="text-center text-sm font-medium text-black/80 dark:text-white/90 truncate">
+              {title || 'New Conversation'}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-1 min-w-0">
+            <Popover className="relative">
+              <PopoverButton className="p-2 rounded-lg hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200">
+                <Share size={16} className="text-black/60 dark:text-white/60" />
+              </PopoverButton>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-200"
+                enterFrom="opacity-0 translate-y-1"
+                enterTo="opacity-100 translate-y-0"
+                leave="transition ease-in duration-150"
+                leaveFrom="opacity-100 translate-y-0"
+                leaveTo="opacity-0 translate-y-1"
+              >
+                <PopoverPanel className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 shadow-xl shadow-black/10 dark:shadow-black/30 z-50">
+                  <div className="p-3">
+                    <div className="mb-2">
+                      <p className="text-xs font-medium text-black/40 dark:text-white/40 uppercase tracking-wide">
+                        Export Chat
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+                        onClick={() => exportAsMarkdown(sections, title || '')}
+                      >
+                        <FileText size={16} className="text-[#24A0ED]" />
+                        <div>
+                          <p className="text-sm font-medium text-black dark:text-white">
+                            Markdown
+                          </p>
+                          <p className="text-xs text-black/50 dark:text-white/50">
+                            .md format
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+                        onClick={() => exportAsPDF(sections, title || '')}
+                      >
+                        <FileDown size={16} className="text-[#24A0ED]" />
+                        <div>
+                          <p className="text-sm font-medium text-black dark:text-white">
+                            PDF
+                          </p>
+                          <p className="text-xs text-black/50 dark:text-white/50">
+                            Document format
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </PopoverPanel>
+              </Transition>
+            </Popover>
+            <DeleteChat
+              redirect
+              chatId={chatId!}
+              chats={[]}
+              setChats={() => {}}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
