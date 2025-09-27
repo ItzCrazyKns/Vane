@@ -22,26 +22,22 @@ import { z } from 'zod';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// Message schema
 const messageSchema = z.object({
   messageId: z.string().min(1, 'Message ID is required'),
   chatId: z.string().min(1, 'Chat ID is required'),
   content: z.string().min(1, 'Message content is required'),
 });
 
-// ChatModel schema
 const chatModelSchema = z.object({
   provider: z.string().optional(),
   name: z.string().optional(),
 });
 
-// EmbeddingModel schema
 const embeddingModelSchema = z.object({
   provider: z.string().optional(),
   name: z.string().optional(),
 });
 
-// Main Body schema
 const bodySchema = z.object({
   message: messageSchema,
   optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
@@ -69,8 +65,7 @@ const bodySchema = z.object({
 type Message = z.infer<typeof messageSchema>;
 type Body = z.infer<typeof bodySchema>;
 
-// Safe validation that returns success/error
-function safeValidateBody(data: unknown) {
+const safeValidateBody = (data: unknown) => {
   const result = bodySchema.safeParse(data);
 
   if (!result.success) {
@@ -87,7 +82,7 @@ function safeValidateBody(data: unknown) {
     success: true,
     data: result.data,
   };
-}
+};
 
 const handleEmitterEvents = async (
   stream: EventEmitter,
