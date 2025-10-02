@@ -4,7 +4,7 @@ interface LineOutputParserArgs {
   key?: string;
 }
 
-class LineOutputParser extends BaseOutputParser<string> {
+class LineOutputParser extends BaseOutputParser<string | undefined> {
   private key = 'questions';
 
   constructor(args?: LineOutputParserArgs) {
@@ -18,7 +18,7 @@ class LineOutputParser extends BaseOutputParser<string> {
 
   lc_namespace = ['langchain', 'output_parsers', 'line_output_parser'];
 
-  async parse(text: string): Promise<string> {
+  async parse(text: string): Promise<string | undefined> {
     text = text.trim() || '';
 
     const regex = /^(\s*(-|\*|\d+\.\s|\d+\)\s|\u2022)\s*)+/;
@@ -26,7 +26,7 @@ class LineOutputParser extends BaseOutputParser<string> {
     const endKeyIndex = text.indexOf(`</${this.key}>`);
 
     if (startKeyIndex === -1 || endKeyIndex === -1) {
-      return '';
+      return undefined;
     }
 
     const questionsStartIndex =
