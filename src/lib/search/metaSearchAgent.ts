@@ -453,7 +453,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
         event.event === 'on_chain_end' &&
         event.name === 'FinalSourceRetriever'
       ) {
-        ``;
         emitter.emit(
           'data',
           JSON.stringify({ type: 'sources', data: event.data.output }),
