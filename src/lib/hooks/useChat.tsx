@@ -399,6 +399,7 @@ export const ChatProvider = ({
           (m, j) =>
             j > i &&
             m.role === 'source' &&
+            m.sources &&
             (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
         ) as SourceMessage | undefined;
 
@@ -417,7 +418,7 @@ export const ChatProvider = ({
             const closeThinkTag =
               processedMessage.match(/<\/think>/g)?.length || 0;
 
-            if (openThinkTag > closeThinkTag) {
+            if (openThinkTag && !closeThinkTag) {
               processedMessage += '</think> <a> </a>';
             }
           }
@@ -426,7 +427,11 @@ export const ChatProvider = ({
             thinkingEnded = true;
           }
 
-          if (sourceMessage && sourceMessage.sources.length > 0) {
+          if (
+            sourceMessage &&
+            sourceMessage.sources &&
+            sourceMessage.sources.length > 0
+          ) {
             processedMessage = processedMessage.replace(
               citationRegex,
               (_, capturedContent: string) => {
@@ -635,23 +640,22 @@ export const ChatProvider = ({
             },
           ]);
           added = true;
+          setMessageAppeared(true);
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (
+                message.messageId === data.messageId &&
+                message.role === 'assistant'
+              ) {
+                return { ...message, content: message.content + data.data };
+              }
+
+              return message;
+            }),
+          );
         }
-
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (
-              message.messageId === data.messageId &&
-              message.role === 'assistant'
-            ) {
-              return { ...message, content: message.content + data.data };
-            }
-
-            return message;
-          }),
-        );
-
         recievedMessage += data.data;
-        setMessageAppeared(true);
       }
 
       if (data.type === 'messageEnd') {
