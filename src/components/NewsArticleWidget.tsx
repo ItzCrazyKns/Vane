@@ -29,15 +29,13 @@ const NewsArticleWidget = () => {
   return (
     <div className="bg-light-secondary dark:bg-dark-secondary rounded-2xl border border-light-200 dark:border-dark-200 shadow-sm shadow-light-200/10 dark:shadow-black/25 flex flex-row items-stretch w-full h-24 min-h-[96px] max-h-[96px] p-0 overflow-hidden">
       {loading ? (
-        <>
-          <div className="animate-pulse flex flex-row items-center w-full h-full">
-            <div className="rounded-lg w-16 min-w-16 max-w-16 h-16 min-h-16 max-h-16 bg-light-200 dark:bg-dark-200 mr-3" />
-            <div className="flex flex-col justify-center flex-1 h-full w-0 gap-2">
-              <div className="h-4 w-3/4 rounded bg-light-200 dark:bg-dark-200" />
-              <div className="h-3 w-1/2 rounded bg-light-200 dark:bg-dark-200" />
-            </div>
+        <div className="animate-pulse flex flex-row items-stretch w-full h-full">
+          <div className="w-24 min-w-24 max-w-24 h-full bg-light-200 dark:bg-dark-200" />
+          <div className="flex flex-col justify-center flex-1 px-3 py-2 gap-2">
+            <div className="h-4 w-3/4 rounded bg-light-200 dark:bg-dark-200" />
+            <div className="h-3 w-1/2 rounded bg-light-200 dark:bg-dark-200" />
           </div>
-        </>
+        </div>
       ) : error ? (
         <div className="w-full text-xs text-red-400">Could not load news.</div>
       ) : article ? (
