@@ -67,8 +67,10 @@ fs.readdirSync(migrationsFolder)
                 `);
 
         messages.forEach((msg: any) => {
-          if (msg.type === 'user') {
+          while (typeof msg.metadata === 'string') {
             msg.metadata = JSON.parse(msg.metadata || '{}');
+          }
+          if (msg.type === 'user') {
             insertMessage.run(
               'user',
               msg.chatId,
@@ -78,7 +80,6 @@ fs.readdirSync(migrationsFolder)
               '[]',
             );
           } else if (msg.type === 'assistant') {
-            msg.metadata = JSON.parse(msg.metadata || '{}');
             insertMessage.run(
               'assistant',
               msg.chatId,
