@@ -54,7 +54,7 @@ fs.readdirSync(migrationsFolder)
                         id INTEGER PRIMARY KEY,
                         type TEXT NOT NULL,
                         chatId TEXT NOT NULL,
-                        createdAt TEXT NOT NULL,
+                        createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         messageId TEXT NOT NULL,
                         content TEXT,
                         sources TEXT DEFAULT '[]'
