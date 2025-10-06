@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - canary
   release:
     types: [published]
 
@@ -41,6 +42,19 @@ jobs:
             --provenance false \
             -f $DOCKERFILE \
             -t itzcrazykns1337/${IMAGE_NAME}:amd64 \
+            --push .
+
+      - name: Build and push AMD64 Canary Docker image
+        if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
+        run: |
+          DOCKERFILE=app.dockerfile
+          IMAGE_NAME=perplexica
+          docker buildx build --platform linux/amd64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:canary-amd64 \
+            --cache-to=type=inline \
+            --provenance false \
+            -f $DOCKERFILE \
+            -t itzcrazykns1337/${IMAGE_NAME}:canary-amd64 \
             --push .
 
       - name: Build and push AMD64 release Docker image
@@ -91,6 +105,19 @@ jobs:
             -t itzcrazykns1337/${IMAGE_NAME}:arm64 \
             --push .
 
+      - name: Build and push ARM64 Canary Docker image
+        if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
+        run: |
+          DOCKERFILE=app.dockerfile
+          IMAGE_NAME=perplexica
+          docker buildx build --platform linux/arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:canary-arm64 \
+            --cache-to=type=inline \
+            --provenance false \
+            -f $DOCKERFILE \
+            -t itzcrazykns1337/${IMAGE_NAME}:canary-arm64 \
+            --push .
+
       - name: Build and push ARM64 release Docker image
         if: github.event_name == 'release'
         run: |
@@ -127,6 +154,15 @@ jobs:
             --amend itzcrazykns1337/${IMAGE_NAME}:amd64 \
             --amend itzcrazykns1337/${IMAGE_NAME}:arm64
           docker manifest push itzcrazykns1337/${IMAGE_NAME}:main
+
+      - name: Create and push multi-arch manifest for canary
+        if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
+        run: |
+          IMAGE_NAME=perplexica
+          docker manifest create itzcrazykns1337/${IMAGE_NAME}:canary \
+            --amend itzcrazykns1337/${IMAGE_NAME}:canary-amd64 \
+            --amend itzcrazykns1337/${IMAGE_NAME}:canary-arm64
+          docker manifest push itzcrazykns1337/${IMAGE_NAME}:canary
 
       - name: Create and push multi-arch manifest for releases
         if: github.event_name == 'release'
