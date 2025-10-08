@@ -49,6 +49,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [require('@tailwindcss/typography'), require('@headlessui/tailwindcss')({ prefix: 'headless' })],
 };
 export default config;

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
+    "@headlessui/tailwindcss": "^0.2.2",
     "@iarna/toml": "^2.2.5",
     "@icons-pack/react-simple-icons": "^12.3.0",
     "@langchain/anthropic": "^0.3.24",
