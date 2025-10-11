@@ -5,11 +5,10 @@
   "author": "ItzCrazyKns",
   "scripts": {
     "dev": "next dev",
-    "build": "npm run db:migrate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format:write": "prettier . --write",
-    "db:migrate": "node ./src/lib/db/migrate.ts"
+    "format:write": "prettier . --write"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -66,6 +65,7 @@
     "postcss": "^8",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
