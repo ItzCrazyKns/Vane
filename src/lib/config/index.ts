@@ -68,11 +68,11 @@ class ConfigManager {
         }
       }
 
-      this.currentConfig = this.migrateConfigNeeded(this.currentConfig);
+      this.currentConfig = this.migrateConfig(this.currentConfig);
     }
   }
 
-  private migrateConfigNeeded(config: Config): Config {
+  private migrateConfig(config: Config): Config {
     /* TODO: Add migrations */
     return config;
   }
@@ -132,6 +132,22 @@ class ConfigManager {
 
     this.saveConfig();
   }
+
+  public getConfig(key: string, defaultValue?: any): any {
+    const nested = key.split('.');
+    let obj: any = this.currentConfig;
+
+    for (let i = 0; i < nested.length; i++) {
+      const part = nested[i];
+      if (obj == null) return defaultValue;
+
+      obj = obj[part];
+    }
+
+    return obj === undefined ? defaultValue : obj;
+  }
 }
 
-new ConfigManager();
+const configManager = new ConfigManager();
+
+export default configManager
