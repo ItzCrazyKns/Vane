@@ -148,7 +148,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
   async loadChatModel(key: string): Promise<BaseChatModel> {
     const modelList = await this.getModelList();
 
-    const exists = modelList.chat.filter((m) => m.key === key);
+    const exists = modelList.chat.find((m) => m.key === key);
 
     if (!exists) {
       throw new Error(
@@ -168,8 +168,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
 
   async loadEmbeddingModel(key: string): Promise<Embeddings> {
     const modelList = await this.getModelList();
-
-    const exists = modelList.chat.filter((m) => m.key === key);
+    const exists = modelList.embedding.find((m) => m.key === key);
 
     if (!exists) {
       throw new Error(
