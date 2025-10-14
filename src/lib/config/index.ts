@@ -150,4 +150,4 @@ class ConfigManager {
 
 const configManager = new ConfigManager();
 
-export default configManager
+export default configManager;
