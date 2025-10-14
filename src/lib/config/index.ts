@@ -145,6 +145,54 @@ class ConfigManager {
 
     return obj === undefined ? defaultValue : obj;
   }
+
+  public updateConfig(key: string, val: any) {
+    const parts = key.split('.');
+    if (parts.length === 0) return;
+
+    let target: any = this.currentConfig;
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      if (target[part] === null || typeof target[part] !== 'object') {
+        target[part] = {};
+      }
+
+      target = target[part];
+    }
+
+    const finalKey = parts[parts.length - 1];
+    target[finalKey] = val;
+
+    this.saveConfig();
+  }
+
+  public addModelProvider(type: string, name: string, config: any) {
+    const newModelProvider: ConfigModelProvider = {
+      id: crypto.randomUUID(),
+      name,
+      type,
+      config,
+      chatModels: [],
+      embeddingModels: [],
+      hash: hashObj(config),
+    };
+
+    this.currentConfig.modelProviders.push(newModelProvider);
+    this.saveConfig();
+  }
+
+  public removeModelProvider(id: string) {
+    const index = this.currentConfig.modelProviders.findIndex(
+      (p) => p.id === id,
+    );
+
+    if (index === -1) return;
+
+    this.currentConfig.modelProviders =
+      this.currentConfig.modelProviders.filter((p) => p.id !== id);
+
+    this.saveConfig();
+  }
 }
 
 const configManager = new ConfigManager();
