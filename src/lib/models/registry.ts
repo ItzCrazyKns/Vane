@@ -1,32 +1,52 @@
-import { ModelProviderUISection, UIConfigField } from '../config/types';
-import { ProviderMetadata } from './types';
-import BaseModelProvider from './providers/baseProvider';
-import OpenAIProvider from './providers/openai';
-
-interface ProviderClass<T> {
-  new (config: T): BaseModelProvider<T>;
-  getProviderConfigFields(): UIConfigField[];
-  getProviderMetadata(): ProviderMetadata;
-}
-
-const providers: Record<string, ProviderClass<any>> = {
-  openai: OpenAIProvider,
-};
+import { ConfigModelProvider } from '../config/types';
+import BaseModelProvider, {
+  createProviderInstance,
+} from './providers/baseProvider';
+import { getConfiguredModelProviders } from '../config/serverRegistry';
+import { providers } from './providers';
+import { ModelList } from './types';
 
 class ModelRegistry {
-  constructor() {}
+  activeProviders: (ConfigModelProvider & {
+    provider: BaseModelProvider<any>;
+  })[] = [];
 
-  getUIConfigSection(): ModelProviderUISection[] {
-    return Object.entries(providers).map(([k, p]) => {
-      const configFields = p.getProviderConfigFields();
-      const metadata = p.getProviderMetadata();
+  constructor() {
+    this.initializeActiveProviders();
+  }
 
-      return {
-        fields: configFields,
-        key: k,
-        name: metadata.name,
-      };
+  private initializeActiveProviders() {
+    const configuredProviders = getConfiguredModelProviders();
+
+    configuredProviders.forEach((p) => {
+      try {
+        const provider = providers[p.type];
+        if (!provider) throw new Error('Invalid provider type');
+
+        this.activeProviders.push({
+          ...p,
+          provider: createProviderInstance(provider, p.id, p.name, p.config),
+        });
+      } catch (err) {
+        console.error(
+          `Failed to initialize provider. Type: ${p.type}, ID: ${p.id}, Config: ${JSON.stringify(p.config)}, Error: ${err}`,
+        );
+      }
     });
+  }
+
+  async getActiveModels() {
+    const models: ModelList[] = [];
+
+    await Promise.all(
+      this.activeProviders.map(async (p) => {
+        const m = await p.provider.getModelList();
+
+        models.push(m);
+      }),
+    );
+
+    return models;
   }
 }
 

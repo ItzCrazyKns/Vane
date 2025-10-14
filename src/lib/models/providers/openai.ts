@@ -6,7 +6,6 @@ import { Embeddings } from '@langchain/core/embeddings';
 import { UIConfigField } from '@/lib/config/types';
 
 interface OpenAIConfig {
-  name: string;
   apiKey: string;
   baseURL: string;
 }
@@ -90,15 +89,6 @@ const defaultEmbeddingModels: Model[] = [
 ];
 
 const providerConfigFields: UIConfigField[] = [
-  /* {
-    type: 'string',
-    name: 'Name (Optional)',
-    key: 'name',
-    description: 'An optional name for this provider configuration',
-    required: false,
-    placeholder: 'Provider Name',
-    scope: 'server',
-  }, */ /* FOR NAME DIRECTLY CREATE INPUT IN FRONTEND */
   {
     type: 'password',
     name: 'API Key',
@@ -123,8 +113,8 @@ const providerConfigFields: UIConfigField[] = [
 ];
 
 class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
-  constructor(config: OpenAIConfig) {
-    super(config);
+  constructor(id: string, name: string, config: OpenAIConfig) {
+    super(id, name, config);
   }
 
   async getDefaultModels(): Promise<ModelList> {
@@ -190,6 +180,20 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
         baseURL: this.config.baseURL,
       },
     });
+  }
+
+  static parseAndValidate(raw: any): OpenAIConfig {
+    if (!raw || typeof raw !== 'object')
+      throw new Error('Invalid config provided. Expected object');
+    if (!raw.apiKey || !raw.baseURL)
+      throw new Error(
+        'Invalid config provided. API key and base URL must be provided',
+      );
+
+    return {
+      apiKey: String(raw.apiKey),
+      baseURL: String(raw.baseURL),
+    };
   }
 
   static getProviderConfigFields(): UIConfigField[] {
