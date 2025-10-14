@@ -1,8 +1,8 @@
 import path from 'node:path';
 import fs from 'fs';
-import { Config, ConfigModelProvider, EnvMap, UIConfigSections } from './types';
-import ModelRegistry from '../models/registry';
+import { Config, ConfigModelProvider, UIConfigSections } from './types';
 import { hashObj } from '../serverUtils';
+import { getModelProvidersUIConfigSection } from '../models/providers';
 
 class ConfigManager {
   configPath: string = path.join(
@@ -19,7 +19,6 @@ class ConfigManager {
     general: [],
     modelProviders: [],
   };
-  modelRegistry = new ModelRegistry();
 
   constructor() {
     this.initialize();
@@ -78,7 +77,7 @@ class ConfigManager {
   }
 
   private initializeFromEnv() {
-    const providerConfigSections = this.modelRegistry.getUIConfigSection();
+    const providerConfigSections = getModelProvidersUIConfigSection();
 
     this.uiConfigSections.modelProviders = providerConfigSections;
 
