@@ -4,6 +4,7 @@ import BaseModelProvider from './baseProvider';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { Embeddings } from '@langchain/core/embeddings';
 import { UIConfigField } from '@/lib/config/types';
+import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 
 interface OpenAIConfig {
   apiKey: string;
@@ -132,12 +133,15 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
   }
 
   async getModelList(): Promise<ModelList> {
-    /* Todo: IMPLEMENT MODEL READING FROM CONFIG FILE */
     const defaultModels = await this.getDefaultModels();
+    const configProvider = getConfiguredModelProviderById(this.id)!;
 
     return {
-      embedding: [...defaultModels.embedding],
-      chat: [...defaultModels.chat],
+      embedding: [
+        ...defaultModels.embedding,
+        ...configProvider.embeddingModels,
+      ],
+      chat: [...defaultModels.chat, ...configProvider.chatModels],
     };
   }
 

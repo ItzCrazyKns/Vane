@@ -1,3 +1,5 @@
+import { Model } from '../models/types';
+
 type BaseUIConfigField = {
   name: string;
   key: string;
@@ -40,8 +42,8 @@ type ConfigModelProvider = {
   id: string;
   name: string;
   type: string;
-  chatModels: string[];
-  embeddingModels: string[];
+  chatModels: Model[];
+  embeddingModels: Model[];
   config: { [key: string]: any };
   hash: string;
 };
