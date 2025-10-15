@@ -12,6 +12,7 @@ class ConfigManager {
   configVersion = 1;
   currentConfig: Config = {
     version: this.configVersion,
+    setupComplete: false,
     general: {},
     modelProviders: [],
   };
@@ -192,6 +193,18 @@ class ConfigManager {
       this.currentConfig.modelProviders.filter((p) => p.id !== id);
 
     this.saveConfig();
+  }
+
+  public isSetupComplete() {
+    return this.currentConfig.setupComplete
+  }
+
+  public markSetupComplete() {
+    if (!this.currentConfig.setupComplete) {
+      this.currentConfig.setupComplete = true
+    }
+
+    this.saveConfig()
   }
 }
 

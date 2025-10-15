@@ -50,6 +50,7 @@ type ConfigModelProvider = {
 
 type Config = {
   version: number;
+  setupComplete: boolean;
   general: {
     [key: string]: any;
   };
