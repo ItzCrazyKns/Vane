@@ -4,7 +4,7 @@ import BaseModelProvider, {
 } from './providers/baseProvider';
 import { getConfiguredModelProviders } from '../config/serverRegistry';
 import { providers } from './providers';
-import { ModelList } from './types';
+import { MinimalProvider, Model } from './types';
 
 class ModelRegistry {
   activeProviders: (ConfigModelProvider & {
@@ -35,18 +35,23 @@ class ModelRegistry {
     });
   }
 
-  async getActiveModels() {
-    const models: ModelList[] = [];
+  async getActiveProviders() {
+    const providers: MinimalProvider[] = [];
 
     await Promise.all(
       this.activeProviders.map(async (p) => {
         const m = await p.provider.getModelList();
 
-        models.push(m);
+        providers.push({
+          id: p.id,
+          name: p.name,
+          chatModels: m.chat,
+          embeddingModels: m.embedding,
+        });
       }),
     );
 
-    return models;
+    return providers;
   }
 }
 

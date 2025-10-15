@@ -13,4 +13,11 @@ type ProviderMetadata = {
   key: string;
 };
 
-export type { Model, ModelList, ProviderMetadata };
+type MinimalProvider = {
+  id: string;
+  name: string;
+  chatModels: Model[];
+  embeddingModels: Model[];
+};
+
+export type { Model, ModelList, ProviderMetadata, MinimalProvider };
