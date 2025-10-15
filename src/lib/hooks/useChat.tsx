@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
+import { MinimalProvider } from '../models/types';
 
 export type Section = {
   userMessage: UserMessage;
@@ -66,13 +67,13 @@ export interface File {
 }
 
 interface ChatModelProvider {
-  name: string;
-  provider: string;
+  key: string;
+  providerId: string;
 }
 
 interface EmbeddingModelProvider {
-  name: string;
-  provider: string;
+  key: string;
+  providerId: string;
 }
 
 const checkConfig = async (
@@ -82,10 +83,12 @@ const checkConfig = async (
   setHasError: (hasError: boolean) => void,
 ) => {
   try {
-    let chatModel = localStorage.getItem('chatModel');
-    let chatModelProvider = localStorage.getItem('chatModelProvider');
-    let embeddingModel = localStorage.getItem('embeddingModel');
-    let embeddingModelProvider = localStorage.getItem('embeddingModelProvider');
+    let chatModelKey = localStorage.getItem('chatModelKey');
+    let chatModelProviderId = localStorage.getItem('chatModelProviderId');
+    let embeddingModelKey = localStorage.getItem('embeddingModelKey');
+    let embeddingModelProviderId = localStorage.getItem(
+      'embeddingModelProviderId',
+    );
 
     const autoImageSearch = localStorage.getItem('autoImageSearch');
     const autoVideoSearch = localStorage.getItem('autoVideoSearch');
@@ -98,145 +101,81 @@ const checkConfig = async (
       localStorage.setItem('autoVideoSearch', 'false');
     }
 
-    const providers = await fetch(`/api/models`, {
+    const res = await fetch(`/api/providers`, {
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then(async (res) => {
-      if (!res.ok)
-        throw new Error(
-          `Failed to fetch models: ${res.status} ${res.statusText}`,
-        );
-      return res.json();
     });
 
-    if (
-      !chatModel ||
-      !chatModelProvider ||
-      !embeddingModel ||
-      !embeddingModelProvider
-    ) {
-      if (!chatModel || !chatModelProvider) {
-        const chatModelProviders = providers.chatModelProviders;
-        const chatModelProvidersKeys = Object.keys(chatModelProviders);
-
-        if (!chatModelProviders || chatModelProvidersKeys.length === 0) {
-          return toast.error('No chat models available');
-        } else {
-          chatModelProvider =
-            chatModelProvidersKeys.find(
-              (provider) =>
-                Object.keys(chatModelProviders[provider]).length > 0,
-            ) || chatModelProvidersKeys[0];
-        }
-
-        if (
-          chatModelProvider === 'custom_openai' &&
-          Object.keys(chatModelProviders[chatModelProvider]).length === 0
-        ) {
-          toast.error(
-            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
-          );
-          return setHasError(true);
-        }
-
-        chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
-      }
-
-      if (!embeddingModel || !embeddingModelProvider) {
-        const embeddingModelProviders = providers.embeddingModelProviders;
-
-        if (
-          !embeddingModelProviders ||
-          Object.keys(embeddingModelProviders).length === 0
-        )
-          return toast.error('No embedding models available');
-
-        embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-        embeddingModel = Object.keys(
-          embeddingModelProviders[embeddingModelProvider],
-        )[0];
-      }
-
-      localStorage.setItem('chatModel', chatModel!);
-      localStorage.setItem('chatModelProvider', chatModelProvider);
-      localStorage.setItem('embeddingModel', embeddingModel!);
-      localStorage.setItem('embeddingModelProvider', embeddingModelProvider);
-    } else {
-      const chatModelProviders = providers.chatModelProviders;
-      const embeddingModelProviders = providers.embeddingModelProviders;
-
-      if (
-        Object.keys(chatModelProviders).length > 0 &&
-        (!chatModelProviders[chatModelProvider] ||
-          Object.keys(chatModelProviders[chatModelProvider]).length === 0)
-      ) {
-        const chatModelProvidersKeys = Object.keys(chatModelProviders);
-        chatModelProvider =
-          chatModelProvidersKeys.find(
-            (key) => Object.keys(chatModelProviders[key]).length > 0,
-          ) || chatModelProvidersKeys[0];
-
-        localStorage.setItem('chatModelProvider', chatModelProvider);
-      }
-
-      if (
-        chatModelProvider &&
-        !chatModelProviders[chatModelProvider][chatModel]
-      ) {
-        if (
-          chatModelProvider === 'custom_openai' &&
-          Object.keys(chatModelProviders[chatModelProvider]).length === 0
-        ) {
-          toast.error(
-            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
-          );
-          return setHasError(true);
-        }
-
-        chatModel = Object.keys(
-          chatModelProviders[
-            Object.keys(chatModelProviders[chatModelProvider]).length > 0
-              ? chatModelProvider
-              : Object.keys(chatModelProviders)[0]
-          ],
-        )[0];
-
-        localStorage.setItem('chatModel', chatModel);
-      }
-
-      if (
-        Object.keys(embeddingModelProviders).length > 0 &&
-        !embeddingModelProviders[embeddingModelProvider]
-      ) {
-        embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-        localStorage.setItem('embeddingModelProvider', embeddingModelProvider);
-      }
-
-      if (
-        embeddingModelProvider &&
-        !embeddingModelProviders[embeddingModelProvider][embeddingModel]
-      ) {
-        embeddingModel = Object.keys(
-          embeddingModelProviders[embeddingModelProvider],
-        )[0];
-        localStorage.setItem('embeddingModel', embeddingModel);
-      }
+    if (!res.ok) {
+      throw new Error(
+        `Provider fetching failed with status code ${res.status}`,
+      );
     }
 
+    const data = await res.json();
+    const providers: MinimalProvider[] = data.providers;
+
+    if (providers.length === 0) {
+      throw new Error(
+        'No chat model providers found, please configure them in the settings page.',
+      );
+    }
+
+    const chatModelProvider =
+      providers.find((p) => p.id === chatModelProviderId) ??
+      providers.find((p) => p.chatModels.length > 0);
+
+    if (!chatModelProvider) {
+      throw new Error(
+        'No chat models found, pleae configure them in the settings page.',
+      );
+    }
+
+    chatModelProviderId = chatModelProvider.id;
+
+    const chatModel =
+      chatModelProvider.chatModels.find((m) => m.key === chatModelKey) ??
+      chatModelProvider.chatModels[0];
+    chatModelKey = chatModel.key;
+
+    const embeddingModelProvider =
+      providers.find((p) => p.id === embeddingModelProviderId) ??
+      providers.find((p) => p.embeddingModels.length > 0);
+
+    if (!embeddingModelProvider) {
+      throw new Error(
+        'No embedding models found, pleae configure them in the settings page.',
+      );
+    }
+
+    embeddingModelProviderId = embeddingModelProvider.id;
+
+    const embeddingModel =
+      embeddingModelProvider.embeddingModels.find(
+        (m) => m.key === embeddingModelKey,
+      ) ?? embeddingModelProvider.embeddingModels[0];
+    embeddingModelKey = embeddingModel.key;
+
+    localStorage.setItem('chatModelKey', chatModelKey);
+    localStorage.setItem('chatModelProviderId', chatModelProviderId);
+    localStorage.setItem('embeddingModelKey', embeddingModelKey);
+    localStorage.setItem('embeddingModelProviderId', embeddingModelProviderId);
+
     setChatModelProvider({
-      name: chatModel!,
-      provider: chatModelProvider,
+      key: chatModelKey,
+      providerId: chatModelProviderId,
     });
 
     setEmbeddingModelProvider({
-      name: embeddingModel!,
-      provider: embeddingModelProvider,
+      key: embeddingModelKey,
+      providerId: embeddingModelProviderId,
     });
 
     setIsConfigReady(true);
-  } catch (err) {
+  } catch (err: any) {
     console.error('An error occurred while checking the configuration:', err);
+    toast.error(err.message);
     setIsConfigReady(false);
     setHasError(true);
   }
@@ -356,15 +295,15 @@ export const ChatProvider = ({
 
   const [chatModelProvider, setChatModelProvider] = useState<ChatModelProvider>(
     {
-      name: '',
-      provider: '',
+      key: '',
+      providerId: '',
     },
   );
 
   const [embeddingModelProvider, setEmbeddingModelProvider] =
     useState<EmbeddingModelProvider>({
-      name: '',
-      provider: '',
+      key: '',
+      providerId: '',
     });
 
   const [isConfigReady, setIsConfigReady] = useState(false);
@@ -742,12 +681,12 @@ export const ChatProvider = ({
           ? chatHistory.slice(0, messageIndex === -1 ? undefined : messageIndex)
           : chatHistory,
         chatModel: {
-          name: chatModelProvider.name,
-          provider: chatModelProvider.provider,
+          key: chatModelProvider.key,
+          providerId: chatModelProvider.providerId,
         },
         embeddingModel: {
-          name: embeddingModelProvider.name,
-          provider: embeddingModelProvider.provider,
+          key: embeddingModelProvider.key,
+          providerId: embeddingModelProvider.providerId,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
       }),
