@@ -55,6 +55,9 @@ type Config = {
     [key: string]: any;
   };
   modelProviders: ConfigModelProvider[];
+  search: {
+    [key: string]: any
+  }
 };
 
 type EnvMap = {
@@ -73,6 +76,7 @@ type ModelProviderUISection = {
 type UIConfigSections = {
   general: UIConfigField[];
   modelProviders: ModelProviderUISection[];
+  search:  UIConfigField[];
 };
 
 export type {
