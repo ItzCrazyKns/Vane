@@ -1,23 +1,12 @@
 import handleVideoSearch from '@/lib/chains/videoSearchAgent';
-import {
-  getCustomOpenaiApiKey,
-  getCustomOpenaiApiUrl,
-  getCustomOpenaiModelName,
-} from '@/lib/config';
-import { getAvailableChatModelProviders } from '@/lib/providers';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import ModelRegistry from '@/lib/models/registry';
+import { ModelWithProvider } from '@/lib/models/types';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { ChatOpenAI } from '@langchain/openai';
-
-interface ChatModel {
-  provider: string;
-  model: string;
-}
 
 interface VideoSearchBody {
   query: string;
   chatHistory: any[];
-  chatModel?: ChatModel;
+  chatModel: ModelWithProvider;
 }
 
 export const POST = async (req: Request) => {
@@ -34,35 +23,12 @@ export const POST = async (req: Request) => {
       })
       .filter((msg) => msg !== undefined) as BaseMessage[];
 
-    const chatModelProviders = await getAvailableChatModelProviders();
+    const registry = new ModelRegistry();
 
-    const chatModelProvider =
-      chatModelProviders[
-        body.chatModel?.provider || Object.keys(chatModelProviders)[0]
-      ];
-    const chatModel =
-      chatModelProvider[
-        body.chatModel?.model || Object.keys(chatModelProvider)[0]
-      ];
-
-    let llm: BaseChatModel | undefined;
-
-    if (body.chatModel?.provider === 'custom_openai') {
-      llm = new ChatOpenAI({
-        apiKey: getCustomOpenaiApiKey(),
-        modelName: getCustomOpenaiModelName(),
-        temperature: 0.7,
-        configuration: {
-          baseURL: getCustomOpenaiApiUrl(),
-        },
-      }) as unknown as BaseChatModel;
-    } else if (chatModelProvider && chatModel) {
-      llm = chatModel.model;
-    }
-
-    if (!llm) {
-      return Response.json({ error: 'Invalid chat model' }, { status: 400 });
-    }
+    const llm = await registry.loadChatModel(
+      body.chatModel.providerId,
+      body.chatModel.key,
+    );
 
     const videos = await handleVideoSearch(
       {
