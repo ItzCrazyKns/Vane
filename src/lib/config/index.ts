@@ -15,10 +15,26 @@ class ConfigManager {
     setupComplete: false,
     general: {},
     modelProviders: [],
+    search: {
+      searxngURL: '',
+    },
   };
   uiConfigSections: UIConfigSections = {
     general: [],
     modelProviders: [],
+    search: [
+      {
+        name: 'SearXNG URL',
+        key: 'searxngURL',
+        type: 'string',
+        required: false,
+        description: 'The URL of your SearXNG instance',
+        placeholder: 'http://localhost:4000',
+        default: '',
+        scope: 'server',
+        env: 'SEARXNG_API_URL',
+      },
+    ],
   };
 
   constructor() {
@@ -78,6 +94,7 @@ class ConfigManager {
   }
 
   private initializeFromEnv() {
+    /* providers section*/
     const providerConfigSections = getModelProvidersUIConfigSection();
 
     this.uiConfigSections.modelProviders = providerConfigSections;
@@ -129,6 +146,14 @@ class ConfigManager {
     });
 
     this.currentConfig.modelProviders.push(...newProviders);
+
+    /* search section */
+    this.uiConfigSections.search.forEach((f) => {
+      if (f.env && !this.currentConfig.search[f.key]) {
+        this.currentConfig.search[f.key] =
+          process.env[f.env] ?? f.default ?? '';
+      }
+    });
 
     this.saveConfig();
   }
@@ -196,15 +221,19 @@ class ConfigManager {
   }
 
   public isSetupComplete() {
-    return this.currentConfig.setupComplete
+    return this.currentConfig.setupComplete;
   }
 
   public markSetupComplete() {
     if (!this.currentConfig.setupComplete) {
-      this.currentConfig.setupComplete = true
+      this.currentConfig.setupComplete = true;
     }
 
-    this.saveConfig()
+    this.saveConfig();
+  }
+
+  public getUIConfigSections(): UIConfigSections {
+    return this.uiConfigSections;
   }
 }
 
