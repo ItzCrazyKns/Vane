@@ -53,6 +53,26 @@ class ModelRegistry {
 
     return providers;
   }
+
+  async loadChatModel(providerId: string, modelName: string) {
+    const provider = this.activeProviders.find((p) => p.id === providerId);
+
+    if (!provider) throw new Error('Invalid provider id');
+
+    const model = await provider.provider.loadChatModel(modelName);
+
+    return model;
+  }
+
+  async loadEmbeddingModel(providerId: string, modelName: string) {
+    const provider = this.activeProviders.find((p) => p.id === providerId);
+
+    if (!provider) throw new Error('Invalid provider id');
+
+    const model = await provider.provider.loadEmbeddingModel(modelName);
+
+    return model;
+  }
 }
 
 export default ModelRegistry;
