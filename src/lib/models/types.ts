@@ -20,4 +20,15 @@ type MinimalProvider = {
   embeddingModels: Model[];
 };
 
-export type { Model, ModelList, ProviderMetadata, MinimalProvider };
+type ModelWithProvider = {
+  key: string;
+  providerId: string;
+};
+
+export type {
+  Model,
+  ModelList,
+  ProviderMetadata,
+  MinimalProvider,
+  ModelWithProvider,
+};
