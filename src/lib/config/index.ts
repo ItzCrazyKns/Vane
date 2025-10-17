@@ -20,7 +20,27 @@ class ConfigManager {
     },
   };
   uiConfigSections: UIConfigSections = {
-    general: [],
+    general: [
+      {
+        name: 'Theme',
+        key: 'theme',
+        type: 'select',
+        options: [
+          {
+            name: 'Light',
+            value: 'light',
+          },
+          {
+            name: 'Dark',
+            value: 'dark',
+          },
+        ],
+        required: false,
+        description: 'Choose between light and dark layouts for the app.',
+        default: 'dark',
+        scope: 'client',
+      },
+    ],
     modelProviders: [],
     search: [
       {
