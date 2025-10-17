@@ -11,8 +11,8 @@ const themeDark = (colors: DefaultColors) => ({
 const themeLight = (colors: DefaultColors) => ({
   50: '#ffffff',
   100: '#f6f8fa',
-  200: '#d0d7de',
-  300: '#afb8c1',
+  200: '#e8edf1',
+  300: '#d0d7de',
 });
 
 const config: Config = {
