@@ -66,12 +66,12 @@ const EmptyChatMessageInput = () => {
           placeholder="Ask anything..."
         />
         <div className="flex flex-row items-center justify-between mt-4">
-          <div className="flex flex-row items-center space-x-2 lg:space-x-4">
-            <Focus />
-            <Attach showText />
-          </div>
-          <div className="flex flex-row items-center space-x-1 sm:space-x-4">
-            <Optimization />
+          <Optimization />
+          <div className="flex flex-row items-center space-x-2">
+            <div className="flex flex-row items-center space-x-1">
+              <ModelSelector />
+              <Attach />
+            </div>
             <button
               disabled={message.trim().length === 0}
               className="bg-sky-500 text-white disabled:text-black/50 dark:disabled:text-white/50 disabled:bg-[#e0e0dc] dark:disabled:bg-[#ececec21] hover:bg-opacity-85 transition duration-100 rounded-full p-2"
