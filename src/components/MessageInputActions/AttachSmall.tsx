@@ -5,7 +5,14 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { CopyPlus, File, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-react';
+import {
+  CopyPlus,
+  File,
+  LoaderCircle,
+  Paperclip,
+  Plus,
+  Trash,
+} from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { File as FileType } from '../ChatWindow';
 import { useChat } from '@/lib/hooks/useChat';
@@ -45,7 +52,7 @@ const AttachSmall = () => {
   };
 
   return loading ? (
-    <div className="flex flex-row items-center justify-between space-x-1 p-1">
+    <div className="flex flex-row items-center justify-between space-x-1 p-1 ">
       <LoaderCircle size={20} className="text-sky-400 animate-spin" />
     </div>
   ) : files.length > 0 ? (
@@ -116,8 +123,8 @@ const AttachSmall = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     {file.fileName.length > 25
                       ? file.fileName.replace(/\.\w+$/, '').substring(0, 25) +
-                      '...' +
-                      file.fileExtension
+                        '...' +
+                        file.fileExtension
                       : file.fileName}
                   </p>
                 </div>
@@ -141,7 +148,7 @@ const AttachSmall = () => {
         multiple
         hidden
       />
-      <Paperclip size={20} />
+      <Paperclip size={16} />
     </button>
   );
 };
