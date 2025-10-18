@@ -5,7 +5,15 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
+import {
+  CopyPlus,
+  File,
+  Link,
+  LoaderCircle,
+  Paperclip,
+  Plus,
+  Trash,
+} from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
 
@@ -24,12 +32,12 @@ const Attach = ({ showText }: { showText?: boolean }) => {
     }
 
     const embeddingModelProvider = localStorage.getItem(
-      'embeddingModelProvider',
+      'embeddingModelProviderId',
     );
-    const embeddingModel = localStorage.getItem('embeddingModel');
+    const embeddingModel = localStorage.getItem('embeddingModelKey');
 
-    data.append('embedding_model_provider', embeddingModelProvider!);
-    data.append('embedding_model', embeddingModel!);
+    data.append('embedding_model_provider_id', embeddingModelProvider!);
+    data.append('embedding_model_key', embeddingModel!);
 
     const res = await fetch(`/api/uploads`, {
       method: 'POST',
@@ -169,7 +177,7 @@ const Attach = ({ showText }: { showText?: boolean }) => {
         multiple
         hidden
       />
-      <CopyPlus size={showText ? 18 : undefined} />
+      <Paperclip size={showText ? 18 : undefined} />
       {showText && <p className="text-xs font-medium pl-[1px]">Attach</p>}
     </button>
   );

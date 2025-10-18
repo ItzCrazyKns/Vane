@@ -5,7 +5,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
+import { CopyPlus, File, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { File as FileType } from '../ChatWindow';
 import { useChat } from '@/lib/hooks/useChat';
@@ -25,12 +25,12 @@ const AttachSmall = () => {
     }
 
     const embeddingModelProvider = localStorage.getItem(
-      'embeddingModelProvider',
+      'embeddingModelProviderId',
     );
-    const embeddingModel = localStorage.getItem('embeddingModel');
+    const embeddingModel = localStorage.getItem('embeddingModelKey');
 
-    data.append('embedding_model_provider', embeddingModelProvider!);
-    data.append('embedding_model', embeddingModel!);
+    data.append('embedding_model_provider_id', embeddingModelProvider!);
+    data.append('embedding_model_key', embeddingModel!);
 
     const res = await fetch(`/api/uploads`, {
       method: 'POST',
@@ -116,8 +116,8 @@ const AttachSmall = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     {file.fileName.length > 25
                       ? file.fileName.replace(/\.\w+$/, '').substring(0, 25) +
-                        '...' +
-                        file.fileExtension
+                      '...' +
+                      file.fileExtension
                       : file.fileName}
                   </p>
                 </div>
@@ -141,7 +141,7 @@ const AttachSmall = () => {
         multiple
         hidden
       />
-      <CopyPlus size={20} />
+      <Paperclip size={20} />
     </button>
   );
 };
