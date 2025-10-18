@@ -5,7 +5,7 @@ import OllamaProvider from './ollama';
 
 export const providers: Record<string, ProviderConstructor<any>> = {
   openai: OpenAIProvider,
-  ollama: OllamaProvider
+  ollama: OllamaProvider,
 };
 
 export const getModelProvidersUIConfigSection =

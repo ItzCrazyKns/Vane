@@ -67,7 +67,6 @@ class ModelRegistry {
           chatModels: m.chat,
           embeddingModels: m.embedding,
         });
-
       }),
     );
 

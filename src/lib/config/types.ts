@@ -17,7 +17,6 @@ type StringUIConfigField = BaseUIConfigField & {
 
 type SelectUIConfigFieldOptions = {
   name: string;
-  key: string;
   value: string;
 };
 
@@ -56,8 +55,8 @@ type Config = {
   };
   modelProviders: ConfigModelProvider[];
   search: {
-    [key: string]: any
-  }
+    [key: string]: any;
+  };
 };
 
 type EnvMap = {
@@ -76,7 +75,7 @@ type ModelProviderUISection = {
 type UIConfigSections = {
   general: UIConfigField[];
   modelProviders: ModelProviderUISection[];
-  search:  UIConfigField[];
+  search: UIConfigField[];
 };
 
 export type {
@@ -84,6 +83,8 @@ export type {
   Config,
   EnvMap,
   UIConfigSections,
+  SelectUIConfigField,
+  StringUIConfigField,
   ModelProviderUISection,
   ConfigModelProvider,
 };
