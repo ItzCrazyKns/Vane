@@ -225,6 +225,8 @@ class ConfigManager {
 
     this.currentConfig.modelProviders.push(newModelProvider);
     this.saveConfig();
+
+    return newModelProvider;
   }
 
   public removeModelProvider(id: string) {
@@ -236,6 +238,69 @@ class ConfigManager {
 
     this.currentConfig.modelProviders =
       this.currentConfig.modelProviders.filter((p) => p.id !== id);
+
+    this.saveConfig();
+  }
+
+  public async updateModelProvider(id: string, name: string, config: any) {
+    const provider = this.currentConfig.modelProviders.find((p) => {
+      return p.id === id;
+    });
+
+    if (!provider) throw new Error('Provider not found');
+
+    provider.name = name;
+    provider.config = config;
+
+    this.saveConfig();
+
+    return provider;
+  }
+
+  public addProviderModel(
+    providerId: string,
+    type: 'embedding' | 'chat',
+    model: any,
+  ) {
+    const provider = this.currentConfig.modelProviders.find(
+      (p) => p.id === providerId,
+    );
+
+    if (!provider) throw new Error('Invalid provider id');
+
+    delete model.type;
+
+    if (type === 'chat') {
+      provider.chatModels.push(model);
+    } else {
+      provider.embeddingModels.push(model);
+    }
+
+    this.saveConfig();
+
+    return model;
+  }
+
+  public removeProviderModel(
+    providerId: string,
+    type: 'embedding' | 'chat',
+    modelKey: string,
+  ) {
+    const provider = this.currentConfig.modelProviders.find(
+      (p) => p.id === providerId,
+    );
+
+    if (!provider) throw new Error('Invalid provider id');
+
+    if (type === 'chat') {
+      provider.chatModels = provider.chatModels.filter(
+        (m) => m.key !== modelKey,
+      );
+    } else {
+      provider.embeddingModels = provider.embeddingModels.filter(
+        (m) => m.key != modelKey,
+      );
+    }
 
     this.saveConfig();
   }
@@ -254,6 +319,10 @@ class ConfigManager {
 
   public getUIConfigSections(): UIConfigSections {
     return this.uiConfigSections;
+  }
+
+  public getCurrentConfig(): Config {
+    return JSON.parse(JSON.stringify(this.currentConfig));
   }
 }
 
