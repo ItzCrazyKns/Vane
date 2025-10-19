@@ -104,7 +104,7 @@ const WeatherWidget = () => {
 
   useEffect(() => {
     updateWeather();
-    const intervalId = setInterval(updateWeather, 2 * 60 * 1000);
+    const intervalId = setInterval(updateWeather, 30 * 1000);
     return () => clearInterval(intervalId);
   }, []);
 

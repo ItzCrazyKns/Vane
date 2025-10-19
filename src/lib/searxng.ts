@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getSearxngApiEndpoint } from './config';
+import { getSearxngURL } from './config/serverRegistry';
 
 interface SearxngSearchOptions {
   categories?: string[];
@@ -23,7 +23,7 @@ export const searchSearxng = async (
   query: string,
   opts?: SearxngSearchOptions,
 ) => {
-  const searxngURL = getSearxngApiEndpoint();
+  const searxngURL = getSearxngURL();
 
   const url = new URL(`${searxngURL}/search?format=json`);
   url.searchParams.append('q', query);
