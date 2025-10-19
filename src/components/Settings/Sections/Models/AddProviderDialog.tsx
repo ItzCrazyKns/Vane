@@ -96,9 +96,9 @@ const AddProvider = ({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-4 py-2 rounded-lg text-sm border border-light-200 dark:border-dark-200 text-black dark:text-white bg-light-secondary/50 dark:bg-dark-secondary/50 hover:bg-light-secondary hover:dark:bg-dark-secondary hover:border-light-300 hover:dark:border-dark-300 flex flex-row items-center space-x-1 active:scale-95 transition duration-200"
+        className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs sm:text-sm border border-light-200 dark:border-dark-200 text-black dark:text-white bg-light-secondary/50 dark:bg-dark-secondary/50 hover:bg-light-secondary hover:dark:bg-dark-secondary hover:border-light-300 hover:dark:border-dark-300 flex flex-row items-center space-x-1 active:scale-95 transition duration-200"
       >
-        <Plus size={16} />
+        <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
         <span>Add Provider</span>
       </button>
       <AnimatePresence>
