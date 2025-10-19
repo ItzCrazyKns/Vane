@@ -2,10 +2,12 @@ import { ModelProviderUISection } from '@/lib/config/types';
 import { ProviderConstructor } from './baseProvider';
 import OpenAIProvider from './openai';
 import OllamaProvider from './ollama';
+import TransformersProvider from './transformers';
 
 export const providers: Record<string, ProviderConstructor<any>> = {
   openai: OpenAIProvider,
   ollama: OllamaProvider,
+  transformers: TransformersProvider,
 };
 
 export const getModelProvidersUIConfigSection =
