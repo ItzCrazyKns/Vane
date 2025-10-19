@@ -6,6 +6,8 @@ import {
   UIConfigField,
 } from '@/lib/config/types';
 import ModelProvider from './ModelProvider';
+import SettingsField from '../../SettingsField';
+import ModelSelect from './ModelSelector';
 
 const Models = ({
   fields,
@@ -17,14 +19,21 @@ const Models = ({
   const [providers, setProviders] = useState<ConfigModelProvider[]>(values);
 
   return (
-    <div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
-      <div className="flex flex-row justify-between items-center">
+    <div className="flex-1 space-y-6 overflow-y-auto py-6">
+      <div className="flex flex-col px-6 gap-y-4">
+        <h3 className="text-sm text-black/70 dark:text-white/70">
+          Select models
+        </h3>
+        <ModelSelect providers={values} type="embedding" />
+      </div>
+      <div className="border-t border-light-200 dark:border-dark-200" />
+      <div className="flex flex-row justify-between items-center px-6 ">
         <p className="text-sm text-black/70 dark:text-white/70">
           Manage model provider
         </p>
         <AddProvider modelProviders={fields} setProviders={setProviders} />
       </div>
-      <div className="flex flex-col gap-y-4">
+      <div className="flex flex-col px-6 gap-y-4">
         {providers.map((provider) => (
           <ModelProvider
             key={`provider-${provider.id}`}
