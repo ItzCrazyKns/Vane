@@ -16,7 +16,7 @@ const Chat = () => {
   useEffect(() => {
     const updateDividerWidth = () => {
       if (dividerRef.current) {
-        setDividerWidth(dividerRef.current.scrollWidth);
+        setDividerWidth(dividerRef.current.offsetWidth);
       }
     };
 
