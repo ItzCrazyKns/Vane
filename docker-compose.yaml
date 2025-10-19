@@ -15,6 +15,7 @@ services:
       context: .
       dockerfile: app.dockerfile
     environment:
+      - DOCKER=true
       - SEARXNG_API_URL=http://searxng:8080
       - DATA_DIR=/home/perplexica
     ports:
@@ -24,7 +25,6 @@ services:
     volumes:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
-      - ./config.toml:/home/perplexica/config.toml
     restart: unless-stopped
 
 networks:
