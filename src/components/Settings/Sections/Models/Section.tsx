@@ -6,8 +6,7 @@ import {
   UIConfigField,
 } from '@/lib/config/types';
 import ModelProvider from './ModelProvider';
-import SettingsField from '../../SettingsField';
-import ModelSelect from './ModelSelector';
+import ModelSelect from './ModelSelect';
 
 const Models = ({
   fields,
