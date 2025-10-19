@@ -31,11 +31,20 @@ const Chat = () => {
 
   useEffect(() => {
     const scroll = () => {
-      messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
+      messageEnd.current?.scrollIntoView({ behavior: 'auto' });
     };
 
     if (chatTurns.length === 1) {
       document.title = `${chatTurns[0].content.substring(0, 30)} - Perplexica`;
+    }
+
+    const messageEndBottom =
+      messageEnd.current?.getBoundingClientRect().bottom ?? 0;
+
+    const distanceFromMessageEnd = window.innerHeight - messageEndBottom;
+
+    if (distanceFromMessageEnd >= -100) {
+      scroll();
     }
 
     if (chatTurns[chatTurns.length - 1]?.role === 'user') {
