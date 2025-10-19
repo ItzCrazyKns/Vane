@@ -5,8 +5,7 @@ import Focus from './MessageInputActions/Focus';
 import Optimization from './MessageInputActions/Optimization';
 import Attach from './MessageInputActions/Attach';
 import { useChat } from '@/lib/hooks/useChat';
-import AttachSmall from './MessageInputActions/AttachSmall';
-import ModelSelector from './MessageInputActions/ModelSelector';
+import ModelSelector from './MessageInputActions/ChatModelSelector';
 
 const EmptyChatMessageInput = () => {
   const { sendMessage } = useChat();

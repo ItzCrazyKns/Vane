@@ -97,7 +97,7 @@ const ModelSelector = () => {
         leaveTo="opacity-0 translate-y-1"
       >
         <PopoverPanel className="absolute z-10 w-[230px] sm:w-[270px] md:w-[300px] -right-4">
-          <div className="bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full flex flex-col shadow-lg overflow-hidden">
+          <div className="bg-light-primary dark:bg-dark-primary max-h-[300px] sm:max-w-none border rounded-lg border-light-200 dark:border-dark-200 w-full flex flex-col shadow-lg overflow-hidden">
             <div className="p-4 border-b border-light-200 dark:border-dark-200">
               <div className="relative">
                 <Search
@@ -109,7 +109,7 @@ const ModelSelector = () => {
                   placeholder="Search models..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-light-secondary dark:bg-dark-secondary rounded-lg text-xs text-black dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20 border border-transparent focus:border-sky-500/30 transition duration-200"
+                  className="w-full pl-9 pr-3 py-2 bg-light-secondary dark:bg-dark-secondary rounded-lg placeholder:text-sm text-sm text-black dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20 border border-transparent focus:border-sky-500/30 transition duration-200"
                 />
               </div>
             </div>
