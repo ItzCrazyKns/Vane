@@ -39,10 +39,11 @@ export const searchSearxng = async (
     });
   }
 
-  const res = await axios.get(url.toString());
+  const res = await fetch(url);
+  const data = await res.json();
 
-  const results: SearxngSearchResult[] = res.data.results;
-  const suggestions: string[] = res.data.suggestions;
+  const results: SearxngSearchResult[] = data.results;
+  const suggestions: string[] = data.suggestions;
 
   return { results, suggestions };
 };
