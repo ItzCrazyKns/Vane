@@ -16,7 +16,7 @@ import { StringOutputParser } from '@langchain/core/output_parsers';
 import LineListOutputParser from '../outputParsers/listLineOutputParser';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 import { getDocumentsFromLinks } from '../utils/documents';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import { searchSearxng } from '../searxng';
 import path from 'node:path';
 import fs from 'node:fs';
