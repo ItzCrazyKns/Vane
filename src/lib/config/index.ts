@@ -124,7 +124,7 @@ class ConfigManager {
     providerConfigSections.forEach((provider) => {
       const newProvider: ConfigModelProvider & { required?: string[] } = {
         id: crypto.randomUUID(),
-        name: `${provider.name} ${Math.floor(Math.random() * 1000)}`,
+        name: `${provider.name}`,
         type: provider.key,
         chatModels: [],
         embeddingModels: [],
