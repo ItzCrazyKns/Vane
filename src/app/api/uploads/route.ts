@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 import ModelRegistry from '@/lib/models/registry';
 
 interface FileRes {

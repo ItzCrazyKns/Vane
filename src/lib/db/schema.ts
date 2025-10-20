@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
