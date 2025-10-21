@@ -11,14 +11,16 @@ const ModelSelect = ({
   type: 'chat' | 'embedding';
 }) => {
   const [selectedModel, setSelectedModel] = useState<string>(
-    `${providers[0]?.id}/${providers[0].embeddingModels[0]?.key}`,
+    type === 'chat'
+      ? `${localStorage.getItem('chatModelProviderId')}/${localStorage.getItem('chatModelKey')}`
+      : `${localStorage.getItem('embeddingModelProviderId')}/${localStorage.getItem('embeddingModelKey')}`,
   );
   const [loading, setLoading] = useState(false);
 
   const handleSave = async (newValue: string) => {
     setLoading(true);
     setSelectedModel(newValue);
-    console.log(newValue);
+
     try {
       if (type === 'chat') {
         localStorage.setItem('chatModelProviderId', newValue.split('/')[0]);
