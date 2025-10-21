@@ -32,10 +32,17 @@ type PasswordUIConfigField = BaseUIConfigField & {
   default?: string;
 };
 
+type TextareaUIConfigField = BaseUIConfigField & {
+  type: 'textarea';
+  placeholder?: string;
+  default?: string;
+};
+
 type UIConfigField =
   | StringUIConfigField
   | SelectUIConfigField
-  | PasswordUIConfigField;
+  | PasswordUIConfigField
+  | TextareaUIConfigField;
 
 type ConfigModelProvider = {
   id: string;
@@ -87,4 +94,5 @@ export type {
   StringUIConfigField,
   ModelProviderUISection,
   ConfigModelProvider,
+  TextareaUIConfigField,
 };

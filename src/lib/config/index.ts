@@ -40,6 +40,16 @@ class ConfigManager {
         default: 'dark',
         scope: 'client',
       },
+      {
+        name: 'System Instructions',
+        key: 'systemInstructions',
+        type: 'textarea',
+        required: false,
+        description: 'Add custom behavior or tone for the model.',
+        placeholder:
+          'e.g., "Respond in a friendly and concise tone" or "Use British English and format answers as bullet points."',
+        scope: 'client',
+      },
     ],
     modelProviders: [],
     search: [
