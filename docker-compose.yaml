@@ -1,0 +1,15 @@
+services:
+  perplexica:
+    image: itzcrazykns1337/perplexica:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - data:/home/perplexica/data
+      - uploads:/home/perplexica/uploads
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: 'perplexica-data'
+  uploads:
+    name: 'perplexica-uploads'
