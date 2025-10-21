@@ -63,7 +63,8 @@ const SetupConfig = ({
     }
   };
 
-  const hasProviders = providers.length > 0;
+  const hasProviders =
+    providers.filter((p) => p.chatModels.length > 0).length > 0;
 
   return (
     <div className="w-[95vw] md:w-[80vw] lg:w-[65vw] mx-auto px-2 sm:px-4 md:px-6 flex flex-col space-y-6">

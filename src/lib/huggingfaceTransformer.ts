@@ -28,8 +28,6 @@ export class HuggingFaceTransformersEmbeddings
 
   timeout?: number;
 
-  private pipelinePromise: Promise<any> | undefined;
-
   constructor(fields?: Partial<HuggingFaceTransformersEmbeddingsParams>) {
     super(fields ?? {});
 
