@@ -4,11 +4,55 @@
 
 Perplexica’s Search API makes it easy to use our AI-powered search engine. You can run different types of searches, pick the models you want to use, and get the most recent info. Follow the following headings to learn more about Perplexica's search API.
 
-## Endpoint
+## Endpoints
 
-### **POST** `http://localhost:3000/api/search`
+### Get Available Providers and Models
 
-**Note**: Replace `3000` with any other port if you've changed the default PORT
+Before making search requests, you'll need to get the available providers and their models.
+
+#### **GET** `/api/providers`
+
+**Full URL**: `http://localhost:3000/api/providers`
+
+Returns a list of all active providers with their available chat and embedding models.
+
+**Response Example:**
+```json
+{
+  "providers": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "OpenAI",
+      "chatModels": [
+        {
+          "name": "GPT 4 Omni Mini",
+          "key": "gpt-4o-mini"
+        },
+        {
+          "name": "GPT 4 Omni",
+          "key": "gpt-4o"
+        }
+      ],
+      "embeddingModels": [
+        {
+          "name": "Text Embedding 3 Large",
+          "key": "text-embedding-3-large"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Use the `id` field as the `providerId` and the `key` field from the models arrays when making search requests.
+
+### Search Query
+
+#### **POST** `/api/search`
+
+**Full URL**: `http://localhost:3000/api/search`
+
+**Note**: Replace `localhost:3000` with your Perplexica instance URL if running on a different host or port
 
 ### Request
 
@@ -19,12 +63,12 @@ The API accepts a JSON object in the request body, where you define the focus mo
 ```json
 {
   "chatModel": {
-    "provider": "openai",
-    "name": "gpt-4o-mini"
+    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+    "key": "gpt-4o-mini"
   },
   "embeddingModel": {
-    "provider": "openai",
-    "name": "text-embedding-3-large"
+    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+    "key": "text-embedding-3-large"
   },
   "optimizationMode": "speed",
   "focusMode": "webSearch",
@@ -38,20 +82,19 @@ The API accepts a JSON object in the request body, where you define the focus mo
 }
 ```
 
+**Note**: The `providerId` must be a valid UUID obtained from the `/api/providers` endpoint. The example above uses a sample UUID for demonstration.
+
 ### Request Parameters
 
-- **`chatModel`** (object, optional): Defines the chat model to be used for the query. For model details you can send a GET request at `http://localhost:3000/api/models`. Make sure to use the key value (For example "gpt-4o-mini" instead of the display name "GPT 4 omni mini").
+- **`chatModel`** (object, optional): Defines the chat model to be used for the query. To get available providers and models, send a GET request to `http://localhost:3000/api/providers`.
 
-  - `provider`: Specifies the provider for the chat model (e.g., `openai`, `ollama`).
-  - `name`: The specific model from the chosen provider (e.g., `gpt-4o-mini`).
-  - Optional fields for custom OpenAI configuration:
-    - `customOpenAIBaseURL`: If you’re using a custom OpenAI instance, provide the base URL.
-    - `customOpenAIKey`: The API key for a custom OpenAI instance.
+  - `providerId` (string): The UUID of the provider. You can get this from the `/api/providers` endpoint response.
+  - `key` (string): The model key/identifier (e.g., `gpt-4o-mini`, `llama3.1:latest`). Use the `key` value from the provider's `chatModels` array, not the display name.
 
-- **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching. For model details you can send a GET request at `http://localhost:3000/api/models`. Make sure to use the key value (For example "text-embedding-3-large" instead of the display name "Text Embedding 3 Large").
+- **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching. To get available providers and models, send a GET request to `http://localhost:3000/api/providers`.
 
-  - `provider`: The provider for the embedding model (e.g., `openai`).
-  - `name`: The specific embedding model (e.g., `text-embedding-3-large`).
+  - `providerId` (string): The UUID of the embedding provider. You can get this from the `/api/providers` endpoint response.
+  - `key` (string): The embedding model key (e.g., `text-embedding-3-large`, `nomic-embed-text`). Use the `key` value from the provider's `embeddingModels` array, not the display name.
 
 - **`focusMode`** (string, required): Specifies which focus mode to use. Available modes:
 
@@ -108,7 +151,7 @@ The response from the API includes both the final message and the sources used t
 
 #### Streaming Response (stream: true)
 
-When streaming is enabled, the API returns a stream of newline-delimited JSON objects. Each line contains a complete, valid JSON object. The response has Content-Type: application/json.
+When streaming is enabled, the API returns a stream of newline-delimited JSON objects using Server-Sent Events (SSE). Each line contains a complete, valid JSON object. The response has `Content-Type: text/event-stream`.
 
 Example of streamed response objects:
 

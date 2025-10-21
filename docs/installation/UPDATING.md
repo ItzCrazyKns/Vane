@@ -2,45 +2,80 @@
 
 To update Perplexica to the latest version, follow these steps:
 
-## For Docker users
+## For Docker users (Using pre-built images)
 
-1. Clone the latest version of Perplexica from GitHub:
+Simply pull the latest image and restart your container:
+
+```bash
+docker pull itzcrazykns1337/perplexica:latest
+docker stop perplexica
+docker rm perplexica
+docker run -p 3000:3000 -p 8080:8080 --name perplexica itzcrazykns1337/perplexica:latest
+```
+
+For standalone version:
+
+```bash
+docker pull itzcrazykns1337/perplexica:standalone-latest
+docker stop perplexica
+docker rm perplexica
+docker run -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 --name perplexica itzcrazykns1337/perplexica:standalone-latest
+```
+
+Once updated, go to http://localhost:3000 and verify the latest changes. Your settings are preserved automatically.
+
+## For Docker users (Building from source)
+
+1. Navigate to your Perplexica directory and pull the latest changes:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Perplexica.git
+   cd Perplexica
+   git pull origin master
    ```
 
-2. Navigate to the project directory.
-
-3. Check for changes in the configuration files. If the `sample.config.toml` file contains new fields, delete your existing `config.toml` file, rename `sample.config.toml` to `config.toml`, and update the configuration accordingly.
-
-4. Pull the latest images from the registry.
+2. Rebuild the Docker image:
 
    ```bash
-   docker compose pull
+   docker build -t perplexica .
    ```
 
-5. Update and recreate the containers.
+3. Stop and remove the old container, then start the new one:
 
    ```bash
-   docker compose up -d
+   docker stop perplexica
+   docker rm perplexica
+   docker run -p 3000:3000 -p 8080:8080 --name perplexica perplexica
    ```
 
-6. Once the command completes, go to http://localhost:3000 and verify the latest changes.
+4. Once the command completes, go to http://localhost:3000 and verify the latest changes.
 
 ## For non-Docker users
 
-1. Clone the latest version of Perplexica from GitHub:
+1. Navigate to your Perplexica directory and pull the latest changes:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Perplexica.git
+   cd Perplexica
+   git pull origin master
    ```
 
-2. Navigate to the project directory.
+2. Install any new dependencies:
 
-3. Check for changes in the configuration files. If the `sample.config.toml` file contains new fields, delete your existing `config.toml` file, rename `sample.config.toml` to `config.toml`, and update the configuration accordingly.
-4. After populating the configuration run `npm i`.
-5. Install the dependencies and then execute `npm run build`.
-6. Finally, start the app by running `npm run start`
+   ```bash
+   npm i
+   ```
+
+3. Rebuild the application:
+
+   ```bash
+   npm run build
+   ```
+
+4. Restart the application:
+
+   ```bash
+   npm run start
+   ```
+
+5. Go to http://localhost:3000 and verify the latest changes. Your settings are preserved automatically.
 
 ---
