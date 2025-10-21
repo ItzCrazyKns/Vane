@@ -59,11 +59,13 @@ const SettingsSelect = ({
   };
 
   return (
-    <section className="rounded-xl border border-light-200 bg-light-primary/80 p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
-      <div className="space-y-5">
+    <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
+      <div className="space-y-3 lg:space-y-5">
         <div>
-          <h4 className="text-base text-black dark:text-white">{field.name}</h4>
-          <p className="text-xs text-black/50 dark:text-white/50">
+          <h4 className="text-sm lg:text-base text-black dark:text-white">
+            {field.name}
+          </h4>
+          <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
             {field.description}
           </p>
         </div>
@@ -74,7 +76,7 @@ const SettingsSelect = ({
             value: option.value,
             label: option.name,
           }))}
-          className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer capitalize pr-12"
+          className="!text-xs lg:!text-sm"
           loading={loading}
           disabled={loading}
         />
@@ -128,11 +130,13 @@ const SettingsInput = ({
   };
 
   return (
-    <section className="rounded-xl border border-light-200 bg-light-primary/80 p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
-      <div className="space-y-5">
+    <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
+      <div className="space-y-3 lg:space-y-5">
         <div>
-          <h4 className="text-base text-black dark:text-white">{field.name}</h4>
-          <p className="text-xs text-black/50 dark:text-white/50">
+          <h4 className="text-sm lg:text-base text-black dark:text-white">
+            {field.name}
+          </h4>
+          <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
             {field.description}
           </p>
         </div>
@@ -141,7 +145,7 @@ const SettingsInput = ({
             value={value ?? field.default ?? ''}
             onChange={(event) => setValue(event.target.value)}
             onBlur={(event) => handleSave(event.target.value)}
-            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             placeholder={field.placeholder}
             type="text"
             disabled={loading}

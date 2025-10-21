@@ -18,16 +18,23 @@ const ModelSelect = ({
   const handleSave = async (newValue: string) => {
     setLoading(true);
     setSelectedModel(newValue);
+    console.log(newValue);
     try {
       if (type === 'chat') {
         localStorage.setItem('chatModelProviderId', newValue.split('/')[0]);
-        localStorage.setItem('chatModelKey', newValue.split('/')[1]);
+        localStorage.setItem(
+          'chatModelKey',
+          newValue.split('/').slice(1).join('/'),
+        );
       } else {
         localStorage.setItem(
           'embeddingModelProviderId',
           newValue.split('/')[0],
         );
-        localStorage.setItem('embeddingModelKey', newValue.split('/')[1]);
+        localStorage.setItem(
+          'embeddingModelKey',
+          newValue.split('/').slice(1).join('/'),
+        );
       }
     } catch (error) {
       console.error('Error saving config:', error);
@@ -38,13 +45,13 @@ const ModelSelect = ({
   };
 
   return (
-    <section className="rounded-xl border border-light-200 bg-light-primary/80 p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
-      <div className="space-y-5">
+    <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
+      <div className="space-y-3 lg:space-y-5">
         <div>
-          <h4 className="text-base text-black dark:text-white">
+          <h4 className="text-sm lg:text-base text-black dark:text-white">
             Select {type === 'chat' ? 'Chat Model' : 'Embedding Model'}
           </h4>
-          <p className="text-xs text-black/50 dark:text-white/50">
+          <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
             {type === 'chat'
               ? 'Select the model to use for chat responses'
               : 'Select the model to use for embeddings'}
@@ -68,7 +75,7 @@ const ModelSelect = ({
                   })),
                 )
           }
-          className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer capitalize pr-12"
+          className="!text-xs lg:!text-sm"
           loading={loading}
           disabled={loading}
         />

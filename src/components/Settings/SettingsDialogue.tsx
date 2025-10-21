@@ -1,5 +1,11 @@
 import { Dialog, DialogPanel } from '@headlessui/react';
-import { BrainCog, ChevronLeft, Search, Settings } from 'lucide-react';
+import {
+  ArrowLeft,
+  BrainCog,
+  ChevronLeft,
+  Search,
+  Settings,
+} from 'lucide-react';
 import General from './Sections/General';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -8,9 +14,11 @@ import Loader from '../ui/Loader';
 import { cn } from '@/lib/utils';
 import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
+import Select from '@/components/ui/Select';
 
 const sections = [
   {
+    key: 'general',
     name: 'General',
     description: 'Adjust common settings.',
     icon: Settings,
@@ -18,6 +26,7 @@ const sections = [
     dataAdd: 'general',
   },
   {
+    key: 'models',
     name: 'Models',
     description: 'Configure model settings.',
     icon: BrainCog,
@@ -25,6 +34,7 @@ const sections = [
     dataAdd: 'modelProviders',
   },
   {
+    key: 'search',
     name: 'Search',
     description: 'Manage search settings.',
     icon: Search,
@@ -42,7 +52,12 @@ const SettingsDialogue = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
-  const [activeSection, setActiveSection] = useState(sections[0]);
+  const [activeSection, setActiveSection] = useState<string>(sections[0].key);
+  const [selectedSection, setSelectedSection] = useState(sections[0]);
+
+  useEffect(() => {
+    setSelectedSection(sections.find((s) => s.key === activeSection)!);
+  }, [activeSection]);
 
   useEffect(() => {
     if (isOpen) {
@@ -83,14 +98,14 @@ const SettingsDialogue = ({
         transition={{ duration: 0.1 }}
         className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black/30 backdrop-blur-sm h-screen"
       >
-        <DialogPanel className="space-y-4 border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary backdrop-blur-lg rounded-xl h-[calc(100vh-2%)] w-[calc(100vw-2%)] md:h-[calc(100vh-7%)] md:w-[calc(100vw-7%)] lg:h-[calc(100vh-20%)] lg:w-[calc(100vw-30%)]">
+        <DialogPanel className="space-y-4 border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary backdrop-blur-lg rounded-xl h-[calc(100vh-2%)] w-[calc(100vw-2%)] md:h-[calc(100vh-7%)] md:w-[calc(100vw-7%)] lg:h-[calc(100vh-20%)] lg:w-[calc(100vw-30%)] overflow-hidden flex flex-col">
           {isLoading ? (
             <div className="flex items-center justify-center h-full w-full">
               <Loader />
             </div>
           ) : (
-            <div className="flex flex-1 inset-0 h-full">
-              <div className="w-[240px] border-r border-white-200 dark:border-dark-200 h-full px-3 pt-3 flex flex-col">
+            <div className="flex flex-1 inset-0 h-full overflow-hidden">
+              <div className="hidden lg:flex flex-col w-[240px] border-r border-white-200 dark:border-dark-200 h-full px-3 pt-3 overflow-y-auto">
                 <button
                   onClick={() => setIsOpen(false)}
                   className="group flex flex-row items-center hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg"
@@ -109,11 +124,11 @@ const SettingsDialogue = ({
                       key={section.dataAdd}
                       className={cn(
                         `flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-sm hover:bg-light-200 hover:dark:bg-dark-200 transition duration-200 active:scale-95`,
-                        activeSection.name === section.name
+                        activeSection === section.key
                           ? 'bg-light-200 dark:bg-dark-200 text-black/90 dark:text-white/90'
                           : ' text-black/70 dark:text-white/70',
                       )}
-                      onClick={() => setActiveSection(section)}
+                      onClick={() => setActiveSection(section.key)}
                     >
                       <section.icon size={17} />
                       <p>{section.name}</p>
@@ -121,23 +136,50 @@ const SettingsDialogue = ({
                   ))}
                 </div>
               </div>
-              <div className="w-full">
-                {activeSection.component && (
-                  <div className="flex h-full flex-col">
-                    <div className="border-b border-light-200/60 px-6 pb-6 pt-8 dark:border-dark-200/60">
+              <div className="w-full flex flex-col overflow-hidden">
+                <div className="flex flex-row lg:hidden w-full justify-between px-[20px] my-4 flex-shrink-0">
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="group flex flex-row items-center hover:bg-light-200 hover:dark:bg-dark-200 rounded-lg mr-[40%]"
+                  >
+                    <ArrowLeft
+                      size={18}
+                      className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70"
+                    />
+                  </button>
+                  <Select
+                    options={sections.map((section) => {
+                      return {
+                        value: section.key,
+                        key: section.key,
+                        label: section.name,
+                      };
+                    })}
+                    value={activeSection}
+                    onChange={(e) => {
+                      setActiveSection(e.target.value);
+                    }}
+                    className="!text-xs lg:!text-sm"
+                  />
+                </div>
+                {selectedSection.component && (
+                  <div className="flex flex-1 flex-col overflow-hidden">
+                    <div className="border-b border-light-200/60 px-6 pb-6 lg:pt-6 dark:border-dark-200/60 flex-shrink-0">
                       <div className="flex flex-col">
-                        <h4 className="font-medium text-black dark:text-white">
-                          {activeSection.name}
+                        <h4 className="font-medium text-black dark:text-white text-sm lg:text-base">
+                          {selectedSection.name}
                         </h4>
-                        <p className="text-xs text-black/50 dark:text-white/50">
-                          {activeSection.description}
+                        <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
+                          {selectedSection.description}
                         </p>
                       </div>
                     </div>
-                    <activeSection.component
-                      fields={config.fields[activeSection.dataAdd]}
-                      values={config.values[activeSection.dataAdd]}
-                    />
+                    <div className="flex-1 overflow-y-auto">
+                      <selectedSection.component
+                        fields={config.fields[selectedSection.dataAdd]}
+                        values={config.values[selectedSection.dataAdd]}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

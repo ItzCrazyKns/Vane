@@ -78,7 +78,7 @@ const ModelProvider = ({
         )}
         onClick={() => setOpen(!open)}
       >
-        <p className="text-black dark:text-white font-medium">
+        <p className="text-sm lg:text-base text-black dark:text-white font-medium">
           {modelProvider.name}
         </p>
         <div className="flex items-center gap-4">
@@ -115,7 +115,7 @@ const ModelProvider = ({
               {modelProvider.chatModels.length > 0 && (
                 <div className="flex flex-col gap-y-2">
                   <div className="flex flex-row w-full justify-between items-center">
-                    <p className="text-xs text-black/70 dark:text-white/70">
+                    <p className="text-[11px] lg:text-xs text-black/70 dark:text-white/70">
                       Chat models
                     </p>
                     <AddModel
@@ -126,7 +126,7 @@ const ModelProvider = ({
                   </div>
                   <div className="flex flex-col gap-2">
                     {modelProvider.chatModels.some((m) => m.key === 'error') ? (
-                      <div className="flex flex-row items-center gap-2 text-sm text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/20 px-3 py-2 border border-red-200 dark:border-red-900/30">
+                      <div className="flex flex-row items-center gap-2 text-xs lg:text-sm text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/20 px-3 py-2 border border-red-200 dark:border-red-900/30">
                         <AlertCircle size={16} className="shrink-0" />
                         <span className="break-words">
                           {
@@ -141,7 +141,7 @@ const ModelProvider = ({
                         {modelProvider.chatModels.map((model, index) => (
                           <div
                             key={`${modelProvider.id}-chat-${model.key}-${index}`}
-                            className="flex flex-row items-center space-x-1 text-sm text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5"
+                            className="flex flex-row items-center space-x-1 text-xs lg:text-sm text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5"
                           >
                             <span>{model.name}</span>
                             <button
@@ -161,7 +161,7 @@ const ModelProvider = ({
               {modelProvider.embeddingModels.length > 0 && (
                 <div className="flex flex-col gap-y-2">
                   <div className="flex flex-row w-full justify-between items-center">
-                    <p className="text-xs text-black/70 dark:text-white/70">
+                    <p className="text-[11px] lg:text-xs text-black/70 dark:text-white/70">
                       Embedding models
                     </p>
                     <AddModel
@@ -174,7 +174,7 @@ const ModelProvider = ({
                     {modelProvider.embeddingModels.some(
                       (m) => m.key === 'error',
                     ) ? (
-                      <div className="flex flex-row items-center gap-2 text-sm text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/20 px-3 py-2 border border-red-200 dark:border-red-900/30">
+                      <div className="flex flex-row items-center gap-2 text-xs lg:text-sm text-red-500 dark:text-red-400 rounded-lg bg-red-50 dark:bg-red-950/20 px-3 py-2 border border-red-200 dark:border-red-900/30">
                         <AlertCircle size={16} className="shrink-0" />
                         <span className="break-words">
                           {
@@ -189,7 +189,7 @@ const ModelProvider = ({
                         {modelProvider.embeddingModels.map((model, index) => (
                           <div
                             key={`${modelProvider.id}-embedding-${model.key}-${index}`}
-                            className="flex flex-row items-center space-x-1 text-sm text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5"
+                            className="flex flex-row items-center space-x-1 text-xs lg:text-sm text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5"
                           >
                             <span>{model.name}</span>
                             <button
