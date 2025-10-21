@@ -50,6 +50,25 @@ class ConfigManager {
           'e.g., "Respond in a friendly and concise tone" or "Use British English and format answers as bullet points."',
         scope: 'client',
       },
+      {
+        name: 'Measurement Unit',
+        key: 'measureUnit',
+        type: 'select',
+        options: [
+          {
+            name: 'Imperial',
+            value: 'Imperial',
+          },
+          {
+            name: 'Metric',
+            value: 'Metric',
+          },
+        ],
+        required: false,
+        description: 'Choose between Metric  and Imperial measurement unit.',
+        default: 'Metric',
+        scope: 'client',
+      },
     ],
     modelProviders: [],
     search: [
