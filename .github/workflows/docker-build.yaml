@@ -11,6 +11,13 @@ on:
 jobs:
   build-amd64:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant:
+          - name: full
+            dockerfile: Dockerfile
+          - name: slim
+            dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -31,47 +38,54 @@ jobs:
         id: version
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Build and push AMD64 Docker image
+      - name: Build and push AMD64 Docker image (master)
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          DOCKERFILE=app.dockerfile
-          IMAGE_NAME=perplexica
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:amd64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/perplexica:${VARIANT}-amd64 \
             --cache-to=type=inline \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/${IMAGE_NAME}:amd64 \
+            -t itzcrazykns1337/perplexica:${VARIANT}-amd64 \
             --push .
 
       - name: Build and push AMD64 Canary Docker image
         if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
         run: |
-          DOCKERFILE=app.dockerfile
-          IMAGE_NAME=perplexica
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:canary-amd64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/perplexica:${VARIANT}-canary-amd64 \
             --cache-to=type=inline \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/${IMAGE_NAME}:canary-amd64 \
+            -t itzcrazykns1337/perplexica:${VARIANT}-canary-amd64 \
             --push .
 
       - name: Build and push AMD64 release Docker image
         if: github.event_name == 'release'
         run: |
-          DOCKERFILE=app.dockerfile
-          IMAGE_NAME=perplexica
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }}-amd64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
             --cache-to=type=inline \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }}-amd64 \
+            -t itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
             --push .
 
   build-arm64:
     runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        variant:
+          - name: full
+            dockerfile: Dockerfile
+          - name: slim
+            dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -92,48 +106,51 @@ jobs:
         id: version
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Build and push ARM64 Docker image
+      - name: Build and push ARM64 Docker image (master)
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          DOCKERFILE=app.dockerfile
-          IMAGE_NAME=perplexica
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/perplexica:${VARIANT}-arm64 \
             --cache-to=type=inline \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/${IMAGE_NAME}:arm64 \
+            -t itzcrazykns1337/perplexica:${VARIANT}-arm64 \
             --push .
 
       - name: Build and push ARM64 Canary Docker image
         if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
         run: |
-          DOCKERFILE=app.dockerfile
-          IMAGE_NAME=perplexica
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:canary-arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/perplexica:${VARIANT}-canary-arm64 \
             --cache-to=type=inline \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/${IMAGE_NAME}:canary-arm64 \
+            -t itzcrazykns1337/perplexica:${VARIANT}-canary-arm64 \
             --push .
 
       - name: Build and push ARM64 release Docker image
         if: github.event_name == 'release'
         run: |
-          DOCKERFILE=app.dockerfile
-          IMAGE_NAME=perplexica
+          DOCKERFILE=${{ matrix.variant.dockerfile }}
+          VARIANT=${{ matrix.variant.name }}
           docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }}-arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
             --cache-to=type=inline \
             --provenance false \
             -f $DOCKERFILE \
-            -t itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }}-arm64 \
+            -t itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
             --push .
 
   manifest:
     needs: [build-amd64, build-arm64]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [full, slim]
     steps:
       - name: Log in to DockerHub
         uses: docker/login-action@v2
@@ -146,29 +163,55 @@ jobs:
         id: version
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Create and push multi-arch manifest for main
+      - name: Create and push manifest for main
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          IMAGE_NAME=perplexica
-          docker manifest create itzcrazykns1337/${IMAGE_NAME}:main \
-            --amend itzcrazykns1337/${IMAGE_NAME}:amd64 \
-            --amend itzcrazykns1337/${IMAGE_NAME}:arm64
-          docker manifest push itzcrazykns1337/${IMAGE_NAME}:main
+          VARIANT=${{ matrix.variant }}
+          docker manifest create itzcrazykns1337/perplexica:${VARIANT}-latest \
+            --amend itzcrazykns1337/perplexica:${VARIANT}-amd64 \
+            --amend itzcrazykns1337/perplexica:${VARIANT}-arm64
+          docker manifest push itzcrazykns1337/perplexica:${VARIANT}-latest
 
-      - name: Create and push multi-arch manifest for canary
+          if [ "$VARIANT" = "full" ]; then
+            docker manifest create itzcrazykns1337/perplexica:latest \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-amd64 \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-arm64
+            docker manifest push itzcrazykns1337/perplexica:latest
+
+            docker manifest create itzcrazykns1337/perplexica:main \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-amd64 \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-arm64
+            docker manifest push itzcrazykns1337/perplexica:main
+          fi
+
+      - name: Create and push manifest for canary
         if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
         run: |
-          IMAGE_NAME=perplexica
-          docker manifest create itzcrazykns1337/${IMAGE_NAME}:canary \
-            --amend itzcrazykns1337/${IMAGE_NAME}:canary-amd64 \
-            --amend itzcrazykns1337/${IMAGE_NAME}:canary-arm64
-          docker manifest push itzcrazykns1337/${IMAGE_NAME}:canary
+          VARIANT=${{ matrix.variant }}
+          docker manifest create itzcrazykns1337/perplexica:${VARIANT}-canary \
+            --amend itzcrazykns1337/perplexica:${VARIANT}-canary-amd64 \
+            --amend itzcrazykns1337/perplexica:${VARIANT}-canary-arm64
+          docker manifest push itzcrazykns1337/perplexica:${VARIANT}-canary
 
-      - name: Create and push multi-arch manifest for releases
+          if [ "$VARIANT" = "full" ]; then
+            docker manifest create itzcrazykns1337/perplexica:canary \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-canary-amd64 \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-canary-arm64
+            docker manifest push itzcrazykns1337/perplexica:canary
+          fi
+
+      - name: Create and push manifest for releases
         if: github.event_name == 'release'
         run: |
-          IMAGE_NAME=perplexica
-          docker manifest create itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }} \
-            --amend itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }}-amd64 \
-            --amend itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }}-arm64
-          docker manifest push itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }}
+          VARIANT=${{ matrix.variant }}
+          docker manifest create itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }} \
+            --amend itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+            --amend itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
+          docker manifest push itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}
+
+          if [ "$VARIANT" = "full" ]; then
+            docker manifest create itzcrazykns1337/perplexica:${{ env.RELEASE_VERSION }} \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+              --amend itzcrazykns1337/perplexica:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
+            docker manifest push itzcrazykns1337/perplexica:${{ env.RELEASE_VERSION }}
+          fi

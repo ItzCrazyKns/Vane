@@ -28,8 +28,6 @@ export class HuggingFaceTransformersEmbeddings
 
   timeout?: number;
 
-  private pipelinePromise: Promise<any> | undefined;
-
   constructor(fields?: Partial<HuggingFaceTransformersEmbeddingsParams>) {
     super(fields ?? {});
 
@@ -67,12 +65,8 @@ export class HuggingFaceTransformersEmbeddings
   }
 
   private async runEmbedding(texts: string[]) {
-    const { pipeline } = await import('@xenova/transformers');
-
-    const pipe = await (this.pipelinePromise ??= pipeline(
-      'feature-extraction',
-      this.model,
-    ));
+    const { pipeline } = await import('@huggingface/transformers');
+    const pipe = await pipeline('feature-extraction', this.model);
 
     return this.caller.call(async () => {
       const output = await pipe(texts, { pooling: 'mean', normalize: true });

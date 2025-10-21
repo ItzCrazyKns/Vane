@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { getAvailableEmbeddingModelProviders } from '@/lib/providers';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { Document } from 'langchain/document';
+import { Document } from '@langchain/core/documents';
+import ModelRegistry from '@/lib/models/registry';
 
 interface FileRes {
   fileName: string;
@@ -30,8 +30,8 @@ export async function POST(req: Request) {
     const formData = await req.formData();
 
     const files = formData.getAll('files') as File[];
-    const embedding_model = formData.get('embedding_model');
-    const embedding_model_provider = formData.get('embedding_model_provider');
+    const embedding_model = formData.get('embedding_model_key') as string;
+    const embedding_model_provider = formData.get('embedding_model_provider_id') as string;
 
     if (!embedding_model || !embedding_model_provider) {
       return NextResponse.json(
@@ -40,20 +40,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const embeddingModels = await getAvailableEmbeddingModelProviders();
-    const provider =
-      embedding_model_provider ?? Object.keys(embeddingModels)[0];
-    const embeddingModel =
-      embedding_model ?? Object.keys(embeddingModels[provider as string])[0];
+    const registry = new ModelRegistry();
 
-    let embeddingsModel =
-      embeddingModels[provider as string]?.[embeddingModel as string]?.model;
-    if (!embeddingsModel) {
-      return NextResponse.json(
-        { message: 'Invalid embedding model selected' },
-        { status: 400 },
-      );
-    }
+    const model = await registry.loadEmbeddingModel(embedding_model_provider, embedding_model);
 
     const processedFiles: FileRes[] = [];
 
@@ -98,7 +87,7 @@ export async function POST(req: Request) {
           }),
         );
 
-        const embeddings = await embeddingsModel.embedDocuments(
+        const embeddings = await model.embedDocuments(
           splitted.map((doc) => doc.pageContent),
         );
         const embeddingsDataPath = filePath.replace(

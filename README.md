@@ -76,6 +76,35 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 ### Getting Started with Docker (Recommended)
 
+Perplexica can be easily run using Docker. Simply run the following command:
+
+```bash
+docker run -p 3000:3000 --name perplexica itzcrazykns1337/perplexica:latest
+```
+
+This will pull and start the Perplexica container with the bundled SearxNG search engine. Once running, open your browser and navigate to http://localhost:3000. You can then configure your settings (API keys, models, etc.) directly in the setup screen.
+
+**Note**: The image includes both Perplexica and SearxNG, so no additional setup is required.
+
+#### Using Perplexica with Your Own SearxNG Instance
+
+If you already have SearxNG running, you can use the slim version of Perplexica:
+
+```bash
+docker run -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 --name perplexica itzcrazykns1337/perplexica:slim-latest
+```
+
+**Important**: Make sure your SearxNG instance has:
+
+- JSON format enabled in the settings
+- Wolfram Alpha search engine enabled
+
+Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
+
+#### Advanced Setup (Building from Source)
+
+If you prefer to build from source or need more control:
+
 1. Ensure Docker is installed and running on your system.
 2. Clone the Perplexica repository:
 
@@ -85,39 +114,46 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 3. After cloning, navigate to the directory containing the project files.
 
-4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
-
-   - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
-   - `CUSTOM_OPENAI`: Your OpenAI-API-compliant local server URL, model name, and API key. You should run your local server with host set to `0.0.0.0`, take note of which port number it is running on, and then use that port number to set `API_URL = http://host.docker.internal:PORT_NUMBER`. You must specify the model name, such as `MODEL_NAME = "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q4_K_XL"`. Finally, set `API_KEY` to the appropriate value. If you have not defined an API key, just put anything you want in-between the quotation marks: `API_KEY = "whatever-you-want-but-not-blank"` **You only need to configure these settings if you want to use a local OpenAI-compliant server, such as Llama.cpp's [`llama-server`](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)**.
-   - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
-   - `LEMONADE`: Your Lemonade API URL. Since Lemonade runs directly on your local machine (not in Docker), you should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Lemonade on port 8000, use `http://host.docker.internal:8000`. For other ports, adjust accordingly. **You need to fill this if you wish to use Lemonade's models**.
-   - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.`
-   - `ANTHROPIC`: Your Anthropic API key. **You only need to fill this if you wish to use Anthropic models**.
-   - `Gemini`: Your Gemini API key. **You only need to fill this if you wish to use Google's models**.
-   - `DEEPSEEK`: Your Deepseek API key. **Only needed if you want Deepseek models.**
-   - `AIMLAPI`: Your AI/ML API key. **Only needed if you want to use AI/ML API models and embeddings.**
-
-     **Note**: You can change these after starting Perplexica from the settings dialog.
-
-   - `SIMILARITY_MEASURE`: The similarity measure to use (This is filled by default; you can leave it as is if you are unsure about it.)
-
-5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
+4. Build and run using Docker:
 
    ```bash
-   docker compose up -d
+   docker build -t perplexica .
+   docker run -p 3000:3000 --name perplexica perplexica
    ```
 
-6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
+5. Access Perplexica at http://localhost:3000 and configure your settings in the setup screen.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
 
 ### Non-Docker Installation
 
-1. Install SearXNG and allow `JSON` format in the SearXNG settings.
-2. Clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. Ensure you complete all required fields in this file.
-3. After populating the configuration run `npm i`.
-4. Install the dependencies and then execute `npm run build`.
-5. Finally, start the app by running `npm run start`
+1. Install SearXNG and allow `JSON` format in the SearXNG settings. Make sure Wolfram Alpha search engine is also enabled.
+2. Clone the repository:
+
+   ```bash
+   git clone https://github.com/ItzCrazyKns/Perplexica.git
+   cd Perplexica
+   ```
+
+3. Install dependencies:
+
+   ```bash
+   npm i
+   ```
+
+4. Build the application:
+
+   ```bash
+   npm run build
+   ```
+
+5. Start the application:
+
+   ```bash
+   npm run start
+   ```
+
+6. Open your browser and navigate to http://localhost:3000 to complete the setup and configure your settings (API keys, models, SearxNG URL, etc.) in the setup screen.
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 

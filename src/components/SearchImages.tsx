@@ -33,11 +33,10 @@ const SearchImages = ({
           onClick={async () => {
             setLoading(true);
 
-            const chatModelProvider = localStorage.getItem('chatModelProvider');
-            const chatModel = localStorage.getItem('chatModel');
-
-            const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
-            const customOpenAIKey = localStorage.getItem('openAIApiKey');
+            const chatModelProvider = localStorage.getItem(
+              'chatModelProviderId',
+            );
+            const chatModel = localStorage.getItem('chatModelKey');
 
             const res = await fetch(`/api/images`, {
               method: 'POST',
@@ -48,12 +47,8 @@ const SearchImages = ({
                 query: query,
                 chatHistory: chatHistory,
                 chatModel: {
-                  provider: chatModelProvider,
-                  model: chatModel,
-                  ...(chatModelProvider === 'custom_openai' && {
-                    customOpenAIBaseURL: customOpenAIBaseURL,
-                    customOpenAIKey: customOpenAIKey,
-                  }),
+                  providerId: chatModelProvider,
+                  key: chatModel,
                 },
               }),
             });

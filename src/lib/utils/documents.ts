@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { htmlToText } from 'html-to-text';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { Document } from '@langchain/core/documents';
 import pdfParse from 'pdf-parse';
 

@@ -5,7 +5,7 @@
 @font-face {
   font-family: 'PP Editorial';
   src: url('/fonts/pp-ed-ul.otf') format('opentype');
-  font-weight: 200;
+  font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
@@ -18,6 +18,66 @@
   .overflow-hidden-scrollable::-webkit-scrollbar {
     display: none;
   }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #e8edf1 transparent; /* light-200 */
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: #e8edf1; /* light-200 */
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: #d0d7de; /* light-300 */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    * {
+      scrollbar-color: #21262d transparent; /* dark-200 */
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: #21262d; /* dark-200 */
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+      background: #30363d; /* dark-300 */
+    }
+  }
+
+  :root.dark *,
+  html.dark *,
+  body.dark * {
+    scrollbar-color: #21262d transparent; /* dark-200 */
+  }
+
+  :root.dark *::-webkit-scrollbar-thumb,
+  html.dark *::-webkit-scrollbar-thumb,
+  body.dark *::-webkit-scrollbar-thumb {
+    background: #21262d; /* dark-200 */
+  }
+
+  :root.dark *::-webkit-scrollbar-thumb:hover,
+  html.dark *::-webkit-scrollbar-thumb:hover,
+  body.dark *::-webkit-scrollbar-thumb:hover {
+    background: #30363d; /* dark-300 */
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @layer utilities {
@@ -25,6 +85,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
   }
 }

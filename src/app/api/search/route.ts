@@ -1,36 +1,14 @@
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import type { Embeddings } from '@langchain/core/embeddings';
-import { ChatOpenAI } from '@langchain/openai';
-import {
-  getAvailableChatModelProviders,
-  getAvailableEmbeddingModelProviders,
-} from '@/lib/providers';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { MetaSearchAgentType } from '@/lib/search/metaSearchAgent';
-import {
-  getCustomOpenaiApiKey,
-  getCustomOpenaiApiUrl,
-  getCustomOpenaiModelName,
-} from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
-
-interface chatModel {
-  provider: string;
-  name: string;
-  customOpenAIKey?: string;
-  customOpenAIBaseURL?: string;
-}
-
-interface embeddingModel {
-  provider: string;
-  name: string;
-}
+import ModelRegistry from '@/lib/models/registry';
+import { ModelWithProvider } from '@/lib/models/types';
 
 interface ChatRequestBody {
   optimizationMode: 'speed' | 'balanced';
   focusMode: string;
-  chatModel?: chatModel;
-  embeddingModel?: embeddingModel;
+  chatModel: ModelWithProvider;
+  embeddingModel: ModelWithProvider;
   query: string;
   history: Array<[string, string]>;
   stream?: boolean;
@@ -58,59 +36,15 @@ export const POST = async (req: Request) => {
         : new AIMessage({ content: msg[1] });
     });
 
-    const [chatModelProviders, embeddingModelProviders] = await Promise.all([
-      getAvailableChatModelProviders(),
-      getAvailableEmbeddingModelProviders(),
+    const registry = new ModelRegistry();
+
+    const [llm, embeddings] = await Promise.all([
+      registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),
+      registry.loadEmbeddingModel(
+        body.embeddingModel.providerId,
+        body.embeddingModel.key,
+      ),
     ]);
-
-    const chatModelProvider =
-      body.chatModel?.provider || Object.keys(chatModelProviders)[0];
-    const chatModel =
-      body.chatModel?.name ||
-      Object.keys(chatModelProviders[chatModelProvider])[0];
-
-    const embeddingModelProvider =
-      body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0];
-    const embeddingModel =
-      body.embeddingModel?.name ||
-      Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
-
-    let llm: BaseChatModel | undefined;
-    let embeddings: Embeddings | undefined;
-
-    if (body.chatModel?.provider === 'custom_openai') {
-      llm = new ChatOpenAI({
-        modelName: body.chatModel?.name || getCustomOpenaiModelName(),
-        apiKey: body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
-        temperature: 0.7,
-        configuration: {
-          baseURL:
-            body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
-        },
-      }) as unknown as BaseChatModel;
-    } else if (
-      chatModelProviders[chatModelProvider] &&
-      chatModelProviders[chatModelProvider][chatModel]
-    ) {
-      llm = chatModelProviders[chatModelProvider][chatModel]
-        .model as unknown as BaseChatModel | undefined;
-    }
-
-    if (
-      embeddingModelProviders[embeddingModelProvider] &&
-      embeddingModelProviders[embeddingModelProvider][embeddingModel]
-    ) {
-      embeddings = embeddingModelProviders[embeddingModelProvider][
-        embeddingModel
-      ].model as Embeddings | undefined;
-    }
-
-    if (!llm || !embeddings) {
-      return Response.json(
-        { message: 'Invalid model selected' },
-        { status: 400 },
-      );
-    }
 
     const searchHandler: MetaSearchAgentType = searchHandlers[body.focusMode];
 
