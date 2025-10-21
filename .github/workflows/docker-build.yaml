@@ -16,8 +16,8 @@ jobs:
         variant:
           - name: full
             dockerfile: Dockerfile
-          - name: standalone
-            dockerfile: Dockerfile.standalone
+          - name: slim
+            dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -84,8 +84,8 @@ jobs:
         variant:
           - name: full
             dockerfile: Dockerfile
-          - name: standalone
-            dockerfile: Dockerfile.standalone
+          - name: slim
+            dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -150,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        variant: [full, standalone]
+        variant: [full, slim]
     steps:
       - name: Log in to DockerHub
         uses: docker/login-action@v2
