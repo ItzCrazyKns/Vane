@@ -17,6 +17,7 @@ Before making search requests, you'll need to get the available providers and th
 Returns a list of all active providers with their available chat and embedding models.
 
 **Response Example:**
+
 ```json
 {
   "providers": [

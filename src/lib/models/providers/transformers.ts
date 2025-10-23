@@ -4,8 +4,7 @@ import BaseModelProvider from './baseProvider';
 import { Embeddings } from '@langchain/core/embeddings';
 import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
-import { HuggingFaceTransformersEmbeddings } from '@/lib/huggingfaceTransformer';
-
+import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/huggingface_transformers';
 interface TransformersConfig {}
 
 const defaultEmbeddingModels: Model[] = [

@@ -9,7 +9,7 @@ const SettingsButtonMobile = () => {
   return (
     <>
       <button className="lg:hidden" onClick={() => setIsOpen(true)}>
-        <Settings size={18}/>
+        <Settings size={18} />
       </button>
       <AnimatePresence>
         {isOpen && <SettingsDialogue isOpen={isOpen} setIsOpen={setIsOpen} />}
