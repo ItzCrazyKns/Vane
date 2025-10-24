@@ -535,7 +535,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     messageId,
     rewrite = false,
   ) => {
-    if (loading) return;
+    if (loading || !message) return;
     setLoading(true);
     setMessageAppeared(false);
 

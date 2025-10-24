@@ -8,7 +8,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { MinimalProvider } from '@/lib/models/types';
 import { useChat } from '@/lib/hooks/useChat';
 
@@ -30,24 +30,7 @@ const ModelSelector = () => {
         }
 
         const data: { providers: MinimalProvider[] } = await res.json();
-
-        const currentProviderIndex = data.providers.findIndex(
-          (p: MinimalProvider) => {
-            return p.id === chatModelProvider?.providerId;
-          },
-        );
-
-        if (currentProviderIndex === -1) {
-          setProviders(data.providers);
-          return;
-        }
-
-        const selectedProvider = data.providers[currentProviderIndex];
-        const remainingProviders = data.providers.filter(
-          (_, index) => index !== currentProviderIndex,
-        );
-
-        setProviders([selectedProvider, ...remainingProviders]);
+        setProviders(data.providers);
       } catch (error) {
         console.error('Error loading providers:', error);
       } finally {
@@ -56,7 +39,26 @@ const ModelSelector = () => {
     };
 
     loadProviders();
-  }, [chatModelProvider]);
+  }, []);
+
+  const orderedProviders = useMemo(() => {
+    if (!chatModelProvider?.providerId) return providers;
+
+    const currentProviderIndex = providers.findIndex(
+      (p) => p.id === chatModelProvider.providerId,
+    );
+
+    if (currentProviderIndex === -1) {
+      return providers;
+    }
+
+    const selectedProvider = providers[currentProviderIndex];
+    const remainingProviders = providers.filter(
+      (_, index) => index !== currentProviderIndex,
+    );
+
+    return [selectedProvider, ...remainingProviders];
+  }, [providers, chatModelProvider]);
 
   const handleModelSelect = (providerId: string, modelKey: string) => {
     setChatModelProvider({ providerId, key: modelKey });
@@ -64,7 +66,7 @@ const ModelSelector = () => {
     localStorage.setItem('chatModelKey', modelKey);
   };
 
-  const filteredProviders = providers
+  const filteredProviders = orderedProviders
     .map((provider) => ({
       ...provider,
       chatModels: provider.chatModels.filter(
@@ -141,6 +143,7 @@ const ModelSelector = () => {
                             onClick={() =>
                               handleModelSelect(provider.id, model.key)
                             }
+                            type="button"
                             className={cn(
                               'px-3 py-2 flex items-center justify-between text-start duration-200 cursor-pointer transition rounded-lg group',
                               chatModelProvider?.providerId === provider.id &&
