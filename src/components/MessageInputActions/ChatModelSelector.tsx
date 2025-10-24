@@ -31,17 +31,21 @@ const ModelSelector = () => {
 
         const data: { providers: MinimalProvider[] } = await res.json();
 
-        const currentProviderIndex = data.providers.findIndex((p: MinimalProvider) => { 
-          return p.id === chatModelProvider?.providerId
-        })
+        const currentProviderIndex = data.providers.findIndex(
+          (p: MinimalProvider) => {
+            return p.id === chatModelProvider?.providerId;
+          },
+        );
 
         if (currentProviderIndex === -1) {
           setProviders(data.providers);
           return;
         }
-        
-        const selectedProvider = data.providers[currentProviderIndex]
-        const remainingProviders = data.providers.filter((_, index) => index !== currentProviderIndex)
+
+        const selectedProvider = data.providers[currentProviderIndex];
+        const remainingProviders = data.providers.filter(
+          (_, index) => index !== currentProviderIndex,
+        );
 
         setProviders([selectedProvider, ...remainingProviders]);
       } catch (error) {
@@ -150,7 +154,8 @@ const ModelSelector = () => {
                                 size={15}
                                 className={cn(
                                   'shrink-0',
-                                  chatModelProvider?.providerId === provider.id &&
+                                  chatModelProvider?.providerId ===
+                                    provider.id &&
                                     chatModelProvider?.key === model.key
                                     ? 'text-sky-500'
                                     : 'text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70',
@@ -159,7 +164,8 @@ const ModelSelector = () => {
                               <p
                                 className={cn(
                                   'text-sm truncate',
-                                  chatModelProvider?.providerId === provider.id &&
+                                  chatModelProvider?.providerId ===
+                                    provider.id &&
                                     chatModelProvider?.key === model.key
                                     ? 'text-sky-500 font-medium'
                                     : 'text-black/70 dark:text-white/70 group-hover:text-black dark:group-hover:text-white',

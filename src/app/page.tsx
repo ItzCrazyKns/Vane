@@ -7,9 +7,7 @@ export const metadata: Metadata = {
 };
 
 const Home = () => {
-  return (
-    <ChatWindow />
-  );
+  return <ChatWindow />;
 };
 
 export default Home;

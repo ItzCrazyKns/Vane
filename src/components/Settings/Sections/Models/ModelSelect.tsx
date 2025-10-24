@@ -27,7 +27,7 @@ const ModelSelect = ({
       if (type === 'chat') {
         const providerId = newValue.split('/')[0];
         const modelKey = newValue.split('/').slice(1).join('/');
-        
+
         localStorage.setItem('chatModelProviderId', providerId);
         localStorage.setItem('chatModelKey', modelKey);
 
@@ -39,14 +39,8 @@ const ModelSelect = ({
         const providerId = newValue.split('/')[0];
         const modelKey = newValue.split('/').slice(1).join('/');
 
-        localStorage.setItem(
-          'embeddingModelProviderId',
-          providerId,
-        );
-        localStorage.setItem(
-          'embeddingModelKey',
-          modelKey,
-        );
+        localStorage.setItem('embeddingModelProviderId', providerId);
+        localStorage.setItem('embeddingModelKey', modelKey);
 
         setEmbeddingModelProvider({
           providerId: providerId,

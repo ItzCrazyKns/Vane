@@ -262,22 +262,18 @@ export const chatContext = createContext<ChatContext>({
   optimizationMode: '',
   chatModelProvider: { key: '', providerId: '' },
   embeddingModelProvider: { key: '', providerId: '' },
-  rewrite: () => { },
-  sendMessage: async () => { },
-  setFileIds: () => { },
-  setFiles: () => { },
-  setFocusMode: () => { },
-  setOptimizationMode: () => { },
-  setChatModelProvider: () => { },
-  setEmbeddingModelProvider: () => { },
+  rewrite: () => {},
+  sendMessage: async () => {},
+  setFileIds: () => {},
+  setFiles: () => {},
+  setFocusMode: () => {},
+  setOptimizationMode: () => {},
+  setChatModelProvider: () => {},
+  setEmbeddingModelProvider: () => {},
 });
 
-export const ChatProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const params: { chatId: string } = useParams()
+export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
+  const params: { chatId: string } = useParams();
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
