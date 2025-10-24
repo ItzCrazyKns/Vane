@@ -48,6 +48,8 @@ type ChatContext = {
   messageAppeared: boolean;
   isReady: boolean;
   hasError: boolean;
+  chatModelProvider: ChatModelProvider;
+  embeddingModelProvider: EmbeddingModelProvider;
   setOptimizationMode: (mode: string) => void;
   setFocusMode: (mode: string) => void;
   setFiles: (files: File[]) => void;
@@ -58,6 +60,8 @@ type ChatContext = {
     rewrite?: boolean,
   ) => Promise<void>;
   rewrite: (messageId: string) => void;
+  setChatModelProvider: (provider: ChatModelProvider) => void;
+  setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
 };
 
 export interface File {
@@ -256,12 +260,16 @@ export const chatContext = createContext<ChatContext>({
   sections: [],
   notFound: false,
   optimizationMode: '',
-  rewrite: () => {},
-  sendMessage: async () => {},
-  setFileIds: () => {},
-  setFiles: () => {},
-  setFocusMode: () => {},
-  setOptimizationMode: () => {},
+  chatModelProvider: { key: '', providerId: '' },
+  embeddingModelProvider: { key: '', providerId: '' },
+  rewrite: () => { },
+  sendMessage: async () => { },
+  setFileIds: () => { },
+  setFiles: () => { },
+  setFocusMode: () => { },
+  setOptimizationMode: () => { },
+  setChatModelProvider: () => { },
+  setEmbeddingModelProvider: () => { },
 });
 
 export const ChatProvider = ({
@@ -743,6 +751,10 @@ export const ChatProvider = ({
         setOptimizationMode,
         rewrite,
         sendMessage,
+        setChatModelProvider,
+        chatModelProvider,
+        embeddingModelProvider,
+        setEmbeddingModelProvider,
       }}
     >
       {children}

@@ -10,15 +10,14 @@ import {
 } from '@headlessui/react';
 import { Fragment, useEffect, useState } from 'react';
 import { MinimalProvider } from '@/lib/models/types';
+import { useChat } from '@/lib/hooks/useChat';
 
 const ModelSelector = () => {
   const [providers, setProviders] = useState<MinimalProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedModel, setSelectedModel] = useState<{
-    providerId: string;
-    modelKey: string;
-  } | null>(null);
+
+  const { setChatModelProvider, chatModelProvider } = useChat();
 
   useEffect(() => {
     const loadProviders = async () => {
@@ -30,28 +29,21 @@ const ModelSelector = () => {
           throw new Error('Failed to fetch providers');
         }
 
-        const data = await res.json();
-        setProviders(data.providers || []);
+        const data: { providers: MinimalProvider[] } = await res.json();
 
-        const savedProviderId = localStorage.getItem('chatModelProviderId');
-        const savedModelKey = localStorage.getItem('chatModelKey');
+        const currentProviderIndex = data.providers.findIndex((p: MinimalProvider) => { 
+          return p.id === chatModelProvider?.providerId
+        })
 
-        if (savedProviderId && savedModelKey) {
-          setSelectedModel({
-            providerId: savedProviderId,
-            modelKey: savedModelKey,
-          });
-        } else if (data.providers && data.providers.length > 0) {
-          const firstProvider = data.providers.find(
-            (p: MinimalProvider) => p.chatModels.length > 0,
-          );
-          if (firstProvider && firstProvider.chatModels[0]) {
-            setSelectedModel({
-              providerId: firstProvider.id,
-              modelKey: firstProvider.chatModels[0].key,
-            });
-          }
+        if (currentProviderIndex === -1) {
+          setProviders(data.providers);
+          return;
         }
+        
+        const selectedProvider = data.providers[currentProviderIndex]
+        const remainingProviders = data.providers.filter((_, index) => index !== currentProviderIndex)
+
+        setProviders([selectedProvider, ...remainingProviders]);
       } catch (error) {
         console.error('Error loading providers:', error);
       } finally {
@@ -60,10 +52,10 @@ const ModelSelector = () => {
     };
 
     loadProviders();
-  }, []);
+  }, [chatModelProvider]);
 
   const handleModelSelect = (providerId: string, modelKey: string) => {
-    setSelectedModel({ providerId, modelKey });
+    setChatModelProvider({ providerId, key: modelKey });
     localStorage.setItem('chatModelProviderId', providerId);
     localStorage.setItem('chatModelKey', modelKey);
   };
@@ -140,15 +132,15 @@ const ModelSelector = () => {
 
                       <div className="flex flex-col px-2 py-2 space-y-0.5">
                         {provider.chatModels.map((model) => (
-                          <PopoverButton
+                          <button
                             key={model.key}
                             onClick={() =>
                               handleModelSelect(provider.id, model.key)
                             }
                             className={cn(
                               'px-3 py-2 flex items-center justify-between text-start duration-200 cursor-pointer transition rounded-lg group',
-                              selectedModel?.providerId === provider.id &&
-                                selectedModel?.modelKey === model.key
+                              chatModelProvider?.providerId === provider.id &&
+                                chatModelProvider?.key === model.key
                                 ? 'bg-light-secondary dark:bg-dark-secondary'
                                 : 'hover:bg-light-secondary dark:hover:bg-dark-secondary',
                             )}
@@ -158,8 +150,8 @@ const ModelSelector = () => {
                                 size={15}
                                 className={cn(
                                   'shrink-0',
-                                  selectedModel?.providerId === provider.id &&
-                                    selectedModel?.modelKey === model.key
+                                  chatModelProvider?.providerId === provider.id &&
+                                    chatModelProvider?.key === model.key
                                     ? 'text-sky-500'
                                     : 'text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70',
                                 )}
@@ -167,8 +159,8 @@ const ModelSelector = () => {
                               <p
                                 className={cn(
                                   'text-sm truncate',
-                                  selectedModel?.providerId === provider.id &&
-                                    selectedModel?.modelKey === model.key
+                                  chatModelProvider?.providerId === provider.id &&
+                                    chatModelProvider?.key === model.key
                                     ? 'text-sky-500 font-medium'
                                     : 'text-black/70 dark:text-white/70 group-hover:text-black dark:group-hover:text-white',
                                 )}
@@ -176,7 +168,7 @@ const ModelSelector = () => {
                                 {model.name}
                               </p>
                             </div>
-                          </PopoverButton>
+                          </button>
                         ))}
                       </div>
 
