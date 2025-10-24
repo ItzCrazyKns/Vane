@@ -9,6 +9,7 @@ import { Toaster } from 'sonner';
 import ThemeProvider from '@/components/theme/Provider';
 import configManager from '@/lib/config';
 import SetupWizard from '@/components/Setup/SetupWizard';
+import { ChatProvider } from '@/lib/hooks/useChat';
 
 const montserrat = Montserrat({
   weight: ['300', '400', '500', '700'],
@@ -36,7 +37,7 @@ export default function RootLayout({
       <body className={cn('h-full', montserrat.className)}>
         <ThemeProvider>
           {setupComplete ? (
-            <>
+            <ChatProvider>
               <Sidebar>{children}</Sidebar>
               <Toaster
                 toastOptions={{
@@ -47,7 +48,7 @@ export default function RootLayout({
                   },
                 }}
               />
-            </>
+            </ChatProvider>
           ) : (
             <SetupWizard configSections={configSections} />
           )}

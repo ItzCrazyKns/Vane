@@ -17,7 +17,7 @@ import {
   useState,
 } from 'react';
 import crypto from 'crypto';
-import { useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 import { MinimalProvider } from '../models/types';
@@ -274,15 +274,14 @@ export const chatContext = createContext<ChatContext>({
 
 export const ChatProvider = ({
   children,
-  id,
 }: {
   children: React.ReactNode;
-  id?: string;
 }) => {
+  const params: { chatId: string } = useParams()
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
-  const [chatId, setChatId] = useState<string | undefined>(id);
+  const [chatId, setChatId] = useState<string | undefined>(params.chatId);
   const [newChatCreated, setNewChatCreated] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -452,6 +451,19 @@ export const ChatProvider = ({
   }, []);
 
   useEffect(() => {
+    if (params.chatId && params.chatId !== chatId) {
+      setChatId(params.chatId);
+      setMessages([]);
+      setChatHistory([]);
+      setFiles([]);
+      setFileIds([]);
+      setIsMessagesLoaded(false);
+      setNotFound(false);
+      setNewChatCreated(false);
+    }
+  }, [params.chatId, chatId]);
+
+  useEffect(() => {
     if (
       chatId &&
       !newChatCreated &&
@@ -474,7 +486,7 @@ export const ChatProvider = ({
       setChatId(crypto.randomBytes(20).toString('hex'));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
 
   useEffect(() => {
     messagesRef.current = messages;

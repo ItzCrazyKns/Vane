@@ -9,6 +9,7 @@ import Link from 'next/link';
 import NextError from 'next/error';
 import { useChat } from '@/lib/hooks/useChat';
 import Loader from './ui/Loader';
+import SettingsButtonMobile from './Settings/SettingsButtonMobile';
 
 export interface BaseMessage {
   chatId: string;
@@ -56,9 +57,7 @@ const ChatWindow = () => {
     return (
       <div className="relative">
         <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
-          <Link href="/settings">
-            <Settings className="cursor-pointer lg:hidden" />
-          </Link>
+          <SettingsButtonMobile />
         </div>
         <div className="flex flex-col items-center justify-center min-h-screen">
           <p className="dark:text-white/70 text-black/70 text-sm">
