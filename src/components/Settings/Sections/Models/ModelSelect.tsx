@@ -64,8 +64,8 @@ const ModelSelect = ({
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
             {type === 'chat'
-              ? 'Select the model to use for chat responses'
-              : 'Select the model to use for embeddings'}
+              ? 'Choose which model to use for generating responses'
+              : 'Choose which model to use for generating embeddings'}
           </p>
         </div>
         <Select

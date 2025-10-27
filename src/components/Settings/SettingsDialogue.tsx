@@ -28,7 +28,7 @@ const sections = [
   {
     key: 'models',
     name: 'Models',
-    description: 'Configure model settings.',
+    description: 'Connect to AI services and manage connections.',
     icon: BrainCog,
     component: Models,
     dataAdd: 'modelProviders',

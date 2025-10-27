@@ -63,7 +63,11 @@ const SetupConfig = ({
     }
   };
 
-  const hasProviders = providers.length > 0;
+  const visibleProviders = providers.filter(
+    (p) => p.name.toLowerCase() !== 'transformers',
+  );
+  const hasProviders =
+    visibleProviders.filter((p) => p.chatModels.length > 0).length > 0;
 
   return (
     <div className="w-[95vw] md:w-[80vw] lg:w-[65vw] mx-auto px-2 sm:px-4 md:px-6 flex flex-col space-y-6">
@@ -81,10 +85,10 @@ const SetupConfig = ({
             <div className="flex flex-row justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-light-200 dark:border-dark-200">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-black dark:text-white">
-                  Manage Providers
+                  Manage Connections
                 </p>
                 <p className="text-[10px] sm:text-xs text-black/50 dark:text-white/50 mt-0.5">
-                  Add and configure your model providers
+                  Add connections to access AI models
                 </p>
               </div>
               <AddProvider
@@ -100,14 +104,17 @@ const SetupConfig = ({
                     Loading providers...
                   </p>
                 </div>
-              ) : providers.length === 0 ? (
+              ) : visibleProviders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
                   <p className="text-xs sm:text-sm font-medium text-black/70 dark:text-white/70">
-                    No providers configured
+                    No connections configured
+                  </p>
+                  <p className="text-[10px] sm:text-xs text-black/50 dark:text-white/50 mt-1">
+                    Click &quot;Add Connection&quot; above to get started
                   </p>
                 </div>
               ) : (
-                providers.map((provider) => (
+                visibleProviders.map((provider) => (
                   <ModelProvider
                     key={`provider-${provider.id}`}
                     fields={
