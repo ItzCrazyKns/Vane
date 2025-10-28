@@ -48,7 +48,7 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
     let defaultChatModels: Model[] = [];
 
     data.models.forEach((m: any) => {
-      if (m.supportedGenerationMethods.includes('embedText')) {
+      if (m.supportedGenerationMethods.some((genMethod: string) => genMethod === 'embedText' || genMethod === 'embedContent')) {
         defaultEmbeddingModels.push({
           key: m.name,
           name: m.displayName,
