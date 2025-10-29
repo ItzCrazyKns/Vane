@@ -63,7 +63,10 @@ type ConfigModelProvider = {
 type Config = {
   version: number;
   setupComplete: boolean;
-  general: {
+  preferences: {
+    [key: string]: any;
+  };
+  personalization: {
     [key: string]: any;
   };
   modelProviders: ConfigModelProvider[];
@@ -86,7 +89,8 @@ type ModelProviderUISection = {
 };
 
 type UIConfigSections = {
-  general: UIConfigField[];
+  preferences: UIConfigField[];
+  personalization: UIConfigField[];
   modelProviders: ModelProviderUISection[];
   search: UIConfigField[];
 };
@@ -101,4 +105,5 @@ export type {
   ModelProviderUISection,
   ConfigModelProvider,
   TextareaUIConfigField,
+  SwitchUIConfigField,
 };

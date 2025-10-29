@@ -13,14 +13,15 @@ class ConfigManager {
   currentConfig: Config = {
     version: this.configVersion,
     setupComplete: false,
-    general: {},
+    preferences: {},
+    personalization: {},
     modelProviders: [],
     search: {
       searxngURL: '',
     },
   };
   uiConfigSections: UIConfigSections = {
-    general: [
+    preferences: [
       {
         name: 'Theme',
         key: 'theme',
@@ -41,16 +42,6 @@ class ConfigManager {
         scope: 'client',
       },
       {
-        name: 'System Instructions',
-        key: 'systemInstructions',
-        type: 'textarea',
-        required: false,
-        description: 'Add custom behavior or tone for the model.',
-        placeholder:
-          'e.g., "Respond in a friendly and concise tone" or "Use British English and format answers as bullet points."',
-        scope: 'client',
-      },
-      {
         name: 'Measurement Unit',
         key: 'measureUnit',
         type: 'select',
@@ -67,6 +58,27 @@ class ConfigManager {
         required: false,
         description: 'Choose between Metric  and Imperial measurement unit.',
         default: 'Metric',
+        scope: 'client',
+      },
+      {
+        name: 'Auto video & image search',
+        key: 'autoMediaSearch',
+        type: 'switch',
+        required: false,
+        description: 'Automatically search for relevant images and videos.',
+        default: true,
+        scope: 'client',
+      },
+    ],
+    personalization: [
+      {
+        name: 'System Instructions',
+        key: 'systemInstructions',
+        type: 'textarea',
+        required: false,
+        description: 'Add custom behavior or tone for the model.',
+        placeholder:
+          'e.g., "Respond in a friendly and concise tone" or "Use British English and format answers as bullet points."',
         scope: 'client',
       },
     ],

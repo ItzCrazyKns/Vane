@@ -1,7 +1,7 @@
 import { UIConfigField } from '@/lib/config/types';
 import SettingsField from '../SettingsField';
 
-const General = ({
+const Personalization = ({
   fields,
   values,
 }: {
@@ -19,11 +19,11 @@ const General = ({
               ? localStorage.getItem(field.key)
               : values[field.key]) ?? field.default
           }
-          dataAdd="general"
+          dataAdd="personalization"
         />
       ))}
     </div>
   );
 };
 
-export default General;
+export default Personalization;

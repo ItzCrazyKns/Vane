@@ -4,9 +4,10 @@ import {
   BrainCog,
   ChevronLeft,
   Search,
-  Settings,
+  Sliders,
+  ToggleRight,
 } from 'lucide-react';
-import General from './Sections/General';
+import Preferences from './Sections/Preferences';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -15,15 +16,24 @@ import { cn } from '@/lib/utils';
 import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
+import Personalization from './Sections/Personalization';
 
 const sections = [
   {
-    key: 'general',
-    name: 'General',
-    description: 'Adjust common settings.',
-    icon: Settings,
-    component: General,
-    dataAdd: 'general',
+    key: 'preferences',
+    name: 'Preferences',
+    description: 'Customize your application preferences.',
+    icon: Sliders,
+    component: Preferences,
+    dataAdd: 'preferences',
+  },
+  {
+    key: 'personalization',
+    name: 'Personalization',
+    description: 'Customize the behavior and tone of the model.',
+    icon: ToggleRight,
+    component: Personalization,
+    dataAdd: 'personalization',
   },
   {
     key: 'models',
