@@ -38,11 +38,17 @@ type TextareaUIConfigField = BaseUIConfigField & {
   default?: string;
 };
 
+type SwitchUIConfigField = BaseUIConfigField & {
+  type: 'switch';
+  default?: boolean;
+};
+
 type UIConfigField =
   | StringUIConfigField
   | SelectUIConfigField
   | PasswordUIConfigField
-  | TextareaUIConfigField;
+  | TextareaUIConfigField
+  | SwitchUIConfigField;
 
 type ConfigModelProvider = {
   id: string;
