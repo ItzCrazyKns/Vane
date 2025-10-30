@@ -1,6 +1,7 @@
 import {
   SelectUIConfigField,
   StringUIConfigField,
+  SwitchUIConfigField,
   TextareaUIConfigField,
   UIConfigField,
 } from '@/lib/config/types';
@@ -9,6 +10,7 @@ import Select from '../ui/Select';
 import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
 import { Loader2 } from 'lucide-react';
+import { Switch } from '@headlessui/react';
 
 const SettingsSelect = ({
   field,
@@ -237,6 +239,79 @@ const SettingsTextarea = ({
   );
 };
 
+const SettingsSwitch = ({
+  field,
+  value,
+  setValue,
+  dataAdd,
+}: {
+  field: SwitchUIConfigField;
+  value?: any;
+  setValue: (value: any) => void;
+  dataAdd: string;
+}) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async (newValue: boolean) => {
+    setLoading(true);
+    setValue(newValue);
+    try {
+      if (field.scope === 'client') {
+        localStorage.setItem(field.key, String(newValue));
+      } else {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            key: `${dataAdd}.${field.key}`,
+            value: newValue,
+          }),
+        });
+
+        if (!res.ok) {
+          console.error('Failed to save config:', await res.text());
+          throw new Error('Failed to save configuration');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving config:', error);
+      toast.error('Failed to save configuration.');
+    } finally {
+      setTimeout(() => setLoading(false), 150);
+    }
+  };
+
+  const isChecked = value === true || value === 'true';
+
+  return (
+    <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
+      <div className="flex flex-row items-center space-x-3 lg:space-x-5 w-full justify-between">
+        <div>
+          <h4 className="text-sm lg:text-base text-black dark:text-white">
+            {field.name}
+          </h4>
+          <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
+            {field.description}
+          </p>
+        </div>
+        <Switch
+          checked={isChecked}
+          onChange={handleSave}
+          disabled={loading}
+          className="group relative flex h-6 w-12 shrink-0 cursor-pointer rounded-full bg-white/10 p-1 duration-200 ease-in-out focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed data-[checked]:bg-sky-500"
+        >
+          <span
+            aria-hidden="true"
+            className="pointer-events-none inline-block size-4 translate-x-0 rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out group-data-[checked]:translate-x-6"
+          />
+        </Switch>
+      </div>
+    </section>
+  );
+};
+
 const SettingsField = ({
   field,
   value,
@@ -270,6 +345,15 @@ const SettingsField = ({
     case 'textarea':
       return (
         <SettingsTextarea
+          field={field}
+          value={val}
+          setValue={setVal}
+          dataAdd={dataAdd}
+        />
+      );
+    case 'switch':
+      return (
+        <SettingsSwitch
           field={field}
           value={val}
           setValue={setVal}
