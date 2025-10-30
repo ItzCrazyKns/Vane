@@ -6,11 +6,8 @@ const getClientConfig = (key: string, defaultVal?: any) => {
 
 export const getTheme = () => getClientConfig('theme', 'dark');
 
-export const getAutoImageSearch = () =>
-  Boolean(getClientConfig('autoImageSearch', 'true'));
-
-export const getAutoVideoSearch = () =>
-  Boolean(getClientConfig('autoVideoSearch', 'true'));
+export const getAutoMediaSearch = () =>
+  getClientConfig('autoMediaSearch', 'true') === 'true';
 
 export const getSystemInstructions = () =>
   getClientConfig('systemInstructions', '');

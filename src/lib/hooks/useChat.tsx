@@ -21,6 +21,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 import { MinimalProvider } from '../models/types';
+import { getAutoMediaSearch } from '../config/clientRegistry';
 
 export type Section = {
   userMessage: UserMessage;
@@ -93,17 +94,6 @@ const checkConfig = async (
     let embeddingModelProviderId = localStorage.getItem(
       'embeddingModelProviderId',
     );
-
-    const autoImageSearch = localStorage.getItem('autoImageSearch');
-    const autoVideoSearch = localStorage.getItem('autoVideoSearch');
-
-    if (!autoImageSearch) {
-      localStorage.setItem('autoImageSearch', 'true');
-    }
-
-    if (!autoVideoSearch) {
-      localStorage.setItem('autoVideoSearch', 'false');
-    }
 
     const res = await fetch(`/api/providers`, {
       headers: {
@@ -624,16 +614,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
-        const autoImageSearch = localStorage.getItem('autoImageSearch');
-        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
+        const autoMediaSearch = getAutoMediaSearch();
 
-        if (autoImageSearch === 'true') {
+        if (autoMediaSearch) {
           document
             .getElementById(`search-images-${lastMsg.messageId}`)
             ?.click();
-        }
 
-        if (autoVideoSearch === 'true') {
           document
             .getElementById(`search-videos-${lastMsg.messageId}`)
             ?.click();
