@@ -64,7 +64,7 @@ const SettingsSelect = ({
     <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
       <div className="space-y-3 lg:space-y-5">
         <div>
-          <h4 className="text-sm lg:text-base text-black dark:text-white">
+          <h4 className="text-sm lg:text-sm text-black dark:text-white">
             {field.name}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
@@ -135,7 +135,7 @@ const SettingsInput = ({
     <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
       <div className="space-y-3 lg:space-y-5">
         <div>
-          <h4 className="text-sm lg:text-base text-black dark:text-white">
+          <h4 className="text-sm lg:text-sm text-black dark:text-white">
             {field.name}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
@@ -147,7 +147,7 @@ const SettingsInput = ({
             value={value ?? field.default ?? ''}
             onChange={(event) => setValue(event.target.value)}
             onBlur={(event) => handleSave(event.target.value)}
-            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             placeholder={field.placeholder}
             type="text"
             disabled={loading}
@@ -211,7 +211,7 @@ const SettingsTextarea = ({
     <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
       <div className="space-y-3 lg:space-y-5">
         <div>
-          <h4 className="text-sm lg:text-base text-black dark:text-white">
+          <h4 className="text-sm lg:text-sm text-black dark:text-white">
             {field.name}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
@@ -223,7 +223,7 @@ const SettingsTextarea = ({
             value={value ?? field.default ?? ''}
             onChange={(event) => setValue(event.target.value)}
             onBlur={(event) => handleSave(event.target.value)}
-            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             placeholder={field.placeholder}
             rows={4}
             disabled={loading}
@@ -289,7 +289,7 @@ const SettingsSwitch = ({
     <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
       <div className="flex flex-row items-center space-x-3 lg:space-x-5 w-full justify-between">
         <div>
-          <h4 className="text-sm lg:text-base text-black dark:text-white">
+          <h4 className="text-sm lg:text-sm text-black dark:text-white">
             {field.name}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">

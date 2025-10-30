@@ -20,7 +20,7 @@ const Models = ({
   return (
     <div className="flex-1 space-y-6 overflow-y-auto py-6">
       <div className="flex flex-col px-6 gap-y-4">
-        <h3 className="text-xs lg:text-sm text-black/70 dark:text-white/70">
+        <h3 className="text-xs lg:text-xs text-black/70 dark:text-white/70">
           Select models
         </h3>
         <ModelSelect
@@ -38,7 +38,7 @@ const Models = ({
       </div>
       <div className="border-t border-light-200 dark:border-dark-200" />
       <div className="flex flex-row justify-between items-center px-6 ">
-        <p className="text-xs lg:text-sm text-black/70 dark:text-white/70">
+        <p className="text-xs lg:text-xs text-black/70 dark:text-white/70">
           Manage connections
         </p>
         <AddProvider modelProviders={fields} setProviders={setProviders} />

@@ -176,7 +176,7 @@ const SettingsDialogue = ({
                   <div className="flex flex-1 flex-col overflow-hidden">
                     <div className="border-b border-light-200/60 px-6 pb-6 lg:pt-6 dark:border-dark-200/60 flex-shrink-0">
                       <div className="flex flex-col">
-                        <h4 className="font-medium text-black dark:text-white text-sm lg:text-base">
+                        <h4 className="font-medium text-black dark:text-white text-sm lg:text-sm">
                           {selectedSection.name}
                         </h4>
                         <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">

@@ -97,7 +97,7 @@ const AddModel = ({
             >
               <DialogPanel className="w-full mx-4 lg:w-[600px] max-h-[85vh] flex flex-col border bg-light-primary dark:bg-dark-primary border-light-secondary dark:border-dark-secondary rounded-lg">
                 <div className="px-6 pt-6 pb-4">
-                  <h3 className="text-black/90 dark:text-white/90 font-medium">
+                  <h3 className="text-black/90 dark:text-white/90 font-medium text-sm">
                     Add new {type === 'chat' ? 'chat' : 'embedding'} model
                   </h3>
                 </div>
@@ -115,7 +115,7 @@ const AddModel = ({
                         <input
                           value={modelName}
                           onChange={(e) => setModelName(e.target.value)}
-                          className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                           placeholder="e.g., GPT-4"
                           type="text"
                           required
@@ -128,7 +128,7 @@ const AddModel = ({
                         <input
                           value={modelKey}
                           onChange={(e) => setModelKey(e.target.value)}
-                          className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                          className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                           placeholder="e.g., gpt-4"
                           type="text"
                           required
@@ -140,7 +140,7 @@ const AddModel = ({
                       <button
                         type="submit"
                         disabled={loading}
-                        className="px-4 py-2 rounded-lg text-sm bg-sky-500 text-white font-medium disabled:opacity-85 hover:opacity-85 active:scale-95 transition duration-200"
+                        className="px-4 py-2 rounded-lg text-[13px] bg-sky-500 text-white font-medium disabled:opacity-85 hover:opacity-85 active:scale-95 transition duration-200"
                       >
                         {loading ? (
                           <Loader2 className="animate-spin" size={16} />

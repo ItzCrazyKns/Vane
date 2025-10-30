@@ -59,7 +59,7 @@ const ModelSelect = ({
     <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
       <div className="space-y-3 lg:space-y-5">
         <div>
-          <h4 className="text-sm lg:text-base text-black dark:text-white">
+          <h4 className="text-sm lg:text-sm text-black dark:text-white">
             Select {type === 'chat' ? 'Chat Model' : 'Embedding Model'}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
@@ -86,7 +86,7 @@ const ModelSelect = ({
                   })),
                 )
           }
-          className="!text-xs lg:!text-sm"
+          className="!text-xs lg:!text-[13px]"
           loading={loading}
           disabled={loading}
         />
