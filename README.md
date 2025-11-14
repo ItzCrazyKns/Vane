@@ -59,9 +59,7 @@ Warp is revolutionizing development workflows with AI-powered features, modern U
 
 We'd also like to thank the following partners for their generous support:
 
-| | |
-|---|---|
-| ![Exa](.assets/sponsers/exa.png) **[Exa](https://dashboard.exa.ai)** | The Perfect Web Search API - Exa provides web search, web crawling, deep research, and answer APIs designed for LLMs |
+| [![Exa](.assets/sponsers/exa.png)](https://dashboard.exa.ai) | The Perfect Web Search API for LLMs - [Try Exa](https://dashboard.exa.ai) for web search, crawling, deep research, and answer APIs |
 
 ## Installation
 
