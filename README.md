@@ -63,7 +63,7 @@ We'd also like to thank the following partners for their generous support:
   <tr>
     <td>
       <a href="https://dashboard.exa.ai" target="_blank">
-        <img src=".assets/sponsers/exa.png" alt="Exa" style="max-width: 8rem; max-height: 8rem; border-radius: .75rem;" />
+        <img src=".assets/sponsers/exa.png" alt="Exa" style="max-width: 8rem; max-height: 3rem; border-radius: .75rem;" />
       </a>
     </td>
     <td>
