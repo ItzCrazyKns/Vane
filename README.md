@@ -14,6 +14,11 @@ Perplexica is a **privacy-focused AI answering engine** that runs entirely on yo
 
 Want to know more about its architecture and how it works? You can read it [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/architecture/README.md).
 
+## About this fork (Perplexica-no-ads)
+
+- This fork tracks Perplexica with a focus on a clean, ad-free experience.
+- Added Settings → Preferences switches to show or hide the home weather and recent news widgets.
+
 ## ✨ Features
 
 🤖 **Support for all major AI providers** - Use local LLMs through Ollama or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, and more. Mix and match models based on your needs.
@@ -35,6 +40,8 @@ Want to know more about its architecture and how it works? You can read it [here
 📚 **Discover** - Browse interesting articles and trending content throughout the day. Stay informed without even searching.
 
 🕒 **Search history** - Every search is saved locally so you can revisit your discoveries anytime. Your research is never lost.
+
+🧩 **Home widgets control** - Toggle the weather and recent news cards on/off from Settings → Preferences.
 
 ✨ **More coming soon** - We're actively developing new features based on community feedback. Join our Discord to help shape Perplexica's future!
 
@@ -76,32 +83,39 @@ We'd also like to thank the following partners for their generous support:
 
 There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. Using Docker is highly recommended.
 
-### Getting Started with Docker (Recommended)
+### Docker (build from this fork)
 
-Perplexica can be easily run using Docker. Simply run the following command:
+Build a local image from this repository and run it:
 
 ```bash
-docker run -d -p 3000:3000 -v perplexica-data:/home/perplexica/data -v perplexica-uploads:/home/perplexica/uploads --name perplexica itzcrazykns1337/perplexica:latest
+docker build -t perplexica-no-ads .
+docker run -d -p 3000:3000 \
+  -v perplexica-data:/home/perplexica/data \
+  -v perplexica-uploads:/home/perplexica/uploads \
+  --name perplexica-no-ads \
+  perplexica-no-ads
 ```
 
-This will pull and start the Perplexica container with the bundled SearxNG search engine. Once running, open your browser and navigate to http://localhost:3000. You can then configure your settings (API keys, models, etc.) directly in the setup screen.
-
-**Note**: The image includes both Perplexica and SearxNG, so no additional setup is required. The `-v` flags create persistent volumes for your data and uploaded files.
+Then open http://localhost:3000 to finish setup (API keys, models, etc.).
 
 #### Using Perplexica with Your Own SearxNG Instance
 
-If you already have SearxNG running, you can use the slim version of Perplexica:
+If you already have SearxNG running, build the slim image and pass your URL:
 
 ```bash
-docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v perplexica-data:/home/perplexica/data -v perplexica-uploads:/home/perplexica/uploads --name perplexica itzcrazykns1337/perplexica:slim-latest
+docker build -f Dockerfile.slim -t perplexica-no-ads:slim .
+docker run -d -p 3000:3000 \
+  -e SEARXNG_API_URL=http://your-searxng-url:8080 \
+  -v perplexica-data:/home/perplexica/data \
+  -v perplexica-uploads:/home/perplexica/uploads \
+  --name perplexica-no-ads \
+  perplexica-no-ads:slim
 ```
 
 **Important**: Make sure your SearxNG instance has:
 
 - JSON format enabled in the settings
 - Wolfram Alpha search engine enabled
-
-Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
 
 #### Advanced Setup (Building from Source)
 
@@ -111,7 +125,7 @@ If you prefer to build from source or need more control:
 2. Clone the Perplexica repository:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Perplexica.git
+   git clone https://github.com/PSYEONE/Perplexica-no-ads.git
    ```
 
 3. After cloning, navigate to the directory containing the project files.
@@ -119,8 +133,8 @@ If you prefer to build from source or need more control:
 4. Build and run using Docker:
 
    ```bash
-   docker build -t perplexica .
-   docker run -d -p 3000:3000 -v perplexica-data:/home/perplexica/data -v perplexica-uploads:/home/perplexica/uploads --name perplexica perplexica
+   docker build -t perplexica-no-ads .
+   docker run -d -p 3000:3000 -v perplexica-data:/home/perplexica/data -v perplexica-uploads:/home/perplexica/uploads --name perplexica-no-ads perplexica-no-ads
    ```
 
 5. Access Perplexica at http://localhost:3000 and configure your settings in the setup screen.
@@ -133,8 +147,8 @@ If you prefer to build from source or need more control:
 2. Clone the repository:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Perplexica.git
-   cd Perplexica
+   git clone https://github.com/PSYEONE/Perplexica-no-ads.git
+   cd Perplexica-no-ads
    ```
 
 3. Install dependencies:
