@@ -12,6 +12,12 @@ import { useTheme } from 'next-themes';
 import { Loader2 } from 'lucide-react';
 import { Switch } from '@headlessui/react';
 
+const emitClientConfigChanged = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('client-config-changed'));
+  }
+};
+
 const SettingsSelect = ({
   field,
   value,
@@ -35,6 +41,7 @@ const SettingsSelect = ({
         if (field.key === 'theme') {
           setTheme(newValue);
         }
+        emitClientConfigChanged();
       } else {
         const res = await fetch('/api/config', {
           method: 'POST',
@@ -106,6 +113,7 @@ const SettingsInput = ({
     try {
       if (field.scope === 'client') {
         localStorage.setItem(field.key, newValue);
+        emitClientConfigChanged();
       } else {
         const res = await fetch('/api/config', {
           method: 'POST',
@@ -182,6 +190,7 @@ const SettingsTextarea = ({
     try {
       if (field.scope === 'client') {
         localStorage.setItem(field.key, newValue);
+        emitClientConfigChanged();
       } else {
         const res = await fetch('/api/config', {
           method: 'POST',
@@ -258,6 +267,7 @@ const SettingsSwitch = ({
     try {
       if (field.scope === 'client') {
         localStorage.setItem(field.key, String(newValue));
+        emitClientConfigChanged();
       } else {
         const res = await fetch('/api/config', {
           method: 'POST',
