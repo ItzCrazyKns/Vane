@@ -14,7 +14,7 @@ import {
 } from '@/lib/config/clientRegistry';
 
 const EmptyChat = () => {
-  const [showWeather, setShowWeather] = useState(true);
+  const [showWeather, setShowWeather] = useState(() => (typeof window !== 'undefined' ? getShowWeatherWidget() : true));
   const [showNews, setShowNews] = useState(() => (typeof window !== 'undefined' ? getShowNewsWidget() : true));
 
   useEffect(() => {
