@@ -15,7 +15,7 @@ import {
 
 const EmptyChat = () => {
   const [showWeather, setShowWeather] = useState(true);
-  const [showNews, setShowNews] = useState(true);
+  const [showNews, setShowNews] = useState(() => (typeof window !== 'undefined' ? getShowNewsWidget() : true));
 
   useEffect(() => {
     const updateWidgetVisibility = () => {
