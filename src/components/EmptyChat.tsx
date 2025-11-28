@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
 import { Settings } from 'lucide-react';
@@ -14,8 +14,12 @@ import {
 } from '@/lib/config/clientRegistry';
 
 const EmptyChat = () => {
-  const [showWeather, setShowWeather] = useState(() => (typeof window !== 'undefined' ? getShowWeatherWidget() : true));
-  const [showNews, setShowNews] = useState(() => (typeof window !== 'undefined' ? getShowNewsWidget() : true));
+  const [showWeather, setShowWeather] = useState(() =>
+    typeof window !== 'undefined' ? getShowWeatherWidget() : true,
+  );
+  const [showNews, setShowNews] = useState(() =>
+    typeof window !== 'undefined' ? getShowNewsWidget() : true,
+  );
 
   useEffect(() => {
     const updateWidgetVisibility = () => {
