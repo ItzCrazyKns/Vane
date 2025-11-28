@@ -69,6 +69,24 @@ class ConfigManager {
         default: true,
         scope: 'client',
       },
+      {
+        name: 'Show weather widget',
+        key: 'showWeatherWidget',
+        type: 'switch',
+        required: false,
+        description: 'Display the weather card on the home screen.',
+        default: true,
+        scope: 'client',
+      },
+      {
+        name: 'Show news widget',
+        key: 'showNewsWidget',
+        type: 'switch',
+        required: false,
+        description: 'Display the recent news card on the home screen.',
+        default: true,
+        scope: 'client',
+      },
     ],
     personalization: [
       {
