@@ -1,15 +1,70 @@
 services:
+  # Perplexica
   perplexica:
-    image: itzcrazykns1337/perplexica:latest
+    image: itzcrazykns1337/perplexica:main
+    build:
+      context: .
+      dockerfile: app.dockerfile
+    container_name: perplexica
     ports:
-      - '3000:3000'
+      - 3000:3000
+    environment:
+      - SEARXNG_API_URL=http://searxng:8080
+      - OLLAMA_API_URL=http://127.0.0.1:11434
+      - DATA_DIR=/home/perplexica
+    depends_on:
+      - searxng
+      - ollama
+    networks:
+      - ai_network
     volumes:
-      - data:/home/perplexica/data
+      - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
+      - ./config.toml:/home/perplexica/config.toml
+    restart: unless-stopped
+
+
+
+  # SearXNG
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    # container_name: searxng
+    ports:
+      - 4000:8080
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    networks:
+      - ai_network
+    restart: unless-stopped
+
+  # Ollama
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - 11434:11434
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_ORIGINS=http://localhost,https://localhost,http://127.0.0.1,https://127.0.0.1,http://0.0.0.0,https://0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            capabilities: ["gpu"]
+            count: all  # Adjust count for the number of GPUs you want to use
+    networks:
+      - ai_network
     restart: unless-stopped
 
 volumes:
-  data:
-    name: 'perplexica-data'
+  ollama_data:
+  backend-dbstore:
   uploads:
-    name: 'perplexica-uploads'
+
+networks:
+  ai_network:
+    driver: bridge
+
