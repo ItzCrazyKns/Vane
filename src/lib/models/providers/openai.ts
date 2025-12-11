@@ -61,6 +61,22 @@ const defaultChatModels: Model[] = [
     key: 'gpt-5-mini',
   },
   {
+    name: 'GPT 5 Pro',
+    key: 'gpt-5-pro',
+  },
+  {
+    name: 'GPT 5.1',
+    key: 'gpt-5.1',
+  },
+  {
+    name: 'GPT 5.2',
+    key: 'gpt-5.2',
+  },
+  {
+    name: 'GPT 5.2 Pro',
+    key: 'gpt-5.2-pro',
+  },
+  {
     name: 'o1',
     key: 'o1',
   },
