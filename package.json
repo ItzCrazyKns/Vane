@@ -37,7 +37,7 @@
     "lucide-react": "^0.363.0",
     "mammoth": "^1.9.1",
     "markdown-to-jsx": "^7.7.2",
-    "next": "^15.2.2",
+    "next": "^15.2.8",
     "next-themes": "^0.3.0",
     "pdf-parse": "^1.1.1",
     "react": "^18",
