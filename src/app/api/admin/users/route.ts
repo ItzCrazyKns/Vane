@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { users, auth } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 
 /**
  * GET /api/admin/users - List all users (admin only)
@@ -92,7 +92,7 @@ export async function PATCH(req: NextRequest) {
     // Prevent demoting yourself if you're the last admin
     if (userId === currentUserId && role === 'user') {
       const adminCount = await db
-        .select({ count: db.$count() })
+        .select({ count: count() })
         .from(users)
         .where(eq(users.role, 'admin'))
         .execute();
