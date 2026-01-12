@@ -17,6 +17,7 @@ type UploadManagerParams = {
 
 type RecordedFile = {
     id: string;
+    userId: string | null;  // User who uploaded the file
     name: string;
     filePath: string;
     contentPath: string;
@@ -63,18 +64,30 @@ class UploadManager {
         fs.writeFileSync(UploadManager.uploadedFilesRecordPath, JSON.stringify({ files: currentData }, null, 2));
     }
 
-    static getFile(fileId: string): RecordedFile | null {
+    static getFile(fileId: string, userId?: string | null): RecordedFile | null {
         const recordedFiles = this.getRecordedFiles();
+        const file = recordedFiles.find(f => f.id === fileId);
 
-        return recordedFiles.find(f => f.id === fileId) || null;
+        if (!file) {
+            return null;
+        }
+
+        // If userId is provided, verify ownership
+        // Allow access if file has no owner (legacy files) or if userId matches
+        if (userId !== undefined && file.userId !== null && file.userId !== userId) {
+            console.warn(`Access denied: User ${userId} attempted to access file ${fileId} owned by ${file.userId}`);
+            return null;
+        }
+
+        return file;
     }
 
-    static getFileChunks(fileId: string): { content: string; embedding: number[] }[] {
+    static getFileChunks(fileId: string, userId?: string | null): { content: string; embedding: number[] }[] {
         try {
-            const recordedFile = this.getFile(fileId);
+            const recordedFile = this.getFile(fileId, userId);
 
             if (!recordedFile) {
-                throw new Error(`File with ID ${fileId} not found`);
+                throw new Error(`File with ID ${fileId} not found or access denied`);
             }
 
             const contentData = JSON.parse(fs.readFileSync(recordedFile.contentPath, 'utf-8'))
@@ -174,7 +187,7 @@ class UploadManager {
         }
     }
 
-    async processFiles(files: File[]): Promise<FileRes[]> {
+    async processFiles(files: File[], userId?: string | null): Promise<FileRes[]> {
         const processedFiles: FileRes[] = [];
 
         await Promise.all(files.map(async (file) => {
@@ -196,6 +209,7 @@ class UploadManager {
 
             const fileRecord: RecordedFile = {
                 id: fileId,
+                userId: userId || null,
                 name: file.name,
                 filePath: filePath,
                 contentPath: contentFilePath,

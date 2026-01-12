@@ -39,3 +39,10 @@ db.sqlite
 /searxng
 
 certificates
+
+# Secret key
+.env.local
+
+# Package manager - using yarn for Docker
+pnpm-lock.yaml
+package-lock.json

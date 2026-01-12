@@ -1,1 +1,1 @@
-/* Do nothing */
+SELECT 1; -- placeholder migration

@@ -70,33 +70,32 @@ const safeValidateBody = (data: unknown) => {
 
 const ensureChatExists = async (input: {
   id: string;
+  userId: string | null;
   sources: SearchSources[];
   query: string;
   fileIds: string[];
 }) => {
   try {
-    const exists = await db.query.chats
-      .findFirst({
-        where: eq(chats.id, input.id),
-      })
-      .execute();
-
-    if (!exists) {
-      await db.insert(chats).values({
+    // Use INSERT OR IGNORE to handle race condition where two requests
+    // try to create the same chat simultaneously
+    await db
+      .insert(chats)
+      .values({
         id: input.id,
+        userId: input.userId,
         createdAt: new Date().toISOString(),
         sources: input.sources,
         title: input.query,
         files: input.fileIds.map((id) => {
           return {
             fileId: id,
-            name: UploadManager.getFile(id)?.name || 'Uploaded File',
+            name: UploadManager.getFile(id, input.userId)?.name || 'Uploaded File',
           };
         }),
-      });
-    }
+      })
+      .onConflictDoNothing();
   } catch (err) {
-    console.error('Failed to check/save chat:', err);
+    console.error('Failed to save chat:', err);
   }
 };
 
@@ -210,6 +209,8 @@ export const POST = async (req: Request) => {
       }
     });
 
+    const userId = req.headers.get('x-user-id');
+
     agent.searchAsync(session, {
       chatHistory: history,
       followUp: message.content,
@@ -222,11 +223,12 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
+        userId,
       },
     });
-
     ensureChatExists({
       id: body.message.chatId,
+      userId,
       sources: body.sources as SearchSources[],
       fileIds: body.files,
       query: body.message.content,

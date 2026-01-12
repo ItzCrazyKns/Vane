@@ -4,6 +4,9 @@ import UploadManager from '@/lib/uploads/manager';
 
 export async function POST(req: Request) {
   try {
+    // Get userId from middleware-injected headers
+    const userId = req.headers.get('x-user-id');
+
     const formData = await req.formData();
 
     const files = formData.getAll('files') as File[];
@@ -20,12 +23,13 @@ export async function POST(req: Request) {
     const registry = new ModelRegistry();
 
     const model = await registry.loadEmbeddingModel(embeddingModelProvider, embeddingModel);
-    
+
     const uploadManager = new UploadManager({
       embeddingModel: model,
     })
 
-    const processedFiles = await uploadManager.processFiles(files);
+    // Pass userId to associate files with the user
+    const processedFiles = await uploadManager.processFiles(files, userId);
 
     return NextResponse.json({
       files: processedFiles,

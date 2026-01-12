@@ -7,6 +7,9 @@ services:
       - '3000:3000'
     volumes:
       - data:/home/perplexica/data
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-please-change-this-secret-in-production}
+      - NODE_ENV=production
     restart: unless-stopped
 
 volumes:

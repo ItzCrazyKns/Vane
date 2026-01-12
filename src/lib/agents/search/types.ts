@@ -13,6 +13,7 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
+  userId?: string | null;  // User ID for file access verification
 };
 
 export type SearchAgentInput = {
@@ -66,6 +67,7 @@ export type AdditionalConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   session: SessionManager;
+  userId?: string | null;  // User ID for file access verification
 };
 
 export type ResearcherInput = {

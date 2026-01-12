@@ -323,10 +323,11 @@ export const getResearcherPrompt = (
   i: number,
   maxIteration: number,
   fileIds: string[],
+  userId?: string | null,
 ) => {
   let prompt = '';
 
-  const filesData = UploadStore.getFileData(fileIds);
+  const filesData = UploadStore.getFileData(fileIds, userId);
 
   const fileDesc = filesData
     .map(

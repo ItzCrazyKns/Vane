@@ -21,9 +21,12 @@
     "@tailwindcss/typography": "^0.5.12",
     "@toolsycc/json-repair": "^0.1.22",
     "axios": "^1.8.3",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^11.9.1",
     "clsx": "^2.1.0",
     "drizzle-orm": "^0.40.1",
+    "framer-motion": "^12.25.0",
+    "jose": "^6.1.3",
     "js-tiktoken": "^1.0.21",
     "jspdf": "^3.0.4",
     "lightweight-charts": "^5.0.9",
@@ -53,6 +56,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/better-sqlite3": "^7.6.12",
     "@types/jspdf": "^2.0.0",
     "@types/node": "^24.8.1",

@@ -63,6 +63,7 @@ class Researcher {
         i,
         maxIteration,
         input.config.fileIds,
+        input.config.userId,
       );
 
       const actionStream = input.config.llm.streamText({
@@ -167,6 +168,7 @@ class Researcher {
         session: session,
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
+        userId: input.config.userId,
       });
 
       actionOutput.push(...actionResults);
