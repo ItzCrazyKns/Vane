@@ -37,20 +37,34 @@ export const PUBLIC_PAGES = ['/login', '/register'];
 export const SKIP_PATHS = ['/_next', '/favicon.ico', '/public'];
 
 /**
+ * Check if we're in the Next.js build phase.
+ * During build, NODE_ENV is 'production' but we shouldn't throw for missing secrets.
+ */
+function isBuildPhase(): boolean {
+  // NEXT_PHASE is set during next build
+  return process.env.NEXT_PHASE === 'phase-production-build';
+}
+
+/**
  * Get the JWT secret, with validation for production.
- * Throws an error if JWT_SECRET is not set in production.
+ * Throws an error if JWT_SECRET is not set in production (but not during build).
  */
 export function getJwtSecret(): Uint8Array {
   const JWT_SECRET_RAW = process.env.JWT_SECRET;
 
-  if (!JWT_SECRET_RAW && process.env.NODE_ENV === 'production') {
+  // In production runtime (not build), require JWT_SECRET
+  if (
+    !JWT_SECRET_RAW &&
+    process.env.NODE_ENV === 'production' &&
+    !isBuildPhase()
+  ) {
     throw new Error(
       'CRITICAL: JWT_SECRET environment variable is required in production. ' +
         "Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
     );
   }
 
-  if (!JWT_SECRET_RAW) {
+  if (!JWT_SECRET_RAW && !isBuildPhase()) {
     console.warn(
       '[AUTH] WARNING: JWT_SECRET not set. Using insecure default for development only.',
     );
