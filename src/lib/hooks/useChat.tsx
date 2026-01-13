@@ -82,7 +82,11 @@ const checkConfig = async (
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
   setIsConfigReady: (ready: boolean) => void,
   setHasError: (hasError: boolean) => void,
+  retryCount = 0,
 ) => {
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY = 500; // ms
+
   try {
     let chatModelKey = localStorage.getItem('chatModelKey');
     let chatModelProviderId = localStorage.getItem('chatModelProviderId');
@@ -96,6 +100,13 @@ const checkConfig = async (
         'Content-Type': 'application/json',
       },
     });
+
+    // Retry on auth failures (401) - may happen due to cookie timing after login
+    if (res.status === 401 && retryCount < MAX_RETRIES) {
+      console.log(`[checkConfig] Got 401, retrying in ${RETRY_DELAY}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return checkConfig(setChatModelProvider, setEmbeddingModelProvider, setIsConfigReady, setHasError, retryCount + 1);
+    }
 
     if (!res.ok) {
       throw new Error(

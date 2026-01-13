@@ -395,7 +395,11 @@ node .next/standalone/server.js
 
 ### Password Security
 - **Hashing**: Bcrypt with cost factor 12 (2^12 iterations)
-- **Validation**: Minimum 8 characters
+- **Validation**: Minimum 8 characters plus complexity requirements:
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one number
+  - At least one special character
 - **Storage**: Only hash stored, never plaintext
 
 ### Token Security
@@ -409,12 +413,17 @@ node .next/standalone/server.js
 ```javascript
 {
   httpOnly: true,                              // No JavaScript access
-  secure: process.env.NODE_ENV === 'production', // HTTPS only in prod
+  secure: shouldUseSecureCookies(),           // Controlled by SECURE_COOKIES env var
   sameSite: 'lax',                            // CSRF protection
   maxAge: 60 * 60 * 24 * 7,                   // 7 days
   path: '/'
 }
 ```
+
+**SECURE_COOKIES environment variable:**
+- `SECURE_COOKIES=true` - Cookies require HTTPS (use for production with SSL)
+- `SECURE_COOKIES=false` - Cookies work over HTTP (default in docker-compose for local dev)
+- If not set, falls back to `NODE_ENV === 'production'`
 
 ### Authorization
 - **Middleware**: Protects all routes except public paths
@@ -593,6 +602,33 @@ pnpm install
 
 ---
 
+### Issue: "Failed to connect to server" after login (requires reload)
+
+**Cause**: Cookie timing race condition. After login, the browser may not send the auth cookie on the very first request.
+
+**Solution**: This is handled automatically with retry logic in `checkConfig()`. If the `/api/providers` request returns 401, it retries up to 2 times with 500ms delay.
+
+If the issue persists:
+- Check browser console for `[checkConfig] Got 401, retrying...` messages
+- Ensure `SECURE_COOKIES=false` is set for local HTTP development
+- Try a hard refresh (Ctrl+Shift+R) after login
+
+---
+
+### Issue: Cookie rejected as "non-HTTPS cookie can't be set as secure"
+
+**Cause**: Running Docker locally over HTTP but `SECURE_COOKIES` is not set to `false`.
+
+**Solution**: Set `SECURE_COOKIES=false` in docker-compose.yaml (this is now the default):
+```yaml
+environment:
+  - SECURE_COOKIES=false
+```
+
+For production with HTTPS, set `SECURE_COOKIES=true`.
+
+---
+
 ### Issue: Build fails with better-sqlite3 errors
 
 **Cause**: Native module not compiled for current platform.
@@ -708,111 +744,16 @@ This section analyzes how well the authentication system handles multiple concur
    - Primary key on `chats.id` prevents duplicates
    - **Code:** `src/app/api/chats/route.ts`, `src/app/api/chats/[id]/route.ts`
 
-### ⚠️ ~~Minor Issues~~ ✅ FIXED
+### Resolved Issues
 
-#### ~~Race Condition in Chat Creation~~ ✅ FIXED
+All previously identified concurrency issues have been fixed:
 
-**Location:** `src/app/api/chat/route.ts:71-100` (`ensureChatExists()`)
+1. **Chat Creation Race Condition** - Fixed using `INSERT OR IGNORE` atomic operation in `ensureChatExists()`
 
-**Issue (RESOLVED):** Two simultaneous requests with the same `chatId` could both try to insert.
-
-**Previous Code:**
-```typescript
-// 1. Check if chat exists
-const exists = await db.query.chats.findFirst({ where: eq(chats.id, input.id) });
-
-// 2. If not, insert it
-if (!exists) {
-  await db.insert(chats).values({...});
-}
-```
-
-**Problem:** Check-then-insert is not atomic.
-
-**Impact:**
-- Low severity (database rejects duplicate)
-- One request succeeds, other fails silently
-
-**Fix Applied:**
-```typescript
-// ✅ Use INSERT OR IGNORE - atomic operation
-await db.insert(chats).values({...}).onConflictDoNothing();
-```
-
-**Result:** No more race condition. Multiple simultaneous requests with the same chatId are handled gracefully.
-
-### 🔴 ~~Critical Security Issue: File Upload Isolation~~ ✅ FIXED
-
-**Location:** `src/lib/uploads/manager.ts`
-
-**Issue (RESOLVED):** Files were stored globally without user association.
-
-**Previous Problem:**
-- Files stored in `data/uploads/uploaded_files.json` without userId
-- Any user who knew a `fileId` could access any uploaded file
-- No ownership verification
-
-**Example Attack (NOW PREVENTED):**
-1. User A uploads sensitive document → gets `fileId: "abc123"`
-2. User B guesses or intercepts `fileId: "abc123"`
-3. User B tries to access file → **NOW DENIED** ✅
-
-**Impact:** Privacy breach prevented
-
-**Fix Applied:**
-```typescript
-// 1. ✅ Added userId to RecordedFile type (manager.ts:18-25)
-type RecordedFile = {
-  id: string;
-  userId: string | null;  // NEW - nullable for legacy files
-  name: string;
-  filePath: string;
-  contentPath: string;
-  uploadedAt: string;
-}
-
-// 2. ✅ Store userId when uploading (manager.ts:211-217, uploads/route.ts:8,32)
-const fileRecord: RecordedFile = {
-  id: fileId,
-  userId: userId || null,  // NEW - from auth headers
-  name: file.name,
-  // ...
-}
-
-// 3. ✅ Verify ownership when accessing (manager.ts:67-83)
-static getFile(fileId: string, userId?: string | null): RecordedFile | null {
-  const recordedFiles = this.getRecordedFiles();
-  const file = recordedFiles.find(f => f.id === fileId);
-
-  if (!file) return null;
-
-  // If userId is provided, verify ownership
-  // Allow access if file has no owner (legacy) or if userId matches
-  if (userId !== undefined && file.userId !== null && file.userId !== userId) {
-    console.warn(`Access denied: User ${userId} attempted to access file ${fileId} owned by ${file.userId}`);
-    return null;  // Access denied
-  }
-
-  return file;
-}
-
-// 4. ✅ Updated all call sites:
-// - chat/route.ts:92 - passes userId when creating chat
-// - uploads/route.ts:32 - passes userId when uploading
-// - uploadsSearch.ts:55 - passes userId to UploadStore
-// - researcher.ts:330 - passes userId to getFileData
-// - store.ts:36,87,107 - passes userId to getFile/getFileChunks
-```
-
-**Files Modified:**
-- `src/lib/uploads/manager.ts` - Added userId to type and methods
-- `src/lib/uploads/store.ts` - Pass userId through UploadStore
-- `src/app/api/uploads/route.ts` - Extract and pass userId
-- `src/app/api/chat/route.ts` - Pass userId to file access
-- `src/lib/agents/search/types.ts` - Added userId to SearchAgentConfig
-- `src/lib/agents/search/researcher/index.ts` - Pass userId to actions
-- `src/lib/agents/search/researcher/actions/uploadsSearch.ts` - Pass userId to UploadStore
-- `src/lib/prompts/search/researcher.ts` - Pass userId to getFileData
+2. **File Upload Isolation** - Fixed by adding `userId` to all file operations:
+   - Files now store owner userId
+   - Ownership verified on access
+   - Legacy files (null userId) accessible to all users until migrated
 
 ### Testing Concurrency
 
@@ -849,23 +790,17 @@ pnpm dev
 
 **Note:** Test creates temporary users with timestamped emails. Delete them via admin panel after testing.
 
-### Recommendations
+### Future Improvements
 
-**Immediate (Critical):**
-1. ✅ **FIXED** - File upload isolation bug (userId added to all file operations)
-2. ✅ **FIXED** - userId added to RecordedFile type
-3. ✅ **FIXED** - File ownership verified in chat creation
-
-**Short-term (Nice to have):**
-1. ✅ **FIXED** - Use `INSERT OR IGNORE` in `ensureChatExists()`
-2. Add integration tests for concurrent access
-3. Add file upload ownership tests
+**Testing:**
+- Add integration tests for concurrent access
+- Add file upload ownership tests
 
 **Long-term:**
-1. Consider moving files to database (blob storage)
-2. Add file upload quotas per user
-3. Add audit logging for file access
-4. Implement proper transaction handling
+- Consider moving files to database (blob storage)
+- Add file upload quotas per user
+- Add audit logging for file access (auth audit logging is implemented)
+- Implement proper transaction handling
 
 ---
 
@@ -1119,131 +1054,35 @@ curl -X POST http://localhost:3000/api/chat -H "Cookie: auth-token=USER3_TOKEN" 
 
 ### Potential Future Enhancements
 
-This section documents features identified during code review that could improve security and functionality.
+#### Already Implemented
 
-#### Security Enhancements
+- **Rate Limiting** - In-memory rate limiter at `src/lib/auth/rateLimiter.ts` (5 attempts/15 min)
+- **Password Policy** - Complexity validation at `src/lib/auth/validation.ts`
+- **Email Validation** - Format validation at `src/lib/auth/validation.ts`
+- **Audit Logging** - Auth events logged at `src/lib/auth/audit.ts`
+- **User Settings Sync** - Database-backed settings via `src/lib/contexts/UserSettingsContext.tsx`
 
-1. ~~**Rate Limiting**~~ ✅ **IMPLEMENTED**
-   - ~~Protect login/register endpoints from brute force attacks~~
-   - ~~Implement per-IP throttling (5 attempts per 15 minutes)~~
-   - In-memory rate limiter at `src/lib/auth/rateLimiter.ts`
+#### Security Enhancements (Not Yet Implemented)
 
-2. **Account Lockout**
-   - Temporary account lockout after multiple failed login attempts
-   - Configurable lockout duration and attempt threshold
-   - Admin ability to unlock accounts
-
-3. **CSRF Protection**
-   - Add CSRF tokens to state-changing operations
-   - Validate Origin/Referer headers on POST requests
-
-4. ~~**Stronger Password Policy**~~ ✅ **IMPLEMENTED**
-   - ~~Character variety requirements (uppercase, lowercase, numbers, symbols)~~
-   - Validation at `src/lib/auth/validation.ts`
-
-5. ~~**Email Validation**~~ ✅ **IMPLEMENTED**
-   - ~~Validate email format on registration~~
-   - Format validation at `src/lib/auth/validation.ts`
-
-6. **Refresh Token Rotation**
-   - Shorter-lived access tokens (1 hour instead of 7 days)
-   - Separate refresh tokens for session extension
-   - Token refresh endpoint
-
-7. **Session Revocation**
-   - Server-side token blacklist/revocation list
-   - Immediate logout invalidation (currently only clears cookie)
-   - Admin ability to revoke all user sessions
-
-8. ~~**Audit Logging**~~ ✅ **IMPLEMENTED**
-   - ~~Log authentication events (login, logout, failed attempts)~~
-   - ~~Track admin actions (user management, role changes)~~
-   - Audit system at `src/lib/auth/audit.ts`
-   - Events: login_success, login_failure, logout, register, role_change, user_delete
+1. **Account Lockout** - Temporary lockout after failed attempts
+2. **CSRF Protection** - Tokens for state-changing operations
+3. **Refresh Token Rotation** - Shorter-lived access tokens with refresh
+4. **Session Revocation** - Server-side token blacklist
 
 #### Feature Enhancements (Medium Priority)
 
-9. **Password Reset Flow**
-   - Email-based password reset
-   - Secure, short-lived reset tokens
-   - Password reset UI
-
-10. **Email Verification**
-    - Verify email on registration
-    - Resend verification email option
-
-11. **Multi-Factor Authentication (MFA/2FA)**
-    - TOTP-based second factor (Google Authenticator, etc.)
-    - Optional per-user enablement
-    - Recovery codes
-
-12. **OAuth Integration** (Google, GitHub)
-    - Add OAuth providers
-    - Link social accounts to existing users
-
-13. **Session Management UI**
-    - View active sessions across devices
-    - Revoke individual sessions
-    - Device/location tracking
-
-14. **Chat Sharing**
-    - Share chats via link
-    - Granular permissions (read/write)
-    - Public/private sharing options
+5. **Password Reset Flow** - Email-based reset with secure tokens
+6. **Email Verification** - Verify email on registration
+7. **Multi-Factor Authentication (MFA/2FA)** - TOTP-based second factor
+8. **OAuth Integration** - Google, GitHub login
+9. **Session Management UI** - View/revoke active sessions
+10. **Chat Sharing** - Share chats via link with permissions
 
 #### Nice-to-Have (Lower Priority)
 
-15. **Group Permissions**
-    - Create user groups
-    - Group-based chat sharing
-    - Team workspaces
-
-16. **API Keys**
-    - Personal API keys for programmatic access
-    - Key rotation and revocation
-
-17. **User Profile Enhancements**
-    - Avatar upload
-    - Display name editing
-    - Timezone preferences
-
-18. ~~**User Settings Sync**~~ ✅ **IMPLEMENTED**
-    - ~~Move localStorage preferences to database~~
-    - ~~Sync settings across devices~~
-    - Per-user preferences (theme, widgets, etc.) now stored in database
-    - Settings context at `src/lib/contexts/UserSettingsContext.tsx`
-
----
-
-## Comparison with Open-WebUI
-
-### What Was Adopted
-
-- JWT authentication pattern
-- User/auth table separation
-- Password hashing with bcrypt
-- HTTPOnly cookie storage
-- Middleware-based route protection
-- userId foreign key on user data
-
-### What Was Adapted
-
-- **Framework**: Open-WebUI uses Python/FastAPI, Perplexica uses Next.js
-- **Libraries**:
-  - `jose` instead of PyJWT
-  - `bcryptjs` instead of bcrypt (Python)
-  - Next.js middleware instead of FastAPI dependencies
-- **Session handling**: Server components pattern instead of FastAPI sessions
-- **No OAuth/LDAP**: Simplified to password-only auth for MVP
-
-### What Was Simplified
-
-- **No groups**: Single-tenant user isolation only
-- **No permissions system**: Basic user/admin roles only
-- **No API keys**: JWT tokens only
-- **No password reset**: To be added later
-- **No MFA/2FA**: Single factor authentication only
-- **No OAuth**: Password-based auth only (no Google/GitHub login)
+11. **Group Permissions** - User groups and team workspaces
+12. **API Keys** - Personal API keys for programmatic access
+13. **User Profile Enhancements** - Avatar upload, display name editing
 
 ---
 
