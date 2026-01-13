@@ -84,6 +84,20 @@ CREATE TABLE auth (
 );
 ```
 
+**`audit_logs` table:**
+```sql
+CREATE TABLE audit_logs (
+  id INTEGER PRIMARY KEY,
+  eventType TEXT NOT NULL,        -- 'login_success', 'login_failure', 'logout', 'register', 'role_change', 'user_delete'
+  userId TEXT REFERENCES users(id) ON DELETE SET NULL,
+  targetUserId TEXT,              -- For admin actions on other users
+  ipAddress TEXT,
+  userAgent TEXT,
+  details TEXT,                   -- JSON object with event-specific data
+  createdAt TEXT NOT NULL
+);
+```
+
 ### Modified Tables
 
 **`chats` table - added userId column:**
@@ -193,18 +207,56 @@ node .next/standalone/server.js
 - TypeScript interfaces: `AuthUser`, `SessionUser`, `JWTPayload`, `UserSettings`
 
 **`src/lib/auth/helpers.ts`**
+- `AuthError` class - Custom error with HTTP status
+- `isAuthError()` - Type guard for AuthError
 - `getRequestUser()` - Extract user from request headers
-- `requireUser()` - Extract user or throw error
-- `requireAdmin()` - Ensure user is admin
+- `requireUser()` - Extract user or throw AuthError
+- `requireAdmin()` - Ensure user is admin or throw AuthError
+- `handleAuthRouteError()` - Standardized error response handler
+
+**`src/lib/auth/constants.ts`**
+- `AUTH_COOKIE_NAME` - Cookie name for auth token
+- `TOKEN_EXPIRY` - JWT expiry duration
+- `PUBLIC_API_ROUTES` - Routes that don't require auth
+- `PUBLIC_PAGES` - Pages accessible without login
+- `getJwtSecret()` - Get JWT secret with production validation
+
+**`src/lib/auth/validation.ts`**
+- `validatePassword()` - Password complexity validation
+- `validateEmail()` - Email format validation
+
+**`src/lib/auth/rateLimiter.ts`**
+- `checkRateLimit()` - Check and record rate limit attempt
+- `resetRateLimit()` - Clear rate limit for a key
+- `getClientIp()` - Extract client IP from headers
+
+**`src/lib/auth/audit.ts`**
+- `logAuditEvent()` - Generic audit logging
+- `logLoginSuccess()` - Log successful login
+- `logLoginFailure()` - Log failed login
+- `logLogout()` - Log user logout
+- `logRegistration()` - Log new user registration
+- `logRoleChange()` - Log admin role changes
+- `logUserDelete()` - Log admin user deletion
+
+**`src/lib/contexts/UserSettingsContext.tsx`**
+- `UserSettingsProvider` - React context provider for user settings
+- `useUserSettings()` - Hook for accessing user settings with loading state
+
+**`src/lib/migrations/migrate-legacy-data.ts`**
+- `migrateLegacyData()` - Assign orphaned chats/files to admin
+- `hasLegacyData()` - Check if migration is needed
 
 #### Middleware
 
 **`src/middleware.ts`**
 - Intercepts all requests
-- Public routes: `/login`, `/register`, `/api/auth/*`
-- Verifies JWT token from cookie
-- Injects user info into headers for API routes
-- Redirects unauthenticated users
+- Public routes defined in `constants.ts`
+- `validateJwtPayload()` - Runtime type validation of JWT claims
+- `verifyTokenFromRequest()` - Verify JWT and extract user
+- Injects user info into headers (`x-user-id`, `x-user-email`, `x-user-role`)
+- Redirects unauthenticated users to `/login`
+- Returns 401 for unauthenticated API requests
 
 #### API Routes (`src/app/api/auth/`)
 
@@ -1069,13 +1121,12 @@ curl -X POST http://localhost:3000/api/chat -H "Cookie: auth-token=USER3_TOKEN" 
 
 This section documents features identified during code review that could improve security and functionality.
 
-#### Security Enhancements (High Priority)
+#### Security Enhancements
 
-1. **Rate Limiting**
-   - Protect login/register endpoints from brute force attacks
-   - Implement per-IP and per-email throttling (e.g., 5 attempts per 15 minutes)
-   - Request throttling for API endpoints
-   - Per-user quotas for resource-intensive operations
+1. ~~**Rate Limiting**~~ ✅ **IMPLEMENTED**
+   - ~~Protect login/register endpoints from brute force attacks~~
+   - ~~Implement per-IP throttling (5 attempts per 15 minutes)~~
+   - In-memory rate limiter at `src/lib/auth/rateLimiter.ts`
 
 2. **Account Lockout**
    - Temporary account lockout after multiple failed login attempts
@@ -1086,14 +1137,13 @@ This section documents features identified during code review that could improve
    - Add CSRF tokens to state-changing operations
    - Validate Origin/Referer headers on POST requests
 
-4. **Stronger Password Policy**
-   - Character variety requirements (uppercase, lowercase, numbers, symbols)
-   - Optional integration with password strength library (zxcvbn)
-   - Common password blacklist
+4. ~~**Stronger Password Policy**~~ ✅ **IMPLEMENTED**
+   - ~~Character variety requirements (uppercase, lowercase, numbers, symbols)~~
+   - Validation at `src/lib/auth/validation.ts`
 
-5. **Email Validation**
-   - Validate email format on registration/login
-   - Optionally verify email ownership via confirmation link
+5. ~~**Email Validation**~~ ✅ **IMPLEMENTED**
+   - ~~Validate email format on registration~~
+   - Format validation at `src/lib/auth/validation.ts`
 
 6. **Refresh Token Rotation**
    - Shorter-lived access tokens (1 hour instead of 7 days)
@@ -1105,10 +1155,11 @@ This section documents features identified during code review that could improve
    - Immediate logout invalidation (currently only clears cookie)
    - Admin ability to revoke all user sessions
 
-8. **Audit Logging**
-   - Log authentication events (login, logout, failed attempts)
-   - Track admin actions (user management, config changes)
-   - Security event monitoring
+8. ~~**Audit Logging**~~ ✅ **IMPLEMENTED**
+   - ~~Log authentication events (login, logout, failed attempts)~~
+   - ~~Track admin actions (user management, role changes)~~
+   - Audit system at `src/lib/auth/audit.ts`
+   - Events: login_success, login_failure, logout, register, role_change, user_delete
 
 #### Feature Enhancements (Medium Priority)
 
@@ -1160,6 +1211,7 @@ This section documents features identified during code review that could improve
     - ~~Move localStorage preferences to database~~
     - ~~Sync settings across devices~~
     - Per-user preferences (theme, widgets, etc.) now stored in database
+    - Settings context at `src/lib/contexts/UserSettingsContext.tsx`
 
 ---
 
@@ -1189,8 +1241,9 @@ This section documents features identified during code review that could improve
 - **No groups**: Single-tenant user isolation only
 - **No permissions system**: Basic user/admin roles only
 - **No API keys**: JWT tokens only
-- **No rate limiting**: To be added later
 - **No password reset**: To be added later
+- **No MFA/2FA**: Single factor authentication only
+- **No OAuth**: Password-based auth only (no Google/GitHub login)
 
 ---
 
