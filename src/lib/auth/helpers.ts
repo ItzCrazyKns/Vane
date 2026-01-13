@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 import type { AuthUser } from './types';
 
 /**
@@ -65,4 +66,23 @@ export async function requireAdmin(): Promise<AuthUser> {
   }
 
   return user;
+}
+
+/**
+ * Standard error response handler for auth routes.
+ * Handles AuthError specially, logs other errors, and returns consistent format.
+ */
+export function handleAuthRouteError(
+  error: unknown,
+  context: string,
+): NextResponse {
+  if (isAuthError(error)) {
+    return NextResponse.json({ message: error.message }, { status: error.status });
+  }
+
+  console.error(`${context}:`, error);
+  return NextResponse.json(
+    { message: `An error occurred during ${context.toLowerCase()}` },
+    { status: 500 },
+  );
 }

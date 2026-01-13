@@ -1,42 +1,54 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import {
+  AUTH_COOKIE_NAME,
+  PUBLIC_API_ROUTES,
+  PUBLIC_PAGES,
+  SKIP_PATHS,
+  getJwtSecret,
+} from '@/lib/auth/constants';
 
-// JWT_SECRET is required in production - must be set via environment variable
-const JWT_SECRET_RAW = process.env.JWT_SECRET;
+const JWT_SECRET = getJwtSecret();
 
-if (!JWT_SECRET_RAW && process.env.NODE_ENV === 'production') {
-  throw new Error(
-    'CRITICAL: JWT_SECRET environment variable is required in production. ' +
-      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
-  );
+/**
+ * Validate JWT payload has correct types and values.
+ * Returns validated user object or null if invalid.
+ */
+function validateJwtPayload(
+  payload: unknown,
+): { userId: string; email: string; role: 'user' | 'admin' } | null {
+  if (typeof payload !== 'object' || payload === null) {
+    return null;
+  }
+
+  const p = payload as Record<string, unknown>;
+
+  // Validate userId is a non-empty string
+  if (typeof p.userId !== 'string' || p.userId.length === 0) {
+    return null;
+  }
+
+  // Validate email is a non-empty string
+  if (typeof p.email !== 'string' || p.email.length === 0) {
+    return null;
+  }
+
+  // Validate role is exactly 'user' or 'admin'
+  if (p.role !== 'user' && p.role !== 'admin') {
+    return null;
+  }
+
+  return {
+    userId: p.userId,
+    email: p.email,
+    role: p.role,
+  };
 }
-
-const JWT_SECRET = new TextEncoder().encode(
-  JWT_SECRET_RAW || 'perplexica-dev-secret-do-not-use-in-production',
-);
-
-const AUTH_COOKIE_NAME = 'auth-token';
-
-// Routes that don't require authentication (before login)
-const publicApiRoutes = [
-  '/api/auth/login',
-  '/api/auth/register',
-  '/api/auth/logout',
-  '/api/config',
-  '/api/providers',
-  '/api/models',
-];
-
-// Note: Root path (/) is allowed during setup wizard (before auth is configured)
-const publicPages = ['/login', '/register'];
-
-// Static assets and Next.js internals to skip
-const skipPaths = ['/_next', '/favicon.ico', '/public'];
 
 async function verifyTokenFromRequest(
   request: NextRequest,
-): Promise<{ userId: string; email: string; role: string } | null> {
+): Promise<{ userId: string; email: string; role: 'user' | 'admin' } | null> {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
 
   if (!token) {
@@ -45,17 +57,7 @@ async function verifyTokenFromRequest(
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    const { userId, email, role } = payload as {
-      userId: string;
-      email: string;
-      role: string;
-    };
-
-    if (!userId || !email || !role) {
-      return null;
-    }
-
-    return { userId, email, role };
+    return validateJwtPayload(payload);
   } catch {
     return null;
   }
@@ -65,12 +67,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static assets and Next.js internals
-  if (skipPaths.some((path) => pathname.startsWith(path))) {
+  if (SKIP_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
   // Allow public API routes (but still set headers if user is authenticated)
-  if (publicApiRoutes.some((route) => pathname.startsWith(route))) {
+  if (PUBLIC_API_ROUTES.some((route) => pathname.startsWith(route))) {
     const user = await verifyTokenFromRequest(request);
     if (user) {
       // User is authenticated - add headers so route handlers can use them
@@ -87,7 +89,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Allow public pages
-  if (publicPages.includes(pathname)) {
+  if (PUBLIC_PAGES.includes(pathname)) {
     // If user is already logged in, redirect to home
     const user = await verifyTokenFromRequest(request);
     if (user) {

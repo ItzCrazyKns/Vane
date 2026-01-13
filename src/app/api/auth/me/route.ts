@@ -1,22 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { migrateUserSettings } from '@/lib/migrations/migrate-user-settings';
+import { requireUser, handleAuthRouteError } from '@/lib/auth/helpers';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const userId = req.headers.get('x-user-id');
-
-    if (!userId) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-    }
+    const authUser = await requireUser();
 
     // Migrate user settings if needed (runs only once per user)
-    await migrateUserSettings(userId);
+    await migrateUserSettings(authUser.userId);
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
+      where: eq(users.id, authUser.userId),
     });
 
     if (!user) {
@@ -33,10 +30,6 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Get user error:', error);
-    return NextResponse.json(
-      { message: 'An error occurred' },
-      { status: 500 },
-    );
+    return handleAuthRouteError(error, 'Get user');
   }
 }

@@ -3,6 +3,9 @@ import db, { sqlite } from '@/lib/db';
 import { users, auth } from '@/lib/db/schema';
 import { hashPassword, createToken, setAuthCookie } from '@/lib/auth';
 import { checkRateLimit, getClientIp } from '@/lib/auth/rateLimiter';
+import { validatePassword, validateEmail } from '@/lib/auth/validation';
+import { handleAuthRouteError } from '@/lib/auth/helpers';
+import { logRegistration } from '@/lib/auth/audit';
 import { eq, sql } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
@@ -29,9 +32,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (password.length < 8) {
+    // Validate email format
+    if (!validateEmail(email)) {
       return NextResponse.json(
-        { message: 'Password must be at least 8 characters' },
+        { message: 'Invalid email format' },
+        { status: 400 },
+      );
+    }
+
+    // Validate password complexity
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return NextResponse.json(
+        {
+          message: 'Password does not meet requirements',
+          errors: passwordValidation.errors,
+        },
         { status: 400 },
       );
     }
@@ -104,6 +120,9 @@ export async function POST(req: NextRequest) {
     const token = await createToken(userId, normalizedEmail, role!);
     await setAuthCookie(token);
 
+    // Log registration
+    logRegistration(userId, normalizedEmail, role!, req.headers);
+
     return NextResponse.json(
       {
         user: {
@@ -116,10 +135,6 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error('Registration error:', error);
-    return NextResponse.json(
-      { message: 'An error occurred during registration' },
-      { status: 500 },
-    );
+    return handleAuthRouteError(error, 'Registration');
   }
 }

@@ -7,6 +7,8 @@ import {
   resetRateLimit,
   getClientIp,
 } from '@/lib/auth/rateLimiter';
+import { handleAuthRouteError } from '@/lib/auth/helpers';
+import { logLoginSuccess, logLoginFailure } from '@/lib/auth/audit';
 import { eq } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
@@ -38,6 +40,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!authRecord || !authRecord.active) {
+      logLoginFailure(email, 'Invalid credentials', req.headers);
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 },
@@ -47,6 +50,7 @@ export async function POST(req: NextRequest) {
     // Verify password
     const valid = await verifyPassword(password, authRecord.passwordHash);
     if (!valid) {
+      logLoginFailure(email, 'Invalid password', req.headers);
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 },
@@ -73,6 +77,9 @@ export async function POST(req: NextRequest) {
     // Clear rate limit on successful login
     resetRateLimit(`login:${clientIp}`);
 
+    // Log successful login
+    logLoginSuccess(user.id, user.email, req.headers);
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -82,10 +89,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json(
-      { message: 'An error occurred during login' },
-      { status: 500 },
-    );
+    return handleAuthRouteError(error, 'Login');
   }
 }

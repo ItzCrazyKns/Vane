@@ -187,7 +187,7 @@ class UploadManager {
         }
     }
 
-    async processFiles(files: File[], userId?: string | null): Promise<FileRes[]> {
+    async processFiles(files: File[], userId: string): Promise<FileRes[]> {
         const processedFiles: FileRes[] = [];
 
         await Promise.all(files.map(async (file) => {
@@ -209,7 +209,7 @@ class UploadManager {
 
             const fileRecord: RecordedFile = {
                 id: fileId,
-                userId: userId || null,
+                userId: userId,
                 name: file.name,
                 filePath: filePath,
                 contentPath: contentFilePath,

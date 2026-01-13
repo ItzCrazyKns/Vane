@@ -4,8 +4,15 @@ import UploadManager from '@/lib/uploads/manager';
 
 export async function POST(req: Request) {
   try {
-    // Get userId from middleware-injected headers
+    // Get userId from middleware-injected headers (required)
     const userId = req.headers.get('x-user-id');
+
+    if (!userId) {
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 },
+      );
+    }
 
     const formData = await req.formData();
 

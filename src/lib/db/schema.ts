@@ -77,3 +77,26 @@ export const chats = sqliteTable('chats', {
     .$type<DBFile[]>()
     .default(sql`'[]'`),
 });
+
+// Audit log event types
+export type AuditEventType =
+  | 'login_success'
+  | 'login_failure'
+  | 'logout'
+  | 'register'
+  | 'password_change'
+  | 'role_change'
+  | 'user_delete'
+  | 'admin_action';
+
+// Audit logs table - tracks authentication and admin events
+export const auditLogs = sqliteTable('audit_logs', {
+  id: integer('id').primaryKey(),
+  eventType: text('eventType').$type<AuditEventType>().notNull(),
+  userId: text('userId').references(() => users.id, { onDelete: 'set null' }), // Nullable if user deleted
+  targetUserId: text('targetUserId'), // For admin actions on other users
+  ipAddress: text('ipAddress'),
+  userAgent: text('userAgent'),
+  details: text('details', { mode: 'json' }).$type<Record<string, unknown>>(),
+  createdAt: text('createdAt').notNull(),
+});

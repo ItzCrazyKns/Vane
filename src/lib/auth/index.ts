@@ -2,30 +2,17 @@ import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import type { JWTPayload, AuthUser } from './types';
+import {
+  AUTH_COOKIE_NAME,
+  TOKEN_EXPIRY,
+  TOKEN_MAX_AGE_SECONDS,
+  getJwtSecret,
+} from './constants';
 
-// JWT_SECRET is required in production - must be set via environment variable
-const JWT_SECRET_RAW = process.env.JWT_SECRET;
-
-if (!JWT_SECRET_RAW && process.env.NODE_ENV === 'production') {
-  throw new Error(
-    'CRITICAL: JWT_SECRET environment variable is required in production. ' +
-      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
-  );
-}
-
-if (!JWT_SECRET_RAW) {
-  console.warn(
-    '[AUTH] WARNING: JWT_SECRET not set. Using insecure default for development only.',
-  );
-}
-
-const JWT_SECRET = new TextEncoder().encode(
-  JWT_SECRET_RAW || 'perplexica-dev-secret-do-not-use-in-production',
-);
-const TOKEN_EXPIRY = '7d';
+const JWT_SECRET = getJwtSecret();
 const BCRYPT_ROUNDS = 12;
 
-export const AUTH_COOKIE_NAME = 'auth-token';
+export { AUTH_COOKIE_NAME };
 
 /**
  * Hash a password using bcrypt.
@@ -106,7 +93,7 @@ export async function setAuthCookie(token: string): Promise<void> {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: TOKEN_MAX_AGE_SECONDS,
     path: '/',
   });
 }
