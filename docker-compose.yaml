@@ -10,6 +10,7 @@ services:
     environment:
       - JWT_SECRET=${JWT_SECRET:-please-change-this-secret-in-production}
       - NODE_ENV=production
+      - SECURE_COOKIES=${SECURE_COOKIES:-false}
     restart: unless-stopped
 
 volumes:

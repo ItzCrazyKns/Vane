@@ -85,13 +85,25 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 }
 
 /**
+ * Determine if cookies should be marked as secure.
+ * - SECURE_COOKIES env var takes precedence (allows HTTP in production for local Docker)
+ * - Falls back to NODE_ENV check
+ */
+function shouldUseSecureCookies(): boolean {
+  if (process.env.SECURE_COOKIES !== undefined) {
+    return process.env.SECURE_COOKIES === 'true';
+  }
+  return process.env.NODE_ENV === 'production';
+}
+
+/**
  * Set the auth cookie with the given token.
  */
 export async function setAuthCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookies(),
     sameSite: 'lax',
     maxAge: TOKEN_MAX_AGE_SECONDS,
     path: '/',
