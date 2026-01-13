@@ -56,6 +56,8 @@ type ConfigModelProvider = {
   type: string;
   chatModels: Model[];
   embeddingModels: Model[];
+  excludedChatModels: string[];
+  excludedEmbeddingModels: string[];
   config: { [key: string]: any };
   hash: string;
 };

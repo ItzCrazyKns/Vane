@@ -187,6 +187,8 @@ class ConfigManager {
         type: provider.key,
         chatModels: [],
         embeddingModels: [],
+        excludedChatModels: [],
+        excludedEmbeddingModels: [],
         config: {},
         required: [],
         hash: '',
@@ -279,6 +281,8 @@ class ConfigManager {
       config,
       chatModels: [],
       embeddingModels: [],
+      excludedChatModels: [],
+      excludedEmbeddingModels: [],
       hash: hashObj(config),
     };
 
@@ -327,12 +331,24 @@ class ConfigManager {
 
     if (!provider) throw new Error('Invalid provider id');
 
+    // Initialize exclusion arrays if they don't exist (for existing configs)
+    if (!provider.excludedChatModels) provider.excludedChatModels = [];
+    if (!provider.excludedEmbeddingModels) provider.excludedEmbeddingModels = [];
+
     delete model.type;
 
     if (type === 'chat') {
       provider.chatModels.push(model);
+      // Remove from exclusions if it was previously excluded
+      provider.excludedChatModels = provider.excludedChatModels.filter(
+        (k) => k !== model.key,
+      );
     } else {
       provider.embeddingModels.push(model);
+      // Remove from exclusions if it was previously excluded
+      provider.excludedEmbeddingModels = provider.excludedEmbeddingModels.filter(
+        (k) => k !== model.key,
+      );
     }
 
     this.saveConfig();
@@ -351,14 +367,28 @@ class ConfigManager {
 
     if (!provider) throw new Error('Invalid provider id');
 
+    // Initialize exclusion arrays if they don't exist (for existing configs)
+    if (!provider.excludedChatModels) provider.excludedChatModels = [];
+    if (!provider.excludedEmbeddingModels) provider.excludedEmbeddingModels = [];
+
     if (type === 'chat') {
+      // Remove from user-added models
       provider.chatModels = provider.chatModels.filter(
         (m) => m.key !== modelKey,
       );
+      // Add to exclusions to hide from auto-discovered models
+      if (!provider.excludedChatModels.includes(modelKey)) {
+        provider.excludedChatModels.push(modelKey);
+      }
     } else {
+      // Remove from user-added models
       provider.embeddingModels = provider.embeddingModels.filter(
-        (m) => m.key != modelKey,
+        (m) => m.key !== modelKey,
       );
+      // Add to exclusions to hide from auto-discovered models
+      if (!provider.excludedEmbeddingModels.includes(modelKey)) {
+        provider.excludedEmbeddingModels.push(modelKey);
+      }
     }
 
     this.saveConfig();

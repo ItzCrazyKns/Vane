@@ -19,6 +19,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  loggingOut: boolean;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -26,6 +27,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  loggingOut: false,
   logout: async () => {},
   refresh: async () => {},
 });
@@ -33,6 +35,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -56,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    setLoggingOut(true);
     try {
       console.log('Logging out...'); // Debug log
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -73,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, loggingOut, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );

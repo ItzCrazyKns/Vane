@@ -1,5 +1,8 @@
 import { UIConfigField } from '@/lib/config/types';
-import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
+import {
+  getConfiguredModelProviderById,
+  mergeModelsWithExclusions,
+} from '@/lib/config/serverRegistry';
 import BaseModelProvider from '../../base/provider';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import LMStudioLLM from './lmstudioLLM';
@@ -72,14 +75,7 @@ class LMStudioProvider extends BaseModelProvider<LMStudioConfig> {
   async getModelList(): Promise<ModelList> {
     const defaultModels = await this.getDefaultModels();
     const configProvider = getConfiguredModelProviderById(this.id)!;
-
-    return {
-      embedding: [
-        ...defaultModels.embedding,
-        ...configProvider.embeddingModels,
-      ],
-      chat: [...defaultModels.chat, ...configProvider.chatModels],
-    };
+    return mergeModelsWithExclusions(defaultModels, configProvider);
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {

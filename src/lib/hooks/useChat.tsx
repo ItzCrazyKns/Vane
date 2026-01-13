@@ -18,6 +18,7 @@ import { MinimalProvider } from '../models/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
+import { useAuth } from './useAuth';
 
 export type Section = {
   message: Message;
@@ -82,10 +83,11 @@ const checkConfig = async (
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
   setIsConfigReady: (ready: boolean) => void,
   setHasError: (hasError: boolean) => void,
+  isLoggingOut: () => boolean,
   retryCount = 0,
 ) => {
-  const MAX_RETRIES = 2;
-  const RETRY_DELAY = 500; // ms
+  const MAX_RETRIES = 3;
+  const BASE_DELAY = 800; // ms
 
   try {
     let chatModelKey = localStorage.getItem('chatModelKey');
@@ -103,9 +105,15 @@ const checkConfig = async (
 
     // Retry on auth failures (401) - may happen due to cookie timing after login
     if (res.status === 401 && retryCount < MAX_RETRIES) {
-      console.log(`[checkConfig] Got 401, retrying in ${RETRY_DELAY}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-      return checkConfig(setChatModelProvider, setEmbeddingModelProvider, setIsConfigReady, setHasError, retryCount + 1);
+      // Skip retry if logging out - the 401 is expected
+      if (isLoggingOut()) {
+        console.log('[checkConfig] Skipping retry - logout in progress');
+        return;
+      }
+      const delay = BASE_DELAY * (retryCount + 1); // Exponential backoff: 800, 1600, 2400ms
+      console.log(`[checkConfig] Got 401, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return checkConfig(setChatModelProvider, setEmbeddingModelProvider, setIsConfigReady, setHasError, isLoggingOut, retryCount + 1);
     }
 
     if (!res.ok) {
@@ -175,6 +183,11 @@ const checkConfig = async (
 
     setIsConfigReady(true);
   } catch (err: any) {
+    // Don't show errors during logout - the 401 is expected
+    if (isLoggingOut()) {
+      console.log('[checkConfig] Suppressing error during logout:', err.message);
+      return;
+    }
     console.error('An error occurred while checking the configuration:', err);
     toast.error(err.message);
     setIsConfigReady(false);
@@ -280,6 +293,7 @@ export const chatContext = createContext<ChatContext>({
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const params: { chatId: string } = useParams();
+  const { loggingOut } = useAuth();
 
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
@@ -471,12 +485,19 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Use ref to access current loggingOut state in checkConfig callback
+  const loggingOutRef = useRef(loggingOut);
+  useEffect(() => {
+    loggingOutRef.current = loggingOut;
+  }, [loggingOut]);
+
   useEffect(() => {
     checkConfig(
       setChatModelProvider,
       setEmbeddingModelProvider,
       setIsConfigReady,
       setHasError,
+      () => loggingOutRef.current,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

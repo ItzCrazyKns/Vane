@@ -1,5 +1,8 @@
 import { UIConfigField } from '@/lib/config/types';
-import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
+import {
+  getConfiguredModelProviderById,
+  mergeModelsWithExclusions,
+} from '@/lib/config/serverRegistry';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import GeminiEmbedding from './geminiEmbedding';
 import BaseEmbedding from '../../base/embedding';
@@ -73,14 +76,7 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
   async getModelList(): Promise<ModelList> {
     const defaultModels = await this.getDefaultModels();
     const configProvider = getConfiguredModelProviderById(this.id)!;
-
-    return {
-      embedding: [
-        ...defaultModels.embedding,
-        ...configProvider.embeddingModels,
-      ],
-      chat: [...defaultModels.chat, ...configProvider.chatModels],
-    };
+    return mergeModelsWithExclusions(defaultModels, configProvider);
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
