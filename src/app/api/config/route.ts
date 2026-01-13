@@ -2,7 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
-import { requireAdmin } from '@/lib/auth/helpers';
+import { requireAdmin, getRequestUser } from '@/lib/auth/helpers';
 
 type SaveConfigBody = {
   key: string;
@@ -11,6 +11,18 @@ type SaveConfigBody = {
 
 export const GET = async (req: NextRequest) => {
   try {
+    // After setup is complete, require authentication to read config
+    // During setup, allow public access (needed for setup wizard)
+    if (configManager.isSetupComplete()) {
+      const user = await getRequestUser();
+      if (!user) {
+        return Response.json(
+          { message: 'Authentication required' },
+          { status: 401 },
+        );
+      }
+    }
+
     const values = configManager.getCurrentConfig();
     const fields = configManager.getUIConfigSections();
 

@@ -1,9 +1,22 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
-import { requireAdmin } from '@/lib/auth/helpers';
+import { requireAdmin, getRequestUser } from '@/lib/auth/helpers';
+import configManager from '@/lib/config';
 
 export const GET = async (req: Request) => {
   try {
+    // After setup is complete, require authentication to read providers
+    // During setup, allow public access (needed for setup wizard)
+    if (configManager.isSetupComplete()) {
+      const user = await getRequestUser();
+      if (!user) {
+        return Response.json(
+          { message: 'Authentication required' },
+          { status: 401 },
+        );
+      }
+    }
+
     const registry = new ModelRegistry();
 
     const activeProviders = await registry.getActiveProviders();

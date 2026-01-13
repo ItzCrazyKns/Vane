@@ -2,8 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
+// JWT_SECRET is required in production - must be set via environment variable
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
+
+if (!JWT_SECRET_RAW && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'CRITICAL: JWT_SECRET environment variable is required in production. ' +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+  );
+}
+
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'perplexica-default-secret-change-in-production',
+  JWT_SECRET_RAW || 'perplexica-dev-secret-do-not-use-in-production',
 );
 
 const AUTH_COOKIE_NAME = 'auth-token';
@@ -59,8 +69,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow public API routes
+  // Allow public API routes (but still set headers if user is authenticated)
   if (publicApiRoutes.some((route) => pathname.startsWith(route))) {
+    const user = await verifyTokenFromRequest(request);
+    if (user) {
+      // User is authenticated - add headers so route handlers can use them
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-user-id', user.userId);
+      requestHeaders.set('x-user-email', user.email);
+      requestHeaders.set('x-user-role', user.role);
+      return NextResponse.next({
+        request: { headers: requestHeaders },
+      });
+    }
+    // Not authenticated - allow anyway (public route)
     return NextResponse.next();
   }
 

@@ -1065,43 +1065,101 @@ curl -X POST http://localhost:3000/api/chat -H "Cookie: auth-token=USER3_TOKEN" 
 
 ---
 
-### Nice-to-Have Features
+### Potential Future Enhancements
 
-1. **OAuth Integration** (Google, GitHub)
-   - Add OAuth providers
-   - Link social accounts to existing users
+This section documents features identified during code review that could improve security and functionality.
 
-2. **Password Reset Flow**
-   - Email verification
-   - Secure reset tokens
-   - Password reset page
+#### Security Enhancements (High Priority)
 
-3. **Email Verification**
-   - Verify email on registration
-   - Resend verification email
+1. **Rate Limiting**
+   - Protect login/register endpoints from brute force attacks
+   - Implement per-IP and per-email throttling (e.g., 5 attempts per 15 minutes)
+   - Request throttling for API endpoints
+   - Per-user quotas for resource-intensive operations
 
-4. **Group Permissions**
-   - Create user groups
-   - Group-based chat sharing
-   - Team workspaces
+2. **Account Lockout**
+   - Temporary account lockout after multiple failed login attempts
+   - Configurable lockout duration and attempt threshold
+   - Admin ability to unlock accounts
 
-5. **Rate Limiting**
-   - Protect login endpoint from brute force
-   - Request throttling
-   - Per-user quotas
+3. **CSRF Protection**
+   - Add CSRF tokens to state-changing operations
+   - Validate Origin/Referer headers on POST requests
 
-6. **User Settings Sync**
-   - Move localStorage preferences to database
-   - Sync settings across devices
+4. **Stronger Password Policy**
+   - Character variety requirements (uppercase, lowercase, numbers, symbols)
+   - Optional integration with password strength library (zxcvbn)
+   - Common password blacklist
 
-7. **Chat Sharing**
-   - Share chats via link
-   - Granular permissions (read/write)
+5. **Email Validation**
+   - Validate email format on registration/login
+   - Optionally verify email ownership via confirmation link
 
-8. **Session Management**
-   - View active sessions
-   - Revoke sessions
-   - Device tracking
+6. **Refresh Token Rotation**
+   - Shorter-lived access tokens (1 hour instead of 7 days)
+   - Separate refresh tokens for session extension
+   - Token refresh endpoint
+
+7. **Session Revocation**
+   - Server-side token blacklist/revocation list
+   - Immediate logout invalidation (currently only clears cookie)
+   - Admin ability to revoke all user sessions
+
+8. **Audit Logging**
+   - Log authentication events (login, logout, failed attempts)
+   - Track admin actions (user management, config changes)
+   - Security event monitoring
+
+#### Feature Enhancements (Medium Priority)
+
+9. **Password Reset Flow**
+   - Email-based password reset
+   - Secure, short-lived reset tokens
+   - Password reset UI
+
+10. **Email Verification**
+    - Verify email on registration
+    - Resend verification email option
+
+11. **Multi-Factor Authentication (MFA/2FA)**
+    - TOTP-based second factor (Google Authenticator, etc.)
+    - Optional per-user enablement
+    - Recovery codes
+
+12. **OAuth Integration** (Google, GitHub)
+    - Add OAuth providers
+    - Link social accounts to existing users
+
+13. **Session Management UI**
+    - View active sessions across devices
+    - Revoke individual sessions
+    - Device/location tracking
+
+14. **Chat Sharing**
+    - Share chats via link
+    - Granular permissions (read/write)
+    - Public/private sharing options
+
+#### Nice-to-Have (Lower Priority)
+
+15. **Group Permissions**
+    - Create user groups
+    - Group-based chat sharing
+    - Team workspaces
+
+16. **API Keys**
+    - Personal API keys for programmatic access
+    - Key rotation and revocation
+
+17. **User Profile Enhancements**
+    - Avatar upload
+    - Display name editing
+    - Timezone preferences
+
+18. ~~**User Settings Sync**~~ ✅ **IMPLEMENTED**
+    - ~~Move localStorage preferences to database~~
+    - ~~Sync settings across devices~~
+    - Per-user preferences (theme, widgets, etc.) now stored in database
 
 ---
 

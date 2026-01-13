@@ -3,8 +3,24 @@ import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import type { JWTPayload, AuthUser } from './types';
 
+// JWT_SECRET is required in production - must be set via environment variable
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
+
+if (!JWT_SECRET_RAW && process.env.NODE_ENV === 'production') {
+  throw new Error(
+    'CRITICAL: JWT_SECRET environment variable is required in production. ' +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+  );
+}
+
+if (!JWT_SECRET_RAW) {
+  console.warn(
+    '[AUTH] WARNING: JWT_SECRET not set. Using insecure default for development only.',
+  );
+}
+
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'perplexica-default-secret-change-in-production',
+  JWT_SECRET_RAW || 'perplexica-dev-secret-do-not-use-in-production',
 );
 const TOKEN_EXPIRY = '7d';
 const BCRYPT_ROUNDS = 12;
