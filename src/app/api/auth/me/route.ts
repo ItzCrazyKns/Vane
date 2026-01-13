@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { migrateUserSettings } from '@/lib/migrations/migrate-user-settings';
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,6 +11,9 @@ export async function GET(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
+
+    // Migrate user settings if needed (runs only once per user)
+    await migrateUserSettings(userId);
 
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),

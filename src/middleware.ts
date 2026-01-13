@@ -74,12 +74,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow root path (/) - layout will show setup wizard or handle auth
-  if (pathname === '/') {
-    return NextResponse.next();
-  }
-
-  // Verify authentication for all other routes
+  // Verify authentication for all other routes (including root path)
   const user = await verifyTokenFromRequest(request);
 
   if (!user) {

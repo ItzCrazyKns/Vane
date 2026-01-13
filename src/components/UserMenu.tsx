@@ -26,10 +26,19 @@ const UserMenu = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (loading || !user) {
+  // Show loading skeleton while authenticating
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-light-200 dark:bg-dark-200 animate-pulse" />
+    );
+  }
+
+  // Don't render if no user
+  if (!user) {
     return null;
   }
 
+  // Generate initials: use name if available, otherwise first 2 chars of email
   const initials = user.name
     ? user.name
         .split(' ')
@@ -37,7 +46,7 @@ const UserMenu = () => {
         .join('')
         .toUpperCase()
         .slice(0, 2)
-    : user.email[0].toUpperCase();
+    : user.email.slice(0, 2).toUpperCase();
 
   return (
     <div className="relative" ref={menuRef}>

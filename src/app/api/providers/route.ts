@@ -1,5 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/auth/helpers';
 
 export const GET = async (req: Request) => {
   try {
@@ -34,6 +35,9 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: NextRequest) => {
   try {
+    // Only admins can add providers
+    await requireAdmin();
+
     const body = await req.json();
     const { type, name, config } = body;
 

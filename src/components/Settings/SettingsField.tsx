@@ -18,6 +18,11 @@ const emitClientConfigChanged = () => {
   }
 };
 
+// Determine whether a setting should be saved to user settings or global config
+const isUserSpecificSetting = (dataAdd: string) => {
+  return dataAdd === 'preferences' || dataAdd === 'personalization';
+};
+
 const SettingsSelect = ({
   field,
   value,
@@ -36,13 +41,34 @@ const SettingsSelect = ({
     setLoading(true);
     setValue(newValue);
     try {
-      if (field.scope === 'client') {
-        localStorage.setItem(field.key, newValue);
+      if (isUserSpecificSetting(dataAdd)) {
+        // Save to user-specific settings (database)
+        const res = await fetch('/api/users/settings', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            settings: { [field.key]: newValue },
+          }),
+        });
+
+        if (!res.ok) {
+          console.error('Failed to save user settings:', await res.text());
+          throw new Error('Failed to save user settings');
+        }
+
+        // Apply theme change immediately for UX
         if (field.key === 'theme') {
           setTheme(newValue);
         }
         emitClientConfigChanged();
+      } else if (field.scope === 'client') {
+        // Legacy: only for non-user-specific client settings
+        localStorage.setItem(field.key, newValue);
+        emitClientConfigChanged();
       } else {
+        // Save to global config (admin-only settings)
         const res = await fetch('/api/config', {
           method: 'POST',
           headers: {
@@ -111,10 +137,29 @@ const SettingsInput = ({
     setLoading(true);
     setValue(newValue);
     try {
-      if (field.scope === 'client') {
+      if (isUserSpecificSetting(dataAdd)) {
+        // Save to user-specific settings (database)
+        const res = await fetch('/api/users/settings', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            settings: { [field.key]: newValue },
+          }),
+        });
+
+        if (!res.ok) {
+          console.error('Failed to save user settings:', await res.text());
+          throw new Error('Failed to save user settings');
+        }
+        emitClientConfigChanged();
+      } else if (field.scope === 'client') {
+        // Legacy: only for non-user-specific client settings
         localStorage.setItem(field.key, newValue);
         emitClientConfigChanged();
       } else {
+        // Save to global config (admin-only settings)
         const res = await fetch('/api/config', {
           method: 'POST',
           headers: {
@@ -188,10 +233,29 @@ const SettingsTextarea = ({
     setLoading(true);
     setValue(newValue);
     try {
-      if (field.scope === 'client') {
+      if (isUserSpecificSetting(dataAdd)) {
+        // Save to user-specific settings (database)
+        const res = await fetch('/api/users/settings', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            settings: { [field.key]: newValue },
+          }),
+        });
+
+        if (!res.ok) {
+          console.error('Failed to save user settings:', await res.text());
+          throw new Error('Failed to save user settings');
+        }
+        emitClientConfigChanged();
+      } else if (field.scope === 'client') {
+        // Legacy: only for non-user-specific client settings
         localStorage.setItem(field.key, newValue);
         emitClientConfigChanged();
       } else {
+        // Save to global config (admin-only settings)
         const res = await fetch('/api/config', {
           method: 'POST',
           headers: {
@@ -265,10 +329,29 @@ const SettingsSwitch = ({
     setLoading(true);
     setValue(newValue);
     try {
-      if (field.scope === 'client') {
+      if (isUserSpecificSetting(dataAdd)) {
+        // Save to user-specific settings (database)
+        const res = await fetch('/api/users/settings', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            settings: { [field.key]: newValue },
+          }),
+        });
+
+        if (!res.ok) {
+          console.error('Failed to save user settings:', await res.text());
+          throw new Error('Failed to save user settings');
+        }
+        emitClientConfigChanged();
+      } else if (field.scope === 'client') {
+        // Legacy: only for non-user-specific client settings
         localStorage.setItem(field.key, String(newValue));
         emitClientConfigChanged();
       } else {
+        // Save to global config (admin-only settings)
         const res = await fetch('/api/config', {
           method: 'POST',
           headers: {

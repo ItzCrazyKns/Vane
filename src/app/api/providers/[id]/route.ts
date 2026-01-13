@@ -1,11 +1,15 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/auth/helpers';
 
 export const DELETE = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
+    // Only admins can delete providers
+    await requireAdmin();
+
     const { id } = await params;
 
     if (!id) {
@@ -48,6 +52,9 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
+    // Only admins can update providers
+    await requireAdmin();
+
     const body = await req.json();
     const { name, config } = body;
     const { id } = await params;

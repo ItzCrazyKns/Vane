@@ -18,6 +18,7 @@ import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 const sections = [
   {
@@ -27,6 +28,7 @@ const sections = [
     icon: Sliders,
     component: Preferences,
     dataAdd: 'preferences',
+    adminOnly: false,
   },
   {
     key: 'personalization',
@@ -35,6 +37,7 @@ const sections = [
     icon: ToggleRight,
     component: Personalization,
     dataAdd: 'personalization',
+    adminOnly: false,
   },
   {
     key: 'models',
@@ -43,6 +46,7 @@ const sections = [
     icon: BrainCog,
     component: Models,
     dataAdd: 'modelProviders',
+    adminOnly: true,
   },
   {
     key: 'search',
@@ -51,6 +55,7 @@ const sections = [
     icon: Search,
     component: SearchSection,
     dataAdd: 'search',
+    adminOnly: true,
   },
 ];
 
@@ -61,29 +66,70 @@ const SettingsDialogue = ({
   isOpen: boolean;
   setIsOpen: (active: boolean) => void;
 }) => {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
-  const [activeSection, setActiveSection] = useState<string>(sections[0].key);
-  const [selectedSection, setSelectedSection] = useState(sections[0]);
+
+  // Filter sections based on user role
+  const availableSections = sections.filter(
+    (section) => !section.adminOnly || user?.role === 'admin',
+  );
+
+  const [activeSection, setActiveSection] = useState<string>(
+    availableSections[0]?.key || sections[0].key,
+  );
+  const [selectedSection, setSelectedSection] = useState(
+    availableSections[0] || sections[0],
+  );
 
   useEffect(() => {
-    setSelectedSection(sections.find((s) => s.key === activeSection)!);
-  }, [activeSection]);
+    setSelectedSection(
+      availableSections.find((s) => s.key === activeSection) ||
+        availableSections[0],
+    );
+  }, [activeSection, availableSections]);
 
   useEffect(() => {
     if (isOpen) {
       const fetchConfig = async () => {
         try {
-          const res = await fetch('/api/config', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
+          // Fetch both user settings and global config in parallel
+          const [userRes, configRes] = await Promise.all([
+            fetch('/api/users/settings', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }),
+            fetch('/api/config', {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            }),
+          ]);
+
+          const userData = await userRes.json();
+          const configData = await configRes.json();
+
+          // Merge user settings with global config defaults
+          // User settings override defaults for preferences and personalization
+          const mergedConfig = {
+            ...configData,
+            values: {
+              ...configData.values,
+              preferences: {
+                ...configData.values.preferences,
+                ...userData.settings,
+              },
+              personalization: {
+                ...configData.values.personalization,
+                systemInstructions: userData.settings.systemInstructions || '',
+              },
             },
-          });
+          };
 
-          const data = await res.json();
-
-          setConfig(data);
+          setConfig(mergedConfig);
         } catch (error) {
           console.error('Error fetching config:', error);
           toast.error('Failed to load configuration.');
@@ -132,7 +178,7 @@ const SettingsDialogue = ({
                   </button>
 
                   <div className="flex flex-col items-start space-y-1 mt-8">
-                    {sections.map((section) => (
+                    {availableSections.map((section) => (
                       <button
                         key={section.dataAdd}
                         className={cn(
@@ -176,7 +222,7 @@ const SettingsDialogue = ({
                     />
                   </button>
                   <Select
-                    options={sections.map((section) => {
+                    options={availableSections.map((section) => {
                       return {
                         value: section.key,
                         key: section.key,

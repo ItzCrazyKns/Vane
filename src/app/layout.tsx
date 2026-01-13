@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'sonner';
 import ThemeProvider from '@/components/theme/Provider';
+import UserSettingsSync from '@/components/theme/UserSettingsSync';
 import configManager from '@/lib/config';
 import SetupWizard from '@/components/Setup/SetupWizard';
 import { ChatProvider } from '@/lib/hooks/useChat';
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body className={cn('h-full antialiased', montserrat.className)}>
         <ThemeProvider>
           <AuthProvider>
+            <UserSettingsSync />
             {setupComplete ? (
               <ChatProvider>
                 <Sidebar>{children}</Sidebar>

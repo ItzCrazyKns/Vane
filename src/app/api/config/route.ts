@@ -2,6 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
+import { requireAdmin } from '@/lib/auth/helpers';
 
 type SaveConfigBody = {
   key: string;
@@ -44,6 +45,9 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
+    // Only admins can update global configuration
+    await requireAdmin();
+
     const body: SaveConfigBody = await req.json();
 
     if (!body.key || !body.value) {
