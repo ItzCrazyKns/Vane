@@ -1,6 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
-import { requireAdmin, getRequestUser } from '@/lib/auth/helpers';
+import { requireAdmin, getRequestUser, isAuthError } from '@/lib/auth/helpers';
 import configManager from '@/lib/config';
 
 export const GET = async (req: Request) => {
@@ -78,6 +78,9 @@ export const POST = async (req: NextRequest) => {
       },
     );
   } catch (err) {
+    if (isAuthError(err)) {
+      return Response.json({ message: err.message }, { status: err.status });
+    }
     console.error('An error occurred while creating provider', err);
     return Response.json(
       {

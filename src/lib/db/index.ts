@@ -9,4 +9,7 @@ const db = drizzle(sqlite, {
   schema: schema,
 });
 
+// Export the underlying sqlite connection for transactions
+export { sqlite };
+
 export default db;

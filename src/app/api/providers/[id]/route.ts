@@ -1,6 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
-import { requireAdmin } from '@/lib/auth/helpers';
+import { requireAdmin, isAuthError } from '@/lib/auth/helpers';
 
 export const DELETE = async (
   req: NextRequest,
@@ -35,6 +35,9 @@ export const DELETE = async (
       },
     );
   } catch (err: any) {
+    if (isAuthError(err)) {
+      return Response.json({ message: err.message }, { status: err.status });
+    }
     console.error('An error occurred while deleting provider', err.message);
     return Response.json(
       {
@@ -83,6 +86,9 @@ export const PATCH = async (
       },
     );
   } catch (err: any) {
+    if (isAuthError(err)) {
+      return Response.json({ message: err.message }, { status: err.status });
+    }
     console.error('An error occurred while updating provider', err.message);
     return Response.json(
       {

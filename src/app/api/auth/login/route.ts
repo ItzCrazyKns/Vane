@@ -2,10 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 import { users, auth } from '@/lib/db/schema';
 import { verifyPassword, createToken, setAuthCookie } from '@/lib/auth';
+import {
+  checkRateLimit,
+  resetRateLimit,
+  getClientIp,
+} from '@/lib/auth/rateLimiter';
 import { eq } from 'drizzle-orm';
 
 export async function POST(req: NextRequest) {
   try {
+    const clientIp = getClientIp(req.headers);
+    const rateLimit = checkRateLimit(`login:${clientIp}`);
+
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        {
+          message: `Too many login attempts. Try again in ${rateLimit.retryAfter} seconds.`,
+        },
+        { status: 429 },
+      );
+    }
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
@@ -52,6 +69,9 @@ export async function POST(req: NextRequest) {
       user.role as 'user' | 'admin',
     );
     await setAuthCookie(token);
+
+    // Clear rate limit on successful login
+    resetRateLimit(`login:${clientIp}`);
 
     return NextResponse.json({
       user: {

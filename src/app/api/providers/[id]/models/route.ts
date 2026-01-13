@@ -1,7 +1,7 @@
 import ModelRegistry from '@/lib/models/registry';
 import { Model } from '@/lib/models/types';
 import { NextRequest } from 'next/server';
-import { requireAdmin } from '@/lib/auth/helpers';
+import { requireAdmin, isAuthError } from '@/lib/auth/helpers';
 
 export const POST = async (
   req: NextRequest,
@@ -40,6 +40,9 @@ export const POST = async (
       },
     );
   } catch (err) {
+    if (isAuthError(err)) {
+      return Response.json({ message: err.message }, { status: err.status });
+    }
     console.error('An error occurred while adding provider model', err);
     return Response.json(
       {
@@ -88,6 +91,9 @@ export const DELETE = async (
       },
     );
   } catch (err) {
+    if (isAuthError(err)) {
+      return Response.json({ message: err.message }, { status: err.status });
+    }
     console.error('An error occurred while deleting provider model', err);
     return Response.json(
       {
