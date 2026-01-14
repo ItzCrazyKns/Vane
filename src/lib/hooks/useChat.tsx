@@ -86,9 +86,6 @@ const checkConfig = async (
   isLoggingOut: () => boolean,
   retryCount = 0,
 ): Promise<void> => {
-  // Version marker to verify new code is running
-  console.log('[checkConfig] v2 - Starting, retryCount:', retryCount);
-
   const MAX_RETRIES = 4;
   const BASE_DELAY = 500; // ms
 
@@ -510,39 +507,16 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   // Track if we've already run checkConfig to prevent multiple runs
   const hasCheckedConfig = useRef(false);
 
-  // Debug: log auth state changes
-  useEffect(() => {
-    console.log('[ChatProvider] Auth state:', { authLoading, user: user?.email, loggingOut, hasCheckedConfig: hasCheckedConfig.current });
-  }, [authLoading, user, loggingOut]);
-
   // Wait for auth to load before checking config
   // Only check config if user is authenticated
   useEffect(() => {
-    console.log('[ChatProvider] useEffect running, checking conditions...');
-
-    if (authLoading) {
-      console.log('[ChatProvider] Waiting for auth to load...');
+    if (authLoading || !user || loggingOut || hasCheckedConfig.current) {
       return;
     }
-    if (!user) {
-      console.log('[ChatProvider] No user, skipping checkConfig');
-      return;
-    }
-    if (loggingOut) {
-      console.log('[ChatProvider] Logging out, skipping checkConfig');
-      return;
-    }
-    if (hasCheckedConfig.current) {
-      console.log('[ChatProvider] Already checked config, skipping');
-      return;
-    }
-
-    console.log('[ChatProvider] All conditions passed, scheduling checkConfig');
     hasCheckedConfig.current = true;
 
     // Small delay to ensure cookies are fully processed
     const timeoutId = setTimeout(() => {
-      console.log('[ChatProvider] Timeout fired, calling checkConfig');
       checkConfig(
         setChatModelProvider,
         setEmbeddingModelProvider,
@@ -552,10 +526,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       );
     }, 100);
 
-    return () => {
-      console.log('[ChatProvider] Cleanup: clearing timeout');
-      clearTimeout(timeoutId);
-    };
+    return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, loggingOut]);
 
