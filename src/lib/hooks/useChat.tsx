@@ -293,7 +293,7 @@ export const chatContext = createContext<ChatContext>({
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const params: { chatId: string } = useParams();
-  const { loggingOut } = useAuth();
+  const { loggingOut, loading: authLoading, user } = useAuth();
 
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
@@ -491,7 +491,22 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     loggingOutRef.current = loggingOut;
   }, [loggingOut]);
 
+  // Track if we've already run checkConfig to prevent multiple runs
+  const hasCheckedConfig = useRef(false);
+
+  // Wait for auth to load before checking config
+  // This prevents race conditions where checkConfig runs before the auth cookie is ready
   useEffect(() => {
+    if (authLoading) {
+      return; // Wait for auth to finish loading
+    }
+    if (loggingOut) {
+      return; // Don't check config during logout
+    }
+    if (hasCheckedConfig.current) {
+      return; // Already checked config
+    }
+    hasCheckedConfig.current = true;
     checkConfig(
       setChatModelProvider,
       setEmbeddingModelProvider,
@@ -500,7 +515,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       () => loggingOutRef.current,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authLoading, loggingOut]);
 
   useEffect(() => {
     if (params.chatId && params.chatId !== chatId) {

@@ -29,6 +29,13 @@
       "when": 1768045060587,
       "tag": "0003_add-user-auth",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1736848800000,
+      "tag": "0004_add-audit-logs",
+      "breakpoints": true
     }
   ]
 }
