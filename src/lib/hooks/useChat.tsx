@@ -85,9 +85,27 @@ const checkConfig = async (
   setHasError: (hasError: boolean) => void,
   isLoggingOut: () => boolean,
   retryCount = 0,
-) => {
-  const MAX_RETRIES = 3;
-  const BASE_DELAY = 800; // ms
+): Promise<void> => {
+  // Version marker to verify new code is running
+  console.log('[checkConfig] v2 - Starting, retryCount:', retryCount);
+
+  const MAX_RETRIES = 4;
+  const BASE_DELAY = 500; // ms
+
+  // Helper to retry with delay
+  const retryWithDelay = async (reason: string): Promise<void> => {
+    if (isLoggingOut()) {
+      console.log('[checkConfig] Skipping retry - logout in progress');
+      return;
+    }
+    if (retryCount >= MAX_RETRIES) {
+      throw new Error(`Failed after ${MAX_RETRIES} retries: ${reason}`);
+    }
+    const delay = BASE_DELAY * Math.pow(2, retryCount); // Exponential: 500, 1000, 2000, 4000ms
+    console.log(`[checkConfig] ${reason}, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return checkConfig(setChatModelProvider, setEmbeddingModelProvider, setIsConfigReady, setHasError, isLoggingOut, retryCount + 1);
+  };
 
   try {
     let chatModelKey = localStorage.getItem('chatModelKey');
@@ -97,23 +115,21 @@ const checkConfig = async (
       'embeddingModelProviderId',
     );
 
-    const res = await fetch(`/api/providers`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    let res: Response;
+    try {
+      res = await fetch(`/api/providers`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (fetchError: any) {
+      // Network error - retry
+      return retryWithDelay(`Network error: ${fetchError.message}`);
+    }
 
-    // Retry on auth failures (401) - may happen due to cookie timing after login
-    if (res.status === 401 && retryCount < MAX_RETRIES) {
-      // Skip retry if logging out - the 401 is expected
-      if (isLoggingOut()) {
-        console.log('[checkConfig] Skipping retry - logout in progress');
-        return;
-      }
-      const delay = BASE_DELAY * (retryCount + 1); // Exponential backoff: 800, 1600, 2400ms
-      console.log(`[checkConfig] Got 401, retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      return checkConfig(setChatModelProvider, setEmbeddingModelProvider, setIsConfigReady, setHasError, isLoggingOut, retryCount + 1);
+    // Retry on auth failures (401) or server errors (5xx)
+    if (res.status === 401 || res.status >= 500) {
+      return retryWithDelay(`Got ${res.status}`);
     }
 
     if (!res.ok) {
@@ -507,13 +523,20 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       return; // Already checked config
     }
     hasCheckedConfig.current = true;
-    checkConfig(
-      setChatModelProvider,
-      setEmbeddingModelProvider,
-      setIsConfigReady,
-      setHasError,
-      () => loggingOutRef.current,
-    );
+
+    // Add a small delay to ensure cookies are fully processed by the browser
+    // This helps with race conditions after login redirect
+    const timeoutId = setTimeout(() => {
+      checkConfig(
+        setChatModelProvider,
+        setEmbeddingModelProvider,
+        setIsConfigReady,
+        setHasError,
+        () => loggingOutRef.current,
+      );
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, loggingOut]);
 
