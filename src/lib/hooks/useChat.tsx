@@ -511,10 +511,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const hasCheckedConfig = useRef(false);
 
   // Wait for auth to load before checking config
-  // This prevents race conditions where checkConfig runs before the auth cookie is ready
+  // Only check config if user is authenticated
   useEffect(() => {
     if (authLoading) {
       return; // Wait for auth to finish loading
+    }
+    if (!user) {
+      return; // Don't check config if not authenticated (will redirect to login)
     }
     if (loggingOut) {
       return; // Don't check config during logout
@@ -524,8 +527,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     }
     hasCheckedConfig.current = true;
 
-    // Add a small delay to ensure cookies are fully processed by the browser
-    // This helps with race conditions after login redirect
+    // Small delay to ensure cookies are fully processed
     const timeoutId = setTimeout(() => {
       checkConfig(
         setChatModelProvider,
@@ -538,7 +540,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, loggingOut]);
+  }, [authLoading, user, loggingOut]);
 
   useEffect(() => {
     if (params.chatId && params.chatId !== chatId) {
