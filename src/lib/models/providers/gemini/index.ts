@@ -97,7 +97,6 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
     return new GeminiLLM({
       apiKey: this.config.apiKey,
       model: key,
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
     });
   }
 
