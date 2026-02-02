@@ -2,6 +2,7 @@ import { GoogleGenAI, Content, Part, Tool as GeminiTool } from '@google/genai';
 import BaseLLM from '../../base/llm';
 import {
   GenerateObjectInput,
+  GenerateOptions,
   GenerateTextInput,
   GenerateTextOutput,
   StreamTextOutput,
@@ -17,12 +18,7 @@ import z from 'zod';
 type GeminiConfig = {
   apiKey: string;
   model: string;
-  options?: {
-    temperature?: number;
-    maxTokens?: number;
-    topP?: number;
-    stopSequences?: string[];
-  };
+  options?: GenerateOptions;
 };
 
 type ConvertedMessages = {
@@ -160,12 +156,7 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
    * Note: frequency_penalty and presence_penalty are NOT included
    * as they cause 400 errors with some Gemini models
    */
-  private buildGenerationConfig(options?: {
-    temperature?: number;
-    maxTokens?: number;
-    topP?: number;
-    stopSequences?: string[];
-  }) {
+  private buildGenerationConfig(options?: GenerateOptions) {
     return {
       temperature: options?.temperature ?? this.config.options?.temperature ?? 0.7,
       maxOutputTokens: options?.maxTokens ?? this.config.options?.maxTokens,
