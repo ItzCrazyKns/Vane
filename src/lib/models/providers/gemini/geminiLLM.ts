@@ -259,13 +259,16 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
     // Track the last finishReason during streaming
     let lastFinishReason: string | undefined;
 
+    // Counter for generating unique tool call IDs across all chunks
+    let toolCallCounter = 0;
+
     for await (const chunk of stream) {
       // Process any function calls in this chunk
       const functionCalls = chunk.functionCalls;
       if (functionCalls && functionCalls.length > 0) {
-        functionCalls.forEach((fc, index) => {
+        functionCalls.forEach((fc) => {
           const id =
-            fc.id || this.generateToolCallId(index, fc.name || 'unknown');
+            fc.id || this.generateToolCallId(toolCallCounter++, fc.name || 'unknown');
           // Update or add the tool call
           accumulatedToolCalls.set(id, {
             id,
@@ -350,9 +353,19 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
 
       try {
         yield parse(receivedObj) as T;
+      } catch {
+        // Expected for incomplete JSON - wait for more chunks
+      }
+    }
+
+    // After loop: validate and yield final object
+    if (receivedObj) {
+      try {
+        const repaired = repairJson(receivedObj, { extractJson: true }) as string;
+        const finalObject = input.schema.parse(JSON.parse(repaired));
+        yield finalObject as T;
       } catch (err) {
-        console.log('Error parsing partial object from Gemini:', err);
-        yield {} as T;
+        throw new Error(`Stream ended with invalid JSON object: ${err}`);
       }
     }
   }
