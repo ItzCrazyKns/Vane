@@ -47,6 +47,7 @@ type ToolCall = {
   id: string;
   name: string;
   arguments: Record<string, any>;
+  thoughtSignature?: string; // For Gemini 3 models
 };
 
 type GenerateTextInput = {

@@ -79,13 +79,18 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
         // Add function calls if present
         if (msg.tool_calls && msg.tool_calls.length > 0) {
           for (const tc of msg.tool_calls) {
-            parts.push({
+            const part: Part = {
               functionCall: {
                 id: tc.id,
                 name: tc.name,
                 args: tc.arguments,
               },
-            });
+            };
+            // Add thoughtSignature as sibling if present (required for Gemini 3 models)
+            if (tc.thoughtSignature) {
+              (part as any).thoughtSignature = tc.thoughtSignature;
+            }
+            parts.push(part);
           }
         }
 
@@ -216,6 +221,7 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
           id: fc.id || this.generateToolCallId(index, fc.name || 'unknown'),
           name: fc.name || 'unknown',
           arguments: (fc.args as Record<string, unknown>) || {},
+          thoughtSignature: (fc as any).thoughtSignature,
         });
       });
     }
@@ -253,7 +259,7 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
     // Accumulate tool calls across chunks
     const accumulatedToolCalls: Map<
       string,
-      { id: string; name: string; arguments: Record<string, unknown> }
+      { id: string; name: string; arguments: Record<string, unknown>; thoughtSignature?: string }
     > = new Map();
 
     // Track the last finishReason during streaming
@@ -274,6 +280,7 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
             id,
             name: fc.name || 'unknown',
             arguments: (fc.args as Record<string, unknown>) || {},
+            thoughtSignature: (fc as any).thoughtSignature,
           });
         });
       }
