@@ -190,6 +190,32 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
       },
     });
 
+    // Validate response before accessing properties
+    if (!response) {
+      throw new Error(
+        'Gemini API returned an empty response. The request may have failed or been blocked.',
+      );
+    }
+
+    // Check if response has any content (text or function calls)
+    const hasText = response.text !== undefined && response.text !== null;
+    const hasFunctionCalls =
+      response.functionCalls && response.functionCalls.length > 0;
+
+    if (!hasText && !hasFunctionCalls) {
+      // Check for candidates to provide more context on why response is empty
+      const candidates = response.candidates;
+      if (candidates && candidates.length > 0) {
+        const finishReason = candidates[0].finishReason;
+        if (finishReason && finishReason !== 'STOP') {
+          throw new Error(
+            `Gemini API returned an empty response. Finish reason: ${finishReason}. The content may have been blocked or filtered.`,
+          );
+        }
+      }
+      // Response is empty but no explicit error - this is valid (empty text response)
+    }
+
     const toolCalls: ToolCall[] = [];
     const functionCalls = response.functionCalls;
     if (functionCalls && functionCalls.length > 0) {
