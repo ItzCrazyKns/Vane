@@ -150,7 +150,7 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
   private generateToolCallId(index: number, name: string): string {
     return crypto
       .createHash('sha256')
-      .update(`${Date.now()}-${index}-${name}`)
+      .update(`${index}-${name}`)
       .digest('hex')
       .slice(0, 16);
   }
