@@ -158,6 +158,7 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
    */
   private buildGenerationConfig(options?: GenerateOptions) {
     return {
+      // Default temperature 0.7 for more focused outputs (OpenAI defaults to 1.0)
       temperature: options?.temperature ?? this.config.options?.temperature ?? 0.7,
       maxOutputTokens: options?.maxTokens ?? this.config.options?.maxTokens,
       topP: options?.topP ?? this.config.options?.topP,
@@ -219,9 +220,15 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
       });
     }
 
+    // Extract finishReason from candidates if available
+    const finishReason = response.candidates?.[0]?.finishReason;
+
     return {
       content: response.text || '',
       toolCalls,
+      additionalInfo: {
+        finishReason,
+      },
     };
   }
 
@@ -249,6 +256,9 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
       { id: string; name: string; arguments: Record<string, unknown> }
     > = new Map();
 
+    // Track the last finishReason during streaming
+    let lastFinishReason: string | undefined;
+
     for await (const chunk of stream) {
       // Process any function calls in this chunk
       const functionCalls = chunk.functionCalls;
@@ -265,10 +275,19 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
         });
       }
 
+      // Extract finishReason from candidates if available
+      const finishReason = chunk.candidates?.[0]?.finishReason;
+      if (finishReason) {
+        lastFinishReason = finishReason;
+      }
+
       yield {
         contentChunk: chunk.text || '',
         toolCallChunk: Array.from(accumulatedToolCalls.values()),
         done: false,
+        additionalInfo: {
+          finishReason,
+        },
       };
     }
 
@@ -277,6 +296,9 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
       contentChunk: '',
       toolCallChunk: Array.from(accumulatedToolCalls.values()),
       done: true,
+      additionalInfo: {
+        finishReason: lastFinishReason,
+      },
     };
   }
 
