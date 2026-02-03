@@ -214,16 +214,20 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
     }
 
     const toolCalls: ToolCall[] = [];
-    const functionCalls = response.functionCalls;
-    if (functionCalls && functionCalls.length > 0) {
-      functionCalls.forEach((fc, index) => {
+    // Get raw parts from response to access both functionCall and thoughtSignature
+    const parts = response.candidates?.[0]?.content?.parts || [];
+    let toolCallIndex = 0;
+    for (const part of parts) {
+      if ((part as any).functionCall) {
+        const fc = (part as any).functionCall;
         toolCalls.push({
-          id: fc.id || this.generateToolCallId(index, fc.name || 'unknown'),
+          id: fc.id || this.generateToolCallId(toolCallIndex, fc.name || 'unknown'),
           name: fc.name || 'unknown',
           arguments: (fc.args as Record<string, unknown>) || {},
-          thoughtSignature: (fc as any).thoughtSignature,
+          thoughtSignature: (part as any).thoughtSignature,  // Get from Part, not FunctionCall
         });
-      });
+        toolCallIndex++;
+      }
     }
 
     // Extract finishReason from candidates if available
@@ -270,9 +274,11 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
 
     for await (const chunk of stream) {
       // Process any function calls in this chunk
-      const functionCalls = chunk.functionCalls;
-      if (functionCalls && functionCalls.length > 0) {
-        functionCalls.forEach((fc) => {
+      // Get raw parts from chunk to access both functionCall and thoughtSignature
+      const parts = chunk.candidates?.[0]?.content?.parts || [];
+      for (const part of parts) {
+        if ((part as any).functionCall) {
+          const fc = (part as any).functionCall;
           const id =
             fc.id || this.generateToolCallId(toolCallCounter++, fc.name || 'unknown');
           // Update or add the tool call
@@ -280,9 +286,9 @@ class GeminiLLM extends BaseLLM<GeminiConfig> {
             id,
             name: fc.name || 'unknown',
             arguments: (fc.args as Record<string, unknown>) || {},
-            thoughtSignature: (fc as any).thoughtSignature,
+            thoughtSignature: (part as any).thoughtSignature,  // Get from Part, not FunctionCall
           });
-        });
+        }
       }
 
       // Extract finishReason from candidates if available
