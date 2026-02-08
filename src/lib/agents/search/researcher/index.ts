@@ -56,74 +56,52 @@ class Researcher {
       },
     ];
 
-    for (let i = 0; i < maxIteration; i++) {
-      const researcherPrompt = getResearcherPrompt(
-        availableActionsDescription,
-        input.config.mode,
-        i,
-        maxIteration,
-        input.config.fileIds,
-      );
+    try {
+      for (let i = 0; i < maxIteration; i++) {
+        const researcherPrompt = getResearcherPrompt(
+          availableActionsDescription,
+          input.config.mode,
+          i,
+          maxIteration,
+          input.config.fileIds,
+        );
 
-      const actionStream = input.config.llm.streamText({
-        messages: [
-          {
-            role: 'system',
-            content: researcherPrompt,
-          },
-          ...agentMessageHistory,
-        ],
-        tools: availableTools,
-      });
+        const actionStream = input.config.llm.streamText({
+          messages: [
+            {
+              role: 'system',
+              content: researcherPrompt,
+            },
+            ...agentMessageHistory,
+          ],
+          tools: availableTools,
+        });
 
-      const block = session.getBlock(researchBlockId);
+        const block = session.getBlock(researchBlockId);
 
-      let reasoningEmitted = false;
-      let reasoningId = crypto.randomUUID();
+        let reasoningEmitted = false;
+        let reasoningId = crypto.randomUUID();
 
-      let finalToolCalls: ToolCall[] = [];
+        let finalToolCalls: ToolCall[] = [];
 
-      for await (const partialRes of actionStream) {
-        if (partialRes.toolCallChunk.length > 0) {
-          partialRes.toolCallChunk.forEach((tc) => {
-            if (
-              tc.name === '__reasoning_preamble' &&
-              tc.arguments['plan'] &&
-              !reasoningEmitted &&
-              block &&
-              block.type === 'research'
-            ) {
-              reasoningEmitted = true;
+        for await (const partialRes of actionStream) {
+          if (partialRes.toolCallChunk.length > 0) {
+            partialRes.toolCallChunk.forEach((tc) => {
+              if (
+                tc.name === '__reasoning_preamble' &&
+                tc.arguments['plan'] &&
+                !reasoningEmitted &&
+                block &&
+                block.type === 'research'
+              ) {
+                reasoningEmitted = true;
 
-              block.data.subSteps.push({
-                id: reasoningId,
-                type: 'reasoning',
-                reasoning: tc.arguments['plan'],
-              });
+                block.data.subSteps.push({
+                  id: reasoningId,
+                  type: 'reasoning',
+                  reasoning: tc.arguments['plan'],
+                });
 
-              session.updateBlock(researchBlockId, [
-                {
-                  op: 'replace',
-                  path: '/data/subSteps',
-                  value: block.data.subSteps,
-                },
-              ]);
-            } else if (
-              tc.name === '__reasoning_preamble' &&
-              tc.arguments['plan'] &&
-              reasoningEmitted &&
-              block &&
-              block.type === 'research'
-            ) {
-              const subStepIndex = block.data.subSteps.findIndex(
-                (step: any) => step.id === reasoningId,
-              );
-
-              if (subStepIndex !== -1) {
-                const subStep = block.data.subSteps[
-                  subStepIndex
-                ] as ReasoningResearchBlock;
-                subStep.reasoning = tc.arguments['plan'];
                 session.updateBlock(researchBlockId, [
                   {
                     op: 'replace',
@@ -131,54 +109,80 @@ class Researcher {
                     value: block.data.subSteps,
                   },
                 ]);
+              } else if (
+                tc.name === '__reasoning_preamble' &&
+                tc.arguments['plan'] &&
+                reasoningEmitted &&
+                block &&
+                block.type === 'research'
+              ) {
+                const subStepIndex = block.data.subSteps.findIndex(
+                  (step: any) => step.id === reasoningId,
+                );
+
+                if (subStepIndex !== -1) {
+                  const subStep = block.data.subSteps[
+                    subStepIndex
+                  ] as ReasoningResearchBlock;
+                  subStep.reasoning = tc.arguments['plan'];
+                  session.updateBlock(researchBlockId, [
+                    {
+                      op: 'replace',
+                      path: '/data/subSteps',
+                      value: block.data.subSteps,
+                    },
+                  ]);
+                }
               }
-            }
 
-            const existingIndex = finalToolCalls.findIndex(
-              (ftc) => ftc.id === tc.id,
-            );
+              const existingIndex = finalToolCalls.findIndex(
+                (ftc) => ftc.id === tc.id,
+              );
 
-            if (existingIndex !== -1) {
-              finalToolCalls[existingIndex].arguments = tc.arguments;
-            } else {
-              finalToolCalls.push(tc);
-            }
-          });
+              if (existingIndex !== -1) {
+                finalToolCalls[existingIndex].arguments = tc.arguments;
+              } else {
+                finalToolCalls.push(tc);
+              }
+            });
+          }
         }
-      }
 
-      if (finalToolCalls.length === 0) {
-        break;
-      }
+        if (finalToolCalls.length === 0) {
+          break;
+        }
 
-      if (finalToolCalls[finalToolCalls.length - 1].name === 'done') {
-        break;
-      }
+        if (finalToolCalls[finalToolCalls.length - 1].name === 'done') {
+          break;
+        }
 
-      agentMessageHistory.push({
-        role: 'assistant',
-        content: '',
-        tool_calls: finalToolCalls,
-      });
-
-      const actionResults = await ActionRegistry.executeAll(finalToolCalls, {
-        llm: input.config.llm,
-        embedding: input.config.embedding,
-        session: session,
-        researchBlockId: researchBlockId,
-        fileIds: input.config.fileIds,
-      });
-
-      actionOutput.push(...actionResults);
-
-      actionResults.forEach((action, i) => {
         agentMessageHistory.push({
-          role: 'tool',
-          id: finalToolCalls[i].id,
-          name: finalToolCalls[i].name,
-          content: JSON.stringify(action),
+          role: 'assistant',
+          content: '',
+          tool_calls: finalToolCalls,
         });
-      });
+
+        const actionResults = await ActionRegistry.executeAll(finalToolCalls, {
+          llm: input.config.llm,
+          embedding: input.config.embedding,
+          session: session,
+          researchBlockId: researchBlockId,
+          fileIds: input.config.fileIds,
+        });
+
+        actionOutput.push(...actionResults);
+
+        actionResults.forEach((action, i) => {
+          agentMessageHistory.push({
+            role: 'tool',
+            id: finalToolCalls[i].id,
+            name: finalToolCalls[i].name,
+            content: JSON.stringify(action),
+          });
+        });
+      }
+    } catch (err) {
+      console.error('Error during research iterations:', err);
     }
 
     const searchResults = actionOutput

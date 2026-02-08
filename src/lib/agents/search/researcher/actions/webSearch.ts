@@ -4,7 +4,6 @@ import { searchSearxng } from '@/lib/searxng';
 import { Chunk, SearchResultsResearchBlock } from '@/lib/types';
 
 const actionSchema = z.object({
-  type: z.literal('web_search'),
   queries: z
     .array(z.string())
     .describe('An array of search queries to perform web searches for.'),
@@ -85,7 +84,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     config.sources.includes('web') &&
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    input.queries = (input.queries || []).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,

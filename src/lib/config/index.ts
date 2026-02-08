@@ -126,49 +126,72 @@ class ConfigManager {
   }
 
   private saveConfig() {
-    fs.writeFileSync(
-      this.configPath,
-      JSON.stringify(this.currentConfig, null, 2),
-    );
+    try {
+      const dir = path.dirname(this.configPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(
+        this.configPath,
+        JSON.stringify(this.currentConfig, null, 2),
+      );
+    } catch (err) {
+      console.error(
+        `CRITICAL: Failed to save config to ${this.configPath}:`,
+        err,
+      );
+    }
   }
 
   private initializeConfig() {
     const exists = fs.existsSync(this.configPath);
     if (!exists) {
-      fs.writeFileSync(
-        this.configPath,
-        JSON.stringify(this.currentConfig, null, 2),
-      );
+      console.log('Config file not found, creating new one.');
+      this.saveConfig();
     } else {
       try {
-        this.currentConfig = JSON.parse(
-          fs.readFileSync(this.configPath, 'utf-8'),
-        );
-      } catch (err) {
-        if (err instanceof SyntaxError) {
-          console.error(
-            `Error parsing config file at ${this.configPath}:`,
-            err,
-          );
-          console.log(
-            'Loading default config and overwriting the existing file.',
-          );
-          fs.writeFileSync(
-            this.configPath,
-            JSON.stringify(this.currentConfig, null, 2),
-          );
+        const fileContent = fs.readFileSync(this.configPath, 'utf-8');
+        if (!fileContent.trim()) {
+          console.warn('Config file is empty, resetting to default.');
+          this.saveConfig();
           return;
-        } else {
-          console.log('Unknown error reading config file:', err);
         }
+        this.currentConfig = JSON.parse(fileContent);
+        this.currentConfig = this.migrateConfig(this.currentConfig);
+      } catch (err) {
+        console.error(
+          `Error parsing config file at ${this.configPath}. Keeping default in-memory config. Error:`,
+          err,
+        );
       }
-
-      this.currentConfig = this.migrateConfig(this.currentConfig);
     }
   }
 
   private migrateConfig(config: Config): Config {
-    /* TODO: Add migrations */
+    // Auto-select default models if missing
+    if (!config.defaultChatModel && config.modelProviders && config.modelProviders.length > 0) {
+      for (const p of config.modelProviders) {
+        if (p.chatModels && p.chatModels.length > 0) {
+          config.defaultChatModel = { providerId: p.id, key: p.chatModels[0].key };
+          console.log(`Auto-selected default chat model: ${p.name} - ${p.chatModels[0].name}`);
+          break;
+        }
+      }
+    }
+
+    if (!config.defaultEmbeddingModel && config.modelProviders && config.modelProviders.length > 0) {
+      for (const p of config.modelProviders) {
+        if (p.embeddingModels && p.embeddingModels.length > 0) {
+          config.defaultEmbeddingModel = {
+            providerId: p.id,
+            key: p.embeddingModels[0].key,
+          };
+          console.log(`Auto-selected default embedding model: ${p.name} - ${p.embeddingModels[0].name}`);
+          break;
+        }
+      }
+    }
+
     return config;
   }
 
@@ -226,13 +249,78 @@ class ConfigManager {
 
     this.currentConfig.modelProviders.push(...newProviders);
 
-    /* search section */
-    this.uiConfigSections.search.forEach((f) => {
-      if (f.env && !this.currentConfig.search[f.key]) {
-        this.currentConfig.search[f.key] =
-          process.env[f.env] ?? f.default ?? '';
+    const applyEnv = (
+      sectionKey: 'search' | 'preferences' | 'personalization',
+      sectionFields: typeof this.uiConfigSections.search,
+    ) => {
+      // Ensure the section exists in currentConfig
+      if (!this.currentConfig[sectionKey]) {
+        this.currentConfig[sectionKey] = {};
       }
-    });
+
+      sectionFields.forEach((f) => {
+        const keySnakeCase = f.key
+          .replace(/([a-z])([A-Z])/g, '$1_$2')
+          .toUpperCase();
+        const structuredKey = `${sectionKey.toUpperCase()}_${keySnakeCase}`;
+        const val =
+          process.env[structuredKey] || (f.env ? process.env[f.env] : undefined);
+
+        if (val) {
+          this.currentConfig[sectionKey][f.key] = val;
+        } else if (
+          this.currentConfig[sectionKey][f.key] === undefined ||
+          this.currentConfig[sectionKey][f.key] === ''
+        ) {
+          this.currentConfig[sectionKey][f.key] = f.default ?? '';
+        }
+      });
+    };
+
+    applyEnv('search', this.uiConfigSections.search);
+    applyEnv('preferences', this.uiConfigSections.preferences);
+    applyEnv('personalization', this.uiConfigSections.personalization);
+
+    // Specific Default Models from Env
+    if (process.env.CHAT_MODEL && process.env.CHAT_PROVIDER_TYPE) {
+      const provider = this.currentConfig.modelProviders.find(
+        (p) =>
+          p.type === process.env.CHAT_PROVIDER_TYPE &&
+          (!process.env.CHAT_PROVIDER_URL ||
+            p.config.baseURL === process.env.CHAT_PROVIDER_URL),
+      );
+
+      if (provider) {
+        this.currentConfig.defaultChatModel = {
+          providerId: provider.id,
+          key: process.env.CHAT_MODEL,
+        };
+      }
+    }
+
+    if (process.env.EMBEDDING_MODEL && process.env.EMBEDDING_PROVIDER_TYPE) {
+      const provider = this.currentConfig.modelProviders.find(
+        (p) =>
+          p.type === process.env.EMBEDDING_PROVIDER_TYPE &&
+          (!process.env.EMBEDDING_PROVIDER_URL ||
+            p.config.baseURL === process.env.EMBEDDING_PROVIDER_URL),
+      );
+
+      if (provider) {
+        this.currentConfig.defaultEmbeddingModel = {
+          providerId: provider.id,
+          key: process.env.EMBEDDING_MODEL,
+        };
+      }
+    }
+
+    if (
+      this.currentConfig.search.searxngURL &&
+      this.currentConfig.defaultChatModel &&
+      this.currentConfig.defaultEmbeddingModel
+    ) {
+      this.currentConfig.setupComplete = true;
+    }
 
     this.saveConfig();
   }
@@ -365,13 +453,17 @@ class ConfigManager {
   }
 
   public isSetupComplete() {
-    return this.currentConfig.setupComplete;
+    return (
+      process.env.SETUP_COMPLETE === 'true' || this.currentConfig.setupComplete
+    );
   }
 
   public markSetupComplete() {
     if (!this.currentConfig.setupComplete) {
       this.currentConfig.setupComplete = true;
     }
+
+    process.env.SETUP_COMPLETE = 'true';
 
     this.saveConfig();
   }
@@ -382,6 +474,98 @@ class ConfigManager {
 
   public getCurrentConfig(): Config {
     return JSON.parse(JSON.stringify(this.currentConfig));
+  }
+
+  public getEnvVars(): string[] {
+    const envVars: string[] = [];
+
+    envVars.push('    environment:');
+
+    envVars.push('      # SearXNG search engine base URL');
+    const searxngURL = this.currentConfig.search.searxngURL;
+    if (searxngURL) {
+      envVars.push(`      - SEARCH_SEARXNG_URL=${searxngURL}`);
+    }
+
+    // Default Models
+    if (this.currentConfig.defaultChatModel) {
+      const provider = this.currentConfig.modelProviders.find(
+        (p) => p.id === this.currentConfig.defaultChatModel?.providerId,
+      );
+      if (provider) {
+        envVars.push('      # Default Chat Model');
+        envVars.push(`      - CHAT_PROVIDER_TYPE=${provider.type}`);
+        if (provider.config.baseURL) {
+          envVars.push(`      - CHAT_PROVIDER_URL=${provider.config.baseURL}`);
+        }
+        envVars.push(`      - CHAT_MODEL=${this.currentConfig.defaultChatModel.key}`);
+      }
+    }
+
+    if (this.currentConfig.defaultEmbeddingModel) {
+      const provider = this.currentConfig.modelProviders.find(
+        (p) => p.id === this.currentConfig.defaultEmbeddingModel?.providerId,
+      );
+      if (provider) {
+        envVars.push('      # Default Embedding Model');
+        envVars.push(`      - EMBEDDING_PROVIDER_TYPE=${provider.type}`);
+        if (provider.config.baseURL) {
+          envVars.push(`      - EMBEDDING_PROVIDER_URL=${provider.config.baseURL}`);
+        }
+        envVars.push(
+          `      - EMBEDDING_MODEL=${this.currentConfig.defaultEmbeddingModel.key}`,
+        );
+      }
+    }
+
+    // Providers configuration
+    this.currentConfig.modelProviders.forEach((p) => {
+      const providerFields = this.uiConfigSections.modelProviders.find(
+        (section) => section.key === p.type,
+      )?.fields;
+      if (providerFields) {
+        envVars.push(`      # ${p.name} Provider Configuration`);
+        providerFields.forEach((f) => {
+          const val = p.config[f.key];
+          if (val && f.env) {
+            envVars.push(`      - ${f.env}=${val}`);
+          }
+        });
+      }
+    });
+
+    // Preferences (Optional)
+    envVars.push('      # Preferences (Optional)');
+    envVars.push('      # Acceptable values for PREFERENCES_THEME: light, dark');
+    this.uiConfigSections.preferences.forEach((f: any) => {
+      const keySnakeCase = f.key
+        .replace(/([a-z])([A-Z])/g, '$1_$2')
+        .toUpperCase();
+      const structuredKey = `PREFERENCES_${keySnakeCase}`;
+      const val = this.currentConfig.preferences[f.key];
+      if (val !== undefined && val !== '') {
+        envVars.push(`      - ${structuredKey}=${val}`);
+      }
+    });
+
+    // Personalization (Optional)
+//    envVars.push('      # Personalization (Optional)');
+    this.uiConfigSections.personalization.forEach((f: any) => {
+      const keySnakeCase = f.key
+        .replace(/([a-z])([A-Z])/g, '$1_$2')
+        .toUpperCase();
+      const structuredKey = `PERSONALIZATION_${keySnakeCase}`;
+      const val = this.currentConfig.personalization[f.key];
+      if (val !== undefined && val !== '') {
+        envVars.push(`      - ${structuredKey}=${val}`);
+      }
+    });
+
+    if (this.currentConfig.setupComplete) {
+      envVars.push('      - SETUP_COMPLETE=true');
+    }
+
+    return envVars;
   }
 }
 
