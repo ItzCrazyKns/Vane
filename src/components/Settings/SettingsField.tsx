@@ -334,7 +334,7 @@ const NumberField = ({
   setValue: (value: any) => void;
   dataAdd?: string;
 }) => {
-  const [inputValue, setInputValue] = useState(value || field.default || '');
+  const [inputValue, setInputValue] = useState(value ?? field.default ?? '');
 
   return (
     <div className="space-y-2">
