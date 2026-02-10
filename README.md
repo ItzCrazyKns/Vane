@@ -161,6 +161,8 @@ If you prefer to build from source or need more control:
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
+For detailed information on configuring Perplexica using environment variables, see the [Configuration Guide](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation/CONFIGURATION.md).
+
 See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like updating, etc.
 
 ### Troubleshooting
@@ -222,9 +224,10 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 
 ## Using Perplexica's API
 
-Perplexica also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, use multiple models and get answers to your queries.
+Perplexica provides two ways to integrate its search capabilities:
 
-For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
+1.  **Native Search API**: A custom API for full control over search sources and model selection. See the [Native API Documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
+2.  **OpenAI-Compatible API**: A drop-in replacement for OpenAI/Perplexity-style APIs at `/api/openai/chat/completions`. This allows you to use Perplexica with existing tools and libraries. See the [Configuration Guide](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation/CONFIGURATION.md#openai-compatible-chat-completions-api) for examples.
 
 ## Expose Perplexica to network
 
