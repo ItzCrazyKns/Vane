@@ -335,6 +335,39 @@ const NumberField = ({
   dataAdd?: string;
 }) => {
   const [inputValue, setInputValue] = useState(value ?? field.default ?? '');
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async (newValue: any) => {
+    setLoading(true);
+    setValue(newValue);
+    try {
+      if (field.scope === 'client') {
+        localStorage.setItem(field.key, newValue);
+        emitClientConfigChanged();
+      } else {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            key: `${dataAdd}.${field.key}`,
+            value: newValue,
+          }),
+        });
+
+        if (!res.ok) {
+          console.error('Failed to save config:', await res.text());
+          throw new Error('Failed to save configuration');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving config:', error);
+      toast.error('Failed to save configuration.');
+    } finally {
+      setTimeout(() => setLoading(false), 150);
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -345,7 +378,7 @@ const NumberField = ({
         type="number"
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
-        onBlur={() => setValue(inputValue)}
+        onBlur={() => handleSave(inputValue)}
         placeholder={field.placeholder}
         data-add={dataAdd}
         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
