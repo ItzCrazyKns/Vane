@@ -1,4 +1,5 @@
 import {
+  NumberUIConfigField,
   SelectUIConfigField,
   StringUIConfigField,
   SwitchUIConfigField,
@@ -322,6 +323,42 @@ const SettingsSwitch = ({
   );
 };
 
+const NumberField = ({
+  field,
+  value,
+  setValue,
+  dataAdd,
+}: {
+  field: NumberUIConfigField;
+  value?: number;
+  setValue: (value: any) => void;
+  dataAdd?: string;
+}) => {
+  const [inputValue, setInputValue] = useState(value || field.default || '');
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {field.name}
+      </label>
+      <input
+        type="number"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onBlur={() => setValue(inputValue)}
+        placeholder={field.placeholder}
+        data-add={dataAdd}
+        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+      />
+      {field.description && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {field.description}
+        </p>
+      )}
+    </div>
+  );
+};
+
 const SettingsField = ({
   field,
   value,
@@ -364,6 +401,15 @@ const SettingsField = ({
     case 'switch':
       return (
         <SettingsSwitch
+          field={field}
+          value={val}
+          setValue={setVal}
+          dataAdd={dataAdd}
+        />
+      );
+    case 'number':
+      return (
+        <NumberField
           field={field}
           value={val}
           setValue={setVal}

@@ -25,6 +25,7 @@ type OpenAIConfig = {
   model: string;
   baseURL?: string;
   options?: GenerateOptions;
+  timeout?: number;
 };
 
 class OpenAILLM extends BaseLLM<OpenAIConfig> {
@@ -36,6 +37,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     this.openAIClient = new OpenAI({
       apiKey: this.config.apiKey,
       baseURL: this.config.baseURL || 'https://api.openai.com/v1',
+      timeout: this.config.timeout,
     });
   }
 
@@ -210,6 +212,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       response_format: zodResponseFormat(input.schema, 'object'),
+      timeout: this.config.timeout,
     });
 
     if (response.choices && response.choices.length > 0) {
@@ -249,6 +252,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       text: {
         format: zodTextFormat(input.schema, 'object'),
       },
+      timeout: this.config.timeout,
     });
 
     for await (const chunk of stream) {

@@ -10,6 +10,7 @@ import OpenAILLM from './openaiLLM';
 interface OpenAIConfig {
   apiKey: string;
   baseURL: string;
+  timeout?: number;
 }
 
 const defaultChatModels: Model[] = [
@@ -128,6 +129,17 @@ const providerConfigFields: UIConfigField[] = [
     env: 'OPENAI_BASE_URL',
     scope: 'server',
   },
+  {
+    type: 'number',
+    name: 'Timeout (ms)',
+    key: 'timeout',
+    description: 'Request timeout in milliseconds',
+    required: false,
+    placeholder: '60000',
+    default: 60000,
+    env: 'OPENAI_TIMEOUT',
+    scope: 'server',
+  },
 ];
 
 class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
@@ -177,6 +189,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
       apiKey: this.config.apiKey,
       model: key,
       baseURL: this.config.baseURL,
+      timeout: this.config.timeout,
     });
   }
 
@@ -194,6 +207,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
       apiKey: this.config.apiKey,
       model: key,
       baseURL: this.config.baseURL,
+      timeout: this.config.timeout,
     });
   }
 
@@ -208,6 +222,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
     return {
       apiKey: String(raw.apiKey),
       baseURL: String(raw.baseURL),
+      timeout: raw.timeout ? Number(raw.timeout) : undefined,
     };
   }
 
