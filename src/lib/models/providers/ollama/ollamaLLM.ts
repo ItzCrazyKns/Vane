@@ -75,7 +75,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         function: {
           name: tool.name,
           description: tool.description,
-          parameters: z.toJSONSchema(tool.schema).properties,
+          parameters: z.toJSONSchema(tool.schema) as any,
         },
       });
     });

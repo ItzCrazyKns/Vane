@@ -1,14 +1,53 @@
 services:
   perplexica:
-    image: itzcrazykns1337/perplexica:latest
+#    image: itzcrazykns1337/perplexica:latest
+    image: perplexica:local
     build:
       context: .
+      dockerfile: Dockerfile.alpine
     ports:
       - '3000:3000'
+    environment:
+      # SearXNG search engine base URL
+      - SEARCH_SEARXNG_URL=http://searxng:8080
+      # Default Chat Model
+#      - CHAT_PROVIDER_TYPE=ollama
+#      - CHAT_PROVIDER_URL=http://host.docker.internal:11434
+#      - CHAT_MODEL=qwen2.5:7b
+      # Default Embedding Model
+#      - EMBEDDING_PROVIDER_TYPE=ollama
+#      - EMBEDDING_PROVIDER_URL=http://host.docker.internal:11434
+#      - EMBEDDING_MODEL=nomic-embed-text:latest
+      # Transformers Provider Configuration
+      # ollama Provider Configuration
+#      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # Preferences (Optional)
+      # Acceptable values for PREFERENCES_THEME: light, dark
+      - PREFERENCES_THEME=dark
+      - PREFERENCES_MEASURE_UNIT=Metric
+      - PREFERENCES_AUTO_MEDIA_SEARCH=true
+      - PREFERENCES_SHOW_WEATHER_WIDGET=true
+      - PREFERENCES_SHOW_NEWS_WIDGET=true
     volumes:
-      - data:/home/perplexica/data
+      - ./data:/home/perplexica/data
     restart: unless-stopped
+    depends_on:
+      - searxng
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-volumes:
-  data:
-    name: 'perplexica-data'
+  searxng:
+    image: searxng/searxng:latest
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    ports:
+      - '8080:8080'
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID

@@ -24,7 +24,11 @@ export const searchSearxng = async (
 ) => {
   const searxngURL = getSearxngURL();
 
-  const url = new URL(`${searxngURL}/search?format=json`);
+  const baseURL = searxngURL.endsWith('/')
+    ? searxngURL.slice(0, -1)
+    : searxngURL;
+
+  const url = new URL(`${baseURL}/search?format=json`);
   url.searchParams.append('q', query);
 
   if (opts) {
@@ -39,10 +43,23 @@ export const searchSearxng = async (
   }
 
   const res = await fetch(url);
-  const data = await res.json();
+  const text = await res.text();
 
-  const results: SearxngSearchResult[] = data.results;
-  const suggestions: string[] = data.suggestions;
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    if (text.trim().startsWith('<!doctype html') || text.trim().startsWith('<html')) {
+      throw new Error(
+        'SearXNG returned an HTML response instead of JSON. ' +
+        'Please ensure that JSON output is enabled in your SearXNG settings (e.g., SEARXNG_SETTINGS_SEARCH__FORMATS=["html", "json"]).'
+      );
+    }
+    throw new Error(`Failed to parse SearXNG response as JSON: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  const results: SearxngSearchResult[] = data.results || [];
+  const suggestions: string[] = data.suggestions || [];
 
   return { results, suggestions };
 };

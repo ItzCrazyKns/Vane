@@ -73,6 +73,14 @@ type Config = {
   search: {
     [key: string]: any;
   };
+  defaultChatModel?: {
+    providerId: string;
+    key: string;
+  };
+  defaultEmbeddingModel?: {
+    providerId: string;
+    key: string;
+  };
 };
 
 type EnvMap = {

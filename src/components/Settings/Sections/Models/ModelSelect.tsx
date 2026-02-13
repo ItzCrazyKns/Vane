@@ -24,10 +24,10 @@ const ModelSelect = ({
     setSelectedModel(newValue);
 
     try {
-      if (type === 'chat') {
-        const providerId = newValue.split('/')[0];
-        const modelKey = newValue.split('/').slice(1).join('/');
+      const providerId = newValue.split('/')[0];
+      const modelKey = newValue.split('/').slice(1).join('/');
 
+      if (type === 'chat') {
         localStorage.setItem('chatModelProviderId', providerId);
         localStorage.setItem('chatModelKey', modelKey);
 
@@ -35,16 +35,29 @@ const ModelSelect = ({
           providerId: providerId,
           key: modelKey,
         });
-      } else {
-        const providerId = newValue.split('/')[0];
-        const modelKey = newValue.split('/').slice(1).join('/');
 
+        await fetch('/api/config', {
+          method: 'POST',
+          body: JSON.stringify({
+            key: 'defaultChatModel',
+            value: { providerId, key: modelKey },
+          }),
+        });
+      } else {
         localStorage.setItem('embeddingModelProviderId', providerId);
         localStorage.setItem('embeddingModelKey', modelKey);
 
         setEmbeddingModelProvider({
           providerId: providerId,
           key: modelKey,
+        });
+
+        await fetch('/api/config', {
+          method: 'POST',
+          body: JSON.stringify({
+            key: 'defaultEmbeddingModel',
+            value: { providerId, key: modelKey },
+          }),
         });
       }
     } catch (error) {
