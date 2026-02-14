@@ -57,8 +57,10 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    // Only admins can update global configuration
-    await requireAdmin();
+    // Only admins can update global configuration (during setup, allow unauthenticated access)
+    if (configManager.isSetupComplete()) {
+      await requireAdmin();
+    }
 
     const body: SaveConfigBody = await req.json();
 

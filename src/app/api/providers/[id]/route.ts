@@ -1,14 +1,17 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
 import { requireAdmin, isAuthError } from '@/lib/auth/helpers';
+import configManager from '@/lib/config';
 
 export const DELETE = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
-    // Only admins can delete providers
-    await requireAdmin();
+    // Only admins can delete providers (during setup, allow unauthenticated access)
+    if (configManager.isSetupComplete()) {
+      await requireAdmin();
+    }
 
     const { id } = await params;
 
@@ -55,8 +58,10 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
-    // Only admins can update providers
-    await requireAdmin();
+    // Only admins can update providers (during setup, allow unauthenticated access)
+    if (configManager.isSetupComplete()) {
+      await requireAdmin();
+    }
 
     const body = await req.json();
     const { name, config } = body;

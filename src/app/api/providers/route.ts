@@ -48,8 +48,10 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    // Only admins can add providers
-    await requireAdmin();
+    // Only admins can add providers (during setup, allow unauthenticated access)
+    if (configManager.isSetupComplete()) {
+      await requireAdmin();
+    }
 
     const body = await req.json();
     const { type, name, config } = body;
