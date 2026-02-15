@@ -264,3 +264,18 @@ Perplexica is built on the idea that AI and large language models should be easy
 If you have any questions or feedback, please feel free to reach out to us. You can create an issue on GitHub or join our Discord server. There, you can connect with other users, share your experiences and reviews, and receive more personalized help. [Click here](https://discord.gg/EFwsmQDgAu) to join the Discord server. To discuss matters outside of regular support, feel free to contact me on Discord at `itzcrazykns`.
 
 Thank you for exploring Perplexica, the AI-powered search engine designed to enhance your search experience. We are constantly working to improve Perplexica and expand its capabilities. We value your feedback and contributions which help us make Perplexica even better. Don't forget to check back for updates and new features!
+
+
+## Contribution
+
+We welcome contributions from the community! If you're looking to help, you can start by looking for issues tagged `good first issue` or `enhancement`.
+
+To contribute, please follow these steps:
+
+1.  **Fork** the repository.
+2.  Create a new **branch** for your feature or bug fix (`git checkout -b feature/your-feature-name`).
+3.  Make your changes and **commit** them with a clear message (`git commit -m 'feat: Add some amazing feature'`).
+4.  **Push** your changes to your fork (`git push origin feature/your-feature-name`).
+5.  Open a **Pull Request** to the `master` branch of this repository.
+
+Please ensure your code follows the project's coding standards and includes tests where applicable. We look forward to your contributions!
