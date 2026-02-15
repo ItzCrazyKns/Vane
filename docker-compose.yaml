@@ -1,18 +1,20 @@
 services:
   perplexica:
-    image: itzcrazykns1337/perplexica:latest
+    image: perplexica-mu:slim
     build:
       context: .
+      dockerfile: Dockerfile.slim
     ports:
-      - '3000:3000'
+      - '8010:3000'
     volumes:
-      - data:/home/perplexica/data
+      - /home/fredrik/perplexica-mu/data:/home/perplexica/data  # Local storage
+      - /home/fredrik/perplexica-mu/uploads:/home/perplexica/uploads  # If uploads exist
     environment:
+      - PUID=1000
+      - PGID=1000
       - JWT_SECRET=${JWT_SECRET:-please-change-this-secret-in-production}
       - NODE_ENV=production
+      - SEARXNG_API_URL=http://172.17.0.1:8009
       - SECURE_COOKIES=${SECURE_COOKIES:-false}
     restart: unless-stopped
 
-volumes:
-  data:
-    name: 'perplexica-data'

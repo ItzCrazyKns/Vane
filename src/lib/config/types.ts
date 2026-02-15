@@ -62,6 +62,11 @@ type ConfigModelProvider = {
   hash: string;
 };
 
+type DefaultModelSelection = {
+  providerId: string;
+  key: string;
+};
+
 type Config = {
   version: number;
   setupComplete?: boolean;
@@ -72,6 +77,8 @@ type Config = {
     [key: string]: any;
   };
   modelProviders: ConfigModelProvider[];
+  defaultChatModel?: DefaultModelSelection;
+  defaultEmbeddingModel?: DefaultModelSelection;
   search: {
     [key: string]: any;
   };
@@ -100,6 +107,7 @@ type UIConfigSections = {
 export type {
   UIConfigField,
   Config,
+  DefaultModelSelection,
   EnvMap,
   UIConfigSections,
   SelectUIConfigField,

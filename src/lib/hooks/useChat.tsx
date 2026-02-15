@@ -137,6 +137,8 @@ const checkConfig = async (
 
     const data = await res.json();
     const providers: MinimalProvider[] = data.providers;
+    const serverDefaultChat = data.defaultChatModel as { providerId: string; key: string } | undefined;
+    const serverDefaultEmbedding = data.defaultEmbeddingModel as { providerId: string; key: string } | undefined;
 
     if (providers.length === 0) {
       throw new Error(
@@ -144,8 +146,10 @@ const checkConfig = async (
       );
     }
 
+    // Fallback chain: localStorage → server default → first available
     const chatModelProvider =
       providers.find((p) => p.id === chatModelProviderId) ??
+      (serverDefaultChat ? providers.find((p) => p.id === serverDefaultChat.providerId) : undefined) ??
       providers.find((p) => p.chatModels.length > 0);
 
     if (!chatModelProvider) {
@@ -158,11 +162,15 @@ const checkConfig = async (
 
     const chatModel =
       chatModelProvider.chatModels.find((m) => m.key === chatModelKey) ??
+      (serverDefaultChat && chatModelProvider.id === serverDefaultChat.providerId
+        ? chatModelProvider.chatModels.find((m) => m.key === serverDefaultChat.key)
+        : undefined) ??
       chatModelProvider.chatModels[0];
     chatModelKey = chatModel.key;
 
     const embeddingModelProvider =
       providers.find((p) => p.id === embeddingModelProviderId) ??
+      (serverDefaultEmbedding ? providers.find((p) => p.id === serverDefaultEmbedding.providerId) : undefined) ??
       providers.find((p) => p.embeddingModels.length > 0);
 
     if (!embeddingModelProvider) {
@@ -176,7 +184,11 @@ const checkConfig = async (
     const embeddingModel =
       embeddingModelProvider.embeddingModels.find(
         (m) => m.key === embeddingModelKey,
-      ) ?? embeddingModelProvider.embeddingModels[0];
+      ) ??
+      (serverDefaultEmbedding && embeddingModelProvider.id === serverDefaultEmbedding.providerId
+        ? embeddingModelProvider.embeddingModels.find((m) => m.key === serverDefaultEmbedding.key)
+        : undefined) ??
+      embeddingModelProvider.embeddingModels[0];
     embeddingModelKey = embeddingModel.key;
 
     localStorage.setItem('chatModelKey', chatModelKey);

@@ -1,4 +1,5 @@
 import ModelRegistry from '@/lib/models/registry';
+import configManager from '@/lib/config';
 import { NextRequest } from 'next/server';
 import { requireAdmin, getRequestUser, isAuthError } from '@/lib/auth/helpers';
 
@@ -20,9 +21,13 @@ export const GET = async (req: Request) => {
       return !p.chatModels.some((m) => m.key === 'error');
     });
 
+    const config = configManager.getCurrentConfig();
+
     return Response.json(
       {
         providers: filteredProviders,
+        defaultChatModel: config.defaultChatModel,
+        defaultEmbeddingModel: config.defaultEmbeddingModel,
       },
       {
         status: 200,
