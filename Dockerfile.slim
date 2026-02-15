@@ -17,7 +17,7 @@ RUN yarn build
 
 FROM node:24.5.0-slim
 
-RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 gosu && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/perplexica
 
@@ -30,6 +30,9 @@ COPY drizzle ./drizzle
 
 RUN mkdir /home/perplexica/uploads
 
+COPY entrypoint.slim.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh && sed -i 's/\r$//' ./entrypoint.sh
+
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["/home/perplexica/entrypoint.sh"]
