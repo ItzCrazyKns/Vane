@@ -11,16 +11,12 @@ type SaveConfigBody = {
 
 export const GET = async (req: NextRequest) => {
   try {
-    // After setup is complete, require authentication to read config
-    // During setup, allow public access (needed for setup wizard)
-    if (configManager.isSetupComplete()) {
-      const user = await getRequestUser();
-      if (!user) {
-        return Response.json(
-          { message: 'Authentication required' },
-          { status: 401 },
-        );
-      }
+    const user = await getRequestUser();
+    if (!user) {
+      return Response.json(
+        { message: 'Authentication required' },
+        { status: 401 },
+      );
     }
 
     const values = configManager.getCurrentConfig();
@@ -57,10 +53,7 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    // Only admins can update global configuration (during setup, allow unauthenticated access)
-    if (configManager.isSetupComplete()) {
-      await requireAdmin();
-    }
+    await requireAdmin();
 
     const body: SaveConfigBody = await req.json();
 

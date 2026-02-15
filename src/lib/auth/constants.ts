@@ -27,8 +27,7 @@ export const PUBLIC_API_ROUTES = [
   '/api/auth/login',
   '/api/auth/register',
   '/api/auth/logout',
-  '/api/config',
-  '/api/providers',
+  '/api/auth/has-users',
   '/api/models',
 ];
 

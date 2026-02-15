@@ -1,20 +1,15 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
 import { requireAdmin, getRequestUser, isAuthError } from '@/lib/auth/helpers';
-import configManager from '@/lib/config';
 
 export const GET = async (req: Request) => {
   try {
-    // After setup is complete, require authentication to read providers
-    // During setup, allow public access (needed for setup wizard)
-    if (configManager.isSetupComplete()) {
-      const user = await getRequestUser();
-      if (!user) {
-        return Response.json(
-          { message: 'Authentication required' },
-          { status: 401 },
-        );
-      }
+    const user = await getRequestUser();
+    if (!user) {
+      return Response.json(
+        { message: 'Authentication required' },
+        { status: 401 },
+      );
     }
 
     const registry = new ModelRegistry();
@@ -48,10 +43,7 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    // Only admins can add providers (during setup, allow unauthenticated access)
-    if (configManager.isSetupComplete()) {
-      await requireAdmin();
-    }
+    await requireAdmin();
 
     const body = await req.json();
     const { type, name, config } = body;

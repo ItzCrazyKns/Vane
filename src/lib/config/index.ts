@@ -12,7 +12,7 @@ class ConfigManager {
   configVersion = 1;
   currentConfig: Config = {
     version: this.configVersion,
-    setupComplete: false,
+    setupComplete: true,
     preferences: {},
     personalization: {},
     modelProviders: [],
@@ -389,18 +389,6 @@ class ConfigManager {
       if (!provider.excludedEmbeddingModels.includes(modelKey)) {
         provider.excludedEmbeddingModels.push(modelKey);
       }
-    }
-
-    this.saveConfig();
-  }
-
-  public isSetupComplete() {
-    return this.currentConfig.setupComplete;
-  }
-
-  public markSetupComplete() {
-    if (!this.currentConfig.setupComplete) {
-      this.currentConfig.setupComplete = true;
     }
 
     this.saveConfig();

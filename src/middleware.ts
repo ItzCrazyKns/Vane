@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
@@ -10,7 +8,6 @@ import {
   SKIP_PATHS,
   getJwtSecret,
 } from '@/lib/auth/constants';
-import { isSetupComplete } from '@/lib/config/setup-check';
 
 const JWT_SECRET = getJwtSecret();
 
@@ -71,11 +68,6 @@ export async function middleware(request: NextRequest) {
 
   // Skip static assets and Next.js internals
   if (SKIP_PATHS.some((path) => pathname.startsWith(path))) {
-    return NextResponse.next();
-  }
-
-  // During setup, skip all auth checks — the layout will show the setup wizard
-  if (!isSetupComplete()) {
     return NextResponse.next();
   }
 

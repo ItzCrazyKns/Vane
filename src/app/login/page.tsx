@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -11,8 +11,29 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingUsers, setCheckingUsers] = useState(true);
   const router = useRouter();
   const { refresh } = useAuth();
+
+  useEffect(() => {
+    const checkUsers = async () => {
+      try {
+        const res = await fetch('/api/auth/has-users');
+        if (res.ok) {
+          const data = await res.json();
+          if (!data.hasUsers) {
+            router.replace('/register');
+            return;
+          }
+        }
+      } catch {
+        // If check fails, show login form anyway
+      }
+      setCheckingUsers(false);
+    };
+
+    checkUsers();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +64,14 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (checkingUsers) {
+    return (
+      <div className="bg-light-primary dark:bg-dark-primary min-h-screen w-screen flex items-center justify-center">
+        <p className="text-black/50 dark:text-white/50 text-sm">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-light-primary dark:bg-dark-primary min-h-screen w-screen flex items-center justify-center p-4">

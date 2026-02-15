@@ -2,17 +2,13 @@ import ModelRegistry from '@/lib/models/registry';
 import { Model } from '@/lib/models/types';
 import { NextRequest } from 'next/server';
 import { requireAdmin, isAuthError } from '@/lib/auth/helpers';
-import configManager from '@/lib/config';
 
 export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
-    // Only admins can add models to providers (during setup, allow unauthenticated access)
-    if (configManager.isSetupComplete()) {
-      await requireAdmin();
-    }
+    await requireAdmin();
 
     const { id } = await params;
 
@@ -63,10 +59,7 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
-    // Only admins can delete models from providers (during setup, allow unauthenticated access)
-    if (configManager.isSetupComplete()) {
-      await requireAdmin();
-    }
+    await requireAdmin();
 
     const { id } = await params;
 
