@@ -1,14 +1,13 @@
 import type { Config } from 'tailwindcss';
-import type { DefaultColors } from 'tailwindcss/types/generated/colors';
 
-const themeDark = (colors: DefaultColors) => ({
+const themeDark = () => ({
   50: '#0d1117',
   100: '#161b22',
   200: '#21262d',
   300: '#30363d',
 });
 
-const themeLight = (colors: DefaultColors) => ({
+const themeLight = () => ({
   50: '#ffffff',
   100: '#f6f8fa',
   200: '#e8edf1',
@@ -20,19 +19,20 @@ const config: Config = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   darkMode: 'class',
   theme: {
     extend: {
-      borderColor: ({ colors }) => {
+      borderColor: () => {
         return {
-          light: themeLight(colors),
-          dark: themeDark(colors),
+          light: themeLight(),
+          dark: themeDark(),
         };
       },
-      colors: ({ colors }) => {
-        const colorsDark = themeDark(colors);
-        const colorsLight = themeLight(colors);
+      colors: () => {
+        const colorsDark = themeDark();
+        const colorsLight = themeLight();
 
         return {
           dark: {

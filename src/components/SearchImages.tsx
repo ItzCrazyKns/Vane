@@ -3,7 +3,6 @@ import { ImagesIcon, PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
-import { Message } from './ChatWindow';
 
 type Image = {
   url: string;

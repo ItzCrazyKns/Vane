@@ -1,5 +1,4 @@
-import { Clock, Edit, Share, Trash, FileText, FileDown } from 'lucide-react';
-import { Message } from './ChatWindow';
+import { Clock, Edit, Share, FileText, FileDown } from 'lucide-react';
 import { useEffect, useState, Fragment } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
 import DeleteChat from './DeleteChat';
@@ -36,14 +35,14 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
 
   sections.forEach((section, idx) => {
     md += `\n---\n`;
-    md += `**🧑 User**  
+    md += `**🧑 User**
 `;
     md += `*${new Date(section.message.createdAt).toLocaleString()}*\n\n`;
     md += `> ${section.message.query.replace(/\n/g, '\n> ')}\n`;
 
     if (section.message.responseBlocks.length > 0) {
       md += `\n---\n`;
-      md += `**🤖 Assistant**  
+      md += `**🤖 Assistant**
 `;
       md += `*${new Date(section.message.createdAt).toLocaleString()}*\n\n`;
       md += `> ${section.message.responseBlocks

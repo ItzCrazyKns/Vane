@@ -8,10 +8,19 @@ search:
   formats:
     - html
     - json
+  safe_search: 0
 
 server:
   secret_key: 'a2fb23f1b02e6ee83875b09826990de0f6bd908b6638e8c10277d415f6ab852b' # Is overwritten by ${SEARXNG_SECRET}
 
 engines:
-  - name: wolframalpha
+  - name: brave
+    disabled: true
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: true
+  - name: youtube
+    disabled: false
+  - name: duckduckgo
     disabled: false

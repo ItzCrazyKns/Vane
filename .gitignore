@@ -38,4 +38,5 @@ Thumbs.db
 db.sqlite
 /searxng
 
+code_count.py
 certificates

@@ -3,10 +3,8 @@ import { cn } from '@/lib/utils';
 import {
   Popover,
   PopoverButton,
-  PopoverPanel,
-  Transition,
+  PopoverPanel
 } from '@headlessui/react';
-import { Fragment } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -40,7 +38,7 @@ const Optimization = () => {
   const { optimizationMode, setOptimizationMode } = useChat();
 
   return (
-    <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
+    <Popover className="relative w-full max-w-60 md:max-w-md lg:max-w-lg">
       {({ open }) => (
         <>
           <PopoverButton
@@ -64,7 +62,7 @@ const Optimization = () => {
           <AnimatePresence>
             {open && (
               <PopoverPanel
-                className="absolute z-10 w-64 md:w-[250px] left-0"
+                className="absolute z-10 w-64 md:w-62.5 left-0"
                 static
               >
                 <motion.div
@@ -72,7 +70,7 @@ const Optimization = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.1, ease: 'easeOut' }}
-                  className="origin-top-left flex flex-col space-y-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto"
+                  className="origin-top-left flex flex-col space-y-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-2 max-h-50 md:max-h-none overflow-y-auto"
                 >
                   {OptimizationModes.map((mode, i) => (
                     <PopoverButton

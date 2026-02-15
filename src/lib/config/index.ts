@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'fs';
+import toml from '@iarna/toml';
 import { Config, ConfigModelProvider, UIConfigSections } from './types';
 import { hashObj } from '../serverUtils';
 import { getModelProvidersUIConfigSection } from '../models/providers';
@@ -172,7 +173,79 @@ class ConfigManager {
     return config;
   }
 
+  private loadFromConfigToml() {
+    try {
+      // Try multiple possible locations for config.toml
+      const possiblePaths = [
+        path.join(process.cwd(), 'config.toml'), // Local dev
+        '/home/perplexica/config.toml', // Docker container
+        path.join(process.env.DATA_DIR || '', 'config.toml'), // Data dir
+      ];
+
+      let tomlPath: string | null = null;
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          tomlPath = p;
+          console.log(`📄 Found config.toml at: ${p}`);
+          break;
+        }
+      }
+
+      if (!tomlPath) {
+        console.log('⚠️ config.toml not found in any of:', possiblePaths);
+        return;
+      }
+
+      const tomlContent = fs.readFileSync(tomlPath, 'utf-8');
+      const parsed: any = toml.parse(tomlContent);
+
+      // Load SearXNG URL from config.toml - config.toml is the source of truth
+      // Always overwrite config.json values when config.toml exists
+      let searxngUrl: string | undefined;
+      let source = '';
+
+      // Try different case variations that might exist in config.toml
+      searxngUrl =
+        parsed.SEARXNG?.URL ||
+        parsed.SEARXNG?.url ||
+        parsed.searxng?.URL ||
+        parsed.searxng?.url;
+      source = 'SEARXNG section';
+
+      // Also check API_ENDPOINTS section (case insensitive)
+      if (!searxngUrl) {
+        const apiEndpoints =
+          parsed.API_ENDPOINTS || parsed.api_endpoints || parsed.Api_Endpoints;
+        if (apiEndpoints) {
+          searxngUrl =
+            apiEndpoints.SEARXNG ||
+            apiEndpoints.searxng ||
+            apiEndpoints.Searxng;
+          source = 'API_ENDPOINTS section';
+        }
+      }
+
+      if (searxngUrl) {
+        const oldUrl = this.currentConfig.search.searxngURL;
+        this.currentConfig.search.searxngURL = searxngUrl;
+        console.log(
+          `✅ Loaded SearXNG URL from config.toml (${source}): ${searxngUrl}` +
+            (oldUrl && oldUrl !== searxngUrl
+              ? ` (overwrote previous: ${oldUrl})`
+              : ''),
+        );
+        // Save the updated config so it persists
+        this.saveConfig();
+      }
+    } catch (err) {
+      console.log('❌ Error loading config.toml:', err);
+    }
+  }
+
   private initializeFromEnv() {
+    // Load from config.toml first as fallback
+    this.loadFromConfigToml();
+
     /* providers section*/
     const providerConfigSections = getModelProvidersUIConfigSection();
 

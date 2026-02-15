@@ -57,7 +57,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
               </p>
             </div>
             <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
-              <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
+              <div className="bg-black/50 dark:bg-white/50 h-1 w-1 rounded-full" />
               <span>{i + 1}</span>
             </div>
           </div>
@@ -111,7 +111,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                   <DialogTitle className="text-lg font-medium leading-6 dark:text-white">
                     Sources
                   </DialogTitle>
-                  <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
+                  <div className="grid grid-cols-2 gap-2 overflow-auto max-h-75 mt-2 pr-2">
                     {sources.map((source, i) => (
                       <a
                         className="bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 border border-light-200 dark:border-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
@@ -145,7 +145,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                             </p>
                           </div>
                           <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
-                            <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
+                            <div className="bg-black/50 dark:bg-white/50 h-1 w-1 rounded-full" />
                             <span>{i + 1}</span>
                           </div>
                         </div>

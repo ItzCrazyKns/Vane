@@ -77,7 +77,7 @@ export type ResearcherInput = {
 
 export type ResearcherOutput = {
   findings: ActionOutput[];
-  searchFindings: Chunk[];
+  searchFindings:SearchFinding[];
 };
 
 export type SearchActionOutput = {
@@ -120,3 +120,13 @@ export interface ResearchAction<
     },
   ) => Promise<ActionOutput>;
 }
+
+export type SearchFinding = {
+  title: string;
+  url: string;
+  chunk: Chunk
+};
+
+export type SearchResponse = {
+  searchFindings: SearchFinding[];
+};

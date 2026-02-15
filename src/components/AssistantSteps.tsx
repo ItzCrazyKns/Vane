@@ -210,6 +210,7 @@ const AssistantSteps = ({
                         )}
 
                       {step.type === 'upload_searching' &&
+                        Array.isArray(step?.queries) &&  // ✅ Defensive
                         step.queries.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {step.queries.map((query, idx) => (

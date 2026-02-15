@@ -27,8 +27,14 @@ class ModelRegistry {
           provider: createProviderInstance(provider, p.id, p.name, p.config),
         });
       } catch (err) {
+        // Sanitize config to prevent API key exposure in logs
+        const sanitizedConfig = { ...p.config };
+        if (sanitizedConfig.apiKey) {
+          sanitizedConfig.apiKey = '***REDACTED***';
+        }
+
         console.error(
-          `Failed to initialize provider. Type: ${p.type}, ID: ${p.id}, Config: ${JSON.stringify(p.config)}, Error: ${err}`,
+          `Failed to initialize provider. Type: ${p.type}, ID: ${p.id}, Config: ${JSON.stringify(sanitizedConfig)}, Error: ${err}`,
         );
       }
     });

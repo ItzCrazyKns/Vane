@@ -1,1 +1,12 @@
-**/node_modules
+node_modules
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+npm-debug.log
+yarn-error.log
+.next
+dist
+coverage
+.env
+.env.*

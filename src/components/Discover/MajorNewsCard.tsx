@@ -15,7 +15,7 @@ const MajorNewsCard = ({
   >
     {isLeft ? (
       <>
-        <div className="relative w-80 h-full overflow-hidden rounded-2xl flex-shrink-0">
+        <div className="relative w-80 h-full overflow-hidden rounded-2xl shrink-0">
           <img
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
             src={
@@ -51,7 +51,7 @@ const MajorNewsCard = ({
             {item.content}
           </p>
         </div>
-        <div className="relative w-80 h-full overflow-hidden rounded-2xl flex-shrink-0">
+        <div className="relative w-80 h-full overflow-hidden rounded-2xl shrink-0">
           <img
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
             src={

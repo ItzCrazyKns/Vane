@@ -1,14 +1,32 @@
 services:
   perplexica:
-    image: itzcrazykns1337/perplexica:latest
-    build:
-      context: .
+    image: perplexica-perplexica:latest
+    build: .
     ports:
       - '3000:3000'
     volumes:
       - data:/home/perplexica/data
+      - ./config.toml:/home/perplexica/config.toml
     restart: unless-stopped
+    networks:
+      - perplexica-net
+    depends_on: # Add this to ensure order
+      - searxng
+
+  searxng:
+    image: searxng/searxng:latest
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./searxng:/etc/searxng:ro
+    restart: unless-stopped
+    networks:
+      - perplexica-net
 
 volumes:
   data:
-    name: 'perplexica-data'
+    name: 'data'
+
+networks:
+  perplexica-net:
+    driver: bridge
