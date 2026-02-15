@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
@@ -8,7 +10,7 @@ import {
   SKIP_PATHS,
   getJwtSecret,
 } from '@/lib/auth/constants';
-import configManager from '@/lib/config';
+import { isSetupComplete } from '@/lib/config/setup-check';
 
 const JWT_SECRET = getJwtSecret();
 
@@ -73,7 +75,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // During setup, skip all auth checks — the layout will show the setup wizard
-  if (!configManager.isSetupComplete()) {
+  if (!isSetupComplete()) {
     return NextResponse.next();
   }
 
