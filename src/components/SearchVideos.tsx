@@ -1,9 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { PlayCircle, PlayIcon, PlusIcon, VideoIcon } from 'lucide-react';
+import { PlayCircle,  PlusIcon, VideoIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import Lightbox, { GenericSlide, VideoSlide } from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
-import { Message } from './ChatWindow';
 
 type Video = {
   url: string;

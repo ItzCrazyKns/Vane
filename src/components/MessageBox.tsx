@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import React, { MutableRefObject } from 'react';
+import React, { RefObject } from 'react';
 import { cn } from '@/lib/utils';
 import {
   BookCopy,
@@ -41,13 +41,13 @@ const ThinkTagProcessor = ({
 
 const MessageBox = ({
   section,
-  sectionIndex,
+
   dividerRef,
   isLast,
 }: {
   section: Section;
   sectionIndex: number;
-  dividerRef?: MutableRefObject<HTMLDivElement | null>;
+  dividerRef?: RefObject<HTMLDivElement | null>;
   isLast: boolean;
 }) => {
   const {
@@ -105,7 +105,7 @@ const MessageBox = ({
 
   return (
     <div className="space-y-6">
-      <div className={'w-full pt-8 break-words'}>
+      <div className={'w-full pt-8 wrap-break-words'}>
         <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
           {section.message.query}
         </h2>
@@ -179,8 +179,8 @@ const MessageBox = ({
               <>
                 <Markdown
                   className={cn(
-                    'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
-                    'max-w-none break-words text-black dark:text-white',
+                    'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-normal',
+                    'max-w-none wrap-break-words text-black dark:text-white',
                   )}
                   options={markdownOverrides}
                 >
@@ -245,7 +245,7 @@ const MessageBox = ({
                                   <div className="flex flex-row space-x-3 items-center">
                                     <CornerDownRight
                                       size={15}
-                                      className="group-hover:text-sky-400 transition-colors duration-200 flex-shrink-0"
+                                      className="group-hover:text-sky-400 transition-colors duration-200 shrink-0"
                                     />
                                     <p className="text-sm text-black/70 dark:text-white/70 group-hover:text-sky-400 transition-colors duration-200 leading-relaxed">
                                       {suggestion}
@@ -253,7 +253,7 @@ const MessageBox = ({
                                   </div>
                                   <Plus
                                     size={16}
-                                    className="text-black/40 dark:text-white/40 group-hover:text-sky-400 transition-colors duration-200 flex-shrink-0"
+                                    className="text-black/40 dark:text-white/40 group-hover:text-sky-400 transition-colors duration-200 shrink-0"
                                   />
                                 </div>
                               </button>

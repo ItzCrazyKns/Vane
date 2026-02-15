@@ -27,6 +27,12 @@ const uploadsSearchAction: ResearchAction<typeof schema> = {
   Never use this tool to search the web or for information that is not contained within the user's uploaded files.
   `,
   execute: async (input, additionalConfig) => {
+    input.queries = Array.isArray(input?.queries)
+      ? input.queries
+      : typeof input?.queries === 'string'
+        ? [input.queries]  // wrap single string
+        : [];  // fallback to empty array
+    console.log("Query: ", input.queries);
     input.queries = input.queries.slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(

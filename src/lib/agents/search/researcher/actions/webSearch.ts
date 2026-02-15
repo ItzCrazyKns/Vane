@@ -4,7 +4,6 @@ import { searchSearxng } from '@/lib/searxng';
 import { Chunk, SearchResultsResearchBlock } from '@/lib/types';
 
 const actionSchema = z.object({
-  type: z.literal('web_search'),
   queries: z
     .array(z.string())
     .describe('An array of search queries to perform web searches for.'),
@@ -49,7 +48,6 @@ Use this tool to perform web searches based on the provided queries. This is use
 You have to call this tool several times to gather enough information unless the question is very simple (like greeting questions or basic facts).
 Start initially with broader queries to get an overview, then narrow down with more specific queries based on the results you receive.
 Never stop before at least 5-6 iterations of searches unless the user question is very simple.
-
 Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
 
 You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
@@ -75,7 +73,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
         prompt = qualityModePrompt;
         break;
       default:
-        prompt = speedModePrompt;
+        prompt = qualityModePrompt;
         break;
     }
 
@@ -85,6 +83,40 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     config.sources.includes('web') &&
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {
+    // Defensive validation: Ensure queries is always an array
+    // Handle both proper arrays and stringified arrays like "['query1', 'query2']"
+    const rawQueries = input?.queries;
+    let queries: string[] = [];
+
+    if (Array.isArray(rawQueries)) {
+      queries = rawQueries;
+    } else if (typeof rawQueries === 'string') {
+      const queryString = rawQueries as string;
+      const trimmedStr = queryString.trim();
+      // Check if it looks like a JSON/Python array string
+      if (trimmedStr.startsWith('[') && trimmedStr.endsWith(']')) {
+        try {
+          // Replace single quotes with double quotes and parse
+          const jsonStr = trimmedStr.replace(/'/g, '"');
+          const parsed = JSON.parse(jsonStr);
+          if (Array.isArray(parsed)) {
+            console.log('📝 Parsed stringified array:', parsed);
+            queries = parsed;
+          } else {
+            queries = [trimmedStr];
+          }
+        } catch (e) {
+          console.log('⚠️ Failed to parse as JSON array:', trimmedStr);
+          queries = [trimmedStr];
+        }
+      } else {
+        queries = [trimmedStr];
+      }
+    }
+
+    input.queries = queries;
+    console.log('🔍 Queries after normalization:', input.queries);
+    // Limit to max 3 queries
     input.queries = input.queries.slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(

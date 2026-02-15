@@ -1,6 +1,28 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@plugin "@tailwindcss/typography";
+@plugin "@headlessui/tailwindcss";
+
+/* Enable dark mode with class strategy */
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Custom Colors */
+  --color-dark-50: #0d1117;
+  --color-dark-100: #161b22;
+  --color-dark-200: #21262d;
+  --color-dark-300: #30363d;
+
+  --color-light-50: #ffffff;
+  --color-light-100: #f6f8fa;
+  --color-light-200: #e8edf1;
+  --color-light-300: #d0d7de;
+
+  /* Semantic colors */
+  --color-dark-primary: var(--color-dark-50);
+  --color-dark-secondary: var(--color-dark-100);
+  --color-light-primary: var(--color-light-50);
+  --color-light-secondary: var(--color-light-100);
+}
 
 @font-face {
   font-family: 'PP Editorial';

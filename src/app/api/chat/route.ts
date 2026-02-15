@@ -210,6 +210,11 @@ export const POST = async (req: Request) => {
       }
     });
 
+    // Convert string[] → SearchSources[]
+    const searchSources: SearchSources[] = (body.sources || []).map((sourceName: string) => {
+      return { name: sourceName, enabled: true } as unknown as SearchSources;
+    });
+
     agent.searchAsync(session, {
       chatHistory: history,
       followUp: message.content,
@@ -218,12 +223,13 @@ export const POST = async (req: Request) => {
       config: {
         llm,
         embedding: embedding,
-        sources: body.sources as SearchSources[],
-        mode: body.optimizationMode,
-        fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
+        sources: searchSources,
+        mode: body.optimizationMode || 'balanced',
+        fileIds: body.files || [],
+        systemInstructions: '',
       },
     });
+
 
     ensureChatExists({
       id: body.message.chatId,

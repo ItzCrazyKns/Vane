@@ -2,9 +2,46 @@ import z from 'zod';
 import { ResearchAction } from '../../types';
 import { Chunk, ReadingResearchBlock } from '@/lib/types';
 import TurnDown from 'turndown';
-import path from 'path';
 
 const turndownService = new TurnDown();
+
+/**
+ * Validates URLs to prevent Server-Side Request Forgery (SSRF) attacks.
+ * Blocks internal IP ranges, localhost, and non-HTTP/HTTPS protocols.
+ */
+function isValidUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+
+    // Only allow HTTP and HTTPS protocols
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return false;
+    }
+
+    // Block internal/private IP ranges and localhost
+    const hostname = url.hostname.toLowerCase();
+    const blockedPatterns = [
+      /^localhost$/,
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2[0-9]|3[01])\./,
+      /^192\.168\./,
+      /^169\.254\./, // Link-local
+      /^0\./,
+      /^::1$/,
+      /^fc00:/i, // IPv6 unique local
+      /^fe80:/i, // IPv6 link-local
+    ];
+
+    if (blockedPatterns.some((pattern) => pattern.test(hostname))) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const schema = z.object({
   urls: z.array(z.string()).describe('A list of URLs to scrape content from.'),
@@ -39,6 +76,18 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
     await Promise.all(
       params.urls.map(async (url) => {
         try {
+          // Validate URL to prevent SSRF attacks
+          if (!isValidUrl(url)) {
+            results.push({
+              content: `Access to URL ${url} is not allowed for security reasons.`,
+              metadata: {
+                url,
+                title: `Blocked: ${url}`,
+              },
+            });
+            return;
+          }
+
           const res = await fetch(url);
           const text = await res.text();
 

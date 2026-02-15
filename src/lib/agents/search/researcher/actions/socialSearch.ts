@@ -30,6 +30,16 @@ const socialSearchAction: ResearchAction<typeof schema> = {
     config.classification.classification.skipSearch === false &&
     config.classification.classification.discussionSearch === true,
   execute: async (input, additionalConfig) => {
+    // Defensive validation: Ensure queries is always an array
+    input.queries = Array.isArray(input?.queries)
+      ? input.queries
+      : typeof input?.queries === 'string'
+        ? [input.queries]  // wrap single string
+        : [];  // fallback to empty array
+
+    console.log("Query:", input.queries)
+
+    // Limit to max 3 queries
     input.queries = input.queries.slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(

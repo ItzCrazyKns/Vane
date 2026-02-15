@@ -3,7 +3,6 @@ import UploadManager from "./manager";
 import computeSimilarity from "../utils/computeSimilarity";
 import { Chunk } from "../types";
 import { hashObj } from "../serverUtils";
-import fs from 'fs';
 
 type UploadStoreParams = {
     embeddingModel: BaseEmbedding<any>;
@@ -58,7 +57,7 @@ class UploadStore {
         const hashResults: string[][] = []
 
         await Promise.all(queryEmbeddings.map(async (query) => {
-            const similarities = this.records.map((record, idx) => {
+            const similarities = this.records.map((record) => {
                 return {
                     chunk: {
                         content: record.content,

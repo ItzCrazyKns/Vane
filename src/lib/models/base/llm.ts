@@ -1,7 +1,6 @@
 import z from 'zod';
 import {
   GenerateObjectInput,
-  GenerateOptions,
   GenerateTextInput,
   GenerateTextOutput,
   StreamTextOutput,
