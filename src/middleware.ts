@@ -8,6 +8,7 @@ import {
   SKIP_PATHS,
   getJwtSecret,
 } from '@/lib/auth/constants';
+import configManager from '@/lib/config';
 
 const JWT_SECRET = getJwtSecret();
 
@@ -68,6 +69,11 @@ export async function middleware(request: NextRequest) {
 
   // Skip static assets and Next.js internals
   if (SKIP_PATHS.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // During setup, skip all auth checks — the layout will show the setup wizard
+  if (!configManager.isSetupComplete()) {
     return NextResponse.next();
   }
 
