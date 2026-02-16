@@ -10,7 +10,6 @@ import {
   StopCircle,
   Layers3,
   Plus,
-  CornerDownRight,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX, RuleType } from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
@@ -232,32 +231,19 @@ const MessageBox = ({
                           Related
                         </h3>
                       </div>
-                      <div className="space-y-0">
+                      <div className="flex flex-wrap gap-2">
                         {section.suggestions.map(
                           (suggestion: string, i: number) => (
-                            <div key={i}>
-                              <div className="h-px bg-light-200/40 dark:bg-dark-200/40" />
-                              <button
-                                onClick={() => sendMessage(suggestion)}
-                                className="group w-full py-4 text-left transition-colors duration-200"
-                              >
-                                <div className="flex items-center justify-between gap-3">
-                                  <div className="flex flex-row space-x-3 items-center">
-                                    <CornerDownRight
-                                      size={15}
-                                      className="group-hover:text-sky-400 transition-colors duration-200 flex-shrink-0"
-                                    />
-                                    <p className="text-sm text-black/70 dark:text-white/70 group-hover:text-sky-400 transition-colors duration-200 leading-relaxed">
-                                      {suggestion}
-                                    </p>
-                                  </div>
-                                  <Plus
-                                    size={16}
-                                    className="text-black/40 dark:text-white/40 group-hover:text-sky-400 transition-colors duration-200 flex-shrink-0"
-                                  />
-                                </div>
-                              </button>
-                            </div>
+                            <button
+                              key={i}
+                              onClick={() => sendMessage(suggestion)}
+                              className="px-4 py-2 bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 border border-light-200 dark:border-dark-200 rounded-2xl text-sm transition-colors cursor-pointer text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white flex items-center gap-2"
+                            >
+                              <span className="truncate max-w-xs">
+                                {suggestion}
+                              </span>
+                              <Plus size={14} className="opacity-50 flex-shrink-0" />
+                            </button>
                           ),
                         )}
                       </div>

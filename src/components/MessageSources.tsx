@@ -27,48 +27,42 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
       {sources.slice(0, 3).map((source, i) => (
         <a
-          className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+          className="bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 border border-light-200 dark:border-dark-200 flex flex-col justify-between h-24 max-w-full"
           key={i}
           href={source.metadata.url}
           target="_blank"
         >
-          <p className="dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
+          <p className="dark:text-white text-xs font-medium line-clamp-2 leading-relaxed break-words">
             {source.metadata.title}
           </p>
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-row items-center space-x-1">
-              {source.metadata.url.includes('file_id://') ? (
-                <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
-                  <File size={12} className="text-white/70" />
-                </div>
-              ) : (
-                <img
-                  src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
-                  width={16}
-                  height={16}
-                  alt="favicon"
-                  className="rounded-lg h-4 w-4"
-                />
-              )}
-              <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
-                {source.metadata.url.includes('file_id://')
-                  ? 'Uploaded File'
-                  : source.metadata.url.replace(/.+\/\/|www.|\..+/g, '')}
-              </p>
-            </div>
-            <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
-              <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
-              <span>{i + 1}</span>
-            </div>
+          <div className="flex flex-row items-center space-x-1 mt-1 w-full">
+            {source.metadata.url.includes('file_id://') ? (
+              <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0">
+                <File size={10} className="text-white/70" />
+              </div>
+            ) : (
+              <img
+                src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                width={16}
+                height={16}
+                alt="favicon"
+                className="rounded-full h-4 w-4 flex-shrink-0"
+              />
+            )}
+            <p className="text-[10px] text-black/50 dark:text-white/50 truncate">
+              {source.metadata.url.includes('file_id://')
+                ? 'Uploaded File'
+                : source.metadata.url.replace(/.+\/\/|www.|\..+/g, '')}
+            </p>
           </div>
         </a>
       ))}
       {sources.length > 3 && (
         <button
           onClick={openModal}
-          className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+          className="bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 border border-light-200 dark:border-dark-200 flex flex-col justify-between h-24"
         >
-          <div className="flex flex-row items-center space-x-1">
+          <div className="flex flex-row items-center space-x-1 overflow-hidden">
             {sources.slice(3, 6).map((source, i) => {
               return source.metadata.url === 'File' ? (
                 <div
@@ -114,40 +108,34 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
                     {sources.map((source, i) => (
                       <a
-                        className="bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 border border-light-200 dark:border-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+                        className="bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 border border-light-200 dark:border-dark-200 transition duration-200 rounded-lg p-3 flex flex-col justify-between h-24"
                         key={i}
                         href={source.metadata.url}
                         target="_blank"
                       >
-                        <p className="dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
+                        <p className="dark:text-white text-xs font-medium line-clamp-2 leading-relaxed break-words">
                           {source.metadata.title}
                         </p>
-                        <div className="flex flex-row items-center justify-between">
-                          <div className="flex flex-row items-center space-x-1">
-                            {source.metadata.url === 'File' ? (
-                              <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
-                                <File size={12} className="text-white/70" />
-                              </div>
-                            ) : (
-                              <img
-                                src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
-                                width={16}
-                                height={16}
-                                alt="favicon"
-                                className="rounded-lg h-4 w-4"
-                              />
+                        <div className="flex flex-row items-center space-x-1 mt-1 w-full">
+                          {source.metadata.url === 'File' ? (
+                            <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0">
+                              <File size={10} className="text-white/70" />
+                            </div>
+                          ) : (
+                            <img
+                              src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                              width={16}
+                              height={16}
+                              alt="favicon"
+                              className="rounded-full h-4 w-4 flex-shrink-0"
+                            />
+                          )}
+                          <p className="text-[10px] text-black/50 dark:text-white/50 truncate">
+                            {source.metadata.url.replace(
+                              /.+\/\/|www.|\..+/g,
+                              '',
                             )}
-                            <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
-                              {source.metadata.url.replace(
-                                /.+\/\/|www.|\..+/g,
-                                '',
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
-                            <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
-                            <span>{i + 1}</span>
-                          </div>
+                          </p>
                         </div>
                       </a>
                     ))}

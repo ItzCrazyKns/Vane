@@ -10,14 +10,14 @@ const MajorNewsCard = ({
 }) => (
   <Link
     href={`/?q=Summary: ${item.url}`}
-    className="w-full group flex flex-row items-stretch gap-6 h-60 py-3"
+    className="w-full group flex flex-col md:flex-row items-stretch gap-6 min-h-[16rem] p-4 rounded-2xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
     target="_blank"
   >
     {isLeft ? (
       <>
-        <div className="relative w-80 h-full overflow-hidden rounded-2xl flex-shrink-0">
+        <div className="relative w-full md:w-1/2 h-48 md:h-auto overflow-hidden rounded-xl flex-shrink-0 border border-light-200 dark:border-dark-200">
           <img
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-in-out"
             src={
               new URL(item.thumbnail).origin +
               new URL(item.thumbnail).pathname +
@@ -26,9 +26,9 @@ const MajorNewsCard = ({
             alt={item.title}
           />
         </div>
-        <div className="flex flex-col justify-center flex-1 py-4">
+        <div className="flex flex-col justify-center flex-1 py-2">
           <h2
-            className="text-3xl font-light mb-3 leading-tight line-clamp-3 group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200"
+            className="text-3xl font-medium mb-3 leading-tight line-clamp-3 group-hover:text-[#24A0ED] transition-colors duration-200"
             style={{ fontFamily: 'PP Editorial, serif' }}
           >
             {item.title}
@@ -40,9 +40,9 @@ const MajorNewsCard = ({
       </>
     ) : (
       <>
-        <div className="flex flex-col justify-center flex-1 py-4">
+        <div className="flex flex-col justify-center flex-1 py-2 order-2 md:order-1">
           <h2
-            className="text-3xl font-light mb-3 leading-tight line-clamp-3 group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200"
+            className="text-3xl font-medium mb-3 leading-tight line-clamp-3 group-hover:text-[#24A0ED] transition-colors duration-200"
             style={{ fontFamily: 'PP Editorial, serif' }}
           >
             {item.title}
@@ -51,9 +51,9 @@ const MajorNewsCard = ({
             {item.content}
           </p>
         </div>
-        <div className="relative w-80 h-full overflow-hidden rounded-2xl flex-shrink-0">
+        <div className="relative w-full md:w-1/2 h-48 md:h-auto overflow-hidden rounded-xl flex-shrink-0 border border-light-200 dark:border-dark-200 order-1 md:order-2">
           <img
-            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500 ease-in-out"
             src={
               new URL(item.thumbnail).origin +
               new URL(item.thumbnail).pathname +

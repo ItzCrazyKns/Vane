@@ -14,9 +14,12 @@ export interface Chat {
   files: { fileId: string; name: string }[];
 }
 
+import { Search } from 'lucide-react';
+
 const Page = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchChats = async () => {
@@ -38,6 +41,10 @@ const Page = () => {
     fetchChats();
   }, []);
 
+  const filteredChats = chats.filter((chat) =>
+    chat.title.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
   return (
     <div>
       <div className="flex flex-col pt-10 border-b border-light-200/20 dark:border-dark-200/20 pb-6 px-2">
@@ -57,13 +64,28 @@ const Page = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center lg:justify-end gap-2 text-xs text-black/60 dark:text-white/60">
-            <span className="inline-flex items-center gap-1 rounded-full border border-black/20 dark:border-white/20 px-2 py-0.5">
-              <BookOpenText size={14} />
-              {loading
-                ? 'Loading…'
-                : `${chats.length} ${chats.length === 1 ? 'chat' : 'chats'}`}
-            </span>
+          <div className="flex flex-col items-end gap-3 w-full lg:w-auto">
+            <div className="relative w-full lg:w-64">
+              <input
+                type="text"
+                placeholder="Search threads..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 rounded-lg focus:outline-none focus:border-light-300 dark:focus:border-dark-300 text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-white/50 transition-colors"
+              />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-black/40 dark:text-white/40"
+              />
+            </div>
+            <div className="flex items-center justify-center lg:justify-end gap-2 text-xs text-black/60 dark:text-white/60">
+              <span className="inline-flex items-center gap-1 rounded-full border border-black/20 dark:border-white/20 px-2 py-0.5">
+                <BookOpenText size={14} />
+                {loading
+                  ? 'Loading…'
+                  : `${chats.length} ${chats.length === 1 ? 'chat' : 'chats'}`}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -102,10 +124,16 @@ const Page = () => {
             to see it listed here.
           </p>
         </div>
+      ) : filteredChats.length === 0 ? (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] px-2 text-center">
+          <p className="text-black/70 dark:text-white/70 text-sm">
+            No chats match your search.
+          </p>
+        </div>
       ) : (
         <div className="pt-6 pb-28 px-2">
           <div className="rounded-2xl border border-light-200 dark:border-dark-200 overflow-hidden bg-light-primary dark:bg-dark-primary">
-            {chats.map((chat, index) => {
+            {filteredChats.map((chat, index) => {
               const sourcesLabel =
                 chat.sources.length === 0
                   ? null

@@ -11,6 +11,10 @@
 }
 
 @layer base {
+  body {
+    @apply antialiased;
+  }
+
   .overflow-hidden-scrollable {
     -ms-overflow-style: none;
   }

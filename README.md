@@ -34,9 +34,11 @@ Want to know more about its architecture and how it works? You can read it [here
 
 💡 **Smart suggestions** - Get intelligent search suggestions as you type, helping you formulate better queries.
 
-📚 **Discover** - Browse interesting articles and trending content throughout the day. Stay informed without even searching.
+📚 **Discover** - Browse interesting articles and trending content throughout the day with a new curated masonry grid layout.
 
-🕒 **Search history** - Every search is saved locally so you can revisit your discoveries anytime. Your research is never lost.
+🕒 **Search history & Library** - Access your 5 most recent threads directly from the sidebar popover, or search through your entire chat history in the Library with the new real-time search.
+
+🎯 **Focus Mode** - Tailor your search with dedicated focus modes (Web, Academic, Writing, YouTube, Reddit, Wolfram|Alpha) accessible directly from the input bar.
 
 ✨ **More coming soon** - We're actively developing new features based on community feedback. Join our Discord to help shape Perplexica's future!
 

@@ -1,4 +1,5 @@
-import { Clock, Edit, Share, Trash, FileText, FileDown } from 'lucide-react';
+import { Clock, Edit, Share, Trash, FileText, FileDown, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import { Message } from './ChatWindow';
 import { useEffect, useState, Fragment } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
@@ -27,7 +28,7 @@ const downloadFile = (filename: string, content: string, type: string) => {
   }, 0);
 };
 
-const exportAsMarkdown = (sections: Section[], title: string) => {
+const generateMarkdown = (sections: Section[], title: string) => {
   const date = new Date(
     sections[0].message.createdAt || Date.now(),
   ).toLocaleString();
@@ -70,7 +71,19 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
     }
   });
   md += '\n---\n';
+  return md;
+};
+
+const exportAsMarkdown = (sections: Section[], title: string) => {
+  const md = generateMarkdown(sections, title);
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
+};
+
+const copyToClipboard = (sections: Section[], title: string) => {
+  const md = generateMarkdown(sections, title);
+  navigator.clipboard.writeText(md).then(() => {
+    toast.success('Chat copied to clipboard');
+  });
 };
 
 const exportAsPDF = (sections: Section[], title: string) => {
@@ -278,6 +291,20 @@ const Navbar = () => {
                       </p>
                     </div>
                     <div className="space-y-1">
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+                        onClick={() => copyToClipboard(sections, title || '')}
+                      >
+                        <Copy size={16} className="text-[#24A0ED]" />
+                        <div>
+                          <p className="text-sm font-medium text-black dark:text-white">
+                            Copy
+                          </p>
+                          <p className="text-xs text-black/50 dark:text-white/50">
+                            To clipboard
+                          </p>
+                        </div>
+                      </button>
                       <button
                         className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
                         onClick={() => exportAsMarkdown(sections, title || '')}

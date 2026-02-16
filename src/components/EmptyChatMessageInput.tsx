@@ -6,6 +6,8 @@ import Optimization from './MessageInputActions/Optimization';
 import Attach from './MessageInputActions/Attach';
 import { useChat } from '@/lib/hooks/useChat';
 import ModelSelector from './MessageInputActions/ChatModelSelector';
+import Focus from './MessageInputActions/Focus';
+import ProToggle from './MessageInputActions/ProToggle';
 
 const EmptyChatMessageInput = () => {
   const { sendMessage } = useChat();
@@ -55,7 +57,7 @@ const EmptyChatMessageInput = () => {
       }}
       className="w-full"
     >
-      <div className="flex flex-col bg-light-secondary dark:bg-dark-secondary px-3 pt-5 pb-3 rounded-2xl w-full border border-light-200 dark:border-dark-200 shadow-sm shadow-light-200/10 dark:shadow-black/20 transition-all duration-200 focus-within:border-light-300 dark:focus-within:border-dark-300">
+      <div className="flex flex-col bg-light-secondary/50 dark:bg-dark-secondary/50 backdrop-blur-md px-4 pt-5 pb-3 rounded-[32px] w-full border border-light-200 dark:border-dark-200 shadow-lg shadow-light-200/10 dark:shadow-black/20 transition-all duration-200 focus-within:border-light-300 dark:focus-within:border-dark-300">
         <TextareaAutosize
           ref={inputRef}
           value={message}
@@ -65,11 +67,12 @@ const EmptyChatMessageInput = () => {
           placeholder="Ask anything..."
         />
         <div className="flex flex-row items-center justify-between mt-4">
-          <Optimization />
+          <div className="flex items-center gap-4">
+            <Focus />
+            <ProToggle />
+          </div>
           <div className="flex flex-row items-center space-x-2">
             <div className="flex flex-row items-center space-x-1">
-              <Sources />
-              <ModelSelector />
               <Attach />
             </div>
             <button

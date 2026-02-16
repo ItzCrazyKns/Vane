@@ -109,59 +109,55 @@ const SettingsDialogue = ({
         transition={{ duration: 0.1 }}
         className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black/30 backdrop-blur-sm h-screen"
       >
-        <DialogPanel className="space-y-4 border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary backdrop-blur-lg rounded-xl h-[calc(100vh-2%)] w-[calc(100vw-2%)] md:h-[calc(100vh-7%)] md:w-[calc(100vw-7%)] lg:h-[calc(100vh-20%)] lg:w-[calc(100vw-30%)] overflow-hidden flex flex-col">
+        <DialogPanel className="space-y-4 border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary backdrop-blur-lg rounded-2xl shadow-2xl h-[calc(100vh-2%)] w-[calc(100vw-2%)] md:h-[calc(100vh-5%)] md:w-[calc(100vw-5%)] lg:h-[calc(100vh-10%)] lg:w-[calc(100vw-20%)] overflow-hidden flex flex-col">
           {isLoading ? (
             <div className="flex items-center justify-center h-full w-full">
               <Loader />
             </div>
           ) : (
             <div className="flex flex-1 inset-0 h-full overflow-hidden">
-              <div className="hidden lg:flex flex-col justify-between w-[240px] border-r border-white-200 dark:border-dark-200 h-full px-3 pt-3 overflow-y-auto">
-                <div className="flex flex-col">
+              <div className="hidden lg:flex flex-col justify-between w-[260px] border-r border-light-200 dark:border-dark-200 h-full bg-light-secondary/30 dark:bg-dark-secondary/30">
+                <div className="flex flex-col p-4">
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="group flex flex-row items-center hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg"
+                    className="group flex flex-row items-center gap-2 mb-6 text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors"
                   >
-                    <ChevronLeft
-                      size={18}
-                      className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70"
-                    />
-                    <p className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70 text-[14px]">
-                      Back
-                    </p>
+                    <div className="p-1 rounded-md group-hover:bg-light-200 dark:group-hover:bg-dark-200 transition-colors">
+                      <ChevronLeft size={18} />
+                    </div>
+                    <span className="text-sm font-medium">Settings</span>
                   </button>
 
-                  <div className="flex flex-col items-start space-y-1 mt-8">
+                  <div className="flex flex-col space-y-1">
                     {sections.map((section) => (
                       <button
                         key={section.dataAdd}
                         className={cn(
-                          `flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-sm hover:bg-light-200 hover:dark:bg-dark-200 transition duration-200 active:scale-95`,
+                          `flex flex-row items-center gap-3 px-3 py-2.5 rounded-xl w-full text-sm font-medium transition-all duration-200`,
                           activeSection === section.key
-                            ? 'bg-light-200 dark:bg-dark-200 text-black/90 dark:text-white/90'
-                            : ' text-black/70 dark:text-white/70',
+                            ? 'bg-white dark:bg-dark-secondary text-black dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/5'
+                            : 'text-black/60 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5',
                         )}
                         onClick={() => setActiveSection(section.key)}
                       >
-                        <section.icon size={17} />
-                        <p>{section.name}</p>
+                        <section.icon size={18} className={cn(activeSection === section.key ? "text-[#24A0ED]" : "opacity-70")} />
+                        <span>{section.name}</span>
                       </button>
                     ))}
                   </div>
                 </div>
-                <div className="flex flex-col space-y-1 py-[18px] px-2">
-                  <p className="text-xs text-black/70 dark:text-white/70">
-                    Version: {process.env.NEXT_PUBLIC_VERSION}
-                  </p>
-                  <a
-                    href="https://github.com/itzcrazykns/perplexica"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-black/70 dark:text-white/70 flex flex-row space-x-1 items-center transition duration-200 hover:text-black/90 hover:dark:text-white/90"
-                  >
-                    <span>GitHub</span>
-                    <ExternalLink size={12} />
-                  </a>
+                <div className="p-4 border-t border-light-200 dark:border-dark-200 bg-light-secondary/50 dark:bg-dark-secondary/50">
+                  <div className="flex items-center justify-between text-xs text-black/50 dark:text-white/50">
+                    <span>v{process.env.NEXT_PUBLIC_VERSION}</span>
+                    <a
+                      href="https://github.com/itzcrazykns/perplexica"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 hover:text-black dark:hover:text-white transition-colors"
+                    >
+                      GitHub <ExternalLink size={10} />
+                    </a>
+                  </div>
                 </div>
               </div>
               <div className="w-full flex flex-col overflow-hidden">
