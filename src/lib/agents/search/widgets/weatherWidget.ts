@@ -117,6 +117,16 @@ const weatherWidget: Widget = {
 
         const weatherData = await weatherRes.json();
 
+        // Validate weatherData.hourly exists and has required properties
+        if (!weatherData.hourly || 
+            !weatherData.hourly.time || 
+            !weatherData.hourly.temperature_2m || 
+            !weatherData.hourly.precipitation_probability || 
+            !weatherData.hourly.precipitation || 
+            !weatherData.hourly.weather_code) {
+          throw new Error('Incomplete weather data received from API');
+        }
+
         return {
           type: 'weather',
           llmContext: `Weather in ${params.location} is ${JSON.stringify(weatherData.current)}`,
@@ -161,6 +171,16 @@ const weatherWidget: Widget = {
 
         const weatherData = await weatherRes.json();
         const locationData = await locationRes.json();
+
+        // Validate weatherData.hourly exists and has required properties
+        if (!weatherData.hourly || 
+            !weatherData.hourly.time || 
+            !weatherData.hourly.temperature_2m || 
+            !weatherData.hourly.precipitation_probability || 
+            !weatherData.hourly.precipitation || 
+            !weatherData.hourly.weather_code) {
+          throw new Error('Incomplete weather data received from API');
+        }
 
         return {
           type: 'weather',

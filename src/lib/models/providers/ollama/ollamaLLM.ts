@@ -171,7 +171,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
               ) /* Ollama currently doesn't return a tool call ID so we're creating one based on the index and tool call name */
               .digest('hex'),
             name: tc.function.name,
-            arguments: tc.function.arguments,
+            arguments: tc.function.arguments || {},
           })) || [],
         done: chunk.done,
         additionalInfo: {

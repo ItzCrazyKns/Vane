@@ -85,6 +85,14 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     config.sources.includes('web') &&
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {
+    // Validate queries exists and is an array
+    if (!input.queries || !Array.isArray(input.queries) || input.queries.length === 0) {
+      return {
+        type: 'search_results',
+        results: [],
+      };
+    }
+    
     input.queries = input.queries.slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(

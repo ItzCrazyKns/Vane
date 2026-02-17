@@ -88,6 +88,7 @@ class Researcher {
           partialRes.toolCallChunk.forEach((tc) => {
             if (
               tc.name === '__reasoning_preamble' &&
+              tc.arguments &&
               tc.arguments['plan'] &&
               !reasoningEmitted &&
               block &&
@@ -110,6 +111,7 @@ class Researcher {
               ]);
             } else if (
               tc.name === '__reasoning_preamble' &&
+              tc.arguments &&
               tc.arguments['plan'] &&
               reasoningEmitted &&
               block &&
@@ -139,9 +141,12 @@ class Researcher {
             );
 
             if (existingIndex !== -1) {
-              finalToolCalls[existingIndex].arguments = tc.arguments;
+              finalToolCalls[existingIndex].arguments = tc.arguments || {};
             } else {
-              finalToolCalls.push(tc);
+              finalToolCalls.push({
+                ...tc,
+                arguments: tc.arguments || {},
+              });
             }
           });
         }

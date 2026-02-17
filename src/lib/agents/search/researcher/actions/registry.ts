@@ -89,12 +89,23 @@ class ActionRegistry {
 
     await Promise.all(
       actions.map(async (actionConfig) => {
-        const output = await this.execute(
-          actionConfig.name,
-          actionConfig.arguments,
-          additionalConfig,
-        );
-        results.push(output);
+        try {
+          const output = await this.execute(
+            actionConfig.name,
+            actionConfig.arguments || {},
+            additionalConfig,
+          );
+          results.push(output);
+        } catch (error) {
+          console.error(
+            `Error executing action ${actionConfig.name}:`,
+            error,
+          );
+          // Push a done action to prevent breaking the flow
+          results.push({
+            type: 'done',
+          });
+        }
       }),
     );
 
