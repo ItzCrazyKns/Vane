@@ -41,7 +41,7 @@ class MinimaxLLM extends OpenAILLM<MinimaxConfig> {
         input.options?.frequencyPenalty ??
         this.config.options?.frequencyPenalty,
       presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presence_penalty,
+        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       response_format: zodResponseFormat(input.schema, 'object'),
       // MiniMax-specific: split reasoning into separate field to prevent
       // <thinking> tags from breaking JSON parsing
