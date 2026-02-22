@@ -251,25 +251,38 @@ class MinimaxLLM extends BaseLLM<OpenAIConfig> {
 
     const stream = this.openAIClient.responses.stream({
       model: this.config.model,
-      input: this.convertToOpenAIMessages(input.messages),
+      input: input.messages,
+      temperature:
+        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+      top_p: input.options?.topP ?? this.config.options?.topP,
+      max_completion_tokens:
+        input.options?.maxTokens ?? this.config.options?.maxTokens,
+      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
+      frequency_penalty:
+        input.options?.frequencyPenalty ??
+        this.config.options?.frequencyPenalty,
+      presence_penalty:
+        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       text: {
-        format: zodResponseFormat(input.schema, 'object'),
-      },
-      reasoning: {
-        effort: 'high',
+        format: zodTextFormat(input.schema, 'object'),
       },
     });
 
     for await (const chunk of stream) {
-      const textDelta = chunk.delta?.text;
-      if (textDelta) {
-        recievedObj += textDelta;
+      if (chunk.type === 'response.output_text.delta' && chunk.delta) {
+        recievedObj += chunk.delta;
 
         try {
-          const parsed = JSON.parse(recievedObj);
-          yield parsed;
-        } catch {
-          // Not complete JSON yet
+          yield parse(recievedObj) as Partial<z.infer<T>>;
+        } catch (err) {
+          console.log('Error parsing partial object from Minimax:', err);
+          yield {} as Partial<z.infer<T>>;
+        }
+      } else if (chunk.type === 'response.output_text.done' && chunk.text) {
+        try {
+          yield parse(chunk.text) as Partial<z.infer<T>>;
+        } catch (err) {
+          throw new Error(`Error parsing response from Minimax: ${err}`);
         }
       }
     }
