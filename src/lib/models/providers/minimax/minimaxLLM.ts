@@ -41,11 +41,7 @@ class MinimaxLLM extends OpenAILLM {
       try {
         let content = response.choices[0].message.content || '';
         
-        // Clean thinking tags first
-        content = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
-        content = content.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
-        
-        // Extract JSON - find first { and last }
+        // Extract JSON first - find first { and last }
         const startIndex = content.indexOf('{');
         const endIndex = content.lastIndexOf('}');
         let jsonStr = content;
@@ -53,7 +49,13 @@ class MinimaxLLM extends OpenAILLM {
           jsonStr = content.substring(startIndex, endIndex + 1);
         }
         
-        // Use repairJson to fix any issues
+        // Now clean the extracted JSON string
+        jsonStr = jsonStr.replace(/^```json\s*/i, '').replace(/```$/i, '');
+        jsonStr = jsonStr.replace(/^```\s*/i, '').replace(/```$/i, '');
+        jsonStr = jsonStr.replace(/^``json\s*/i, '').replace(/``$/i, '');
+        jsonStr = jsonStr.replace(/^``\s*/i, '').replace(/``$/i, '');
+        
+        // Use repairJson to fix any remaining issues
         const repaired = repairJson(jsonStr, { extractJson: true });
         if (!repaired) {
           throw new Error('No valid JSON found in response');
