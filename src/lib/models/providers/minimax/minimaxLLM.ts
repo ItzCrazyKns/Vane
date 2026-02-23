@@ -39,10 +39,14 @@ class MinimaxLLM extends OpenAILLM {
 
     if (response.choices && response.choices.length > 0) {
       try {
-        // Strip markdown code blocks (e.g., ```json ... ```)
+        // Extract JSON from content - handles markdown wrappers, thinking tags, etc.
         let content = response.choices[0].message.content || '';
-        content = content.replace(/^```json\s*/i, '').replace(/```$/i, '');
-        content = content.replace(/^```\s*/i, '').replace(/```$/i, '');
+        
+        // Try to find JSON object in the content
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          content = jsonMatch[0];
+        }
         
         return input.schema.parse(
           JSON.parse(
