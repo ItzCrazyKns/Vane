@@ -39,17 +39,17 @@ class MinimaxLLM extends OpenAILLM {
 
     if (response.choices && response.choices.length > 0) {
       try {
-        // Extract JSON from content - handles markdown wrappers, thinking tags, etc.
-        let content = response.choices[0].message.content || '';
-        
-        // Try to find JSON object in the content
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          content = jsonMatch[0];
+        // Extract JSON from content - find first { and last }
+        const content = response.choices[0].message.content || '';
+        const startIndex = content.indexOf('{');
+        const endIndex = content.lastIndexOf('}');
+        let jsonStr = content;
+        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+          jsonStr = content.substring(startIndex, endIndex + 1);
         }
         
-        // Use repairJson to extract and fix JSON
-        const repaired = repairJson(content, { extractJson: true });
+        // Use repairJson to fix any issues
+        const repaired = repairJson(jsonStr, { extractJson: true });
         if (!repaired) {
           throw new Error('No valid JSON found in response');
         }
