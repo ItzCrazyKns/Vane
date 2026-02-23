@@ -15,6 +15,32 @@ import { repairJson } from '@toolsycc/json-repair';
  * 
  * See: https://platform.minimax.io/docs/api-reference/text-openai-api.md
  */
+
+/**
+ * Extract JSON from text by cleaning thinking/markdown and finding JSON boundaries
+ */
+function extractJSON(text: string): string {
+  // 1. Remove all thinking blocks (including multiline content)
+  let cleanedText = text.replace(/<minimax:[a-zA-Z0-9_-]+>[\s\S]*?<\/minimax:[a-zA-Z0-9_-]+>/gi, '');
+  cleanedText = cleanedText.replace(/<think>[\s\S]*?<\/think>/gi, '');
+  
+  // 2. Remove all markdown formatting blocks
+  cleanedText = cleanedText.replace(/```json[\s\S]*?```/gi, '');
+  cleanedText = cleanedText.replace(/```[\s\S]*?```/gi, '');
+  
+  // 3. Find the boundaries of the actual JSON object
+  const startIndex = cleanedText.indexOf('{');
+  const endIndex = cleanedText.lastIndexOf('}');
+  
+  // 4. Extract and return only the JSON payload
+  if (startIndex !== -1 && endIndex !== -1 && endIndex >= startIndex) {
+    return cleanedText.substring(startIndex, endIndex + 1);
+  }
+  
+  // Fallback
+  return text;
+}
+
 class MinimaxLLM extends OpenAILLM {
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
     const response = await this.openAIClient.chat.completions.parse({
@@ -39,27 +65,10 @@ class MinimaxLLM extends OpenAILLM {
 
     if (response.choices && response.choices.length > 0) {
       try {
-        let content = response.choices[0].message.content || '';
+        const content = response.choices[0].message.content || '';
+        const jsonStr = extractJSON(content);
         
-        // Extract JSON first - find first { and last }
-        const startIndex = content.indexOf('{');
-        const endIndex = content.lastIndexOf('}');
-        let jsonStr = content;
-        if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-          jsonStr = content.substring(startIndex, endIndex + 1);
-        }
-        
-        // Now clean the extracted JSON string
-        jsonStr = jsonStr.replace(/^```json\s*/i, '').replace(/```$/i, '');
-        jsonStr = jsonStr.replace(/^```\s*/i, '').replace(/```$/i, '');
-        jsonStr = jsonStr.replace(/^``json\s*/i, '').replace(/``$/i, '');
-        jsonStr = jsonStr.replace(/^``\s*/i, '').replace(/``$/i, '');
-        
-        // Clean any remaining thinking tags
-        jsonStr = jsonStr.replace(/<think>[\s\S]*?<\/think>/gi, '');
-        jsonStr = jsonStr.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
-        
-        // Use repairJson to fix any remaining issues
+        // Use repairJson as safety net
         const repaired = repairJson(jsonStr, { extractJson: true });
         if (!repaired) {
           throw new Error('No valid JSON found in response');
