@@ -48,12 +48,14 @@ class MinimaxLLM extends OpenAILLM {
           content = jsonMatch[0];
         }
         
+        // Use repairJson to extract and fix JSON
+        const repaired = repairJson(content, { extractJson: true });
+        if (!repaired) {
+          throw new Error('No valid JSON found in response');
+        }
+        
         return input.schema.parse(
-          JSON.parse(
-            repairJson(content, {
-              extractJson: true,
-            }) as string,
-          ),
+          JSON.parse(repaired as string),
         ) as T;
       } catch (err) {
         throw new Error(`Error parsing response from Minimax: ${err}`);
