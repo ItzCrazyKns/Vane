@@ -39,8 +39,13 @@ class MinimaxLLM extends OpenAILLM {
 
     if (response.choices && response.choices.length > 0) {
       try {
-        // Extract JSON from content - find first { and last }
-        const content = response.choices[0].message.content || '';
+        let content = response.choices[0].message.content || '';
+        
+        // Clean thinking tags first
+        content = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
+        content = content.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
+        
+        // Extract JSON - find first { and last }
         const startIndex = content.indexOf('{');
         const endIndex = content.lastIndexOf('}');
         let jsonStr = content;
