@@ -55,6 +55,10 @@ class MinimaxLLM extends OpenAILLM {
         jsonStr = jsonStr.replace(/^``json\s*/i, '').replace(/``$/i, '');
         jsonStr = jsonStr.replace(/^``\s*/i, '').replace(/``$/i, '');
         
+        // Clean any remaining thinking tags
+        jsonStr = jsonStr.replace(/<think>[\s\S]*?<\/think>/gi, '');
+        jsonStr = jsonStr.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
+        
         // Use repairJson to fix any remaining issues
         const repaired = repairJson(jsonStr, { extractJson: true });
         if (!repaired) {
