@@ -24,9 +24,9 @@ function extractJSON(text: string): string {
   let cleanedText = text.replace(/<minimax:[a-zA-Z0-9_-]+>[\s\S]*?<\/minimax:[a-zA-Z0-9_-]+>/gi, '');
   cleanedText = cleanedText.replace(/<think>[\s\S]*?<\/think>/gi, '');
   
-  // 2. Remove all markdown formatting blocks
-  cleanedText = cleanedText.replace(/```json[\s\S]*?```/gi, '');
-  cleanedText = cleanedText.replace(/```[\s\S]*?```/gi, '');
+  // 2. Remove ONLY the markdown wrappers, not the content inside them!
+  cleanedText = cleanedText.replace(/```json/gi, '');
+  cleanedText = cleanedText.replace(/```/g, '');
   
   // 3. Find the boundaries of the actual JSON object
   const startIndex = cleanedText.indexOf('{');
