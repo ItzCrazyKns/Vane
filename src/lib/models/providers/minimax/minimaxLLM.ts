@@ -43,7 +43,8 @@ function extractJSON(text: string): string {
 
 class MinimaxLLM extends OpenAILLM {
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
+    // CHANGE #1: Use .create() instead of .parse()
+    const response = await this.openAIClient.chat.completions.create({
       messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
       temperature:
@@ -57,15 +58,19 @@ class MinimaxLLM extends OpenAILLM {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      response_format: zodResponseFormat(input.schema, 'object'),
+      // CHANGE #2: We keep response_format as json_object to hint to the model, 
+      // but without .parse(), the SDK won't try to auto-parse the result.
+      response_format: { type: 'json_object' },
       // MiniMax-specific: split reasoning into separate field to prevent
       // <thinking> tags from breaking JSON parsing
       reasoning_split: true,
-    });
+    } as any); // Type cast might be needed depending on your OpenAI SDK version for custom params
 
     if (response.choices && response.choices.length > 0) {
       try {
         const content = response.choices[0].message.content || '';
+        
+        // NOW your extraction logic will actually run!
         const jsonStr = extractJSON(content);
         
         // Use repairJson as safety net
