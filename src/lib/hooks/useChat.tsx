@@ -4,6 +4,8 @@ import { Message } from '@/components/ChatWindow';
 import { Block } from '@/lib/types';
 import {
   createContext,
+  Dispatch,
+  SetStateAction,
   useContext,
   useEffect,
   useMemo,
@@ -50,9 +52,9 @@ type ChatContext = {
   setResearchEnded: (ended: boolean) => void;
   setOptimizationMode: (mode: string) => void;
   setSources: (sources: string[]) => void;
-  setFiles: (files: File[]) => void;
-  setFileIds: (fileIds: string[]) => void;
-  setImages: (images: ImageFile[]) => void;
+  setFiles: Dispatch<SetStateAction<File[]>>;
+  setFileIds: Dispatch<SetStateAction<string[]>>;
+  setImages: Dispatch<SetStateAction<ImageFile[]>>;
   sendMessage: (
     message: string,
     messageId?: string,

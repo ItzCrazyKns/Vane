@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useChat, ImageFile } from '@/lib/hooks/useChat';
 
 const ACCEPTED_DOC_TYPES = [
@@ -9,22 +9,13 @@ const ACCEPTED_DOC_TYPES = [
 
 /**
  * Shared hook for paste and drag-and-drop file handling in chat inputs.
- * Uses refs to always have latest state in async callbacks.
+ * Uses functional state updates to safely merge concurrent async results.
  */
 export const useFileHandler = () => {
-  const { images, setImages, files, setFiles, fileIds, setFileIds } =
-    useChat();
+  const { setImages, setFiles, setFileIds } = useChat();
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingFileName, setUploadingFileName] = useState('');
-
-  // Refs to always have the latest state in async callbacks
-  const imagesRef = useRef(images);
-  imagesRef.current = images;
-  const filesRef = useRef(files);
-  filesRef.current = files;
-  const fileIdsRef = useRef(fileIds);
-  fileIdsRef.current = fileIds;
 
   const processFiles = useCallback(
     (droppedFiles: File[]) => {
@@ -60,7 +51,7 @@ export const useFileHandler = () => {
           ),
         )
           .then((newImgs) => {
-            setImages([...imagesRef.current, ...newImgs]);
+            setImages((prev) => [...prev, ...newImgs]);
           })
           .catch((err) => {
             console.error('Error reading image files:', err);
@@ -86,9 +77,9 @@ export const useFileHandler = () => {
         fetch('/api/uploads', { method: 'POST', body: data })
           .then((res) => res.json())
           .then((resData) => {
-            setFiles([...filesRef.current, ...resData.files]);
-            setFileIds([
-              ...fileIdsRef.current,
+            setFiles((prev) => [...prev, ...resData.files]);
+            setFileIds((prev) => [
+              ...prev,
               ...resData.files.map((f: any) => f.fileId),
             ]);
           })

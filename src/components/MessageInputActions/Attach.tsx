@@ -25,14 +25,6 @@ const Attach = () => {
   const { files, setFiles, setFileIds, fileIds, images, setImages } =
     useChat();
 
-  // Refs for latest state in async callbacks
-  const filesRef = useRef(files);
-  filesRef.current = files;
-  const fileIdsRef = useRef(fileIds);
-  fileIdsRef.current = fileIds;
-  const imagesRef = useRef(images);
-  imagesRef.current = images;
-
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();
   const imageInputRef = useRef<any>();
@@ -61,9 +53,9 @@ const Attach = () => {
 
       const resData = await res.json();
 
-      setFiles([...filesRef.current, ...resData.files]);
-      setFileIds([
-        ...fileIdsRef.current,
+      setFiles((prev) => [...prev, ...resData.files]);
+      setFileIds((prev) => [
+        ...prev,
         ...resData.files.map((file: any) => file.fileId),
       ]);
     } catch (err) {
@@ -101,7 +93,7 @@ const Attach = () => {
         ),
       );
 
-      setImages([...imagesRef.current, ...newImages]);
+      setImages((prev) => [...prev, ...newImages]);
     } catch (err) {
       console.error('Error reading image files:', err);
     }
