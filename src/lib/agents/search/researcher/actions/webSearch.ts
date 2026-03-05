@@ -85,6 +85,12 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     config.sources.includes('web') &&
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {
+    // Fix: Ensure queries is always an array
+    if (!input.queries || !Array.isArray(input.queries)) {
+      console.error('Invalid queries format:', input);
+      input.queries = [];
+    }
+    
     input.queries = input.queries.slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
