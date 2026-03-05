@@ -4,6 +4,7 @@ import { classify } from './classifier';
 import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
+import { ContentPart } from '@/lib/types';
 
 class APISearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -71,6 +72,23 @@ class APISearchAgent {
       input.config.mode,
     );
 
+    // Build user message content with optional images
+    const images = input.config.images || [];
+    let userContent: string | ContentPart[];
+
+    if (images.length > 0) {
+      const parts: ContentPart[] = [
+        { type: 'text', text: input.followUp },
+        ...images.map((url) => ({
+          type: 'image_url' as const,
+          image_url: { url },
+        })),
+      ];
+      userContent = parts;
+    } else {
+      userContent = input.followUp;
+    }
+
     const answerStream = input.config.llm.streamText({
       messages: [
         {
@@ -80,7 +98,7 @@ class APISearchAgent {
         ...input.chatHistory,
         {
           role: 'user',
-          content: input.followUp,
+          content: userContent,
         },
       ],
     });

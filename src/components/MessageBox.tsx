@@ -26,6 +26,7 @@ import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
 import Renderer from './Widgets/Renderer';
 import CodeBlock from './MessageRenderer/CodeBlock';
+import ImagePreview from './ImagePreview';
 
 const ThinkTagProcessor = ({
   children,
@@ -109,6 +110,18 @@ const MessageBox = ({
         <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
           {section.message.query}
         </h2>
+        {section.message.images && section.message.images.length > 0 && (
+          <div className="flex flex-row flex-wrap gap-2 mt-3">
+            {section.message.images.map((img, i) => (
+              <ImagePreview
+                key={i}
+                src={img}
+                alt={`Attached image ${i + 1}`}
+                className="rounded-lg max-h-40 max-w-[200px] object-cover border border-light-200 dark:border-dark-200"
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col space-y-9 lg:space-y-0 lg:flex-row lg:justify-between lg:space-x-9">

@@ -60,6 +60,7 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: [],
         systemInstructions: body.systemInstructions || '',
+        images: [],
       },
       followUp: body.query,
       chatId: crypto.randomUUID(),

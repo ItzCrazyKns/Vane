@@ -7,7 +7,7 @@ import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
 import { chats, messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
-import { TextBlock } from '@/lib/types';
+import { TextBlock, ContentPart } from '@/lib/types';
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -119,6 +119,24 @@ class SearchAgent {
       input.config.systemInstructions,
       input.config.mode,
     );
+
+    // Build user message content with optional images
+    const images = input.config.images || [];
+    let userContent: string | ContentPart[];
+
+    if (images.length > 0) {
+      const parts: ContentPart[] = [
+        { type: 'text', text: input.followUp },
+        ...images.map((url) => ({
+          type: 'image_url' as const,
+          image_url: { url },
+        })),
+      ];
+      userContent = parts;
+    } else {
+      userContent = input.followUp;
+    }
+
     const answerStream = input.config.llm.streamText({
       messages: [
         {
@@ -128,7 +146,7 @@ class SearchAgent {
         ...input.chatHistory,
         {
           role: 'user',
-          content: input.followUp,
+          content: userContent,
         },
       ],
     });

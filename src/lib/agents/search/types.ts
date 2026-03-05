@@ -13,6 +13,7 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
+  images: string[]; // base64 data URLs for multimodal input
 };
 
 export type SearchAgentInput = {

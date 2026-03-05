@@ -34,6 +34,7 @@ type ChatContext = {
   chatHistory: [string, string][];
   files: File[];
   fileIds: string[];
+  images: ImageFile[];
   sources: string[];
   chatId: string | undefined;
   optimizationMode: string;
@@ -51,6 +52,7 @@ type ChatContext = {
   setSources: (sources: string[]) => void;
   setFiles: (files: File[]) => void;
   setFileIds: (fileIds: string[]) => void;
+  setImages: (images: ImageFile[]) => void;
   sendMessage: (
     message: string,
     messageId?: string,
@@ -65,6 +67,12 @@ export interface File {
   fileName: string;
   fileExtension: string;
   fileId: string;
+}
+
+export interface ImageFile {
+  id: string;
+  dataUrl: string; // base64 data URL
+  fileName: string;
 }
 
 interface ChatModelProvider {
@@ -196,7 +204,10 @@ const loadMessages = async (
 
   const data = await res.json();
 
-  const messages = data.messages as Message[];
+  const messages = (data.messages as Message[]).map((msg) => ({
+    ...msg,
+    images: msg.images || [],
+  }));
 
   setMessages(messages);
 
@@ -243,6 +254,7 @@ export const chatContext = createContext<ChatContext>({
   chatId: '',
   fileIds: [],
   files: [],
+  images: [],
   sources: [],
   hasError: false,
   isMessagesLoaded: false,
@@ -260,6 +272,7 @@ export const chatContext = createContext<ChatContext>({
   sendMessage: async () => {},
   setFileIds: () => {},
   setFiles: () => {},
+  setImages: () => {},
   setSources: () => {},
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
@@ -286,6 +299,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [files, setFiles] = useState<File[]>([]);
   const [fileIds, setFileIds] = useState<string[]>([]);
+  const [images, setImages] = useState<ImageFile[]>([]);
 
   const [sources, setSources] = useState<string[]>(['web']);
   const [optimizationMode, setOptimizationMode] = useState('speed');
@@ -733,6 +747,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       chatId: chatId!,
       backendId,
       query: message,
+      images: images.map((img) => img.dataUrl),
       responseBlocks: [],
       status: 'answering',
       createdAt: new Date(),
@@ -756,6 +771,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         },
         chatId: chatId!,
         files: fileIds,
+        images: images.map((img) => img.dataUrl),
         sources: sources,
         optimizationMode: optimizationMode,
         history: rewrite
@@ -775,6 +791,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         systemInstructions: localStorage.getItem('systemInstructions'),
       }),
     });
+
+    // Clear images after sending (they are per-message, not persistent)
+    setImages([]);
 
     if (!res.body) throw new Error('No response body');
 
@@ -813,6 +832,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         chatHistory: chatHistory.current,
         files,
         fileIds,
+        images,
         sources,
         chatId,
         hasError,
@@ -824,6 +844,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         optimizationMode,
         setFileIds,
         setFiles,
+        setImages,
         setSources,
         setOptimizationMode,
         rewrite,
