@@ -94,6 +94,23 @@ class SearchAgent {
       searchPromise,
     ]);
 
+    if (session.signal.aborted) {
+      await db
+        .update(messages)
+        .set({
+          status: 'completed',
+          responseBlocks: session.getAllBlocks(),
+        })
+        .where(
+          and(
+            eq(messages.chatId, input.chatId),
+            eq(messages.messageId, input.messageId),
+          ),
+        )
+        .execute();
+      return;
+    }
+
     session.emit('data', {
       type: 'researchComplete',
     });
@@ -131,41 +148,53 @@ class SearchAgent {
           content: input.followUp,
         },
       ],
+      signal: session.signal,
     });
 
     let responseBlockId = '';
 
-    for await (const chunk of answerStream) {
-      if (!responseBlockId) {
-        const block: TextBlock = {
-          id: crypto.randomUUID(),
-          type: 'text',
-          data: chunk.contentChunk,
-        };
+    try {
+      for await (const chunk of answerStream) {
+        if (session.signal.aborted) break;
 
-        session.emitBlock(block);
+        if (!responseBlockId) {
+          const block: TextBlock = {
+            id: crypto.randomUUID(),
+            type: 'text',
+            data: chunk.contentChunk,
+          };
 
-        responseBlockId = block.id;
-      } else {
-        const block = session.getBlock(responseBlockId) as TextBlock | null;
+          session.emitBlock(block);
 
-        if (!block) {
-          continue;
+          responseBlockId = block.id;
+        } else {
+          const block = session.getBlock(responseBlockId) as TextBlock | null;
+
+          if (!block) {
+            continue;
+          }
+
+          block.data += chunk.contentChunk;
+
+          session.updateBlock(block.id, [
+            {
+              op: 'replace',
+              path: '/data',
+              value: block.data,
+            },
+          ]);
         }
-
-        block.data += chunk.contentChunk;
-
-        session.updateBlock(block.id, [
-          {
-            op: 'replace',
-            path: '/data',
-            value: block.data,
-          },
-        ]);
+      }
+    } catch (err: any) {
+      // Abort errors are expected when the user cancels
+      if (!session.signal.aborted) {
+        throw err;
       }
     }
 
-    session.emit('end', {});
+    if (!session.signal.aborted) {
+      session.emit('end', {});
+    }
 
     await db
       .update(messages)

@@ -57,6 +57,8 @@ class Researcher {
     ];
 
     for (let i = 0; i < maxIteration; i++) {
+      if (session.signal.aborted) break;
+
       const researcherPrompt = getResearcherPrompt(
         availableActionsDescription,
         input.config.mode,
@@ -74,6 +76,7 @@ class Researcher {
           ...agentMessageHistory,
         ],
         tools: availableTools,
+        signal: session.signal,
       });
 
       const block = session.getBlock(researchBlockId);
@@ -83,47 +86,25 @@ class Researcher {
 
       let finalToolCalls: ToolCall[] = [];
 
-      for await (const partialRes of actionStream) {
-        if (partialRes.toolCallChunk.length > 0) {
-          partialRes.toolCallChunk.forEach((tc) => {
-            if (
-              tc.name === '__reasoning_preamble' &&
-              tc.arguments['plan'] &&
-              !reasoningEmitted &&
-              block &&
-              block.type === 'research'
-            ) {
-              reasoningEmitted = true;
+      try {
+        for await (const partialRes of actionStream) {
+          if (partialRes.toolCallChunk.length > 0) {
+            partialRes.toolCallChunk.forEach((tc) => {
+              if (
+                tc.name === '__reasoning_preamble' &&
+                tc.arguments['plan'] &&
+                !reasoningEmitted &&
+                block &&
+                block.type === 'research'
+              ) {
+                reasoningEmitted = true;
 
-              block.data.subSteps.push({
-                id: reasoningId,
-                type: 'reasoning',
-                reasoning: tc.arguments['plan'],
-              });
+                block.data.subSteps.push({
+                  id: reasoningId,
+                  type: 'reasoning',
+                  reasoning: tc.arguments['plan'],
+                });
 
-              session.updateBlock(researchBlockId, [
-                {
-                  op: 'replace',
-                  path: '/data/subSteps',
-                  value: block.data.subSteps,
-                },
-              ]);
-            } else if (
-              tc.name === '__reasoning_preamble' &&
-              tc.arguments['plan'] &&
-              reasoningEmitted &&
-              block &&
-              block.type === 'research'
-            ) {
-              const subStepIndex = block.data.subSteps.findIndex(
-                (step: any) => step.id === reasoningId,
-              );
-
-              if (subStepIndex !== -1) {
-                const subStep = block.data.subSteps[
-                  subStepIndex
-                ] as ReasoningResearchBlock;
-                subStep.reasoning = tc.arguments['plan'];
                 session.updateBlock(researchBlockId, [
                   {
                     op: 'replace',
@@ -131,20 +112,49 @@ class Researcher {
                     value: block.data.subSteps,
                   },
                 ]);
+              } else if (
+                tc.name === '__reasoning_preamble' &&
+                tc.arguments['plan'] &&
+                reasoningEmitted &&
+                block &&
+                block.type === 'research'
+              ) {
+                const subStepIndex = block.data.subSteps.findIndex(
+                  (step: any) => step.id === reasoningId,
+                );
+
+                if (subStepIndex !== -1) {
+                  const subStep = block.data.subSteps[
+                    subStepIndex
+                  ] as ReasoningResearchBlock;
+                  subStep.reasoning = tc.arguments['plan'];
+                  session.updateBlock(researchBlockId, [
+                    {
+                      op: 'replace',
+                      path: '/data/subSteps',
+                      value: block.data.subSteps,
+                    },
+                  ]);
+                }
               }
-            }
 
-            const existingIndex = finalToolCalls.findIndex(
-              (ftc) => ftc.id === tc.id,
-            );
+              const existingIndex = finalToolCalls.findIndex(
+                (ftc) => ftc.id === tc.id,
+              );
 
-            if (existingIndex !== -1) {
-              finalToolCalls[existingIndex].arguments = tc.arguments;
-            } else {
-              finalToolCalls.push(tc);
-            }
-          });
+              if (existingIndex !== -1) {
+                finalToolCalls[existingIndex].arguments = tc.arguments;
+              } else {
+                finalToolCalls.push(tc);
+              }
+            });
+          }
         }
+      } catch (err: any) {
+        if (!session.signal.aborted) {
+          throw err;
+        }
+        break;
       }
 
       if (finalToolCalls.length === 0) {

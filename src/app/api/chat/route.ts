@@ -233,8 +233,9 @@ export const POST = async (req: Request) => {
     });
 
     req.signal.addEventListener('abort', () => {
+      session.abort();
       disconnect();
-      writer.close();
+      writer.close().catch(() => {});
     });
 
     return new Response(responseStream.readable, {
