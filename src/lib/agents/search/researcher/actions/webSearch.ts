@@ -87,7 +87,11 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
   execute: async (input, additionalConfig) => {
     // Fix: Ensure queries is always an array
     if (!input.queries || !Array.isArray(input.queries)) {
-      console.error('Invalid queries format:', input);
+      console.error('Invalid queries format', {
+        hasQueries: Object.prototype.hasOwnProperty.call(input, 'queries'),
+        queriesType: typeof (input as any).queries,
+        isArray: Array.isArray((input as any).queries),
+      });
       input.queries = [];
     }
     

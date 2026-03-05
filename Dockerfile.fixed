@@ -1,0 +1,13 @@
+FROM itzcrazykns1337/perplexica:latest
+
+# Copy fixed source files
+COPY src/lib/agents/search/researcher/actions/webSearch.ts /home/perplexica-src/src/lib/agents/search/researcher/actions/
+COPY src/lib/agents/search/researcher/actions/socialSearch.ts /home/perplexica-src/src/lib/agents/search/researcher/actions/
+COPY src/lib/agents/search/researcher/actions/academicSearch.ts /home/perplexica-src/src/lib/agents/search/researcher/actions/
+
+# Rebuild if source is available
+RUN if [ -d /home/perplexica-src ]; then \
+      cd /home/perplexica-src && \
+      npm run build && \
+      cp -r .next /home/perplexica/; \
+    fi
