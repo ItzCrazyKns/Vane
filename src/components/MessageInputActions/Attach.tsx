@@ -25,63 +25,86 @@ const Attach = () => {
   const { files, setFiles, setFileIds, fileIds, images, setImages } =
     useChat();
 
+  // Refs for latest state in async callbacks
+  const filesRef = useRef(files);
+  filesRef.current = files;
+  const fileIdsRef = useRef(fileIds);
+  fileIdsRef.current = fileIds;
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();
   const imageInputRef = useRef<any>();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
-    const data = new FormData();
+    try {
+      const data = new FormData();
 
-    for (let i = 0; i < e.target.files!.length; i++) {
-      data.append('files', e.target.files![i]);
+      for (let i = 0; i < e.target.files!.length; i++) {
+        data.append('files', e.target.files![i]);
+      }
+
+      const embeddingModelProvider = localStorage.getItem(
+        'embeddingModelProviderId',
+      );
+      const embeddingModel = localStorage.getItem('embeddingModelKey');
+
+      data.append('embedding_model_provider_id', embeddingModelProvider!);
+      data.append('embedding_model_key', embeddingModel!);
+
+      const res = await fetch(`/api/uploads`, {
+        method: 'POST',
+        body: data,
+      });
+
+      const resData = await res.json();
+
+      setFiles([...filesRef.current, ...resData.files]);
+      setFileIds([
+        ...fileIdsRef.current,
+        ...resData.files.map((file: any) => file.fileId),
+      ]);
+    } catch (err) {
+      console.error('Error uploading files:', err);
+    } finally {
+      setLoading(false);
     }
-
-    const embeddingModelProvider = localStorage.getItem(
-      'embeddingModelProviderId',
-    );
-    const embeddingModel = localStorage.getItem('embeddingModelKey');
-
-    data.append('embedding_model_provider_id', embeddingModelProvider!);
-    data.append('embedding_model_key', embeddingModel!);
-
-    const res = await fetch(`/api/uploads`, {
-      method: 'POST',
-      body: data,
-    });
-
-    const resData = await res.json();
-
-    setFiles([...files, ...resData.files]);
-    setFileIds([...fileIds, ...resData.files.map((file: any) => file.fileId)]);
-    setLoading(false);
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles) return;
 
-    const newImages = await Promise.all(
-      Array.from(selectedFiles).map(
-        (file) =>
-          new Promise<{ id: string; dataUrl: string; fileName: string }>(
-            (resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                resolve({
-                  id: Math.random().toString(36).substring(2),
-                  dataUrl: reader.result as string,
-                  fileName: file.name,
-                });
-              };
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            },
-          ),
-      ),
-    );
+    try {
+      const newImages = await Promise.all(
+        Array.from(selectedFiles).map(
+          (file) =>
+            new Promise<{ id: string; dataUrl: string; fileName: string }>(
+              (resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  resolve({
+                    id: Math.random().toString(36).substring(2),
+                    dataUrl: reader.result as string,
+                    fileName: file.name,
+                  });
+                };
+                reader.onerror = () =>
+                  reject(new Error(`Failed to read ${file.name}`));
+                reader.onabort = () =>
+                  reject(new Error(`Aborted reading ${file.name}`));
+                reader.readAsDataURL(file);
+              },
+            ),
+        ),
+      );
 
-    setImages([...images, ...newImages]);
+      setImages([...imagesRef.current, ...newImages]);
+    } catch (err) {
+      console.error('Error reading image files:', err);
+    }
     // Reset the input so the same file can be selected again
     e.target.value = '';
   };

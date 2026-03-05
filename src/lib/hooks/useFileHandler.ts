@@ -9,7 +9,7 @@ const ACCEPTED_DOC_TYPES = [
 
 /**
  * Shared hook for paste and drag-and-drop file handling in chat inputs.
- * Uses refs to avoid stale closure issues in async callbacks.
+ * Uses refs to always have latest state in async callbacks.
  */
 export const useFileHandler = () => {
   const { images, setImages, files, setFiles, fileIds, setFileIds } =
@@ -42,7 +42,7 @@ export const useFileHandler = () => {
         Promise.all(
           imageFiles.map(
             (file) =>
-              new Promise<ImageFile>((resolve) => {
+              new Promise<ImageFile>((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => {
                   resolve({
@@ -51,12 +51,20 @@ export const useFileHandler = () => {
                     fileName: file.name || 'pasted-image.png',
                   });
                 };
+                reader.onerror = () =>
+                  reject(new Error(`Failed to read ${file.name}`));
+                reader.onabort = () =>
+                  reject(new Error(`Aborted reading ${file.name}`));
                 reader.readAsDataURL(file);
               }),
           ),
-        ).then((newImgs) => {
-          setImages([...imagesRef.current, ...newImgs]);
-        });
+        )
+          .then((newImgs) => {
+            setImages([...imagesRef.current, ...newImgs]);
+          })
+          .catch((err) => {
+            console.error('Error reading image files:', err);
+          });
       }
 
       // Handle document files (upload via /api/uploads)
@@ -83,6 +91,9 @@ export const useFileHandler = () => {
               ...fileIdsRef.current,
               ...resData.files.map((f: any) => f.fileId),
             ]);
+          })
+          .catch((err) => {
+            console.error('Error uploading files:', err);
           })
           .finally(() => {
             setIsUploading(false);

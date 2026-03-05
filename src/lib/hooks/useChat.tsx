@@ -491,6 +491,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       chatHistory.current = [];
       setFiles([]);
       setFileIds([]);
+      setImages([]);
       setIsMessagesLoaded(false);
       setNotFound(false);
       setNewChatCreated(false);
