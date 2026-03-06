@@ -47,43 +47,47 @@ class MiniMaxLLM extends OpenAILLM {
   async *streamText(
     input: import('../../types').GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput> {
+    const THINK_START = '<think>';
+    const THINK_END = '</think>';
     let buffer = '';
     let insideThinkTag = false;
-    let thinkBuffer = '';
 
     for await (const chunk of super.streamText(input)) {
       buffer += chunk.contentChunk;
 
       let output = '';
-      let i = 0;
 
-      while (i < buffer.length) {
+      while (buffer.length > 0) {
         if (!insideThinkTag) {
-          const thinkStart = buffer.indexOf('<think>', i);
+          const thinkStart = buffer.indexOf(THINK_START);
           if (thinkStart === -1) {
-            output += buffer.slice(i);
-            buffer = '';
+            if (buffer.length >= THINK_START.length - 1) {
+              const safeLength = buffer.length - (THINK_START.length - 1);
+              output += buffer.slice(0, safeLength);
+              buffer = buffer.slice(safeLength);
+            }
             break;
           } else {
-            output += buffer.slice(i, thinkStart);
+            output += buffer.slice(0, thinkStart);
             insideThinkTag = true;
-            i = thinkStart + 7;
+            buffer = buffer.slice(thinkStart + THINK_START.length);
           }
         } else {
-          const thinkEnd = buffer.indexOf('</think>', i);
+          const thinkEnd = buffer.indexOf(THINK_END);
           if (thinkEnd === -1) {
-            thinkBuffer = buffer.slice(i);
-            buffer = '';
+            if (buffer.length >= THINK_END.length - 1) {
+              buffer = buffer.slice(-(THINK_END.length - 1));
+            }
             break;
           } else {
             insideThinkTag = false;
-            thinkBuffer = '';
-            i = thinkEnd + 8;
+            buffer = buffer.slice(thinkEnd + THINK_END.length);
           }
         }
       }
 
-      if (output || chunk.done) {
+      const hasToolCalls = chunk.toolCallChunk && chunk.toolCallChunk.length > 0;
+      if (output || chunk.done || hasToolCalls) {
         yield {
           contentChunk: output,
           toolCallChunk: chunk.toolCallChunk,
