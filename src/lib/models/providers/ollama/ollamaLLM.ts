@@ -13,6 +13,17 @@ import crypto from 'crypto';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+/**
+ * Some models wrap their JSON output in markdown code fences like
+ * ```json\n{...}\n``` which breaks downstream parsing. This strips
+ * those fences so we get the raw JSON string.
+ */
+function stripMarkdownFences(text: string): string {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/);
+  return match ? match[1].trim() : trimmed;
+}
+
 type OllamaConfig = {
   baseURL: string;
   model: string;
@@ -206,9 +217,10 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     try {
+      const cleaned = stripMarkdownFences(response.message.content);
       return input.schema.parse(
         JSON.parse(
-          repairJson(response.message.content, {
+          repairJson(cleaned, {
             extractJson: true,
           }) as string,
         ),
@@ -249,7 +261,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       recievedObj += chunk.message.content;
 
       try {
-        yield parse(recievedObj) as T;
+        yield parse(stripMarkdownFences(recievedObj)) as T;
       } catch (err) {
         console.log('Error parsing partial object from Ollama:', err);
         yield {} as T;

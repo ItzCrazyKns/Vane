@@ -20,6 +20,17 @@ import {
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+/**
+ * Some models wrap their JSON output in markdown code fences like
+ * ```json\n{...}\n``` which breaks downstream parsing. This strips
+ * those fences so we get the raw JSON string.
+ */
+function stripMarkdownFences(text: string): string {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/);
+  return match ? match[1].trim() : trimmed;
+}
+
 type OpenAIConfig = {
   apiKey: string;
   model: string;
@@ -214,9 +225,11 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       try {
+        const raw = response.choices[0].message.content || '';
+        const cleaned = stripMarkdownFences(raw);
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(cleaned, {
               extractJson: true,
             }) as string,
           ),
@@ -256,14 +269,14 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         recievedObj += chunk.delta;
 
         try {
-          yield parse(recievedObj) as T;
+          yield parse(stripMarkdownFences(recievedObj)) as T;
         } catch (err) {
           console.log('Error parsing partial object from OpenAI:', err);
           yield {} as T;
         }
       } else if (chunk.type === 'response.output_text.done' && chunk.text) {
         try {
-          yield parse(chunk.text) as T;
+          yield parse(stripMarkdownFences(chunk.text)) as T;
         } catch (err) {
           throw new Error(`Error parsing response from OpenAI: ${err}`);
         }
