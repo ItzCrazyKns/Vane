@@ -4,6 +4,7 @@ import net from 'node:net';
 import TurnDown from 'turndown';
 import z from 'zod';
 import { ResearchAction } from '../../types';
+import { splitText } from '@/lib/utils/splitText';
 
 const turndownService = new TurnDown();
 const MAX_REDIRECTS = 5;
@@ -269,8 +270,14 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
 
           const markdown = turndownService.turndown(text);
 
+          // Limit scraped content to avoid blowing up the context window.
+          // splitText chunks by token count — we only keep the first chunk.
+          const maxTokensPerPage = 6000;
+          const chunks = splitText(markdown, maxTokensPerPage, 0);
+          const content = chunks.length > 0 ? chunks[0] : markdown;
+
           results.push({
-            content: markdown,
+            content,
             metadata: {
               url,
               title: title,

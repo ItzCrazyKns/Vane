@@ -98,13 +98,26 @@ class SearchAgent {
       type: 'researchComplete',
     });
 
-    const finalContext =
-      searchResults?.searchFindings
-        .map(
-          (f, index) =>
-            `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
-        )
-        .join('\n') || '';
+    // Cap each result and total context to stay within reasonable token budgets
+    const maxCharsPerResult = 24000;
+    const maxTotalChars = 80000;
+
+    let totalChars = 0;
+    const contextParts: string[] = [];
+
+    if (searchResults?.searchFindings) {
+      for (let i = 0; i < searchResults.searchFindings.length; i++) {
+        const f = searchResults.searchFindings[i];
+        const truncated = f.content.slice(0, maxCharsPerResult);
+        const part = `<result index=${i + 1} title=${f.metadata.title}>${truncated}</result>`;
+
+        if (totalChars + part.length > maxTotalChars) break;
+        totalChars += part.length;
+        contextParts.push(part);
+      }
+    }
+
+    const finalContext = contextParts.join('\n');
 
     const widgetContext = widgetOutputs
       .map((o) => {
