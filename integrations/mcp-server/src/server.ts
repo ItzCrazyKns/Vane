@@ -10,6 +10,22 @@ const PERPLEXICA_CHAT_MODEL = process.env.PERPLEXICA_CHAT_MODEL ?? "";
 const PERPLEXICA_EMBED_PROVIDER = process.env.PERPLEXICA_EMBED_PROVIDER ?? "";
 const PERPLEXICA_EMBED_MODEL = process.env.PERPLEXICA_EMBED_MODEL ?? "";
 
+// Validate required env vars at startup — fail fast with a clear message
+const missingEnv: string[] = [];
+if (!PERPLEXICA_CHAT_PROVIDER) missingEnv.push("PERPLEXICA_CHAT_PROVIDER");
+if (!PERPLEXICA_CHAT_MODEL)    missingEnv.push("PERPLEXICA_CHAT_MODEL");
+if (!PERPLEXICA_EMBED_PROVIDER) missingEnv.push("PERPLEXICA_EMBED_PROVIDER");
+if (!PERPLEXICA_EMBED_MODEL)   missingEnv.push("PERPLEXICA_EMBED_MODEL");
+
+if (missingEnv.length > 0) {
+  console.error(
+    "❌ Perplexica MCP server: missing required environment variables:",
+    missingEnv.join(", ")
+  );
+  console.error("Set these variables before starting. See .env.example for reference.");
+  process.exit(1);
+}
+
 interface SearchResponse {
   message: string;
   sources: Array<{
@@ -74,10 +90,11 @@ function buildMcpServer(): McpServer {
     {
       query: z.string().describe("The search query"),
       sources: z
-        .array(z.string())
+        .array(z.enum(["web", "academic", "discussions"]))
         .optional()
+        .default(["web"])
         .describe(
-          'Sources to search. Defaults to ["web"]. Options: "web", "academic", "discussions"',
+          'Sources to search. Options: "web" (default), "academic", "discussions"',
         ),
     },
     async ({ query, sources }) => {
@@ -107,22 +124,32 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 app.get("/sse", async (_req: Request, res: Response) => {
-  const transport = new SSEServerTransport("/messages", res);
-  const id = transport.sessionId;
-  transports.set(id, transport);
-  const server = buildMcpServer();
-  await server.connect(transport);
-  res.on("close", () => transports.delete(id));
+  try {
+    const transport = new SSEServerTransport("/messages", res);
+    const id = transport.sessionId;
+    transports.set(id, transport);
+    res.on("close", () => transports.delete(id));  // MUST be before connect
+    const server = buildMcpServer();
+    await server.connect(transport);
+  } catch (err) {
+    console.error("[MCP] Failed to establish SSE connection:", err);
+    if (!res.headersSent) res.status(500).json({ error: "SSE connection failed" });
+  }
 });
 
 app.post("/messages", async (req: Request, res: Response) => {
-  const id = req.query.sessionId as string;
-  const transport = transports.get(id);
-  if (!transport) {
-    res.status(404).json({ error: "Session not found" });
-    return;
+  try {
+    const id = req.query.sessionId as string;
+    const transport = transports.get(id);
+    if (!transport) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    await transport.handlePostMessage(req, res);
+  } catch (err) {
+    console.error("[MCP] Failed to handle message:", err);
+    if (!res.headersSent) res.status(500).json({ error: "Message handling failed" });
   }
-  await transport.handlePostMessage(req, res);
 });
 
 app.listen(PORT, () => {
