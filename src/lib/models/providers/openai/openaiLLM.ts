@@ -19,6 +19,7 @@ import {
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
+import { safeParseJson, stripMarkdownFences } from '@/lib/utils/parseJson';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -110,7 +111,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                 return {
                   name: tc.function.name,
                   id: tc.id,
-                  arguments: JSON.parse(tc.function.arguments),
+                  arguments: safeParseJson(tc.function.arguments),
                 };
               }
             })
@@ -256,14 +257,14 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         recievedObj += chunk.delta;
 
         try {
-          yield parse(recievedObj) as T;
+          yield parse(stripMarkdownFences(recievedObj)) as T;
         } catch (err) {
           console.log('Error parsing partial object from OpenAI:', err);
           yield {} as T;
         }
       } else if (chunk.type === 'response.output_text.done' && chunk.text) {
         try {
-          yield parse(chunk.text) as T;
+          yield parse(stripMarkdownFences(chunk.text)) as T;
         } catch (err) {
           throw new Error(`Error parsing response from OpenAI: ${err}`);
         }
