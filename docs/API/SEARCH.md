@@ -15,7 +15,15 @@ The `focusMode` parameter has been removed from all API endpoints and replaced w
 | `"focusMode": "webSearch"` | `"sources": ["web"]` |
 | `"focusMode": "academicSearch"` | `"sources": ["academic"]` |
 
-If you pass `focusMode` to v1.12.1+, it is silently ignored and no sources will be searched. Update your API calls to use `sources` instead.
+> **⚠️ Breaking change in v1.12.1:** The `focusMode` parameter has been removed.
+> Replace `focusMode: "webSearch"` with `sources: ["web"]` in all integrations.
+>
+> **Behaviour by endpoint:**
+> - `/api/chat` — `focusMode` is stripped by Zod schema validation and `sources`
+>   defaults to `[]`. No error is returned, but no sources are searched. Queries
+>   appear to work but return LLM-only answers with no web data.
+> - `/api/search` — `focusMode` is not accepted. Sending `focusMode` without `sources`
+>   returns **HTTP 400** `Missing sources or query`.
 
 ## Endpoints
 
@@ -253,7 +261,7 @@ The `/api/chat` endpoint is the internal streaming API used by Perplexica's fron
 | `optimizationMode` | string | ✅ | `"speed"`, `"balanced"`, or `"quality"` |
 | `history` | array | No | Previous conversation as `["human"/"assistant", "text"]` tuples |
 | `files` | string[] | No | Uploaded file IDs to include in search context |
-| `systemInstructions` | string | No | Custom instructions for the AI |
+| `systemInstructions` | string \| null | No | Custom instructions for the AI (may be null or omitted) |
 
 #### Response Format
 
@@ -263,7 +271,7 @@ Event types:
 
 | Type | Description | Fields |
 |------|-------------|--------|
-| `block` | New content block created | `block: { id, type }` |
+| `block` | New content block created | `block` (full block object, e.g. `{ id, type, data, ... }`) |
 | `updateBlock` | Incremental update to a block | `blockId, patch` (JSON Patch array) |
 | `researchComplete` | Search/research phase finished | — |
 | `messageEnd` | Stream complete | — |
