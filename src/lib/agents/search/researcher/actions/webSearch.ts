@@ -84,7 +84,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     config.sources.includes('web') &&
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    input.queries = (input.queries ?? []).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,

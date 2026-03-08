@@ -25,7 +25,7 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
   getDescription: () => actionDescription,
   enabled: (_) => true,
   execute: async (params, additionalConfig) => {
-    params.urls = params.urls.slice(0, 3);
+    params.urls = (params.urls ?? []).slice(0, 3);
 
     let readingBlockId = crypto.randomUUID();
     let readingEmitted = false;
