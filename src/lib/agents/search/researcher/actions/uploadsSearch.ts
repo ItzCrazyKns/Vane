@@ -27,7 +27,7 @@ const uploadsSearchAction: ResearchAction<typeof schema> = {
   Never use this tool to search the web or for information that is not contained within the user's uploaded files.
   `,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    const queries = (input.queries ?? []).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
@@ -37,7 +37,7 @@ const uploadsSearchAction: ResearchAction<typeof schema> = {
       researchBlock.data.subSteps.push({
         id: crypto.randomUUID(),
         type: 'upload_searching',
-        queries: input.queries,
+        queries: queries,
       });
 
       additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
@@ -54,7 +54,7 @@ const uploadsSearchAction: ResearchAction<typeof schema> = {
       fileIds: additionalConfig.fileIds,
     });
 
-    const results = await uploadStore.query(input.queries, 10);
+    const results = await uploadStore.query(queries, 10);
 
     const seenIds = new Map<string, number>();
 

@@ -85,7 +85,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     config.sources.includes('web') &&
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    const queries = (input.queries ?? []).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
@@ -95,7 +95,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
       researchBlock.data.subSteps.push({
         id: crypto.randomUUID(),
         type: 'searching',
-        searching: input.queries,
+        searching: queries,
       });
 
       additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
@@ -115,7 +115,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     const search = async (q: string) => {
       const res = await searchSearxng(q);
 
-      const resultChunks: Chunk[] = res.results.map((r) => ({
+      const resultChunks: Chunk[] = (res.results ?? []).map((r) => ({
         content: r.content || r.title,
         metadata: {
           title: r.title,
@@ -170,7 +170,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
       }
     };
 
-    await Promise.all(input.queries.map(search));
+    await Promise.all(queries.map(search));
 
     return {
       type: 'search_results',
