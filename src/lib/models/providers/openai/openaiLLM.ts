@@ -22,13 +22,19 @@ import { repairJson } from '@toolsycc/json-repair';
 
 /**
  * Some models wrap their JSON output in markdown code fences like
- * ```json\n{...}\n``` which breaks downstream parsing. This strips
- * those fences so we get the raw JSON string.
+ * ```json\n{...}\n```. This strips those fences so we get raw JSON.
+ * Also handles the streaming case where only the opening fence is
+ * present (the closing fence hasn't arrived yet).
  */
 function stripMarkdownFences(text: string): string {
   const trimmed = text.trim();
-  const match = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/);
-  return match ? match[1].trim() : trimmed;
+  // Full fence pair: ```json\n...\n```
+  const full = trimmed.match(/^```(?:json)?\s*\n([\s\S]*?)\n?\s*```\s*$/);
+  if (full) return full[1].trim();
+  // Opening fence only (streaming partial): ```json\n{...
+  const leading = trimmed.match(/^```(?:json)?\s*\n([\s\S]*)$/);
+  if (leading) return leading[1];
+  return trimmed;
 }
 
 type OpenAIConfig = {
