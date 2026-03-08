@@ -39,10 +39,16 @@ export const searchSearxng = async (
   }
 
   const res = await fetch(url);
+
+  if (!res.ok) {
+    console.error(`SearXNG returned status ${res.status} for query: ${query}`);
+    return { results: [], suggestions: [] };
+  }
+
   const data = await res.json();
 
-  const results: SearxngSearchResult[] = data.results;
-  const suggestions: string[] = data.suggestions;
+  const results: SearxngSearchResult[] = data.results ?? [];
+  const suggestions: string[] = data.suggestions ?? [];
 
   return { results, suggestions };
 };
