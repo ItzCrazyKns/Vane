@@ -41,11 +41,17 @@ export const searchSearxng = async (
   const res = await fetch(url);
 
   if (!res.ok) {
-    console.error(`SearXNG returned status ${res.status} for query: ${query}`);
-    return { results: [], suggestions: [] };
+    throw new Error(
+      `SearXNG returned status ${res.status} for query: ${query}`,
+    );
   }
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`SearXNG returned non-JSON response for query: ${query}`);
+  }
 
   const results: SearxngSearchResult[] = data.results ?? [];
   const suggestions: string[] = data.suggestions ?? [];
