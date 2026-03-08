@@ -51,13 +51,20 @@ export const searchSearxng = async (
     });
 
     if (!res.ok) {
-      throw new Error(`SearXNG error: ${res.statusText}`);
+      throw new Error(
+        `SearXNG returned status ${res.status} for query: ${query}`,
+      );
     }
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(`SearXNG returned non-JSON response for query: ${query}`);
+    }
 
-    const results: SearxngSearchResult[] = data.results || [];
-    const suggestions: string[] = data.suggestions || [];
+    const results: SearxngSearchResult[] = data.results ?? [];
+    const suggestions: string[] = data.suggestions ?? [];
 
     return { results, suggestions };
   } catch (err: any) {
