@@ -4,6 +4,19 @@
 
 Perplexica’s Search API makes it easy to use our AI-powered search engine. You can run different types of searches, pick the models you want to use, and get the most recent info. Follow the following headings to learn more about Perplexica's search API.
 
+## ⚠️ Migration Guide
+
+### v1.12.1: `focusMode` replaced by `sources`
+
+The `focusMode` parameter has been removed from all API endpoints and replaced with `sources`.
+
+| Before (v1.12.0 and earlier) | After (v1.12.1+) |
+|------------------------------|-------------------|
+| `"focusMode": "webSearch"` | `"sources": ["web"]` |
+| `"focusMode": "academicSearch"` | `"sources": ["academic"]` |
+
+If you pass `focusMode` to v1.12.1+, it is silently ignored and no sources will be searched. Update your API calls to use `sources` instead.
+
 ## Endpoints
 
 ### Get Available Providers and Models
@@ -188,3 +201,72 @@ If an error occurs during the search process, the API will return an appropriate
 
 - **400**: If the request is malformed or missing required fields (e.g., no `sources` or `query`).
 - **500**: If an internal server error occurs during the search.
+
+---
+
+## Internal Chat API
+
+The `/api/chat` endpoint is the internal streaming API used by Perplexica's frontend. It uses a different request/response format from `/api/search` and is documented here for integration developers.
+
+> **Note**: For most integrations, prefer `/api/search` above. The `/api/chat` endpoint is designed for Perplexica's UI and may change between versions.
+
+### **POST** `/api/chat`
+
+**Full URL**: `http://localhost:3000/api/chat`
+
+#### Request Body Structure
+
+```json
+{
+  "message": {
+    "messageId": "msg-123",
+    "chatId": "chat-456",
+    "content": "What is Perplexica?"
+  },
+  "chatModel": {
+    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+    "key": "gpt-4o-mini"
+  },
+  "embeddingModel": {
+    "providerId": "550e8400-e29b-41d4-a716-446655440000",
+    "key": "text-embedding-3-large"
+  },
+  "sources": ["web"],
+  "optimizationMode": "balanced",
+  "history": [
+    ["human", "Hi"],
+    ["assistant", "Hello! How can I help?"]
+  ],
+  "files": [],
+  "systemInstructions": ""
+}
+```
+
+#### Request Parameters
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `message` | object | ✅ | `{ messageId, chatId, content }` — message identifiers and query text |
+| `chatModel` | object | ✅ | `{ providerId, key }` — chat model to use (from `/api/providers`) |
+| `embeddingModel` | object | ✅ | `{ providerId, key }` — embedding model (from `/api/providers`) |
+| `sources` | string[] | No | Sources to search: `"web"`, `"academic"`, `"discussions"`. Default: `[]` |
+| `optimizationMode` | string | ✅ | `"speed"`, `"balanced"`, or `"quality"` |
+| `history` | array | No | Previous conversation as `["human"/"assistant", "text"]` tuples |
+| `files` | string[] | No | Uploaded file IDs to include in search context |
+| `systemInstructions` | string | No | Custom instructions for the AI |
+
+#### Response Format
+
+The response is an NDJSON (newline-delimited JSON) stream with `Content-Type: text/event-stream`. Each line is a complete JSON object.
+
+Event types:
+
+| Type | Description | Fields |
+|------|-------------|--------|
+| `block` | New content block created | `block: { id, type }` |
+| `updateBlock` | Incremental update to a block | `blockId, patch` (JSON Patch array) |
+| `researchComplete` | Search/research phase finished | — |
+| `messageEnd` | Stream complete | — |
+| `error` | Error occurred | `data` (error message) |
+
+The `updateBlock` events use [JSON Patch](https://jsonpatch.com/) format. To get the final answer text, look for `patch` entries with `op: "replace"` and `path: "/data"` — the `value` field contains the cumulative text for that block.
