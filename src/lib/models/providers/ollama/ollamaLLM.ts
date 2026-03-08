@@ -21,11 +21,11 @@ import { repairJson } from '@toolsycc/json-repair';
  */
 function stripMarkdownFences(text: string): string {
   const trimmed = text.trim();
-  // Full fence pair: ```json\n...\n```
-  const full = trimmed.match(/^```(?:json)?\s*\n([\s\S]*?)\n?\s*```\s*$/);
+  // Full fence pair: ```json\n...\n``` (or same-line ```json{...}```)
+  const full = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```\s*$/);
   if (full) return full[1].trim();
   // Opening fence only (streaming partial): ```json\n{...
-  const leading = trimmed.match(/^```(?:json)?\s*\n([\s\S]*)$/);
+  const leading = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*)$/);
   if (leading) return leading[1];
   return trimmed;
 }
