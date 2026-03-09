@@ -1,8 +1,16 @@
-import pkg from './package.json' with { type: 'json' };
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(
+  fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf-8'),
+);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  outputFileTracingRoot: projectRoot,
   images: {
     remotePatterns: [
       {

@@ -5,8 +5,8 @@
   "author": "ItzCrazyKns",
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
-    "start": "next start",
+    "build": "node --max-old-space-size=4096 ./node_modules/next/dist/bin/next build --webpack",
+    "start": "node scripts/start-standalone.mjs",
     "lint": "next lint",
     "format:write": "prettier . --write"
   },

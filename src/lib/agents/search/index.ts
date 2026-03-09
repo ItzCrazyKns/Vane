@@ -81,12 +81,20 @@ class SearchAgent {
 
     if (!classification.classification.skipSearch) {
       const researcher = new Researcher();
-      searchPromise = researcher.research(session, {
-        chatHistory: input.chatHistory,
-        followUp: input.followUp,
-        classification: classification,
-        config: input.config,
-      });
+      searchPromise = researcher
+        .research(session, {
+          chatHistory: input.chatHistory,
+          followUp: input.followUp,
+          classification: classification,
+          config: input.config,
+        })
+        .catch((error) => {
+          console.error('Research step failed:', error);
+          return {
+            findings: [],
+            searchFindings: [],
+          };
+        });
     }
 
     const [widgetOutputs, searchResults] = await Promise.all([

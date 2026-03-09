@@ -1,5 +1,5 @@
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
-import { searchSearxng } from '@/lib/searxng';
+import { isSearxngError, searchSearxng } from '@/lib/searxng';
 import {
   videoSearchFewShots,
   videoSearchPrompt,
@@ -43,9 +43,21 @@ const searchVideos = async (
     schema: schema,
   });
 
-  const searchRes = await searchSearxng(res.query, {
-    engines: ['youtube'],
-  });
+  let searchRes;
+  try {
+    searchRes = await searchSearxng(res.query, {
+      engines: ['youtube'],
+    });
+  } catch (error) {
+    if (isSearxngError(error)) {
+      console.warn(
+        `Video search skipped because SearXNG is unavailable: ${error.message}`,
+      );
+      return [];
+    }
+
+    throw error;
+  }
 
   const videos: VideoSearchResult[] = [];
 
