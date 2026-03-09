@@ -208,6 +208,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     try {
       const content = stripMarkdownFences(response.message.content);
+      if (!content.trim()) {
+        throw new Error('Empty response from model');
+      }
       return input.schema.parse(
         JSON.parse(
           repairJson(content, {

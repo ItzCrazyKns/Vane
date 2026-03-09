@@ -226,6 +226,9 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         const content = stripMarkdownFences(
           response.choices[0].message.content || '',
         );
+        if (!content.trim()) {
+          throw new Error('Empty response from model');
+        }
         return input.schema.parse(
           JSON.parse(
             repairJson(content, {
