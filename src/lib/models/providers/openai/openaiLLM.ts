@@ -43,21 +43,24 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       if (msg.role === 'tool') {
         return {
           role: 'tool',
-          tool_call_id: msg.id,
-          content: msg.content,
+          tool_call_id: msg.id || '',
+          content: msg.content || '',
         } as ChatCompletionToolMessageParam;
       } else if (msg.role === 'assistant') {
         return {
           role: 'assistant',
-          content: msg.content,
+          content: msg.content || '',
           ...(msg.tool_calls &&
             msg.tool_calls.length > 0 && {
               tool_calls: msg.tool_calls?.map((tc) => ({
-                id: tc.id,
+                id: tc.id || '',
                 type: 'function',
                 function: {
-                  name: tc.name,
-                  arguments: JSON.stringify(tc.arguments),
+                  name: tc.name || '',
+                  arguments:
+                    typeof tc.arguments === 'string'
+                      ? tc.arguments
+                      : JSON.stringify(tc.arguments || {}),
                 },
               })),
             }),
@@ -163,27 +166,43 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     for await (const chunk of stream) {
       if (chunk.choices && chunk.choices.length > 0) {
         const toolCalls = chunk.choices[0].delta.tool_calls;
-        yield {
-          contentChunk: chunk.choices[0].delta.content || '',
-          toolCallChunk:
-            toolCalls?.map((tc) => {
+        let parsedToolCalls: any[] = [];
+
+        if (toolCalls) {
+          for (const tc of toolCalls) {
+            try {
               if (!recievedToolCalls[tc.index]) {
                 const call = {
-                  name: tc.function?.name!,
-                  id: tc.id!,
+                  name: tc.function?.name || '',
+                  id: tc.id || '',
                   arguments: tc.function?.arguments || '',
                 };
                 recievedToolCalls.push(call);
-                return { ...call, arguments: parse(call.arguments || '{}') };
+                const argsToParse = call.arguments || '{}';
+                parsedToolCalls.push({ ...call, arguments: parse(argsToParse) });
               } else {
                 const existingCall = recievedToolCalls[tc.index];
                 existingCall.arguments += tc.function?.arguments || '';
-                return {
+                const argsToParse = existingCall.arguments || '{}';
+                parsedToolCalls.push({
                   ...existingCall,
-                  arguments: parse(existingCall.arguments),
-                };
+                  arguments: parse(argsToParse),
+                });
               }
-            }) || [],
+            } catch (parseErr) {
+              console.error('Error parsing tool call arguments:', parseErr, 'tc:', JSON.stringify(tc));
+              parsedToolCalls.push({
+                name: tc.function?.name || '',
+                id: tc.id || recievedToolCalls[tc.index]?.id || '',
+                arguments: {},
+              });
+            }
+          }
+        }
+
+        yield {
+          contentChunk: chunk.choices[0].delta.content || '',
+          toolCallChunk: parsedToolCalls,
           done: chunk.choices[0].finish_reason !== null,
           additionalInfo: {
             finishReason: chunk.choices[0].finish_reason,
@@ -229,13 +248,16 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         if (!content.trim()) {
           throw new Error('Empty response from model');
         }
-        return input.schema.parse(
-          JSON.parse(
-            repairJson(content, {
-              extractJson: true,
-            }) as string,
-          ),
-        ) as T;
+        let repairedJson: string;
+        try {
+          repairedJson = repairJson(content, {
+            extractJson: true,
+          }) as string;
+        } catch (repairErr) {
+          console.error('repairJson failed on content:', content);
+          throw new Error(`Failed to repair JSON: ${repairErr}`);
+        }
+        return input.schema.parse(JSON.parse(repairedJson)) as T;
       } catch (err) {
         throw new Error(`Error parsing response from OpenAI: ${err}`);
       }
