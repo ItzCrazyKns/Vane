@@ -44,12 +44,13 @@ class Researcher {
       },
     });
 
+    const chatHistory = input.chatHistory || [];
     const agentMessageHistory: Message[] = [
       {
         role: 'user',
         content: `
           <conversation>
-          ${formatChatHistoryAsString(input.chatHistory.slice(-10))}
+          ${formatChatHistoryAsString(chatHistory.slice(-10))}
            User: ${input.followUp} (Standalone question: ${input.classification.standaloneFollowUp})
            </conversation>
         `,
