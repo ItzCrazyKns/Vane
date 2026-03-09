@@ -25,8 +25,8 @@ class ActionRegistry {
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
   }): ResearchAction[] {
-    return Array.from(
-      this.actions.values().filter((action) => action.enabled(config)),
+    return Array.from(this.actions.values()).filter((action) =>
+      action.enabled(config),
     );
   }
 

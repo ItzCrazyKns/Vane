@@ -51,20 +51,27 @@ export const POST = async (req: Request) => {
 
     const agent = new APISearchAgent();
 
-    agent.searchAsync(session, {
-      chatHistory: history,
-      config: {
-        embedding: embeddings,
-        llm: llm,
-        sources: body.sources,
-        mode: body.optimizationMode,
-        fileIds: [],
-        systemInstructions: body.systemInstructions || '',
-      },
-      followUp: body.query,
-      chatId: crypto.randomUUID(),
-      messageId: crypto.randomUUID(),
-    });
+    void agent
+      .searchAsync(session, {
+        chatHistory: history,
+        config: {
+          embedding: embeddings,
+          llm: llm,
+          sources: body.sources,
+          mode: body.optimizationMode,
+          fileIds: [],
+          systemInstructions: body.systemInstructions || '',
+        },
+        followUp: body.query,
+        chatId: crypto.randomUUID(),
+        messageId: crypto.randomUUID(),
+      })
+      .catch((error) => {
+        console.error('Error in search agent:', error);
+        session.emit('error', {
+          message: error instanceof Error ? error.message : 'Search failed',
+        });
+      });
 
     if (!body.stream) {
       return new Promise(

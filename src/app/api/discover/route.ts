@@ -1,4 +1,4 @@
-import { searchSearxng } from '@/lib/searxng';
+import { isSearxngError, searchSearxng } from '@/lib/searxng';
 
 const websitesForTopic = {
   tech: {
@@ -85,6 +85,20 @@ export const GET = async (req: Request) => {
       },
     );
   } catch (err) {
+    if (isSearxngError(err)) {
+      console.warn(
+        `Discover route skipped because SearXNG is unavailable: ${err.message}`,
+      );
+      return Response.json(
+        {
+          blogs: [],
+        },
+        {
+          status: 200,
+        },
+      );
+    }
+
     console.error(`An error occurred in discover route: ${err}`);
     return Response.json(
       {

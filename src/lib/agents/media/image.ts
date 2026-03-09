@@ -1,6 +1,6 @@
 /* I don't think can be classified as agents but to keep the structure consistent i guess ill keep it here */
 
-import { searchSearxng } from '@/lib/searxng';
+import { isSearxngError, searchSearxng } from '@/lib/searxng';
 import {
   imageSearchFewShots,
   imageSearchPrompt,
@@ -44,9 +44,21 @@ const searchImages = async (
     schema: schema,
   });
 
-  const searchRes = await searchSearxng(res.query, {
-    engines: ['bing images', 'google images'],
-  });
+  let searchRes;
+  try {
+    searchRes = await searchSearxng(res.query, {
+      engines: ['bing images', 'google images'],
+    });
+  } catch (error) {
+    if (isSearxngError(error)) {
+      console.warn(
+        `Image search skipped because SearXNG is unavailable: ${error.message}`,
+      );
+      return [];
+    }
+
+    throw error;
+  }
 
   const images: ImageSearchResult[] = [];
 

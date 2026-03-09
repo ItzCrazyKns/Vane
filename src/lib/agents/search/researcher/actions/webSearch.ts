@@ -1,10 +1,9 @@
 import z from 'zod';
 import { ResearchAction } from '../../types';
-import { searchSearxng } from '@/lib/searxng';
+import { isSearxngError, searchSearxng } from '@/lib/searxng';
 import { Chunk, SearchResultsResearchBlock } from '@/lib/types';
 
 const actionSchema = z.object({
-  type: z.literal('web_search'),
   queries: z
     .array(z.string())
     .describe('An array of search queries to perform web searches for.'),
@@ -113,7 +112,20 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     let results: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q);
+      let res;
+      try {
+        res = await searchSearxng(q);
+      } catch (error) {
+        if (isSearxngError(error)) {
+          console.warn(
+            `Skipping failed SearXNG search for query "${q}":`,
+            error.message,
+          );
+          return;
+        }
+
+        throw error;
+      }
 
       const resultChunks: Chunk[] = res.results.map((r) => ({
         content: r.content || r.title,

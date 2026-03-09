@@ -3,9 +3,7 @@ import BaseEmbedding from "../models/base/embedding"
 import crypto from "crypto"
 import fs from 'fs';
 import { splitText } from "../utils/splitText";
-import { PDFParse } from 'pdf-parse';
-import { CanvasFactory } from 'pdf-parse/worker';
-import officeParser from 'officeparser'
+import { DATA_ROOT } from "../serverPaths";
 
 const supportedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'] as const
 
@@ -31,7 +29,7 @@ type FileRes = {
 
 class UploadManager {
     private embeddingModel: BaseEmbedding<any>;
-    static uploadsDir = path.join(process.cwd(), 'data', 'uploads');
+    static uploadsDir = path.join(DATA_ROOT, 'uploads');
     static uploadedFilesRecordPath = path.join(this.uploadsDir, 'uploaded_files.json');
 
     constructor(private params: UploadManagerParams) {
@@ -114,6 +112,10 @@ class UploadManager {
                 return contentPath;
             case 'application/pdf':
                 const pdfBuffer = fs.readFileSync(filePath);
+                const [{ PDFParse }, { CanvasFactory }] = await Promise.all([
+                    import('pdf-parse'),
+                    import('pdf-parse/worker'),
+                ]);
 
                 const parser = new PDFParse({
                     data: pdfBuffer,
@@ -145,6 +147,7 @@ class UploadManager {
                 return pdfContentPath;
             case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
                 const docBuffer = fs.readFileSync(filePath);
+                const { default: officeParser } = await import('officeparser');
 
                 const docText = await officeParser.parseOfficeAsync(docBuffer)
 

@@ -1,11 +1,6 @@
 import z from 'zod';
 import { Widget } from '../types';
-import YahooFinance from 'yahoo-finance2';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
-
-const yf = new YahooFinance({
-  suppressNotices: ['yahooSurvey'],
-});
 
 const schema = z.object({
   name: z
@@ -73,6 +68,26 @@ const stockWidget: Widget = {
 
     const params = output;
     try {
+      const nodeMajorVersion = Number.parseInt(
+        process.versions.node.split('.')[0] || '0',
+        10,
+      );
+
+      if (
+        nodeMajorVersion < 22 ||
+        typeof (process as NodeJS.Process & { getBuiltinModule?: unknown })
+          .getBuiltinModule !== 'function'
+      ) {
+        throw new Error(
+          `Stock widget requires Node 22+ in this build. Current runtime: ${process.versions.node}.`,
+        );
+      }
+
+      const { default: YahooFinance } = await import('yahoo-finance2');
+      const yf = new YahooFinance({
+        suppressNotices: ['yahooSurvey'],
+      });
+
       const name = params.name;
 
       const findings = await yf.search(name);

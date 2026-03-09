@@ -3,12 +3,10 @@ import fs from 'fs';
 import { Config, ConfigModelProvider, UIConfigSections } from './types';
 import { hashObj } from '../serverUtils';
 import { getModelProvidersUIConfigSection } from '../models/providers';
+import { DATA_ROOT } from '../serverPaths';
 
 class ConfigManager {
-  configPath: string = path.join(
-    process.env.DATA_DIR || process.cwd(),
-    '/data/config.json',
-  );
+  configPath: string = path.join(DATA_ROOT, 'config.json');
   configVersion = 1;
   currentConfig: Config = {
     version: this.configVersion,
@@ -133,6 +131,8 @@ class ConfigManager {
   }
 
   private initializeConfig() {
+    fs.mkdirSync(path.dirname(this.configPath), { recursive: true });
+
     const exists = fs.existsSync(this.configPath);
     if (!exists) {
       fs.writeFileSync(
