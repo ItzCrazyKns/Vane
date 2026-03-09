@@ -1,13 +1,11 @@
 import OpenAI from 'openai';
 import BaseLLM from '../../base/llm';
-import { zodTextFormat, zodResponseFormat } from 'openai/helpers/zod';
 import {
   GenerateObjectInput,
   GenerateOptions,
   GenerateTextInput,
   GenerateTextOutput,
   StreamTextOutput,
-  ToolCall,
 } from '../../types';
 import { parse } from 'partial-json';
 import z from 'zod';
@@ -19,6 +17,7 @@ import {
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
+import { stripMarkdownFences } from '@/lib/utils/parseJson';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -195,8 +194,18 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
-      messages: this.convertToOpenAIMessages(input.messages),
+    // Use chat.completions.create instead of chat.completions.parse
+    // for compatibility with OpenAI-compatible providers (OpenRouter, etc.)
+    // that don't support the /chat/completions/parse endpoint.
+    const response = await this.openAIClient.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You must respond with valid JSON only. No markdown code blocks, no explanatory text.',
+        },
+        ...this.convertToOpenAIMessages(input.messages),
+      ],
       model: this.config.model,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
@@ -209,14 +218,17 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      response_format: zodResponseFormat(input.schema, 'object'),
+      response_format: { type: 'json_object' },
     });
 
     if (response.choices && response.choices.length > 0) {
       try {
+        const content = stripMarkdownFences(
+          response.choices[0].message.content || '',
+        );
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(content, {
               extractJson: true,
             }) as string,
           ),
@@ -230,11 +242,21 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async *streamObject<T>(input: GenerateObjectInput): AsyncGenerator<T> {
-    let recievedObj: string = '';
+    let receivedObj: string = '';
 
-    const stream = this.openAIClient.responses.stream({
+    // Use chat.completions.create with streaming instead of responses.stream
+    // for compatibility with OpenAI-compatible providers (OpenRouter, etc.)
+    // that don't support the OpenAI Responses API.
+    const stream = await this.openAIClient.chat.completions.create({
       model: this.config.model,
-      input: input.messages,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You must respond with valid JSON only. No markdown code blocks, no explanatory text.',
+        },
+        ...this.convertToOpenAIMessages(input.messages),
+      ],
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
       top_p: input.options?.topP ?? this.config.options?.topP,
@@ -246,26 +268,22 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      text: {
-        format: zodTextFormat(input.schema, 'object'),
-      },
+      stream: true,
     });
 
     for await (const chunk of stream) {
-      if (chunk.type === 'response.output_text.delta' && chunk.delta) {
-        recievedObj += chunk.delta;
+      if (chunk.choices && chunk.choices.length > 0) {
+        const delta = chunk.choices[0].delta.content || '';
+        receivedObj += delta;
+
+        // Strip markdown fences if present
+        const cleanedObj = stripMarkdownFences(receivedObj);
 
         try {
-          yield parse(recievedObj) as T;
+          yield parse(cleanedObj) as T;
         } catch (err) {
-          console.log('Error parsing partial object from OpenAI:', err);
+          // Partial JSON may not be parseable yet, yield empty object
           yield {} as T;
-        }
-      } else if (chunk.type === 'response.output_text.done' && chunk.text) {
-        try {
-          yield parse(chunk.text) as T;
-        } catch (err) {
-          throw new Error(`Error parsing response from OpenAI: ${err}`);
         }
       }
     }

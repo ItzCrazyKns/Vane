@@ -12,6 +12,7 @@ import { parse } from 'partial-json';
 import crypto from 'crypto';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
+import { stripMarkdownFences } from '@/lib/utils/parseJson';
 
 type OllamaConfig = {
   baseURL: string;
@@ -206,9 +207,10 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     try {
+      const content = stripMarkdownFences(response.message.content);
       return input.schema.parse(
         JSON.parse(
-          repairJson(response.message.content, {
+          repairJson(content, {
             extractJson: true,
           }) as string,
         ),
@@ -248,10 +250,13 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     for await (const chunk of stream) {
       recievedObj += chunk.message.content;
 
+      // Strip markdown fences if present
+      const cleanedObj = stripMarkdownFences(recievedObj);
+
       try {
-        yield parse(recievedObj) as T;
+        yield parse(cleanedObj) as T;
       } catch (err) {
-        console.log('Error parsing partial object from Ollama:', err);
+        // Partial JSON may not be parseable yet, yield empty object
         yield {} as T;
       }
     }
