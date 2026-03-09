@@ -92,7 +92,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
-        num_ctx: 32000,
+        num_ctx:
+          input.options?.contextWindowSize ??
+          this.config.options?.contextWindowSize,
         frequency_penalty:
           input.options?.frequencyPenalty ??
           this.config.options?.frequencyPenalty,
@@ -105,15 +107,15 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     return {
-      content: res.message.content,
+      content: res.message?.content ?? '',
       toolCalls:
-        res.message.tool_calls?.map((tc) => ({
+        res.message?.tool_calls?.map((tc) => ({
           id: crypto.randomUUID(),
           name: tc.function.name,
           arguments: tc.function.arguments,
         })) || [],
       additionalInfo: {
-        reasoning: res.message.thinking,
+        reasoning: res.message?.thinking,
       },
     };
   }
@@ -146,7 +148,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
-        num_ctx: 32000,
+        num_ctx:
+          input.options?.contextWindowSize ??
+          this.config.options?.contextWindowSize,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         frequency_penalty:
           input.options?.frequencyPenalty ??
@@ -161,9 +165,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     for await (const chunk of stream) {
       yield {
-        contentChunk: chunk.message.content,
+        contentChunk: chunk.message?.content ?? '',
         toolCallChunk:
-          chunk.message.tool_calls?.map((tc, i) => ({
+          chunk.message?.tool_calls?.map((tc, i) => ({
             id: crypto
               .createHash('sha256')
               .update(
@@ -175,7 +179,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
           })) || [],
         done: chunk.done,
         additionalInfo: {
-          reasoning: chunk.message.thinking,
+          reasoning: chunk.message?.thinking,
         },
       };
     }

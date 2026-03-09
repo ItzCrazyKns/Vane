@@ -102,9 +102,9 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       return {
-        content: response.choices[0].message.content!,
+        content: response.choices[0].message?.content ?? '',
         toolCalls:
-          response.choices[0].message.tool_calls
+          response.choices[0].message?.tool_calls
             ?.map((tc) => {
               if (tc.type === 'function') {
                 return {
