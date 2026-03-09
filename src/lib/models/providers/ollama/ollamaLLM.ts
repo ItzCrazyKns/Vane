@@ -253,10 +253,13 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     for await (const chunk of stream) {
       recievedObj += chunk.message.content;
 
+      // Strip markdown fences if present
+      const cleanedObj = stripMarkdownFences(recievedObj);
+
       try {
-        yield parse(stripMarkdownFences(recievedObj)) as T;
+        yield parse(cleanedObj) as T;
       } catch (err) {
-        console.log('Error parsing partial object from Ollama:', err);
+        // Partial JSON may not be parseable yet, yield empty object
         yield {} as T;
       }
     }
