@@ -45,9 +45,6 @@ export const searchSearxng = async (
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        // SearXNG's default botdetection rejects requests that do not identify
-        // an origin IP. Server-side searches from Vane do not have a browser
-        // proxy adding these headers, so provide a loopback address explicitly.
         'X-Forwarded-For': '127.0.0.1',
         'X-Real-IP': '127.0.0.1',
       },
@@ -59,8 +56,8 @@ export const searchSearxng = async (
 
     const data = await res.json();
 
-    const results: SearxngSearchResult[] = data.results;
-    const suggestions: string[] = data.suggestions;
+    const results: SearxngSearchResult[] = data.results || [];
+    const suggestions: string[] = data.suggestions || [];
 
     return { results, suggestions };
   } catch (err: any) {
