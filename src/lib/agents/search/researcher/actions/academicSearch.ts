@@ -30,7 +30,7 @@ const academicSearchAction: ResearchAction<typeof schema> = {
     config.classification.classification.skipSearch === false &&
     config.classification.classification.academicSearch === true,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    const queries = (input.queries ?? []).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
@@ -40,7 +40,7 @@ const academicSearchAction: ResearchAction<typeof schema> = {
       researchBlock.data.subSteps.push({
         type: 'searching',
         id: crypto.randomUUID(),
-        searching: input.queries,
+        searching: queries,
       });
 
       additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
@@ -62,7 +62,7 @@ const academicSearchAction: ResearchAction<typeof schema> = {
         engines: ['arxiv', 'google scholar', 'pubmed'],
       });
 
-      const resultChunks: Chunk[] = res.results.map((r) => ({
+      const resultChunks: Chunk[] = (res.results ?? []).map((r) => ({
         content: r.content || r.title,
         metadata: {
           title: r.title,
@@ -117,7 +117,7 @@ const academicSearchAction: ResearchAction<typeof schema> = {
       }
     };
 
-    await Promise.all(input.queries.map(search));
+    await Promise.all(queries.map(search));
 
     return {
       type: 'search_results',
