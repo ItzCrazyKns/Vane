@@ -14,6 +14,7 @@ interface ChatRequestBody {
   history: Array<[string, string]>;
   stream?: boolean;
   systemInstructions?: string;
+  images?: string[];
 }
 
 export const POST = async (req: Request) => {
@@ -60,6 +61,7 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: [],
         systemInstructions: body.systemInstructions || '',
+        images: body.images || [],
       },
       followUp: body.query,
       chatId: crypto.randomUUID(),
