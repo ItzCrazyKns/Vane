@@ -53,6 +53,7 @@ type GenerateTextInput = {
   messages: Message[];
   tools?: Tool[];
   options?: GenerateOptions;
+  signal?: AbortSignal;
 };
 
 type GenerateTextOutput = {

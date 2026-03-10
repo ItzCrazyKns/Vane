@@ -15,6 +15,7 @@ class SessionManager {
   private events: { event: string; data: any }[] = [];
   private emitter = new EventEmitter();
   private TTL_MS = 30 * 60 * 1000;
+  private abortController = new AbortController();
 
   constructor(id?: string) {
     this.id = id ?? crypto.randomUUID();
@@ -22,6 +23,15 @@ class SessionManager {
     setTimeout(() => {
       SessionManager.sessions.delete(this.id);
     }, this.TTL_MS);
+  }
+
+  get signal(): AbortSignal {
+    return this.abortController.signal;
+  }
+
+  abort() {
+    this.abortController.abort();
+    this.emit('end', {});
   }
 
   static getSession(id: string): SessionManager | undefined {

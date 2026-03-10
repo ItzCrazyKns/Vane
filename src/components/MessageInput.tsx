@@ -1,12 +1,12 @@
 import { cn } from '@/lib/utils';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import AttachSmall from './MessageInputActions/AttachSmall';
 import { useChat } from '@/lib/hooks/useChat';
 
 const MessageInput = () => {
-  const { loading, sendMessage } = useChat();
+  const { loading, sendMessage, cancelMessage } = useChat();
 
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
@@ -76,23 +76,42 @@ const MessageInput = () => {
         className="transition bg-transparent dark:placeholder:text-white/50 placeholder:text-sm text-sm dark:text-white resize-none focus:outline-none w-full px-2 max-h-24 lg:max-h-36 xl:max-h-48 flex-grow flex-shrink"
         placeholder="Ask a follow-up"
       />
-      {mode === 'single' && (
-        <button
-          disabled={message.trim().length === 0 || loading}
-          className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#e0e0dc79] dark:disabled:bg-[#ececec21] rounded-full p-2"
-        >
-          <ArrowUp className="bg-background" size={17} />
-        </button>
-      )}
-      {mode === 'multi' && (
-        <div className="flex flex-row items-center justify-between w-full pt-2">
-          <AttachSmall />
+      {mode === 'single' &&
+        (loading ? (
           <button
-            disabled={message.trim().length === 0 || loading}
+            type="button"
+            onClick={cancelMessage}
+            className="bg-red-500 hover:bg-red-600 text-white transition duration-100 rounded-full p-2"
+          >
+            <Square size={15} fill="currentColor" />
+          </button>
+        ) : (
+          <button
+            disabled={message.trim().length === 0}
             className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#e0e0dc79] dark:disabled:bg-[#ececec21] rounded-full p-2"
           >
             <ArrowUp className="bg-background" size={17} />
           </button>
+        ))}
+      {mode === 'multi' && (
+        <div className="flex flex-row items-center justify-between w-full pt-2">
+          <AttachSmall />
+          {loading ? (
+            <button
+              type="button"
+              onClick={cancelMessage}
+              className="bg-red-500 hover:bg-red-600 text-white transition duration-100 rounded-full p-2"
+            >
+              <Square size={15} fill="currentColor" />
+            </button>
+          ) : (
+            <button
+              disabled={message.trim().length === 0}
+              className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#e0e0dc79] dark:disabled:bg-[#ececec21] rounded-full p-2"
+            >
+              <ArrowUp className="bg-background" size={17} />
+            </button>
+          )}
         </div>
       )}
     </form>
