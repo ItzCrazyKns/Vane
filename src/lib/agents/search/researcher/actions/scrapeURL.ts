@@ -3,6 +3,7 @@ import { ResearchAction } from '../../types';
 import { Chunk, ReadingResearchBlock } from '@/lib/types';
 import TurnDown from 'turndown';
 import path from 'path';
+import { splitText } from '@/lib/utils/splitText';
 
 const turndownService = new TurnDown();
 
@@ -40,10 +41,17 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
       params.urls.map(async (url) => {
         try {
           const res = await fetch(url);
-          const text = await res.text();
+          let text = await res.text();
 
           const title =
             text.match(/<title>(.*?)<\/title>/i)?.[1] || `Content from ${url}`;
+
+          // Cap raw HTML before Turndown so we don't spend CPU converting
+          // megabytes of markup we'll mostly throw away after tokenization.
+          const maxHtmlChars = 200_000;
+          if (text.length > maxHtmlChars) {
+            text = text.slice(0, maxHtmlChars);
+          }
 
           if (
             !readingEmitted &&
@@ -110,8 +118,14 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
 
           const markdown = turndownService.turndown(text);
 
+          // Limit scraped content to avoid blowing up the context window.
+          // splitText chunks by token count — we only keep the first chunk.
+          const maxTokensPerPage = 6000;
+          const chunks = splitText(markdown, maxTokensPerPage, 0);
+          const content = chunks.length > 0 ? chunks[0] : markdown;
+
           results.push({
-            content: markdown,
+            content,
             metadata: {
               url,
               title: title,
