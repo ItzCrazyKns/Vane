@@ -14,6 +14,8 @@ const EmptyChatMessageInput = () => {
   const [message, setMessage] = useState('');
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const isComposing = useRef(false);
+  const lastCompositionEndTime = useRef(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -46,13 +48,6 @@ const EmptyChatMessageInput = () => {
         sendMessage(message);
         setMessage('');
       }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage(message);
-          setMessage('');
-        }
-      }}
       className="w-full"
     >
       <div className="flex flex-col bg-light-secondary dark:bg-dark-secondary px-3 pt-5 pb-3 rounded-2xl w-full border border-light-200 dark:border-dark-200 shadow-sm shadow-light-200/10 dark:shadow-black/20 transition-all duration-200 focus-within:border-light-300 dark:focus-within:border-dark-300">
@@ -61,6 +56,27 @@ const EmptyChatMessageInput = () => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           minRows={2}
+          onKeyDown={(e) => {
+            if (
+              e.key === 'Enter' &&
+              !e.shiftKey &&
+              !e.nativeEvent.isComposing &&
+              !isComposing.current &&
+              e.keyCode !== 229 &&
+              Date.now() - lastCompositionEndTime.current > 150
+            ) {
+              e.preventDefault();
+              sendMessage(message);
+              setMessage('');
+            }
+          }}
+          onCompositionStart={() => {
+            isComposing.current = true;
+          }}
+          onCompositionEnd={() => {
+            isComposing.current = false;
+            lastCompositionEndTime.current = Date.now();
+          }}
           className="px-2 bg-transparent placeholder:text-[15px] placeholder:text-black/50 dark:placeholder:text-white/50 text-sm text-black dark:text-white resize-none focus:outline-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
           placeholder="Ask anything..."
         />

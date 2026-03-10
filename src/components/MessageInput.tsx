@@ -13,6 +13,9 @@ const MessageInput = () => {
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');
 
+  const isComposing = useRef(false);
+  const lastCompositionEndTime = useRef(0);
+
   useEffect(() => {
     if (textareaRows >= 2 && message && mode === 'single') {
       setMode('multi');
@@ -53,13 +56,6 @@ const MessageInput = () => {
         sendMessage(message);
         setMessage('');
       }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !loading) {
-          e.preventDefault();
-          sendMessage(message);
-          setMessage('');
-        }
-      }}
       className={cn(
         'relative bg-light-secondary dark:bg-dark-secondary p-4 flex items-center overflow-visible border border-light-200 dark:border-dark-200 shadow-sm shadow-light-200/10 dark:shadow-black/20 transition-all duration-200 focus-within:border-light-300 dark:focus-within:border-dark-300',
         mode === 'multi' ? 'flex-col rounded-2xl' : 'flex-row rounded-full',
@@ -72,6 +68,28 @@ const MessageInput = () => {
         onChange={(e) => setMessage(e.target.value)}
         onHeightChange={(height, props) => {
           setTextareaRows(Math.ceil(height / props.rowHeight));
+        }}
+        onKeyDown={(e) => {
+          if (
+            e.key === 'Enter' &&
+            !e.shiftKey &&
+            !loading &&
+            !e.nativeEvent.isComposing &&
+            !isComposing.current &&
+            e.keyCode !== 229 &&
+            Date.now() - lastCompositionEndTime.current > 150
+          ) {
+            e.preventDefault();
+            sendMessage(message);
+            setMessage('');
+          }
+        }}
+        onCompositionStart={() => {
+          isComposing.current = true;
+        }}
+        onCompositionEnd={() => {
+          isComposing.current = false;
+          lastCompositionEndTime.current = Date.now();
         }}
         className="transition bg-transparent dark:placeholder:text-white/50 placeholder:text-sm text-sm dark:text-white resize-none focus:outline-none w-full px-2 max-h-24 lg:max-h-36 xl:max-h-48 flex-grow flex-shrink"
         placeholder="Ask a follow-up"
