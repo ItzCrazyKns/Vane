@@ -26,6 +26,7 @@ import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
 import Renderer from './Widgets/Renderer';
 import CodeBlock from './MessageRenderer/CodeBlock';
+import SmartQueryHeading from './SmartQueryHeading';
 
 const ThinkTagProcessor = ({
   children,
@@ -105,11 +106,12 @@ const MessageBox = ({
 
   return (
     <div className="space-y-6">
-      <div className={'w-full pt-8 break-words'}>
+    {/*   <div className={'w-full pt-8 break-words'}>
         <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
           {section.message.query}
         </h2>
-      </div>
+      </div> */}
+      <SmartQueryHeading query={section.message.query} />
 
       <div className="flex flex-col space-y-9 lg:space-y-0 lg:flex-row lg:justify-between lg:space-x-9">
         <div
