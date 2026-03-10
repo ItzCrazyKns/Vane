@@ -20,6 +20,23 @@ import {
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+/**
+ * Some models wrap their JSON output in markdown code fences like
+ * ```json\n{...}\n```. This strips those fences so we get raw JSON.
+ * Also handles the streaming case where only the opening fence is
+ * present (the closing fence hasn't arrived yet).
+ */
+function stripMarkdownFences(text: string): string {
+  const trimmed = text.trim();
+  // Full fence pair: ```json\n...\n``` (or same-line ```json{...}```)
+  const full = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```\s*$/);
+  if (full) return full[1].trim();
+  // Opening fence only (streaming partial): ```json\n{...
+  const leading = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*)$/);
+  if (leading) return leading[1];
+  return trimmed;
+}
+
 type OpenAIConfig = {
   apiKey: string;
   model: string;
@@ -214,9 +231,11 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       try {
+        const raw = response.choices[0].message.content || '';
+        const cleaned = stripMarkdownFences(raw);
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(cleaned, {
               extractJson: true,
             }) as string,
           ),
@@ -256,14 +275,14 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         recievedObj += chunk.delta;
 
         try {
-          yield parse(recievedObj) as T;
+          yield parse(stripMarkdownFences(recievedObj)) as T;
         } catch (err) {
           console.log('Error parsing partial object from OpenAI:', err);
           yield {} as T;
         }
       } else if (chunk.type === 'response.output_text.done' && chunk.text) {
         try {
-          yield parse(chunk.text) as T;
+          yield parse(stripMarkdownFences(chunk.text)) as T;
         } catch (err) {
           throw new Error(`Error parsing response from OpenAI: ${err}`);
         }
