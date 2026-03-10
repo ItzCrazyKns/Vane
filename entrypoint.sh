@@ -26,7 +26,7 @@ else
   echo "SearXNG may not be fully ready, but continuing (PID: $SEARXNG_PID)"
 fi
 
-cd /home/perplexica
-echo "Starting Perplexica..."
+cd /home/vane
+echo "Starting Vane..."
 
 exec node server.js

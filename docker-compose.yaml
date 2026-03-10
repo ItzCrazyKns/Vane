@@ -1,14 +1,14 @@
 services:
-  perplexica:
-    image: itzcrazykns1337/perplexica:latest
+  vane:
+    image: itzcrazykns1337/vane:latest
     build:
       context: .
     ports:
       - '3000:3000'
     volumes:
-      - data:/home/perplexica/data
+      - data:/home/vane/data
     restart: unless-stopped
 
 volumes:
   data:
-    name: 'perplexica-data'
+    name: 'vane-data'

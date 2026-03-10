@@ -1,6 +1,6 @@
-# Perplexica Architecture
+# Vane Architecture
 
-Perplexica is a Next.js application that combines an AI chat experience with search.
+Vane is a Next.js application that combines an AI chat experience with search.
 
 For a high level flow, see [WORKING.md](WORKING.md). For deeper implementation details, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
