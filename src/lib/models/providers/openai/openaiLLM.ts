@@ -25,6 +25,7 @@ type OpenAIConfig = {
   model: string;
   baseURL?: string;
   options?: GenerateOptions;
+  timeout?: number;
 };
 
 class OpenAILLM extends BaseLLM<OpenAIConfig> {
@@ -36,6 +37,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     this.openAIClient = new OpenAI({
       apiKey: this.config.apiKey,
       baseURL: this.config.baseURL || 'https://api.openai.com/v1',
+      timeout: this.config.timeout,
     });
   }
 
@@ -195,22 +197,29 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
-      messages: this.convertToOpenAIMessages(input.messages),
-      model: this.config.model,
-      temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
-      top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
-      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
-      frequency_penalty:
-        input.options?.frequencyPenalty ??
-        this.config.options?.frequencyPenalty,
-      presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      response_format: zodResponseFormat(input.schema, 'object'),
-    });
+    const response = await this.openAIClient.chat.completions.parse(
+      {
+        messages: this.convertToOpenAIMessages(input.messages),
+        model: this.config.model,
+        temperature:
+          input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+        top_p: input.options?.topP ?? this.config.options?.topP,
+        max_completion_tokens:
+          input.options?.maxTokens ?? this.config.options?.maxTokens,
+        stop:
+          input.options?.stopSequences ?? this.config.options?.stopSequences,
+        frequency_penalty:
+          input.options?.frequencyPenalty ??
+          this.config.options?.frequencyPenalty,
+        presence_penalty:
+          input.options?.presencePenalty ??
+          this.config.options?.presencePenalty,
+        response_format: zodResponseFormat(input.schema, 'object'),
+      },
+      {
+        timeout: this.config.timeout,
+      },
+    );
 
     if (response.choices && response.choices.length > 0) {
       try {
@@ -232,24 +241,31 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   async *streamObject<T>(input: GenerateObjectInput): AsyncGenerator<T> {
     let recievedObj: string = '';
 
-    const stream = this.openAIClient.responses.stream({
-      model: this.config.model,
-      input: input.messages,
-      temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
-      top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
-      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
-      frequency_penalty:
-        input.options?.frequencyPenalty ??
-        this.config.options?.frequencyPenalty,
-      presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      text: {
-        format: zodTextFormat(input.schema, 'object'),
+    const stream = this.openAIClient.responses.stream(
+      {
+        model: this.config.model,
+        input: input.messages,
+        temperature:
+          input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+        top_p: input.options?.topP ?? this.config.options?.topP,
+        max_completion_tokens:
+          input.options?.maxTokens ?? this.config.options?.maxTokens,
+        stop:
+          input.options?.stopSequences ?? this.config.options?.stopSequences,
+        frequency_penalty:
+          input.options?.frequencyPenalty ??
+          this.config.options?.frequencyPenalty,
+        presence_penalty:
+          input.options?.presencePenalty ??
+          this.config.options?.presencePenalty,
+        text: {
+          format: zodTextFormat(input.schema, 'object'),
+        },
       },
-    });
+      {
+        timeout: this.config.timeout,
+      },
+    );
 
     for await (const chunk of stream) {
       if (chunk.type === 'response.output_text.delta' && chunk.delta) {
