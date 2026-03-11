@@ -12,6 +12,22 @@ type Video = {
   iframe_src: string;
 };
 
+const getPlayableIframeSrc = (iframeSrc: string) => {
+  try {
+    const url = new URL(iframeSrc);
+
+    if (url.hostname.endsWith('youtube-nocookie.com')) {
+      url.hostname = 'www.youtube.com';
+    }
+
+    url.searchParams.set('enablejsapi', '1');
+
+    return url.toString();
+  } catch {
+    return `${iframeSrc}${iframeSrc.includes('?') ? '&' : '?'}enablejsapi=1`;
+  }
+};
+
 declare module 'yet-another-react-lightbox' {
   export interface VideoSlide extends GenericSlide {
     type: 'video-slide';
@@ -199,7 +215,7 @@ const Searchvideos = ({
                 return slide.type === 'video-slide' ? (
                   <div className="h-full w-full flex flex-row items-center justify-center">
                     <iframe
-                      src={`${slide.iframe_src}${slide.iframe_src.includes('?') ? '&' : '?'}enablejsapi=1`}
+                      src={getPlayableIframeSrc(slide.iframe_src)}
                       ref={(el) => {
                         if (el) {
                           videoRefs.current[index] = el;
