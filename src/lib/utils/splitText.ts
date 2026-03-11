@@ -4,12 +4,43 @@ const splitRegex = /(?<=\. |\n|! |\? |; |:\s|\d+\.\s|- |\* )/g;
 
 const enc = getEncoding('cl100k_base');
 
-const getTokenCount = (text: string): number => {
+export const getTokenCount = (text: string): number => {
   try {
     return enc.encode(text).length;
   } catch {
     return Math.ceil(text.length / 4);
   }
+};
+
+export const truncateTextByTokens = (
+  text: string,
+  maxTokens: number,
+): string => {
+  if (maxTokens <= 0 || text.length === 0) {
+    return '';
+  }
+
+  if (getTokenCount(text) <= maxTokens) {
+    return text;
+  }
+
+  let low = 0;
+  let high = text.length;
+  let best = '';
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = text.slice(0, mid);
+
+    if (getTokenCount(candidate) <= maxTokens) {
+      best = candidate;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return best.trimEnd();
 };
 
 export const splitText = (
