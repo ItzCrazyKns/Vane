@@ -8,6 +8,7 @@ import db from '@/lib/db';
 import { chats, messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
+import { buildSearchResultsContext } from './context';
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -98,13 +99,9 @@ class SearchAgent {
       type: 'researchComplete',
     });
 
-    const finalContext =
-      searchResults?.searchFindings
-        .map(
-          (f, index) =>
-            `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
-        )
-        .join('\n') || '';
+    const finalContext = buildSearchResultsContext(
+      searchResults?.searchFindings || [],
+    );
 
     const widgetContext = widgetOutputs
       .map((o) => {
