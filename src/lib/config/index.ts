@@ -228,9 +228,16 @@ class ConfigManager {
 
     /* search section */
     this.uiConfigSections.search.forEach((f) => {
-      if (f.env && !this.currentConfig.search[f.key]) {
-        this.currentConfig.search[f.key] =
-          process.env[f.env] ?? f.default ?? '';
+      if (!f.env) return;
+
+      const envValue = process.env[f.env];
+      if (envValue) {
+        this.currentConfig.search[f.key] = envValue;
+        return;
+      }
+
+      if (!this.currentConfig.search[f.key]) {
+        this.currentConfig.search[f.key] = f.default ?? '';
       }
     });
 
