@@ -46,9 +46,10 @@ export const GET = async (req: Request) => {
             selectedTopic.query.map(async (query) => {
               return (
                 await searchSearxng(`site:${link} ${query}`, {
-                  engines: ['bing news'],
-                  pageno: 1,
+                  categories: ['news'],
+                  time_range: ['month'],
                   language: 'en',
+                  pageno: 1,
                 })
               ).results;
             }),
@@ -68,9 +69,10 @@ export const GET = async (req: Request) => {
         await searchSearxng(
           `site:${selectedTopic.links[Math.floor(Math.random() * selectedTopic.links.length)]} ${selectedTopic.query[Math.floor(Math.random() * selectedTopic.query.length)]}`,
           {
-            engines: ['bing news'],
-            pageno: 1,
+            categories: ['news'],
+            time_range: ['month'],
             language: 'en',
+            pageno: 1,
           },
         )
       ).results;
