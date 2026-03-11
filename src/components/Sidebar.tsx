@@ -5,6 +5,7 @@ import {
   BookOpenText,
   Home,
   Search,
+  Shield,
   SquarePen,
   Settings,
   Plus,
@@ -48,6 +49,12 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
       href: '/library',
       active: segments.includes('library'),
       label: 'Library',
+    },
+    {
+      icon: Shield,
+      href: '/sentinel',
+      active: segments.includes('sentinel'),
+      label: 'Sentinel',
     },
   ];
 

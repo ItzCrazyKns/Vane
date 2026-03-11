@@ -1,0 +1,28 @@
+{
+  "name": "perplexica-sentinel-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Privacy-first threat detection Chrome extension for Perplexica",
+  "scripts": {
+    "dev": "webpack --watch --mode development",
+    "build": "webpack --mode production",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.2",
+    "mini-css-extract-plugin": "^2.9.2",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.9.3",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
+  }
+}

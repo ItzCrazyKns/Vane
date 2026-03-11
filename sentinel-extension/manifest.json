@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Perplexica Sentinel Mode",
+  "version": "0.1.0",
+  "description": "Privacy-first threat detection and evidence gathering powered by local AI",
+
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "storage",
+    "sidePanel",
+    "webNavigation",
+    "offscreen"
+  ],
+
+  "host_permissions": ["<all_urls>"],
+
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"],
+      "css": ["styles/sentinel-overlay.css"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+
+  "action": {
+    "default_icon": {
+      "16": "icons/sentinel-16.png",
+      "48": "icons/sentinel-48.png",
+      "128": "icons/sentinel-128.png"
+    },
+    "default_title": "Sentinel Mode"
+  },
+
+  "icons": {
+    "16": "icons/sentinel-16.png",
+    "48": "icons/sentinel-48.png",
+    "128": "icons/sentinel-128.png"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

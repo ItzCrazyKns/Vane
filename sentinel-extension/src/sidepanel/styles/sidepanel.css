@@ -1,0 +1,405 @@
+/* ===== Sidepanel Root ===== */
+
+.sp-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0f0f1a;
+  color: #e5e5e5;
+}
+
+/* ===== Error Banner ===== */
+
+.sp-error-banner {
+  background: #4a1c1c;
+  color: #ff9999;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ===== Header ===== */
+
+.sp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #1e1e30;
+}
+
+.sp-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sp-header-title h1 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sp-shield {
+  font-size: 20px;
+}
+
+.sp-model-status {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.sp-model-status--ready {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.sp-model-status--loading {
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.1);
+}
+
+.sp-model-status--heuristics {
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+}
+
+/* ===== Tabs ===== */
+
+.sp-tabs {
+  display: flex;
+  border-bottom: 1px solid #1e1e30;
+}
+
+.sp-tab {
+  flex: 1;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  background: none;
+  border: none;
+  color: #737373;
+  cursor: pointer;
+  transition: color 0.15s;
+  border-bottom: 2px solid transparent;
+}
+
+.sp-tab:hover {
+  color: #a3a3a3;
+}
+
+.sp-tab--active {
+  color: #e5e5e5;
+  border-bottom-color: #dc2626;
+}
+
+/* ===== Content Area ===== */
+
+.sp-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ===== Analyze Button ===== */
+
+.sp-analyze-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 16px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #1e1e30;
+  color: #e5e5e5;
+  border: 1px solid #2e2e48;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sp-analyze-btn:hover:not(:disabled) {
+  background: #2a2a42;
+}
+
+.sp-analyze-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Empty State ===== */
+
+.sp-empty {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.sp-empty-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #a3a3a3;
+  margin-bottom: 6px;
+}
+
+.sp-empty-sub {
+  font-size: 13px;
+  color: #525252;
+}
+
+/* ===== Threat List ===== */
+
+.sp-threat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sp-threat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #1a1a2a;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sp-threat-item:hover {
+  background: #161626;
+}
+
+.sp-threat-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sp-threat-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sp-threat-domain {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e5e5e5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-threat-type {
+  font-size: 12px;
+  color: #737373;
+  margin-top: 2px;
+  text-transform: capitalize;
+}
+
+.sp-threat-time {
+  font-size: 11px;
+  color: #525252;
+  margin-top: 2px;
+}
+
+.sp-threat-chevron {
+  color: #525252;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* ===== Threat Detail ===== */
+
+.sp-detail {
+  padding: 16px;
+}
+
+.sp-detail-back {
+  background: none;
+  border: none;
+  color: #60a5fa;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 0 12px 0;
+}
+
+.sp-detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+}
+
+.sp-detail-section {
+  margin-bottom: 20px;
+}
+
+.sp-detail-section h3 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #737373;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.5px;
+}
+
+.sp-detail-url {
+  font-size: 12px;
+  color: #a3a3a3;
+  word-break: break-all;
+  background: #161626;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin: 0;
+}
+
+.sp-detail-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.sp-detail-label {
+  color: #737373;
+}
+
+.sp-detail-value {
+  color: #e5e5e5;
+  text-transform: capitalize;
+}
+
+.sp-level--critical {
+  color: #dc2626;
+  font-weight: 600;
+}
+.sp-level--high {
+  color: #ea580c;
+  font-weight: 600;
+}
+.sp-level--medium {
+  color: #ca8a04;
+}
+.sp-level--low {
+  color: #65a30d;
+}
+
+.sp-detail-summary {
+  font-size: 13px;
+  color: #a3a3a3;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.sp-detail-indicators {
+  padding-left: 18px;
+  margin: 0;
+  font-size: 12px;
+  color: #a3a3a3;
+  line-height: 1.8;
+}
+
+.sp-detail-screenshot {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #2e2e48;
+}
+
+/* ===== Buttons ===== */
+
+.sp-detail-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.sp-btn {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sp-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.sp-btn--primary:hover {
+  background: #1d4ed8;
+}
+
+.sp-btn--danger {
+  background: #2a1a1a;
+  color: #f87171;
+  border: 1px solid #3b1a1a;
+}
+
+.sp-btn--danger:hover {
+  background: #3b1a1a;
+}
+
+/* ===== Settings ===== */
+
+.sp-settings {
+  padding: 16px;
+}
+
+.sp-setting-item {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #1a1a2a;
+}
+
+.sp-setting-item:last-child {
+  border-bottom: none;
+}
+
+.sp-setting-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sp-setting-toggle input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+.sp-setting-label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.sp-setting-desc {
+  font-size: 12px;
+  color: #525252;
+  margin: 6px 0 0 26px;
+}
+
+.sp-setting-select {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: #1a1a2a;
+  color: #e5e5e5;
+  border: 1px solid #2e2e48;
+  border-radius: 6px;
+}
+
+.sp-setting-select:focus {
+  outline: none;
+  border-color: #2563eb;
+}

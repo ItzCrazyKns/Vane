@@ -1,0 +1,114 @@
+/* ===== Sentinel Warning Overlay ===== */
+/* Injected by content script on malicious pages */
+
+#sentinel-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.88);
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.sentinel-warning-container {
+  background: #1a1a2e;
+  border: 3px solid #dc2626;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(220, 38, 38, 0.4);
+  animation: sentinel-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sentinel-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 60px rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 80px rgba(220, 38, 38, 0.7);
+  }
+}
+
+.sentinel-warning-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.sentinel-warning-title {
+  color: #dc2626;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.sentinel-warning-message {
+  color: #e5e5e5;
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.sentinel-warning-details {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: #a3a3a3;
+  font-size: 13px;
+  text-align: left;
+  margin-bottom: 24px;
+  line-height: 1.7;
+}
+
+.sentinel-warning-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sentinel-btn-exit {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sentinel-btn-exit:hover {
+  background: #b91c1c;
+}
+
+.sentinel-btn-continue {
+  background: transparent;
+  color: #737373;
+  border: 1px solid #525252;
+  padding: 14px 28px;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.sentinel-btn-continue:hover {
+  border-color: #737373;
+  color: #a3a3a3;
+}
+
+.sentinel-warning-footer {
+  color: #525252;
+  font-size: 12px;
+  margin: 20px 0 0 0;
+}
