@@ -140,6 +140,10 @@ class Researcher {
 
             if (existingIndex !== -1) {
               finalToolCalls[existingIndex].arguments = tc.arguments;
+              // Preserve thoughtSignature for Gemini 3 models
+              if (tc.thoughtSignature) {
+                finalToolCalls[existingIndex].thoughtSignature = tc.thoughtSignature;
+              }
             } else {
               finalToolCalls.push(tc);
             }
