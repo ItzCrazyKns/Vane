@@ -14,6 +14,7 @@ interface ChatRequestBody {
   history: Array<[string, string]>;
   stream?: boolean;
   systemInstructions?: string;
+  maxResultsPerQuery?: number; // Limits results per SearXNG query; reduces LLM prompt size for local/small-context models
 }
 
 export const POST = async (req: Request) => {
@@ -60,6 +61,7 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: [],
         systemInstructions: body.systemInstructions || '',
+        maxResultsPerQuery: body.maxResultsPerQuery,
       },
       followUp: body.query,
       chatId: crypto.randomUUID(),

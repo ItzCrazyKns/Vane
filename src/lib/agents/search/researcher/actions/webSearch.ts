@@ -115,7 +115,9 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     const search = async (q: string) => {
       const res = await searchSearxng(q);
 
-      const resultChunks: Chunk[] = res.results.map((r) => ({
+      const resultChunks: Chunk[] = res.results
+        .slice(0, additionalConfig.maxResultsPerQuery ?? res.results.length)
+        .map((r) => ({
         content: r.content || r.title,
         metadata: {
           title: r.title,

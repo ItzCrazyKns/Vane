@@ -167,6 +167,7 @@ class Researcher {
         session: session,
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
+        maxResultsPerQuery: input.config.maxResultsPerQuery,
       });
 
       actionOutput.push(...actionResults);
