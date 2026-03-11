@@ -167,7 +167,11 @@ class Researcher {
         session: session,
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
-        maxResultsPerQuery: input.config.maxResultsPerQuery,
+        maxResultsPerQuery:
+          Number.isInteger(input.config.maxResultsPerQuery) &&
+          (input.config.maxResultsPerQuery as number) > 0
+            ? input.config.maxResultsPerQuery
+            : undefined,
       });
 
       actionOutput.push(...actionResults);
