@@ -176,7 +176,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
 
     return {
       type: 'search_results',
-      results: results.slice(0, additionalConfig.maxResultsPerQuery ?? results.length),    
+      results,    
     };
   },
 };

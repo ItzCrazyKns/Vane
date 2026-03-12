@@ -123,7 +123,7 @@ const academicSearchAction: ResearchAction<typeof schema> = {
 
     return {
       type: 'search_results',
-      results: results.slice(0, additionalConfig.maxResultsPerQuery ?? results.length),    
+      results,    
     };
   },
 };
