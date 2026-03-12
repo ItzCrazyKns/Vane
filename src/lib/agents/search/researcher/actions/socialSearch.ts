@@ -62,7 +62,9 @@ const socialSearchAction: ResearchAction<typeof schema> = {
         engines: ['reddit'],
       });
 
-      const resultChunks: Chunk[] = res.results.map((r) => ({
+      const resultChunks: Chunk[] = res.results
+        .slice(0, additionalConfig.maxResultsPerQuery ?? res.results.length)
+        .map((r) => ({
         content: r.content || r.title,
         metadata: {
           title: r.title,
@@ -121,7 +123,7 @@ const socialSearchAction: ResearchAction<typeof schema> = {
 
     return {
       type: 'search_results',
-      results,
+      results,    
     };
   },
 };

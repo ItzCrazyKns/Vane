@@ -167,18 +167,40 @@ class Researcher {
         session: session,
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
+        maxResultsPerQuery:
+          Number.isInteger(input.config.maxResultsPerQuery) &&
+          (input.config.maxResultsPerQuery as number) > 0
+            ? input.config.maxResultsPerQuery
+            : undefined,
+        maxTotalResults:
+          Number.isInteger(input.config.maxTotalResults) &&
+          (input.config.maxTotalResults as number) > 0
+            ? input.config.maxTotalResults
+            : undefined,
       });
 
       actionOutput.push(...actionResults);
 
       actionResults.forEach((action, i) => {
-        agentMessageHistory.push({
-          role: 'tool',
-          id: finalToolCalls[i].id,
-          name: finalToolCalls[i].name,
-          content: JSON.stringify(action),
+              const totalCap =
+                Number.isInteger(input.config.maxTotalResults) &&
+                (input.config.maxTotalResults as number) > 0
+                  ? input.config.maxTotalResults
+                  : Number.isInteger(input.config.maxResultsPerQuery) &&
+                    (input.config.maxResultsPerQuery as number) > 0
+                  ? input.config.maxResultsPerQuery
+                  : undefined;
+              const truncatedAction =
+                action.type === 'search_results' && totalCap
+                  ? { ...action, results: action.results.slice(0, totalCap) }
+                  : action;
+              agentMessageHistory.push({
+                role: 'tool',
+                id: finalToolCalls[i].id,
+                name: finalToolCalls[i].name,
+                content: JSON.stringify(truncatedAction),
         });
-      });
+      });      
     }
 
     const searchResults = actionOutput
