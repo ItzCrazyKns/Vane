@@ -177,13 +177,17 @@ class Researcher {
       actionOutput.push(...actionResults);
 
       actionResults.forEach((action, i) => {
-        agentMessageHistory.push({
-          role: 'tool',
-          id: finalToolCalls[i].id,
-          name: finalToolCalls[i].name,
-          content: JSON.stringify(action),
+              const truncatedAction =
+                action.type === 'search_results' && input.config.maxResultsPerQuery
+                  ? { ...action, results: action.results.slice(0, input.config.maxResultsPerQuery) }
+                  : action;
+              agentMessageHistory.push({
+                role: 'tool',
+                id: finalToolCalls[i].id,
+                name: finalToolCalls[i].name,
+                content: JSON.stringify(truncatedAction),
         });
-      });
+      });      
     }
 
     const searchResults = actionOutput
