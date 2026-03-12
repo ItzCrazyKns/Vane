@@ -172,14 +172,27 @@ class Researcher {
           (input.config.maxResultsPerQuery as number) > 0
             ? input.config.maxResultsPerQuery
             : undefined,
+        maxTotalResults:
+          Number.isInteger(input.config.maxTotalResults) &&
+          (input.config.maxTotalResults as number) > 0
+            ? input.config.maxTotalResults
+            : undefined,
       });
 
       actionOutput.push(...actionResults);
 
       actionResults.forEach((action, i) => {
+              const totalCap =
+                Number.isInteger(input.config.maxTotalResults) &&
+                (input.config.maxTotalResults as number) > 0
+                  ? input.config.maxTotalResults
+                  : Number.isInteger(input.config.maxResultsPerQuery) &&
+                    (input.config.maxResultsPerQuery as number) > 0
+                  ? input.config.maxResultsPerQuery
+                  : undefined;
               const truncatedAction =
-                action.type === 'search_results' && Number.isInteger(input.config.maxResultsPerQuery) && (input.config.maxResultsPerQuery as number) > 0
-                  ? { ...action, results: action.results.slice(0, input.config.maxResultsPerQuery) }
+                action.type === 'search_results' && totalCap
+                  ? { ...action, results: action.results.slice(0, totalCap) }
                   : action;
               agentMessageHistory.push({
                 role: 'tool',

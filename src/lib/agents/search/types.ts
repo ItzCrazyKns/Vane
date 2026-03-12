@@ -13,7 +13,8 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
-  maxResultsPerQuery?: number; // Limits results per SearXNG query; reduces LLM prompt size for local/small-context models
+  maxResultsPerQuery?: number; // Limits results per SearXNG query action; reduces LLM prompt size for local/small-context models
+  maxTotalResults?: number;    // Limits total results across all engines post-merge; prevents context overflow when multiple engines are active
 };
 
 export type SearchAgentInput = {
@@ -68,6 +69,7 @@ export type AdditionalConfig = {
   embedding: BaseEmbedding<any>;
   session: SessionManager;
   maxResultsPerQuery?: number;
+  maxTotalResults?: number;    // Limits total results across all engines post-merge
 };
 
 export type ResearcherInput = {
