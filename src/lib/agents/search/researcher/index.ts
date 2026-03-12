@@ -178,7 +178,7 @@ class Researcher {
 
       actionResults.forEach((action, i) => {
               const truncatedAction =
-                action.type === 'search_results' && input.config.maxResultsPerQuery
+                action.type === 'search_results' && Number.isInteger(input.config.maxResultsPerQuery) && (input.config.maxResultsPerQuery as number) > 0
                   ? { ...action, results: action.results.slice(0, input.config.maxResultsPerQuery) }
                   : action;
               agentMessageHistory.push({
