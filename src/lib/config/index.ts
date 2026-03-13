@@ -230,8 +230,16 @@ class ConfigManager {
     this.uiConfigSections.search.forEach((f) => {
       if (!f.env) return;
 
-      const envValue = process.env[f.env];
+      const envValue = process.env[f.env]?.trim();
       if (envValue) {
+        if (f.key === 'searxngURL') {
+          try {
+            new URL(envValue);
+          } catch {
+            return;
+          }
+        }
+
         this.currentConfig.search[f.key] = envValue;
         return;
       }
