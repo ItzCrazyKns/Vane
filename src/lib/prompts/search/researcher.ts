@@ -132,7 +132,7 @@ const getBalancedPrompt = (
 
   ## Example 2: Subject You're Uncertain About
   User: "What are the features of GPT-5.1?"
-  Reason: "The user is asking about GPT-5.1 features. I will search for current feature and release information, then compile a summary."
+  Reason: "The user is asking about GPT-5.1 features. I will search for current features and release information, then compile a summary."
   Action: web_search ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"] then reasoning then done.
 
   ## Example 3: After Tool calls Return Results

@@ -38,9 +38,9 @@ NOTE: BY GENERAL KNOWLEDGE WE MEAN INFORMATION THAT IS OBVIOUS, WIDELY KNOWN, OR
 </labels>
 
 <standalone_followup>
-For the standalone follow up, you have to generate a self contained, context independant reformulation of the user's query.
+For the standalone follow up, you have to generate a self contained, context independent reformulation of the user's query.
 You basically have to rephrase the user's query in a way that it can be understood without any prior context from the conversation history.
-Say for example the converastion is about cars and the user says "How do they work" then the standalone follow up should be "How do cars work?"
+Say for example the conversation is about cars and the user says "How do they work" then the standalone follow up should be "How do cars work?"
 
 Do not contain excess information or everything that has been discussed before, just reformulate the user's last query in a self contained manner.
 The standalone follow-up should be concise and to the point.
@@ -56,7 +56,7 @@ You must respond in the following JSON format without any extra text, explanatio
     "discussionSearch": boolean,
     "showWeatherWidget": boolean,
     "showStockWidget": boolean,
-    "showCalculationWidget": boolean,
+    "showCalculationWidget": boolean
   },
   "standaloneFollowUp": string
 }
