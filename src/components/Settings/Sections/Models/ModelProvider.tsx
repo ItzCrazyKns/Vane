@@ -231,7 +231,7 @@ const ModelProvider = ({
             ) : modelProvider.embeddingModels.filter((m) => m.key !== 'error')
                 .length > 0 ? (
               <div className="flex flex-row flex-wrap gap-2">
-                {modelProvider.embeddingModels.map((model, index) => (
+                {modelProvider.embeddingModels.filter((m) => m.key !== 'error').map((model, index) => (
                   <div
                     key={`${modelProvider.id}-embedding-${model.key}-${index}`}
                     className="flex flex-row items-center space-x-1.5 text-xs lg:text-xs text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5 border border-light-200 dark:border-dark-200"

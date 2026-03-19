@@ -47,6 +47,13 @@ export const PATCH = async (
       );
     }
 
+    if (typeof body.password !== 'string' || body.password.length < 8) {
+      return Response.json(
+        { message: 'Password must be at least 8 characters.' },
+        { status: 400 },
+      );
+    }
+
     await resetPasswordById(id, body.password);
     return Response.json({ message: 'Password reset' });
   } catch (err) {

@@ -2,7 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
-import { getAuthEnabled, isAdmin, requireAdmin } from '@/lib/auth';
+import { getAuthEnabled, requireAdmin } from '@/lib/auth';
 
 type SaveConfigBody = {
   key: string;
@@ -82,7 +82,7 @@ export const POST = async (req: NextRequest) => {
       },
     );
   } catch (err) {
-    console.error('Error in getting config: ', err);
+    console.error('Error updating config: ', err);
     return Response.json(
       { message: 'An error has occurred.' },
       { status: 500 },

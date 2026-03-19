@@ -81,7 +81,7 @@ export const DELETE = async (
     if (!body.key) {
       return Response.json(
         {
-          message: 'Key and name must be provided',
+          message: 'Key must be provided',
         },
         {
           status: 400,
