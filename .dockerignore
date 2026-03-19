@@ -1,1 +1,12 @@
 **/node_modules
+.next
+.git
+.github
+*.md
+!README.md
+.env*
+.claude
+data/
+.vscode
+.idea
+tsconfig.tsbuildinfo
