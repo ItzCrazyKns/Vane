@@ -86,7 +86,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       messages: this.convertToOllamaMessages(input.messages),
       tools: ollamaTools.length > 0 ? ollamaTools : undefined,
       ...(reasoningModels.find((m) => this.config.model.includes(m))
-        ? { think: false }
+        ? { think: !!this.reasoning }
         : {}),
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,
@@ -142,7 +142,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       messages: this.convertToOllamaMessages(input.messages),
       stream: true,
       ...(reasoningModels.find((m) => this.config.model.includes(m))
-        ? { think: false }
+        ? { think: !!this.reasoning }
         : {}),
       tools: ollamaTools.length > 0 ? ollamaTools : undefined,
       options: {
@@ -192,7 +192,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       messages: this.convertToOllamaMessages(input.messages),
       format: z.toJSONSchema(input.schema),
       ...(reasoningModels.find((m) => this.config.model.includes(m))
-        ? { think: false }
+        ? { think: !!this.reasoning }
         : {}),
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,
@@ -239,7 +239,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       format: z.toJSONSchema(input.schema),
       stream: true,
       ...(reasoningModels.find((m) => this.config.model.includes(m))
-        ? { think: false }
+        ? { think: !!this.reasoning }
         : {}),
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,

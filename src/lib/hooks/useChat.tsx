@@ -45,6 +45,10 @@ type ChatContext = {
   hasError: boolean;
   chatModelProvider: ChatModelProvider;
   embeddingModelProvider: EmbeddingModelProvider;
+  reasoningEnabled: boolean;
+  reasoningEffort: string;
+  setReasoningEnabled: (enabled: boolean) => void;
+  setReasoningEffort: (effort: string) => void;
   researchEnded: boolean;
   setResearchEnded: (ended: boolean) => void;
   setOptimizationMode: (mode: string) => void;
@@ -253,6 +257,10 @@ export const chatContext = createContext<ChatContext>({
   sections: [],
   notFound: false,
   optimizationMode: '',
+  reasoningEnabled: false,
+  reasoningEffort: 'medium',
+  setReasoningEnabled: () => {},
+  setReasoningEffort: () => {},
   chatModelProvider: { key: '', providerId: '' },
   embeddingModelProvider: { key: '', providerId: '' },
   researchEnded: false,
@@ -289,6 +297,32 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [sources, setSources] = useState<string[]>(['web']);
   const [optimizationMode, setOptimizationMode] = useState('speed');
+  const [reasoningEnabled, setReasoningEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('reasoningEnabled') === 'true';
+    }
+    return false;
+  });
+  const [reasoningEffort, setReasoningEffort] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('reasoningEffort') || 'medium';
+    }
+    return 'medium';
+  });
+
+  const handleSetReasoningEnabled = (enabled: boolean) => {
+    setReasoningEnabled(enabled);
+    localStorage.setItem('reasoningEnabled', String(enabled));
+    if (enabled && !reasoningEffort) {
+      setReasoningEffort('medium');
+      localStorage.setItem('reasoningEffort', 'medium');
+    }
+  };
+
+  const handleSetReasoningEffort = (effort: string) => {
+    setReasoningEffort(effort);
+    localStorage.setItem('reasoningEffort', effort);
+  };
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
@@ -785,6 +819,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           providerId: embeddingModelProvider.providerId,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
+        reasoning: reasoningEnabled
+          ? { enabled: true, effort: reasoningEffort }
+          : { enabled: false },
       }),
     });
 
@@ -834,6 +871,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         messageAppeared,
         notFound,
         optimizationMode,
+        reasoningEnabled,
+        reasoningEffort,
+        setReasoningEnabled: handleSetReasoningEnabled,
+        setReasoningEffort: handleSetReasoningEffort,
         setFileIds,
         setFiles,
         setSources,

@@ -45,6 +45,12 @@ const bodySchema = z.object({
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
   systemInstructions: z.string().nullable().optional().default(''),
+  reasoning: z
+    .object({
+      enabled: z.boolean(),
+      effort: z.string().optional(),
+    })
+    .optional(),
 });
 
 type Body = z.infer<typeof bodySchema>;
@@ -139,6 +145,11 @@ export const POST = async (req: Request) => {
         body.embeddingModel.key,
       ),
     ]);
+
+    // Set reasoning preference on the LLM instance so providers can inject it
+    if (body.reasoning?.enabled && body.reasoning.effort) {
+      llm.setReasoning({ effort: body.reasoning.effort });
+    }
 
     const history: ChatTurnMessage[] = body.history.map((msg) => {
       if (msg[0] === 'human') {
@@ -236,6 +247,9 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
+        reasoning: body.reasoning?.enabled
+          ? { effort: body.reasoning.effort || 'medium' }
+          : undefined,
       },
     });
 

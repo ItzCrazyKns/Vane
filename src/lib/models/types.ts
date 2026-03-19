@@ -36,6 +36,7 @@ type GenerateOptions = {
   frequencyPenalty?: number;
   presencePenalty?: number;
   contextWindowSize?: number;
+  reasoning?: { effort: string };
 };
 
 type Tool = {

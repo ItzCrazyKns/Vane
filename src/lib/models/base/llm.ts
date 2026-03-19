@@ -8,7 +8,14 @@ import {
 } from '../types';
 
 abstract class BaseLLM<CONFIG> {
+  protected reasoning?: { effort: string };
+
   constructor(protected config: CONFIG) {}
+
+  setReasoning(reasoning: { effort: string }) {
+    this.reasoning = reasoning;
+  }
+
   abstract generateText(input: GenerateTextInput): Promise<GenerateTextOutput>;
   abstract streamText(
     input: GenerateTextInput,
