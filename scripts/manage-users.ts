@@ -45,6 +45,10 @@ function parseArgs(args: string[]): Record<string, string> {
   const result: Record<string, string> = {};
   for (let i = 0; i < args.length; i++) {
     if (args[i].startsWith('--') && i + 1 < args.length) {
+      if (args[i + 1].startsWith('--')) {
+        console.error(`Missing value for ${args[i]}`);
+        process.exit(1);
+      }
       result[args[i].slice(2)] = args[i + 1];
       i++;
     }

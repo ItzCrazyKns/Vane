@@ -24,7 +24,7 @@ export const POST = async (req: Request) => {
     const response = Response.json({ success: true }, { status: 200 });
     response.headers.set(
       'Set-Cookie',
-      'session_id=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0',
+      `session_id=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`,
     );
 
     return response;
