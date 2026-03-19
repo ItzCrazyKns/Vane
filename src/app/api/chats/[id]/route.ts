@@ -1,7 +1,7 @@
 import db from '@/lib/db';
 import { chats, messages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { getAuthEnabled } from '@/lib/auth';
+import { getAuthEnabled, isAdmin } from '@/lib/auth';
 
 export const GET = async (
   req: Request,
@@ -18,11 +18,14 @@ export const GET = async (
       return Response.json({ message: 'Chat not found' }, { status: 404 });
     }
 
-    // Ownership check when auth is enabled
+    // Ownership check when auth is enabled (admins can view any chat)
     const authEnabled = getAuthEnabled();
     const userId = req.headers.get('x-user-id');
     if (authEnabled && chatExists.userId !== userId) {
-      return Response.json({ message: 'Chat not found' }, { status: 404 });
+      const admin = userId ? await isAdmin(userId) : false;
+      if (!admin) {
+        return Response.json({ message: 'Chat not found' }, { status: 404 });
+      }
     }
 
     const chatMessages = await db.query.messages.findMany({
@@ -60,11 +63,14 @@ export const DELETE = async (
       return Response.json({ message: 'Chat not found' }, { status: 404 });
     }
 
-    // Ownership check when auth is enabled
+    // Ownership check when auth is enabled (admins can delete any chat)
     const authEnabled = getAuthEnabled();
     const userId = req.headers.get('x-user-id');
     if (authEnabled && chatExists.userId !== userId) {
-      return Response.json({ message: 'Chat not found' }, { status: 404 });
+      const admin = userId ? await isAdmin(userId) : false;
+      if (!admin) {
+        return Response.json({ message: 'Chat not found' }, { status: 404 });
+      }
     }
 
     await db.delete(chats).where(eq(chats.id, id)).execute();

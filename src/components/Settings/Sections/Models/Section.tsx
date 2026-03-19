@@ -2,20 +2,55 @@ import React, { useState } from 'react';
 import AddProvider from './AddProviderDialog';
 import {
   ConfigModelProvider,
+  RestrictedModel,
   ModelProviderUISection,
   UIConfigField,
 } from '@/lib/config/types';
 import ModelProvider from './ModelProvider';
 import ModelSelect from './ModelSelect';
+import { toast } from 'sonner';
 
 const Models = ({
   fields,
   values,
+  restrictedModels: initialRestricted,
 }: {
   fields: ModelProviderUISection[];
   values: ConfigModelProvider[];
+  restrictedModels?: RestrictedModel[];
 }) => {
   const [providers, setProviders] = useState<ConfigModelProvider[]>(values);
+  const [restrictedModels, setRestrictedModels] = useState<RestrictedModel[]>(
+    initialRestricted || [],
+  );
+
+  const handleToggleRestriction = async (
+    providerId: string,
+    modelKey: string,
+  ) => {
+    const exists = restrictedModels.some(
+      (r) => r.providerId === providerId && r.modelKey === modelKey,
+    );
+    const updated = exists
+      ? restrictedModels.filter(
+          (r) => !(r.providerId === providerId && r.modelKey === modelKey),
+        )
+      : [...restrictedModels, { providerId, modelKey }];
+
+    setRestrictedModels(updated);
+
+    try {
+      const res = await fetch('/api/admin/models/restrict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restrictedModels: updated }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setRestrictedModels(restrictedModels);
+      toast.error('Failed to update model restriction.');
+    }
+  };
 
   return (
     <div className="flex-1 space-y-6 overflow-y-auto py-6">
@@ -80,6 +115,12 @@ const Models = ({
               }
               modelProvider={provider}
               setProviders={setProviders}
+              restrictedModels={restrictedModels}
+              onToggleRestriction={
+                initialRestricted !== undefined
+                  ? handleToggleRestriction
+                  : undefined
+              }
             />
           ))
         )}

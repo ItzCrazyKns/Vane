@@ -44,6 +44,19 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
+    // Admin-only when auth is enabled
+    const { getAuthEnabled, isAdmin } = await import('@/lib/auth');
+    const authEnabled = getAuthEnabled();
+    if (authEnabled) {
+      const userId = req.headers.get('x-user-id');
+      if (!userId || !(await isAdmin(userId))) {
+        return Response.json(
+          { message: 'Admin access required.' },
+          { status: 403 },
+        );
+      }
+    }
+
     const body: SaveConfigBody = await req.json();
 
     if (!body.key || !body.value) {

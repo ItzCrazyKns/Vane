@@ -1,12 +1,30 @@
 import ModelRegistry from '@/lib/models/registry';
 import { Model } from '@/lib/models/types';
+import { getAuthEnabled, isAdmin } from '@/lib/auth';
 import { NextRequest } from 'next/server';
+
+const adminGuard = async (req: NextRequest) => {
+  const authEnabled = getAuthEnabled();
+  if (authEnabled) {
+    const userId = req.headers.get('x-user-id');
+    if (!userId || !(await isAdmin(userId))) {
+      return Response.json(
+        { message: 'Admin access required.' },
+        { status: 403 },
+      );
+    }
+  }
+  return null;
+};
 
 export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
+    const guard = await adminGuard(req);
+    if (guard) return guard;
+
     const { id } = await params;
 
     const body: Partial<Model> & { type: 'embedding' | 'chat' } =
@@ -53,6 +71,9 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
+    const guard = await adminGuard(req);
+    if (guard) return guard;
+
     const { id } = await params;
 
     const body: { key: string; type: 'embedding' | 'chat' } = await req.json();

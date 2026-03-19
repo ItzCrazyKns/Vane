@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fs from 'fs';
-import { Config, ConfigModelProvider, UIConfigSections } from './types';
+import { Config, ConfigModelProvider, RestrictedModel, UIConfigSections } from './types';
 import { hashObj } from '../serverUtils';
 import { getModelProvidersUIConfigSection } from '../models/providers';
 
@@ -19,6 +19,7 @@ class ConfigManager {
     search: {
       searxngURL: '',
     },
+    restrictedModels: [],
   };
   uiConfigSections: UIConfigSections = {
     preferences: [
@@ -398,6 +399,15 @@ class ConfigManager {
 
   public getUIConfigSections(): UIConfigSections {
     return this.uiConfigSections;
+  }
+
+  public getRestrictedModels(): RestrictedModel[] {
+    return this.currentConfig.restrictedModels || [];
+  }
+
+  public setRestrictedModels(models: RestrictedModel[]) {
+    this.currentConfig.restrictedModels = models;
+    this.saveConfig();
   }
 
   public getCurrentConfig(): Config {
