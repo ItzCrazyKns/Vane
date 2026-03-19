@@ -236,9 +236,11 @@ class ConfigManager {
           try {
             const parsed = new URL(envValue);
             if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+              this.currentConfig.search[f.key] = f.default ?? '';
               return;
             }
           } catch {
+            this.currentConfig.search[f.key] = f.default ?? '';
             return;
           }
         }

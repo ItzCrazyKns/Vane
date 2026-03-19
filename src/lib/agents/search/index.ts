@@ -95,7 +95,7 @@ class SearchAgent {
 
       const [widgetOutputs, searchResults] = await Promise.all([
         widgetPromise,
-        searchPromise,
+        searchPromise ?? Promise.resolve(null),
       ]);
 
       session.emit('data', {

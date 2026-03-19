@@ -178,30 +178,32 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
           for (const tc of toolCalls) {
             try {
               if (!recievedToolCalls[tc.index]) {
-                const call = {
+                recievedToolCalls[tc.index] = {
                   name: tc.function?.name || '',
                   id: tc.id || '',
                   arguments: tc.function?.arguments || '',
                 };
-                recievedToolCalls[tc.index] = call;
-                const argsToParse = call.arguments || '{}';
-                parsedToolCalls.push({ ...call, arguments: parse(argsToParse) });
               } else {
                 const existingCall = recievedToolCalls[tc.index];
+                if (tc.function?.name) existingCall.name = tc.function.name;
+                if (tc.id) existingCall.id = tc.id;
                 existingCall.arguments += tc.function?.arguments || '';
-                const argsToParse = existingCall.arguments || '{}';
-                parsedToolCalls.push({
-                  ...existingCall,
-                  arguments: parse(argsToParse),
-                });
+              }
+
+              // Only emit parsed tool call when arguments parse successfully
+              const current = recievedToolCalls[tc.index];
+              if (current.arguments) {
+                try {
+                  parsedToolCalls.push({
+                    ...current,
+                    arguments: parse(current.arguments),
+                  });
+                } catch {
+                  // Arguments still incomplete — will retry on next chunk
+                }
               }
             } catch (parseErr) {
-              console.error('Error parsing tool call arguments:', parseErr instanceof Error ? parseErr.message : parseErr, 'tool:', tc.function?.name, 'index:', tc.index);
-              parsedToolCalls.push({
-                name: tc.function?.name || '',
-                id: tc.id || recievedToolCalls[tc.index]?.id || '',
-                arguments: {},
-              });
+              console.error('Error parsing tool call:', parseErr instanceof Error ? parseErr.message : parseErr, 'tool:', tc.function?.name, 'index:', tc.index);
             }
           }
         }
@@ -222,12 +224,17 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     // Use chat.completions.create instead of chat.completions.parse
     // for compatibility with OpenAI-compatible providers (OpenRouter, etc.)
     // that don't support the /chat/completions/parse endpoint.
+    const schemaInstruction = JSON.stringify(
+      z.toJSONSchema(input.schema),
+      null,
+      2,
+    );
+
     const response = await this.openAIClient.chat.completions.create({
       messages: [
         {
           role: 'system',
-          content:
-            'You must respond with valid JSON only. No markdown code blocks, no explanatory text.',
+          content: `You must respond with valid JSON only. No markdown code blocks, no explanatory text.\n\nReturn an object matching this JSON Schema:\n${schemaInstruction}`,
         },
         ...this.convertToOpenAIMessages(input.messages),
       ],
@@ -260,7 +267,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
             extractJson: true,
           }) as string;
         } catch (repairErr) {
-          console.error('repairJson failed on content:', content);
+          console.error('repairJson failed', { contentLength: content.length, error: repairErr instanceof Error ? repairErr.message : String(repairErr) });
           throw new Error(`Failed to repair JSON: ${repairErr}`);
         }
         return input.schema.parse(JSON.parse(repairedJson)) as T;
@@ -278,13 +285,18 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     // Use chat.completions.create with streaming instead of responses.stream
     // for compatibility with OpenAI-compatible providers (OpenRouter, etc.)
     // that don't support the OpenAI Responses API.
+    const schemaInstruction = JSON.stringify(
+      z.toJSONSchema(input.schema),
+      null,
+      2,
+    );
+
     const stream = await this.openAIClient.chat.completions.create({
       model: this.config.model,
       messages: [
         {
           role: 'system',
-          content:
-            'You must respond with valid JSON only. No markdown code blocks, no explanatory text.',
+          content: `You must respond with valid JSON only. No markdown code blocks, no explanatory text.\n\nReturn an object matching this JSON Schema:\n${schemaInstruction}`,
         },
         ...this.convertToOpenAIMessages(input.messages),
       ],

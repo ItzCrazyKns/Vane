@@ -261,7 +261,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     for await (const chunk of stream) {
-      recievedObj += chunk.message.content;
+      const delta = chunk.message?.content ?? '';
+      if (!delta) continue;
+      recievedObj += delta;
 
       // Strip markdown fences if present
       const cleanedObj = stripMarkdownFences(recievedObj);

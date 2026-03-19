@@ -101,6 +101,9 @@ const ensureChatExists = async (input: {
 };
 
 export const POST = async (req: Request) => {
+  let safeClose: (() => void) | undefined;
+  let disconnect: (() => void) | undefined;
+
   try {
     const reqBody = (await req.json()) as Body;
 
@@ -171,7 +174,7 @@ export const POST = async (req: Request) => {
       });
     };
 
-    const safeClose = () => {
+    safeClose = () => {
       if (streamClosed) return;
 
       streamClosed = true;
@@ -185,13 +188,7 @@ export const POST = async (req: Request) => {
       });
     };
 
-    keepAliveInterval = setInterval(() => {
-      safeWrite({ type: 'keepAlive' });
-    }, keepAliveMs);
-
-    safeWrite({ type: 'keepAlive' });
-
-    const disconnect = session.subscribe((event: string, data: any) => {
+    disconnect = session.subscribe((event: string, data: any) => {
       if (event === 'data') {
         if (data.type === 'block') {
           safeWrite({
@@ -213,14 +210,14 @@ export const POST = async (req: Request) => {
         safeWrite({
           type: 'messageEnd',
         });
-        safeClose();
+        safeClose?.();
         session.removeAllListeners();
       } else if (event === 'error') {
         safeWrite({
           type: 'error',
           data: data.data,
         });
-        safeClose();
+        safeClose?.();
         session.removeAllListeners();
       }
     });
@@ -248,9 +245,17 @@ export const POST = async (req: Request) => {
     });
 
     req.signal.addEventListener('abort', () => {
-      disconnect();
-      safeClose();
+      disconnect?.();
+      safeClose?.();
     });
+
+    // Start keepalives only after setup succeeds
+    if (!streamClosed) {
+      keepAliveInterval = setInterval(() => {
+        safeWrite({ type: 'keepAlive' });
+      }, keepAliveMs);
+      safeWrite({ type: 'keepAlive' });
+    }
 
     return new Response(responseStream.readable, {
       headers: {
@@ -260,6 +265,8 @@ export const POST = async (req: Request) => {
       },
     });
   } catch (err) {
+    disconnect?.();
+    safeClose?.();
     console.error('An error occurred while processing chat request:', err);
     return Response.json(
       { message: 'An error occurred while processing chat request' },

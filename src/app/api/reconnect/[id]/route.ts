@@ -4,6 +4,9 @@ export const POST = async (
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) => {
+  let safeClose: (() => void) | undefined;
+  let disconnect: (() => void) | undefined;
+
   try {
     const { id } = await params;
 
@@ -32,7 +35,7 @@ export const POST = async (
       });
     };
 
-    const safeClose = () => {
+    safeClose = () => {
       if (streamClosed) return;
 
       streamClosed = true;
@@ -45,14 +48,6 @@ export const POST = async (
         console.warn('Failed to close reconnect stream:', error);
       });
     };
-
-    keepAliveInterval = setInterval(() => {
-      safeWrite({ type: 'keepAlive' });
-    }, keepAliveMs);
-
-    safeWrite({ type: 'keepAlive' });
-
-    let disconnect: (() => void) | undefined;
 
     disconnect = session.subscribe((event, data) => {
       if (event === 'data') {
@@ -76,7 +71,7 @@ export const POST = async (
         safeWrite({
           type: 'messageEnd',
         });
-        safeClose();
+        safeClose?.();
         if (disconnect) {
           disconnect();
         } else {
@@ -87,7 +82,7 @@ export const POST = async (
           type: 'error',
           data: data.data,
         });
-        safeClose();
+        safeClose?.();
         if (disconnect) {
           disconnect();
         } else {
@@ -97,9 +92,17 @@ export const POST = async (
     });
 
     req.signal.addEventListener('abort', () => {
-      disconnect();
-      safeClose();
+      disconnect?.();
+      safeClose?.();
     });
+
+    // Start keepalives only after setup succeeds
+    if (!streamClosed) {
+      keepAliveInterval = setInterval(() => {
+        safeWrite({ type: 'keepAlive' });
+      }, keepAliveMs);
+      safeWrite({ type: 'keepAlive' });
+    }
 
     return new Response(responseStream.readable, {
       headers: {
@@ -109,6 +112,8 @@ export const POST = async (
       },
     });
   } catch (err) {
+    disconnect?.();
+    safeClose?.();
     console.error('Error in reconnecting to session stream: ', err);
     return Response.json(
       { message: 'An error has occurred.' },

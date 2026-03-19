@@ -77,7 +77,10 @@ class LMStudioLLM extends OpenAILLM {
       throw new Error('No response from LM Studio');
     } catch (err: any) {
       // If JSON mode isn't supported, try without it
-      if (err.message?.includes('response_format') || err.status === 400) {
+      const combinedMessage = [err?.message, err?.error?.message]
+        .filter((v): v is string => typeof v === 'string')
+        .join(' ');
+      if (combinedMessage.includes('response_format')) {
         return this.generateObjectWithoutJsonMode<T>(input, jsonSchema);
       }
       throw err;

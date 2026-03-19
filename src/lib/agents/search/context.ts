@@ -51,7 +51,7 @@ export const buildSearchResultsContext = (searchFindings: Chunk[] = []) => {
       content = `${truncateTextByTokens(fullContent, noteBudget)}${TRUNCATION_NOTE}`;
     }
 
-    const entry = `${prefix}${content}${suffix}`;
+    const entry = `${prefix}${escapeXmlText(content)}${suffix}`;
     const entryTokens = getTokenCount(entry);
 
     if (entryTokens > remainingTokens) {
