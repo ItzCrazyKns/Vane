@@ -2,6 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
+import { getAuthEnabled, isAdmin, requireAdmin } from '@/lib/auth';
 
 type SaveConfigBody = {
   key: string;
@@ -10,6 +11,13 @@ type SaveConfigBody = {
 
 export const GET = async (req: NextRequest) => {
   try {
+    // Admin-only when auth is enabled (config contains provider secrets)
+    const authEnabled = getAuthEnabled();
+    if (authEnabled) {
+      const result = await requireAdmin(req);
+      if ('error' in result) return result.error;
+    }
+
     const values = configManager.getCurrentConfig();
     const fields = configManager.getUIConfigSections();
 
@@ -44,17 +52,10 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    // Admin-only when auth is enabled
-    const { getAuthEnabled, isAdmin } = await import('@/lib/auth');
     const authEnabled = getAuthEnabled();
     if (authEnabled) {
-      const userId = req.headers.get('x-user-id');
-      if (!userId || !(await isAdmin(userId))) {
-        return Response.json(
-          { message: 'Admin access required.' },
-          { status: 403 },
-        );
-      }
+      const result = await requireAdmin(req);
+      if ('error' in result) return result.error;
     }
 
     const body: SaveConfigBody = await req.json();

@@ -95,7 +95,7 @@ export const DELETE = async (
 
     return Response.json(
       {
-        message: 'Model added successfully',
+        message: 'Model deleted successfully',
       },
       {
         status: 200,

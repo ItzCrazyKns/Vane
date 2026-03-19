@@ -145,7 +145,7 @@ const ModelProvider = ({
             ) : modelProvider.chatModels.filter((m) => m.key !== 'error')
                 .length > 0 ? (
               <div className="flex flex-row flex-wrap gap-2">
-                {modelProvider.chatModels.map((model, index) => {
+                {modelProvider.chatModels.filter((m) => m.key !== 'error').map((model, index) => {
                   const isRestricted = restrictedModels?.some(
                     (r) =>
                       r.providerId === modelProvider.id &&

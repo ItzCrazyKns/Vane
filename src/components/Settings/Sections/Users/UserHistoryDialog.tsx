@@ -28,7 +28,10 @@ const UserHistoryDialog = ({
     if (open) {
       setLoading(true);
       fetch(`/api/admin/users/${userId}/chats`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
         .then((data) => setChats(data.chats || []))
         .catch((err) => console.error('Error fetching chats:', err))
         .finally(() => setLoading(false));

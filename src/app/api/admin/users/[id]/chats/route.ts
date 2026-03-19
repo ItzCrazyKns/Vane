@@ -7,15 +7,23 @@ export const GET = async (
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  const result = await requireAdmin(req);
-  if ('error' in result) return result.error;
+  try {
+    const result = await requireAdmin(req);
+    if ('error' in result) return result.error;
 
-  const { id } = await params;
+    const { id } = await params;
 
-  const userChats = await db.query.chats.findMany({
-    where: eq(chats.userId, id),
-    orderBy: desc(chats.createdAt),
-  });
+    const userChats = await db.query.chats.findMany({
+      where: eq(chats.userId, id),
+      orderBy: desc(chats.createdAt),
+    });
 
-  return Response.json({ chats: userChats });
+    return Response.json({ chats: userChats });
+  } catch (err) {
+    console.error('Error fetching user chats:', err);
+    return Response.json(
+      { message: 'An error has occurred.' },
+      { status: 500 },
+    );
+  }
 };

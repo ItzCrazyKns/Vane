@@ -103,6 +103,10 @@ export function deleteUserById(userId: string) {
 }
 
 export async function resetPasswordById(userId: string, newPassword: string) {
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
   const passwordHash = await hashPassword(newPassword);
   db.update(users)
     .set({ passwordHash })

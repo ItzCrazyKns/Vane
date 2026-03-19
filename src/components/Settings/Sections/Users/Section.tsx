@@ -14,7 +14,8 @@ type UserRecord = {
   createdAt: string;
 };
 
-const UsersSection = (_props: { fields?: any; values?: any }) => {
+// Props match SettingsSection interface but are unused for this section
+const UsersSection = (_props: { fields?: unknown; values?: unknown }) => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);

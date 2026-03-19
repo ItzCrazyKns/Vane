@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import AddProvider from './AddProviderDialog';
 import {
   ConfigModelProvider,
@@ -23,11 +23,13 @@ const Models = ({
   const [restrictedModels, setRestrictedModels] = useState<RestrictedModel[]>(
     initialRestricted || [],
   );
+  const confirmedRef = useRef<RestrictedModel[]>(initialRestricted || []);
 
   const handleToggleRestriction = async (
     providerId: string,
     modelKey: string,
   ) => {
+    const previous = confirmedRef.current;
     const exists = restrictedModels.some(
       (r) => r.providerId === providerId && r.modelKey === modelKey,
     );
@@ -46,8 +48,9 @@ const Models = ({
         body: JSON.stringify({ restrictedModels: updated }),
       });
       if (!res.ok) throw new Error();
+      confirmedRef.current = updated;
     } catch {
-      setRestrictedModels(restrictedModels);
+      setRestrictedModels(previous);
       toast.error('Failed to update model restriction.');
     }
   };

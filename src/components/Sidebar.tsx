@@ -176,6 +176,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             <p className="text-xs">{link.label}</p>
           </Link>
         ))}
+        {(!authEnabled || authUser?.role === 'admin') && (
+          <SettingsButton userRole={authUser?.role} />
+        )}
         {authUser && (
           <button
             onClick={handleLogout}
