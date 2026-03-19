@@ -30,44 +30,60 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
   }
 
   async getDefaultModels(): Promise<ModelList> {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${this.config.apiKey}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${this.config.apiKey}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      },
-    );
+      );
 
-    const data = await res.json();
-
-    let defaultEmbeddingModels: Model[] = [];
-    let defaultChatModels: Model[] = [];
-
-    data.models.forEach((m: any) => {
-      if (
-        m.supportedGenerationMethods.some(
-          (genMethod: string) =>
-            genMethod === 'embedText' || genMethod === 'embedContent',
-        )
-      ) {
-        defaultEmbeddingModels.push({
-          key: m.name,
-          name: m.displayName,
-        });
-      } else if (m.supportedGenerationMethods.includes('generateContent')) {
-        defaultChatModels.push({
-          key: m.name,
-          name: m.displayName,
-        });
+      if (!res.ok) {
+        console.error(`Gemini models API returned ${res.status}`);
+        return { embedding: [], chat: [] };
       }
-    });
 
-    return {
-      embedding: defaultEmbeddingModels,
-      chat: defaultChatModels,
-    };
+      const data = await res.json();
+
+      if (!data.models || !Array.isArray(data.models)) {
+        return { embedding: [], chat: [] };
+      }
+
+      let defaultEmbeddingModels: Model[] = [];
+      let defaultChatModels: Model[] = [];
+
+      data.models.forEach((m: any) => {
+        if (
+          m.supportedGenerationMethods?.some(
+            (genMethod: string) =>
+              genMethod === 'embedText' || genMethod === 'embedContent',
+          )
+        ) {
+          defaultEmbeddingModels.push({
+            key: m.name,
+            name: m.displayName,
+          });
+        } else if (
+          m.supportedGenerationMethods?.includes('generateContent')
+        ) {
+          defaultChatModels.push({
+            key: m.name,
+            name: m.displayName,
+          });
+        }
+      });
+
+      return {
+        embedding: defaultEmbeddingModels,
+        chat: defaultChatModels,
+      };
+    } catch (err) {
+      console.error('Error fetching Gemini models:', err);
+      return { embedding: [], chat: [] };
+    }
   }
 
   async getModelList(): Promise<ModelList> {

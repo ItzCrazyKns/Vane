@@ -60,7 +60,7 @@ class TransformersProvider extends BaseModelProvider<TransformersConfig> {
 
     if (!exists) {
       throw new Error(
-        'Error Loading OpenAI Embedding Model. Invalid Model Selected.',
+        'Error Loading Transformers Embedding Model. Invalid Model Selected.',
       );
     }
 
