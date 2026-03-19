@@ -1,7 +1,7 @@
-import { UIConfigField, ConfigModelProvider } from '@/lib/config/types';
+import { UIConfigField, ConfigModelProvider, RestrictedModel } from '@/lib/config/types';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle, Plug2, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Plug2, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import AddModel from './AddModelDialog';
@@ -12,10 +12,14 @@ const ModelProvider = ({
   modelProvider,
   setProviders,
   fields,
+  restrictedModels,
+  onToggleRestriction,
 }: {
   modelProvider: ConfigModelProvider;
   fields: UIConfigField[];
   setProviders: React.Dispatch<React.SetStateAction<ConfigModelProvider[]>>;
+  restrictedModels?: RestrictedModel[];
+  onToggleRestriction?: (providerId: string, modelKey: string) => void;
 }) => {
   const [open, setOpen] = useState(true);
 
@@ -141,22 +145,53 @@ const ModelProvider = ({
             ) : modelProvider.chatModels.filter((m) => m.key !== 'error')
                 .length > 0 ? (
               <div className="flex flex-row flex-wrap gap-2">
-                {modelProvider.chatModels.map((model, index) => (
-                  <div
-                    key={`${modelProvider.id}-chat-${model.key}-${index}`}
-                    className="flex flex-row items-center space-x-1.5 text-xs lg:text-xs text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5 border border-light-200 dark:border-dark-200"
-                  >
-                    <span>{model.name}</span>
-                    <button
-                      onClick={() => {
-                        handleModelDelete('chat', model.key);
-                      }}
-                      className="hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                {modelProvider.chatModels.filter((m) => m.key !== 'error').map((model, index) => {
+                  const isRestricted = restrictedModels?.some(
+                    (r) =>
+                      r.providerId === modelProvider.id &&
+                      r.modelKey === model.key,
+                  );
+                  return (
+                    <div
+                      key={`${modelProvider.id}-chat-${model.key}-${index}`}
+                      className={cn(
+                        'flex flex-row items-center space-x-1.5 text-xs lg:text-xs rounded-lg px-3 py-1.5 border',
+                        isRestricted
+                          ? 'text-black/40 dark:text-white/40 bg-light-secondary/50 dark:bg-dark-secondary/50 border-light-200/50 dark:border-dark-200/50'
+                          : 'text-black/70 dark:text-white/70 bg-light-secondary dark:bg-dark-secondary border-light-200 dark:border-dark-200',
+                      )}
                     >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
+                      <span>{model.name}</span>
+                      {onToggleRestriction && (
+                        <button
+                          onClick={() =>
+                            onToggleRestriction(modelProvider.id, model.key)
+                          }
+                          className="hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+                          title={
+                            isRestricted
+                              ? 'Unrestrict for regular users'
+                              : 'Restrict from regular users'
+                          }
+                        >
+                          {isRestricted ? (
+                            <EyeOff size={12} />
+                          ) : (
+                            <Eye size={12} />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          handleModelDelete('chat', model.key);
+                        }}
+                        className="hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
           </div>
@@ -196,7 +231,7 @@ const ModelProvider = ({
             ) : modelProvider.embeddingModels.filter((m) => m.key !== 'error')
                 .length > 0 ? (
               <div className="flex flex-row flex-wrap gap-2">
-                {modelProvider.embeddingModels.map((model, index) => (
+                {modelProvider.embeddingModels.filter((m) => m.key !== 'error').map((model, index) => (
                   <div
                     key={`${modelProvider.id}-embedding-${model.key}-${index}`}
                     className="flex flex-row items-center space-x-1.5 text-xs lg:text-xs text-black/70 dark:text-white/70 rounded-lg bg-light-secondary dark:bg-dark-secondary px-3 py-1.5 border border-light-200 dark:border-dark-200"

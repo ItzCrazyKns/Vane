@@ -7,10 +7,11 @@ import {
   Search,
   Sliders,
   ToggleRight,
+  UsersRound,
 } from 'lucide-react';
 import Preferences from './Sections/Preferences';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import Loader from '../ui/Loader';
 import { cn } from '@/lib/utils';
@@ -18,8 +19,9 @@ import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
+import UsersSection from './Sections/Users/Section';
 
-const sections = [
+const baseSections = [
   {
     key: 'preferences',
     name: 'Preferences',
@@ -54,21 +56,45 @@ const sections = [
   },
 ];
 
+const usersSection = {
+  key: 'users',
+  name: 'Users',
+  description: 'Manage users and access control.',
+  icon: UsersRound,
+  component: UsersSection,
+  dataAdd: 'users',
+};
+
 const SettingsDialogue = ({
   isOpen,
   setIsOpen,
+  userRole,
 }: {
   isOpen: boolean;
   setIsOpen: (active: boolean) => void;
+  userRole?: string;
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
+
+  const sections = useMemo(() => {
+    if (userRole === 'admin') {
+      return [...baseSections, usersSection];
+    }
+    return baseSections;
+  }, [userRole]);
+
   const [activeSection, setActiveSection] = useState<string>(sections[0].key);
   const [selectedSection, setSelectedSection] = useState(sections[0]);
 
   useEffect(() => {
-    setSelectedSection(sections.find((s) => s.key === activeSection)!);
-  }, [activeSection]);
+    const found = sections.find((s) => s.key === activeSection);
+    if (found) {
+      setSelectedSection(found);
+    } else {
+      setActiveSection(sections[0].key);
+    }
+  }, [activeSection, sections]);
 
   useEffect(() => {
     if (isOpen) {
@@ -206,6 +232,13 @@ const SettingsDialogue = ({
                       <selectedSection.component
                         fields={config.fields[selectedSection.dataAdd]}
                         values={config.values[selectedSection.dataAdd]}
+                        {...(selectedSection.key === 'models' &&
+                        userRole === 'admin'
+                          ? {
+                              restrictedModels:
+                                config.values.restrictedModels || [],
+                            }
+                          : {})}
                       />
                     </div>
                   </div>

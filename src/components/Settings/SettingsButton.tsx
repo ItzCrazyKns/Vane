@@ -3,7 +3,7 @@ import { useState } from 'react';
 import SettingsDialogue from './SettingsDialogue';
 import { AnimatePresence } from 'framer-motion';
 
-const SettingsButton = () => {
+const SettingsButton = ({ userRole }: { userRole?: string }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
@@ -15,7 +15,13 @@ const SettingsButton = () => {
         <Settings size={19} className="cursor-pointer" />
       </div>
       <AnimatePresence>
-        {isOpen && <SettingsDialogue isOpen={isOpen} setIsOpen={setIsOpen} />}
+        {isOpen && (
+          <SettingsDialogue
+            isOpen={isOpen}
+            setIsOpen={setIsOpen}
+            userRole={userRole}
+          />
+        )}
       </AnimatePresence>
     </>
   );

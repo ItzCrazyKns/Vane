@@ -31,6 +31,7 @@ const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
   const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [authEnabled, setAuthEnabled] = useState(false);
   const [authUser, setAuthUser] = useState<{
     username: string;
     role: string;
@@ -41,8 +42,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
     fetch('/api/auth/me')
       .then((res) => res.json())
       .then((data) => {
-        if (data.authEnabled && data.user) {
-          setAuthUser(data.user);
+        if (data.authEnabled) {
+          setAuthEnabled(true);
+          if (data.user) setAuthUser(data.user);
         }
       })
       .catch((err) => console.warn('Failed to fetch auth status:', err));
@@ -148,7 +150,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
                 </button>
               </div>
             )}
-            <SettingsButton />
+            {(!authEnabled || authUser?.role === 'admin') && (
+              <SettingsButton userRole={authUser?.role} />
+            )}
           </div>
         </div>
       </div>
@@ -172,6 +176,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             <p className="text-xs">{link.label}</p>
           </Link>
         ))}
+        {(!authEnabled || authUser?.role === 'admin') && (
+          <SettingsButton userRole={authUser?.role} />
+        )}
         {authUser && (
           <button
             onClick={handleLogout}

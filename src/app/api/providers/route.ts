@@ -1,4 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
+import { getAuthEnabled, isAdmin } from '@/lib/auth';
+import configManager from '@/lib/config';
 import { NextRequest } from 'next/server';
 
 export const GET = async (req: Request) => {
@@ -7,9 +9,30 @@ export const GET = async (req: Request) => {
 
     const activeProviders = await registry.getActiveProviders();
 
-    const filteredProviders = activeProviders.filter((p) => {
+    let filteredProviders = activeProviders.filter((p) => {
       return !p.chatModels.some((m) => m.key === 'error');
     });
+
+    // Filter out restricted models for non-admin users
+    const authEnabled = getAuthEnabled();
+    const userId = req.headers.get('x-user-id');
+    if (authEnabled && userId) {
+      const admin = await isAdmin(userId);
+      if (!admin) {
+        const restricted = configManager.getRestrictedModels();
+        if (restricted.length > 0) {
+          filteredProviders = filteredProviders.map((p) => ({
+            ...p,
+            chatModels: p.chatModels.filter(
+              (m) =>
+                !restricted.some(
+                  (r) => r.providerId === p.id && r.modelKey === m.key,
+                ),
+            ),
+          }));
+        }
+      }
+    }
 
     return Response.json(
       {
@@ -34,6 +57,18 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: NextRequest) => {
   try {
+    // Admin-only when auth is enabled
+    const authEnabled = getAuthEnabled();
+    if (authEnabled) {
+      const userId = req.headers.get('x-user-id');
+      if (!userId || !(await isAdmin(userId))) {
+        return Response.json(
+          { message: 'Admin access required.' },
+          { status: 403 },
+        );
+      }
+    }
+
     const body = await req.json();
     const { type, name, config } = body;
 

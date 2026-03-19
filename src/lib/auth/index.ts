@@ -76,6 +76,50 @@ export async function getUserById(userId: string) {
   });
 }
 
+export async function getAllUsers() {
+  const allUsers = await db.query.users.findMany();
+  return allUsers.map(({ passwordHash, ...rest }) => rest);
+}
+
+export async function createUser(
+  username: string,
+  password: string,
+  role: 'admin' | 'user',
+) {
+  const passwordHash = await hashPassword(password);
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  db.insert(users)
+    .values({ id, username, passwordHash, role, createdAt: now })
+    .run();
+
+  return { id, username, role, createdAt: now };
+}
+
+export function deleteUserById(userId: string) {
+  db.delete(sessions).where(eq(sessions.userId, userId)).run();
+  db.delete(users).where(eq(users.id, userId)).run();
+}
+
+export async function resetPasswordById(userId: string, newPassword: string) {
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+  const passwordHash = await hashPassword(newPassword);
+  db.update(users)
+    .set({ passwordHash })
+    .where(eq(users.id, userId))
+    .run();
+  db.delete(sessions).where(eq(sessions.userId, userId)).run();
+}
+
+export async function isAdmin(userId: string): Promise<boolean> {
+  const user = await getUserById(userId);
+  return user?.role === 'admin';
+}
+
 /**
  * Verify the request is from an authenticated admin user.
  * Returns the user record on success, or a Response on failure.

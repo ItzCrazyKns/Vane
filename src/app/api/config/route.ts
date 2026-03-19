@@ -2,6 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
+import { getAuthEnabled, requireAdmin } from '@/lib/auth';
 
 type SaveConfigBody = {
   key: string;
@@ -10,6 +11,13 @@ type SaveConfigBody = {
 
 export const GET = async (req: NextRequest) => {
   try {
+    // Admin-only when auth is enabled (config contains provider secrets)
+    const authEnabled = getAuthEnabled();
+    if (authEnabled) {
+      const result = await requireAdmin(req);
+      if ('error' in result) return result.error;
+    }
+
     const values = configManager.getCurrentConfig();
     const fields = configManager.getUIConfigSections();
 
@@ -44,6 +52,12 @@ export const GET = async (req: NextRequest) => {
 
 export const POST = async (req: NextRequest) => {
   try {
+    const authEnabled = getAuthEnabled();
+    if (authEnabled) {
+      const result = await requireAdmin(req);
+      if ('error' in result) return result.error;
+    }
+
     const body: SaveConfigBody = await req.json();
 
     if (!body.key || !body.value) {
@@ -68,7 +82,7 @@ export const POST = async (req: NextRequest) => {
       },
     );
   } catch (err) {
-    console.error('Error in getting config: ', err);
+    console.error('Error updating config: ', err);
     return Response.json(
       { message: 'An error has occurred.' },
       { status: 500 },

@@ -60,6 +60,11 @@ type ConfigModelProvider = {
   hash: string;
 };
 
+type RestrictedModel = {
+  providerId: string;
+  modelKey: string;
+};
+
 type Config = {
   version: number;
   setupComplete: boolean;
@@ -73,6 +78,7 @@ type Config = {
   search: {
     [key: string]: any;
   };
+  restrictedModels: RestrictedModel[];
 };
 
 type EnvMap = {
@@ -98,6 +104,7 @@ type UIConfigSections = {
 export type {
   UIConfigField,
   Config,
+  RestrictedModel,
   EnvMap,
   UIConfigSections,
   SelectUIConfigField,
