@@ -31,26 +31,28 @@ class SearchAgent {
           responseBlocks: [],
         });
       } else {
-        await db
-          .delete(messages)
-          .where(
-            and(eq(messages.chatId, input.chatId), gt(messages.id, exists.id)),
-          )
-          .execute();
-        await db
-          .update(messages)
-          .set({
-            status: 'answering',
-            backendId: session.id,
-            responseBlocks: [],
-          })
-          .where(
-            and(
-              eq(messages.chatId, input.chatId),
-              eq(messages.messageId, input.messageId),
-            ),
-          )
-          .execute();
+        await db.transaction(async (tx) => {
+          await tx
+            .delete(messages)
+            .where(
+              and(eq(messages.chatId, input.chatId), gt(messages.id, exists.id)),
+            )
+            .execute();
+          await tx
+            .update(messages)
+            .set({
+              status: 'answering',
+              backendId: session.id,
+              responseBlocks: [],
+            })
+            .where(
+              and(
+                eq(messages.chatId, input.chatId),
+                eq(messages.messageId, input.messageId),
+              ),
+            )
+            .execute();
+        });
       }
 
       const classification = await classify({

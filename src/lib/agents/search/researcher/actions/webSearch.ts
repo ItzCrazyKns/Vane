@@ -117,13 +117,15 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     let searchResultsEmitted = false;
 
     let results: Chunk[] = [];
+    let failedQueries = 0;
 
     const search = async (q: string) => {
       let res;
       try {
         res = await searchSearxng(q);
       } catch (error) {
-        console.error(`SearXNG search failed for query "${q}":`, error);
+        failedQueries++;
+        console.error('SearXNG search failed:', error instanceof Error ? error.message : error);
         return;
       }
 
@@ -185,6 +187,12 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     };
 
     await Promise.all(input.queries.map(search));
+
+    if (results.length === 0 && failedQueries > 0) {
+      throw new Error(
+        `All ${failedQueries} search queries failed. SearXNG may be unavailable.`,
+      );
+    }
 
     return {
       type: 'search_results',

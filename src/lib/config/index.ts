@@ -234,7 +234,10 @@ class ConfigManager {
       if (envValue) {
         if (f.key === 'searxngURL') {
           try {
-            new URL(envValue);
+            const parsed = new URL(envValue);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+              return;
+            }
           } catch {
             return;
           }

@@ -6,8 +6,14 @@ const MAX_RESULT_CONTEXT_TOKENS = 2500;
 const TRUNCATION_NOTE =
   '\n[Result content truncated to fit the model context window.]';
 
-const escapeAttribute = (value: string) =>
-  value.replace(/[<>]/g, '').replace(/"/g, '&quot;');
+const escapeXmlText = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+const escapeAttribute = (value: string): string =>
+  escapeXmlText(value).replace(/"/g, '&quot;');
 
 export const buildSearchResultsContext = (searchFindings: Chunk[] = []) => {
   let remainingTokens = MAX_TOTAL_SEARCH_CONTEXT_TOKENS;
@@ -21,7 +27,7 @@ export const buildSearchResultsContext = (searchFindings: Chunk[] = []) => {
     const title = escapeAttribute(
       String(finding.metadata?.title || `Result ${index + 1}`),
     );
-    const prefix = `<result index=${index + 1} title="${title}">`;
+    const prefix = `<result index="${index + 1}" title="${title}">`;
     const suffix = `</result>`;
     const wrapperTokens = getTokenCount(prefix) + getTokenCount(suffix);
     const availableContentTokens = Math.min(

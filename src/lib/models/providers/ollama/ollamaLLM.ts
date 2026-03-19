@@ -198,6 +198,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+        num_ctx:
+          input.options?.contextWindowSize ??
+          this.config.options?.contextWindowSize,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         frequency_penalty:
           input.options?.frequencyPenalty ??
@@ -242,6 +245,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
           input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+        num_ctx:
+          input.options?.contextWindowSize ??
+          this.config.options?.contextWindowSize,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         frequency_penalty:
           input.options?.frequencyPenalty ??
@@ -263,8 +269,8 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       try {
         yield parse(cleanedObj) as T;
       } catch (err) {
-        // Partial JSON may not be parseable yet, yield empty object
-        yield {} as T;
+        // Partial JSON may not be parseable yet, skip
+        continue;
       }
     }
   }

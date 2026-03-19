@@ -39,24 +39,30 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   convertToOpenAIMessages(messages: Message[]): ChatCompletionMessageParam[] {
-    return messages.map((msg) => {
+    return messages.map((msg): ChatCompletionMessageParam | null => {
       if (msg.role === 'tool') {
+        if (!msg.id) {
+          return null; // Skip tool messages without a tool_call_id
+        }
         return {
           role: 'tool',
-          tool_call_id: msg.id || '',
+          tool_call_id: msg.id,
           content: msg.content || '',
         } as ChatCompletionToolMessageParam;
       } else if (msg.role === 'assistant') {
+        const validToolCalls = msg.tool_calls?.filter(
+          (tc) => tc.id && tc.name,
+        );
         return {
           role: 'assistant',
           content: msg.content || '',
-          ...(msg.tool_calls &&
-            msg.tool_calls.length > 0 && {
-              tool_calls: msg.tool_calls?.map((tc) => ({
-                id: tc.id || '',
+          ...(validToolCalls &&
+            validToolCalls.length > 0 && {
+              tool_calls: validToolCalls.map((tc) => ({
+                id: tc.id,
                 type: 'function',
                 function: {
-                  name: tc.name || '',
+                  name: tc.name,
                   arguments:
                     typeof tc.arguments === 'string'
                       ? tc.arguments
@@ -68,7 +74,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       }
 
       return msg;
-    });
+    }).filter((msg): msg is ChatCompletionMessageParam => msg !== null);
   }
 
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
@@ -177,7 +183,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                   id: tc.id || '',
                   arguments: tc.function?.arguments || '',
                 };
-                recievedToolCalls.push(call);
+                recievedToolCalls[tc.index] = call;
                 const argsToParse = call.arguments || '{}';
                 parsedToolCalls.push({ ...call, arguments: parse(argsToParse) });
               } else {
@@ -190,7 +196,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                 });
               }
             } catch (parseErr) {
-              console.error('Error parsing tool call arguments:', parseErr, 'tc:', JSON.stringify(tc));
+              console.error('Error parsing tool call arguments:', parseErr instanceof Error ? parseErr.message : parseErr, 'tool:', tc.function?.name, 'index:', tc.index);
               parsedToolCalls.push({
                 name: tc.function?.name || '',
                 id: tc.id || recievedToolCalls[tc.index]?.id || '',
@@ -293,6 +299,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
+      response_format: { type: 'json_object' },
       stream: true,
     });
 
@@ -307,8 +314,8 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         try {
           yield parse(cleanedObj) as T;
         } catch (err) {
-          // Partial JSON may not be parseable yet, yield empty object
-          yield {} as T;
+          // Partial JSON may not be parseable yet, skip
+          continue;
         }
       }
     }

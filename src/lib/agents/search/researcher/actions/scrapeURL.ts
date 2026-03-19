@@ -72,7 +72,8 @@ const isBlockedIPv6 = (address: string): boolean => {
     normalized.startsWith('fe8') ||
     normalized.startsWith('fe9') ||
     normalized.startsWith('fea') ||
-    normalized.startsWith('feb')
+    normalized.startsWith('feb') ||
+    normalized.startsWith('ff') // multicast
   );
 };
 
@@ -140,6 +141,10 @@ const assertSafeScrapeURL = async (rawURL: string): Promise<URL> => {
     ) {
       throw error;
     }
+    // Fail closed: if DNS resolution fails, refuse the scrape
+    throw new Error(
+      `DNS lookup failed for ${hostname}, refusing to scrape: ${(error as Error).message}`,
+    );
   }
 
   return parsed;

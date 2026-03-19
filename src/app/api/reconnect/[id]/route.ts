@@ -23,11 +23,13 @@ export const POST = async (
     const safeWrite = (payload: Record<string, unknown>) => {
       if (streamClosed) return;
 
-      try {
-        writer.write(encoder.encode(JSON.stringify(payload) + '\n'));
-      } catch (error) {
+      writer.write(encoder.encode(JSON.stringify(payload) + '\n')).catch((error) => {
         console.warn('Failed to write reconnect stream payload:', error);
-      }
+        streamClosed = true;
+        if (keepAliveInterval) {
+          clearInterval(keepAliveInterval);
+        }
+      });
     };
 
     const safeClose = () => {
@@ -39,11 +41,9 @@ export const POST = async (
         clearInterval(keepAliveInterval);
       }
 
-      try {
-        writer.close();
-      } catch (error) {
+      writer.close().catch((error) => {
         console.warn('Failed to close reconnect stream:', error);
-      }
+      });
     };
 
     keepAliveInterval = setInterval(() => {
@@ -52,7 +52,9 @@ export const POST = async (
 
     safeWrite({ type: 'keepAlive' });
 
-    const disconnect = session.subscribe((event, data) => {
+    let disconnect: (() => void) | undefined;
+
+    disconnect = session.subscribe((event, data) => {
       if (event === 'data') {
         if (data.type === 'block') {
           safeWrite({
@@ -75,14 +77,22 @@ export const POST = async (
           type: 'messageEnd',
         });
         safeClose();
-        disconnect();
+        if (disconnect) {
+          disconnect();
+        } else {
+          queueMicrotask(() => disconnect?.());
+        }
       } else if (event === 'error') {
         safeWrite({
           type: 'error',
           data: data.data,
         });
         safeClose();
-        disconnect();
+        if (disconnect) {
+          disconnect();
+        } else {
+          queueMicrotask(() => disconnect?.());
+        }
       }
     });
 

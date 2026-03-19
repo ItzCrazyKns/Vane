@@ -29,36 +29,51 @@ class VeniceProvider extends BaseModelProvider<VeniceConfig> {
   }
 
   async getDefaultModels(): Promise<ModelList> {
-    const res = await fetch('https://api.venice.ai/api/v1/models', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.config.apiKey}`,
-      },
-    });
+    try {
+      const res = await fetch('https://api.venice.ai/api/v1/models', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+      });
 
-    const data = await res.json();
+      if (!res.ok) {
+        console.error(`Venice API returned status ${res.status}`);
+        return { embedding: [], chat: [] };
+      }
 
-    const defaultChatModels: Model[] = [];
+      const data = await res.json();
+      const defaultChatModels: Model[] = [];
 
-    data.data.forEach((m: any) => {
-      if (m.type === 'text' || !m.type) {
-        defaultChatModels.push({
-          key: m.id,
-          name: m.id,
+      if (data?.data && Array.isArray(data.data)) {
+        data.data.forEach((m: any) => {
+          if (m.type === 'text' || !m.type) {
+            defaultChatModels.push({
+              key: m.id,
+              name: m.id,
+            });
+          }
         });
       }
-    });
 
-    return {
-      embedding: [],
-      chat: defaultChatModels,
-    };
+      return {
+        embedding: [],
+        chat: defaultChatModels,
+      };
+    } catch (error) {
+      console.error('Failed to fetch Venice models:', error);
+      return { embedding: [], chat: [] };
+    }
   }
 
   async getModelList(): Promise<ModelList> {
     const defaultModels = await this.getDefaultModels();
-    const configProvider = getConfiguredModelProviderById(this.id)!;
+    const configProvider = getConfiguredModelProviderById(this.id);
+
+    if (!configProvider) {
+      return defaultModels;
+    }
 
     return {
       embedding: [

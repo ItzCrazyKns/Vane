@@ -49,7 +49,7 @@ const searchVideos = async (
       engines: ['youtube'],
     });
   } catch (error) {
-    console.error(`Video search failed for query "${res.query}":`, error);
+    console.error('Video search failed:', error instanceof Error ? error.message : error);
     return [];
   }
 

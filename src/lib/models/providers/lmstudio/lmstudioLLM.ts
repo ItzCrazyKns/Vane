@@ -23,15 +23,20 @@ class LMStudioLLM extends OpenAILLM {
    * structured output feature for compatibility with LM Studio.
    */
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
+    if (!input.messages || input.messages.length === 0) {
+      throw new Error('LM Studio generateObject requires at least one message');
+    }
+
     // Convert schema to JSON schema for the prompt
     const jsonSchema = z.toJSONSchema(input.schema);
+    const lastMessage = input.messages[input.messages.length - 1];
 
     // Build messages with JSON instruction
     const messagesWithJsonInstruction = [
       ...input.messages.slice(0, -1), // All messages except the last
       {
-        ...input.messages[input.messages.length - 1],
-        content: `${input.messages[input.messages.length - 1].content}\n\nRespond with a valid JSON object matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
+        ...lastMessage,
+        content: `${lastMessage.content}\n\nRespond with a valid JSON object matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
       },
     ];
 
@@ -88,6 +93,7 @@ class LMStudioLLM extends OpenAILLM {
     jsonSchema: object,
   ): Promise<T> {
     // Add stronger JSON instruction when JSON mode isn't available
+    const lastMessage = input.messages[input.messages.length - 1];
     const messagesWithJsonInstruction = [
       {
         role: 'system' as const,
@@ -95,8 +101,8 @@ class LMStudioLLM extends OpenAILLM {
       },
       ...input.messages.slice(0, -1),
       {
-        ...input.messages[input.messages.length - 1],
-        content: `${input.messages[input.messages.length - 1].content}\n\nRespond with ONLY a valid JSON object (no markdown code blocks) matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
+        ...lastMessage,
+        content: `${lastMessage.content}\n\nRespond with ONLY a valid JSON object (no markdown code blocks) matching this schema:\n${JSON.stringify(jsonSchema, null, 2)}`,
       },
     ];
 

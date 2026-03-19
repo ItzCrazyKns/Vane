@@ -162,11 +162,13 @@ export const POST = async (req: Request) => {
     const safeWrite = (payload: Record<string, unknown>) => {
       if (streamClosed) return;
 
-      try {
-        writer.write(encoder.encode(JSON.stringify(payload) + '\n'));
-      } catch (error) {
+      writer.write(encoder.encode(JSON.stringify(payload) + '\n')).catch((error) => {
         console.warn('Failed to write chat stream payload:', error);
-      }
+        streamClosed = true;
+        if (keepAliveInterval) {
+          clearInterval(keepAliveInterval);
+        }
+      });
     };
 
     const safeClose = () => {
@@ -178,11 +180,9 @@ export const POST = async (req: Request) => {
         clearInterval(keepAliveInterval);
       }
 
-      try {
-        writer.close();
-      } catch (error) {
+      writer.close().catch((error) => {
         console.warn('Failed to close chat stream:', error);
-      }
+      });
     };
 
     keepAliveInterval = setInterval(() => {
