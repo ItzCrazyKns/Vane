@@ -22,9 +22,12 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Pass userId to downstream route handlers via header
+  // Pass userId and sessionId to downstream route handlers via headers.
+  // Middleware validates cookie signature + expiry (fast, no DB).
+  // API routes that need revocation support check sessionId against the DB.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-user-id', payload.userId);
+  requestHeaders.set('x-session-id', payload.sessionId);
 
   return NextResponse.next({
     request: {

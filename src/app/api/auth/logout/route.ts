@@ -1,4 +1,4 @@
-import { deleteSession, getAuthEnabled, getSession } from '@/lib/auth';
+import { deleteSession, getAuthEnabled } from '@/lib/auth';
 import { verifySessionCookie } from '@/lib/auth/cookie';
 
 export const POST = async (req: Request) => {

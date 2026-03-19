@@ -75,3 +75,45 @@ export async function getUserById(userId: string) {
     where: eq(users.id, userId),
   });
 }
+
+/**
+ * Verify the request is from an authenticated admin user.
+ * Returns the user record on success, or a Response on failure.
+ */
+export async function requireAdmin(
+  req: Request,
+): Promise<
+  | { user: { id: string; username: string; role: string; createdAt: string } }
+  | { error: Response }
+> {
+  if (!getAuthEnabled()) {
+    return {
+      error: Response.json(
+        { error: 'Authentication is not enabled' },
+        { status: 403 },
+      ),
+    };
+  }
+
+  const userId = req.headers.get('x-user-id');
+  if (!userId) {
+    return {
+      error: Response.json({ error: 'Not authenticated' }, { status: 401 }),
+    };
+  }
+
+  const user = await getUserById(userId);
+  if (!user) {
+    return {
+      error: Response.json({ error: 'User not found' }, { status: 401 }),
+    };
+  }
+
+  if (user.role !== 'admin') {
+    return {
+      error: Response.json({ error: 'Admin access required' }, { status: 403 }),
+    };
+  }
+
+  return { user };
+}

@@ -269,14 +269,14 @@ fs.readdirSync(migrationsFolder)
         db.exec('DROP TABLE messages;');
         db.exec('ALTER TABLE messages_new RENAME TO messages;');
       } else if (migrationName === '0003') {
-        // Auth tables migration — execute DDL then backfill userId
+        // Auth tables migration — execute DDL only.
+        // Existing chats keep userId=NULL (visible to all users when auth is off,
+        // assigned to first admin via CLI if needed when auth is enabled).
         statements.forEach((stmt) => {
           if (stmt.trim()) {
             db.exec(stmt);
           }
         });
-        // Assign existing chats to 'default' so they're visible when auth is enabled
-        db.exec(`UPDATE chats SET userId = 'default' WHERE userId IS NULL`);
       } else {
         // Execute each statement separately
         statements.forEach((stmt) => {

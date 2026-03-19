@@ -31,7 +31,8 @@ export default function LoginPage() {
 
       router.push('/');
       router.refresh();
-    } catch {
+    } catch (err) {
+      console.error('Login request failed:', err);
       setError('Failed to connect to server');
     } finally {
       setLoading(false);

@@ -45,11 +45,16 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
           setAuthUser(data.user);
         }
       })
-      .catch(() => {});
+      .catch((err) => console.warn('Failed to fetch auth status:', err));
   }, []);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.warn('Logout request failed:', err);
+    }
+    setAuthUser(null);
     router.push('/login');
     router.refresh();
   };
@@ -167,6 +172,15 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             <p className="text-xs">{link.label}</p>
           </Link>
         ))}
+        {authUser && (
+          <button
+            onClick={handleLogout}
+            className="relative flex flex-col items-center space-y-1 text-center w-full text-black dark:text-white/70"
+          >
+            <LogOut />
+            <p className="text-xs">Logout</p>
+          </button>
+        )}
       </div>
 
       <Layout>{children}</Layout>

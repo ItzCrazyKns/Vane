@@ -101,8 +101,11 @@ async function main() {
         process.exit(1);
       }
 
-      db.prepare('DELETE FROM sessions WHERE userId = ?').run(user.id);
-      db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+      const removeUser = db.transaction(() => {
+        db.prepare('DELETE FROM sessions WHERE userId = ?').run(user.id);
+        db.prepare('DELETE FROM users WHERE id = ?').run(user.id);
+      });
+      removeUser();
       console.log(`User "${flags.username}" removed.`);
       break;
     }
@@ -123,13 +126,15 @@ async function main() {
       }
 
       const newHash = await bcrypt.hash(flags.password, 10);
-      db.prepare('UPDATE users SET passwordHash = ? WHERE id = ?').run(
-        newHash,
-        user.id,
-      );
-
-      // Invalidate existing sessions
-      db.prepare('DELETE FROM sessions WHERE userId = ?').run(user.id);
+      const resetPw = db.transaction(() => {
+        db.prepare('UPDATE users SET passwordHash = ? WHERE id = ?').run(
+          newHash,
+          user.id,
+        );
+        // Invalidate existing sessions
+        db.prepare('DELETE FROM sessions WHERE userId = ?').run(user.id);
+      });
+      resetPw();
       console.log(
         `Password reset for "${flags.username}". All sessions invalidated.`,
       );

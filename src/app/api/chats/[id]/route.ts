@@ -21,7 +21,7 @@ export const GET = async (
     // Ownership check when auth is enabled
     const authEnabled = getAuthEnabled();
     const userId = req.headers.get('x-user-id');
-    if (authEnabled && userId && chatExists.userId !== userId) {
+    if (authEnabled && chatExists.userId !== userId) {
       return Response.json({ message: 'Chat not found' }, { status: 404 });
     }
 
@@ -63,7 +63,7 @@ export const DELETE = async (
     // Ownership check when auth is enabled
     const authEnabled = getAuthEnabled();
     const userId = req.headers.get('x-user-id');
-    if (authEnabled && userId && chatExists.userId !== userId) {
+    if (authEnabled && chatExists.userId !== userId) {
       return Response.json({ message: 'Chat not found' }, { status: 404 });
     }
 
