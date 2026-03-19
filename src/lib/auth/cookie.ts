@@ -1,0 +1,117 @@
+/**
+ * HMAC-signed session cookie utilities.
+ *
+ * Uses Web Crypto API so it works in both Node.js and Edge Runtime
+ * (Next.js middleware runs in Edge, which can't use better-sqlite3).
+ *
+ * Cookie format: base64(payload).signature
+ * Payload: { userId, sessionId, exp }
+ */
+
+interface SessionPayload {
+  userId: string;
+  sessionId: string;
+  exp: number; // Unix timestamp (ms)
+}
+
+function getSecret(): string {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new Error(
+      'SESSION_SECRET environment variable is required when AUTH_ENABLED=true',
+    );
+  }
+  return secret;
+}
+
+async function getKey(): Promise<CryptoKey> {
+  const secret = getSecret();
+  const enc = new TextEncoder();
+  return crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify'],
+  );
+}
+
+function toBase64(str: string): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(str).toString('base64url');
+  }
+  // Edge Runtime fallback
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (const b of bytes) {
+    binary += String.fromCharCode(b);
+  }
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function fromBase64(b64: string): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(b64, 'base64url').toString('utf-8');
+  }
+  // Edge Runtime fallback
+  const padded = b64.replace(/-/g, '+').replace(/_/g, '/');
+  const binary = atob(padded);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+function bufToHex(buf: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+export async function signSessionCookie(
+  payload: SessionPayload,
+): Promise<string> {
+  const key = await getKey();
+  const data = toBase64(JSON.stringify(payload));
+  const sig = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(data),
+  );
+  return `${data}.${bufToHex(sig)}`;
+}
+
+export async function verifySessionCookie(
+  cookie: string,
+): Promise<SessionPayload | null> {
+  try {
+    const [data, sig] = cookie.split('.');
+    if (!data || !sig) return null;
+
+    const key = await getKey();
+    const sigBytes = new Uint8Array(
+      sig.match(/.{2}/g)!.map((h) => parseInt(h, 16)),
+    );
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      sigBytes,
+      new TextEncoder().encode(data),
+    );
+
+    if (!valid) return null;
+
+    const payload: SessionPayload = JSON.parse(fromBase64(data));
+
+    // Check expiry
+    if (payload.exp < Date.now()) return null;
+
+    return payload;
+  } catch {
+    return null;
+  }
+}

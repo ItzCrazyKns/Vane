@@ -9,10 +9,12 @@ import {
   Settings,
   Plus,
   ArrowLeft,
+  LogOut,
+  User,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useSelectedLayoutSegments } from 'next/navigation';
-import React, { useState, type ReactNode } from 'react';
+import { useSelectedLayoutSegments, useRouter } from 'next/navigation';
+import React, { useState, useEffect, type ReactNode } from 'react';
 import Layout from './Layout';
 import {
   Description,
@@ -29,6 +31,28 @@ const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
   const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [authUser, setAuthUser] = useState<{
+    username: string;
+    role: string;
+  } | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authEnabled && data.user) {
+          setAuthUser(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    router.push('/login');
+    router.refresh();
+  };
 
   const navLinks = [
     {
@@ -101,7 +125,26 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             ))}
           </VerticalIconContainer>
 
-          <SettingsButton />
+          <div className="flex flex-col items-center gap-2">
+            {authUser && (
+              <div className="flex flex-col items-center gap-1">
+                <div className="p-2 rounded-full bg-light-200 dark:bg-dark-200">
+                  <User size={16} className="text-black/70 dark:text-white/70" />
+                </div>
+                <p className="text-[10px] text-black/60 dark:text-white/60 truncate max-w-[60px]">
+                  {authUser.username}
+                </p>
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 rounded-full hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200"
+                  title="Sign out"
+                >
+                  <LogOut size={16} className="text-black/60 dark:text-white/60" />
+                </button>
+              </div>
+            )}
+            <SettingsButton />
+          </div>
         </div>
       </div>
 
