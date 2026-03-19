@@ -1,6 +1,7 @@
 import db from '@/lib/db';
 import { chats, messages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { getAuthEnabled } from '@/lib/auth';
 
 export const GET = async (
   req: Request,
@@ -14,6 +15,13 @@ export const GET = async (
     });
 
     if (!chatExists) {
+      return Response.json({ message: 'Chat not found' }, { status: 404 });
+    }
+
+    // Ownership check when auth is enabled
+    const authEnabled = getAuthEnabled();
+    const userId = req.headers.get('x-user-id');
+    if (authEnabled && chatExists.userId !== userId) {
       return Response.json({ message: 'Chat not found' }, { status: 404 });
     }
 
@@ -49,6 +57,13 @@ export const DELETE = async (
     });
 
     if (!chatExists) {
+      return Response.json({ message: 'Chat not found' }, { status: 404 });
+    }
+
+    // Ownership check when auth is enabled
+    const authEnabled = getAuthEnabled();
+    const userId = req.headers.get('x-user-id');
+    if (authEnabled && chatExists.userId !== userId) {
       return Response.json({ message: 'Chat not found' }, { status: 404 });
     }
 

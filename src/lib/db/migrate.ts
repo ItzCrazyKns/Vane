@@ -269,7 +269,9 @@ fs.readdirSync(migrationsFolder)
         db.exec('DROP TABLE messages;');
         db.exec('ALTER TABLE messages_new RENAME TO messages;');
       } else {
-        // Execute each statement separately
+        // Execute each statement separately.
+        // Note: Migration 0003 (auth tables) is DDL-only. Existing chats keep
+        // userId=NULL (visible to all users when auth is off).
         statements.forEach((stmt) => {
           if (stmt.trim()) {
             db.exec(stmt);

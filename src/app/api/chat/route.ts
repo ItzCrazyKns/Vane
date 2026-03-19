@@ -73,6 +73,7 @@ const ensureChatExists = async (input: {
   sources: SearchSources[];
   query: string;
   fileIds: string[];
+  userId?: string | null;
 }) => {
   try {
     const exists = await db.query.chats
@@ -87,6 +88,7 @@ const ensureChatExists = async (input: {
         createdAt: new Date().toISOString(),
         sources: input.sources,
         title: input.query,
+        userId: input.userId || null,
         files: input.fileIds.map((id) => {
           return {
             fileId: id,
@@ -242,6 +244,7 @@ export const POST = async (req: Request) => {
       sources: body.sources as SearchSources[],
       fileIds: body.files,
       query: body.message.content,
+      userId: req.headers.get('x-user-id'),
     });
 
     req.signal.addEventListener('abort', () => {
