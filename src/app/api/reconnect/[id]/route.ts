@@ -4,6 +4,9 @@ export const POST = async (
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) => {
+  let safeClose: (() => void) | undefined;
+  let disconnect: (() => void) | undefined;
+
   try {
     const { id } = await params;
 
@@ -16,65 +19,90 @@ export const POST = async (
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
+    const keepAliveMs = 15_000;
+    let streamClosed = false;
+    let keepAliveInterval: ReturnType<typeof setInterval> | undefined;
 
-    const disconnect = session.subscribe((event, data) => {
+    const safeWrite = (payload: Record<string, unknown>) => {
+      if (streamClosed) return;
+
+      writer.write(encoder.encode(JSON.stringify(payload) + '\n')).catch((error) => {
+        console.warn('Failed to write reconnect stream payload:', error);
+        streamClosed = true;
+        if (keepAliveInterval) {
+          clearInterval(keepAliveInterval);
+        }
+      });
+    };
+
+    safeClose = () => {
+      if (streamClosed) return;
+
+      streamClosed = true;
+
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+      }
+
+      writer.close().catch((error) => {
+        console.warn('Failed to close reconnect stream:', error);
+      });
+    };
+
+    disconnect = session.subscribe((event, data) => {
       if (event === 'data') {
         if (data.type === 'block') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'block',
-                block: data.block,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'block',
+            block: data.block,
+          });
         } else if (data.type === 'updateBlock') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'updateBlock',
-                blockId: data.blockId,
-                patch: data.patch,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'updateBlock',
+            blockId: data.blockId,
+            patch: data.patch,
+          });
         } else if (data.type === 'researchComplete') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'researchComplete',
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'researchComplete',
+          });
         }
       } else if (event === 'end') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'messageEnd',
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        disconnect();
+        safeWrite({
+          type: 'messageEnd',
+        });
+        safeClose?.();
+        if (disconnect) {
+          disconnect();
+        } else {
+          queueMicrotask(() => disconnect?.());
+        }
       } else if (event === 'error') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'error',
-              data: data.data,
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        disconnect();
+        safeWrite({
+          type: 'error',
+          data: data.data,
+        });
+        safeClose?.();
+        if (disconnect) {
+          disconnect();
+        } else {
+          queueMicrotask(() => disconnect?.());
+        }
       }
     });
 
     req.signal.addEventListener('abort', () => {
-      disconnect();
-      writer.close();
+      disconnect?.();
+      safeClose?.();
     });
+
+    // Start keepalives only after setup succeeds
+    if (!streamClosed) {
+      keepAliveInterval = setInterval(() => {
+        safeWrite({ type: 'keepAlive' });
+      }, keepAliveMs);
+      safeWrite({ type: 'keepAlive' });
+    }
 
     return new Response(responseStream.readable, {
       headers: {
@@ -84,6 +112,8 @@ export const POST = async (
       },
     });
   } catch (err) {
+    disconnect?.();
+    safeClose?.();
     console.error('Error in reconnecting to session stream: ', err);
     return Response.json(
       { message: 'An error has occurred.' },

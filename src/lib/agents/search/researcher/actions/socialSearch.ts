@@ -30,7 +30,7 @@ const socialSearchAction: ResearchAction<typeof schema> = {
     config.classification.classification.skipSearch === false &&
     config.classification.classification.discussionSearch === true,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    input.queries = (input.queries ?? []).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
@@ -58,9 +58,17 @@ const socialSearchAction: ResearchAction<typeof schema> = {
     let results: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
-        engines: ['reddit'],
-      });
+      let res;
+      try {
+        res = await searchSearxng(q, {
+          engines: ['reddit'],
+        });
+      } catch (error) {
+        console.error(`Social search failed for query "${q}":`, error);
+        return;
+      }
+
+      if (!res.results || res.results.length === 0) return;
 
       const resultChunks: Chunk[] = res.results.map((r) => ({
         content: r.content || r.title,

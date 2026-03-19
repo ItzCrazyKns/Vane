@@ -43,19 +43,31 @@ const searchVideos = async (
     schema: schema,
   });
 
-  const searchRes = await searchSearxng(res.query, {
-    engines: ['youtube'],
-  });
+  let searchRes;
+  try {
+    searchRes = await searchSearxng(res.query, {
+      engines: ['youtube'],
+    });
+  } catch (error) {
+    console.error('Video search failed:', error instanceof Error ? error.message : error);
+    return [];
+  }
 
   const videos: VideoSearchResult[] = [];
 
   searchRes.results.forEach((result) => {
     if (result.thumbnail && result.url && result.title && result.iframe_src) {
+      // Normalize embed URL - some SearXNG instances return
+      // youtube-nocookie.com which doesn't resolve on all networks
+      const embedUrl = result.iframe_src.replace(
+        'www.youtube-nocookie.com/embed',
+        'www.youtube.com/embed',
+      );
       videos.push({
         img_src: result.thumbnail,
         url: result.url,
         title: result.title,
-        iframe_src: result.iframe_src,
+        iframe_src: embedUrl,
       });
     }
   });

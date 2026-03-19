@@ -1,13 +1,11 @@
 import OpenAI from 'openai';
 import BaseLLM from '../../base/llm';
-import { zodTextFormat, zodResponseFormat } from 'openai/helpers/zod';
 import {
   GenerateObjectInput,
   GenerateOptions,
   GenerateTextInput,
   GenerateTextOutput,
   StreamTextOutput,
-  ToolCall,
 } from '../../types';
 import { parse } from 'partial-json';
 import z from 'zod';
@@ -19,6 +17,7 @@ import {
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
+import { safeParseJson, stripMarkdownFences } from '@/lib/utils/parseJson';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -40,25 +39,34 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   convertToOpenAIMessages(messages: Message[]): ChatCompletionMessageParam[] {
-    return messages.map((msg) => {
+    return messages.map((msg): ChatCompletionMessageParam | null => {
       if (msg.role === 'tool') {
+        if (!msg.id) {
+          return null; // Skip tool messages without a tool_call_id
+        }
         return {
           role: 'tool',
           tool_call_id: msg.id,
-          content: msg.content,
+          content: msg.content || '',
         } as ChatCompletionToolMessageParam;
       } else if (msg.role === 'assistant') {
+        const validToolCalls = msg.tool_calls?.filter(
+          (tc) => tc.id && tc.name,
+        );
         return {
           role: 'assistant',
-          content: msg.content,
-          ...(msg.tool_calls &&
-            msg.tool_calls.length > 0 && {
-              tool_calls: msg.tool_calls?.map((tc) => ({
+          content: msg.content || '',
+          ...(validToolCalls &&
+            validToolCalls.length > 0 && {
+              tool_calls: validToolCalls.map((tc) => ({
                 id: tc.id,
                 type: 'function',
                 function: {
                   name: tc.name,
-                  arguments: JSON.stringify(tc.arguments),
+                  arguments:
+                    typeof tc.arguments === 'string'
+                      ? tc.arguments
+                      : JSON.stringify(tc.arguments || {}),
                 },
               })),
             }),
@@ -66,7 +74,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       }
 
       return msg;
-    });
+    }).filter((msg): msg is ChatCompletionMessageParam => msg !== null);
   }
 
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
@@ -102,15 +110,15 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       return {
-        content: response.choices[0].message.content!,
+        content: response.choices[0].message?.content ?? '',
         toolCalls:
-          response.choices[0].message.tool_calls
+          response.choices[0].message?.tool_calls
             ?.map((tc) => {
               if (tc.type === 'function') {
                 return {
                   name: tc.function.name,
                   id: tc.id,
-                  arguments: JSON.parse(tc.function.arguments),
+                  arguments: safeParseJson<Record<string, any>>(tc.function.arguments) ?? {},
                 };
               }
             })
@@ -164,27 +172,45 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     for await (const chunk of stream) {
       if (chunk.choices && chunk.choices.length > 0) {
         const toolCalls = chunk.choices[0].delta.tool_calls;
-        yield {
-          contentChunk: chunk.choices[0].delta.content || '',
-          toolCallChunk:
-            toolCalls?.map((tc) => {
+        let parsedToolCalls: any[] = [];
+
+        if (toolCalls) {
+          for (const tc of toolCalls) {
+            try {
               if (!recievedToolCalls[tc.index]) {
-                const call = {
-                  name: tc.function?.name!,
-                  id: tc.id!,
+                recievedToolCalls[tc.index] = {
+                  name: tc.function?.name || '',
+                  id: tc.id || '',
                   arguments: tc.function?.arguments || '',
                 };
-                recievedToolCalls.push(call);
-                return { ...call, arguments: parse(call.arguments || '{}') };
               } else {
                 const existingCall = recievedToolCalls[tc.index];
+                if (tc.function?.name) existingCall.name = tc.function.name;
+                if (tc.id) existingCall.id = tc.id;
                 existingCall.arguments += tc.function?.arguments || '';
-                return {
-                  ...existingCall,
-                  arguments: parse(existingCall.arguments),
-                };
               }
-            }) || [],
+
+              // Only emit parsed tool call when arguments parse successfully
+              const current = recievedToolCalls[tc.index];
+              if (current.arguments) {
+                try {
+                  parsedToolCalls.push({
+                    ...current,
+                    arguments: parse(current.arguments),
+                  });
+                } catch {
+                  // Arguments still incomplete — will retry on next chunk
+                }
+              }
+            } catch (parseErr) {
+              console.error('Error parsing tool call:', parseErr instanceof Error ? parseErr.message : parseErr, 'tool:', tc.function?.name, 'index:', tc.index);
+            }
+          }
+        }
+
+        yield {
+          contentChunk: chunk.choices[0].delta.content || '',
+          toolCallChunk: parsedToolCalls,
           done: chunk.choices[0].finish_reason !== null,
           additionalInfo: {
             finishReason: chunk.choices[0].finish_reason,
@@ -195,8 +221,23 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
-      messages: this.convertToOpenAIMessages(input.messages),
+    // Use chat.completions.create instead of chat.completions.parse
+    // for compatibility with OpenAI-compatible providers (OpenRouter, etc.)
+    // that don't support the /chat/completions/parse endpoint.
+    const schemaInstruction = JSON.stringify(
+      z.toJSONSchema(input.schema),
+      null,
+      2,
+    );
+
+    const response = await this.openAIClient.chat.completions.create({
+      messages: [
+        {
+          role: 'system',
+          content: `You must respond with valid JSON only. No markdown code blocks, no explanatory text.\n\nReturn an object matching this JSON Schema:\n${schemaInstruction}`,
+        },
+        ...this.convertToOpenAIMessages(input.messages),
+      ],
       model: this.config.model,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
@@ -209,18 +250,27 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      response_format: zodResponseFormat(input.schema, 'object'),
+      response_format: { type: 'json_object' },
     });
 
     if (response.choices && response.choices.length > 0) {
       try {
-        return input.schema.parse(
-          JSON.parse(
-            repairJson(response.choices[0].message.content!, {
-              extractJson: true,
-            }) as string,
-          ),
-        ) as T;
+        const content = stripMarkdownFences(
+          response.choices[0].message.content || '',
+        );
+        if (!content.trim()) {
+          throw new Error('Empty response from model');
+        }
+        let repairedJson: string;
+        try {
+          repairedJson = repairJson(content, {
+            extractJson: true,
+          }) as string;
+        } catch (repairErr) {
+          console.error('repairJson failed', { contentLength: content.length, error: repairErr instanceof Error ? repairErr.message : String(repairErr) });
+          throw new Error(`Failed to repair JSON: ${repairErr}`);
+        }
+        return input.schema.parse(JSON.parse(repairedJson)) as T;
       } catch (err) {
         throw new Error(`Error parsing response from OpenAI: ${err}`);
       }
@@ -230,11 +280,26 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async *streamObject<T>(input: GenerateObjectInput): AsyncGenerator<T> {
-    let recievedObj: string = '';
+    let receivedObj: string = '';
 
-    const stream = this.openAIClient.responses.stream({
+    // Use chat.completions.create with streaming instead of responses.stream
+    // for compatibility with OpenAI-compatible providers (OpenRouter, etc.)
+    // that don't support the OpenAI Responses API.
+    const schemaInstruction = JSON.stringify(
+      z.toJSONSchema(input.schema),
+      null,
+      2,
+    );
+
+    const stream = await this.openAIClient.chat.completions.create({
       model: this.config.model,
-      input: input.messages,
+      messages: [
+        {
+          role: 'system',
+          content: `You must respond with valid JSON only. No markdown code blocks, no explanatory text.\n\nReturn an object matching this JSON Schema:\n${schemaInstruction}`,
+        },
+        ...this.convertToOpenAIMessages(input.messages),
+      ],
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
       top_p: input.options?.topP ?? this.config.options?.topP,
@@ -246,26 +311,23 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      text: {
-        format: zodTextFormat(input.schema, 'object'),
-      },
+      response_format: { type: 'json_object' },
+      stream: true,
     });
 
     for await (const chunk of stream) {
-      if (chunk.type === 'response.output_text.delta' && chunk.delta) {
-        recievedObj += chunk.delta;
+      if (chunk.choices && chunk.choices.length > 0) {
+        const delta = chunk.choices[0].delta.content || '';
+        receivedObj += delta;
+
+        // Strip markdown fences if present
+        const cleanedObj = stripMarkdownFences(receivedObj);
 
         try {
-          yield parse(recievedObj) as T;
+          yield parse(cleanedObj) as T;
         } catch (err) {
-          console.log('Error parsing partial object from OpenAI:', err);
-          yield {} as T;
-        }
-      } else if (chunk.type === 'response.output_text.done' && chunk.text) {
-        try {
-          yield parse(chunk.text) as T;
-        } catch (err) {
-          throw new Error(`Error parsing response from OpenAI: ${err}`);
+          // Partial JSON may not be parseable yet, skip
+          continue;
         }
       }
     }

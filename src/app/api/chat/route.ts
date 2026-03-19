@@ -101,6 +101,9 @@ const ensureChatExists = async (input: {
 };
 
 export const POST = async (req: Request) => {
+  let safeClose: (() => void) | undefined;
+  let disconnect: (() => void) | undefined;
+
   try {
     const reqBody = (await req.json()) as Body;
 
@@ -155,57 +158,66 @@ export const POST = async (req: Request) => {
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
+    const keepAliveMs = 15_000;
+    let streamClosed = false;
+    let keepAliveInterval: ReturnType<typeof setInterval> | undefined;
 
-    const disconnect = session.subscribe((event: string, data: any) => {
+    const safeWrite = (payload: Record<string, unknown>) => {
+      if (streamClosed) return;
+
+      writer.write(encoder.encode(JSON.stringify(payload) + '\n')).catch((error) => {
+        console.warn('Failed to write chat stream payload:', error);
+        streamClosed = true;
+        if (keepAliveInterval) {
+          clearInterval(keepAliveInterval);
+        }
+      });
+    };
+
+    safeClose = () => {
+      if (streamClosed) return;
+
+      streamClosed = true;
+
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+      }
+
+      writer.close().catch((error) => {
+        console.warn('Failed to close chat stream:', error);
+      });
+    };
+
+    disconnect = session.subscribe((event: string, data: any) => {
       if (event === 'data') {
         if (data.type === 'block') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'block',
-                block: data.block,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'block',
+            block: data.block,
+          });
         } else if (data.type === 'updateBlock') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'updateBlock',
-                blockId: data.blockId,
-                patch: data.patch,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'updateBlock',
+            blockId: data.blockId,
+            patch: data.patch,
+          });
         } else if (data.type === 'researchComplete') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'researchComplete',
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'researchComplete',
+          });
         }
       } else if (event === 'end') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'messageEnd',
-            }) + '\n',
-          ),
-        );
-        writer.close();
+        safeWrite({
+          type: 'messageEnd',
+        });
+        safeClose?.();
         session.removeAllListeners();
       } else if (event === 'error') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'error',
-              data: data.data,
-            }) + '\n',
-          ),
-        );
-        writer.close();
+        safeWrite({
+          type: 'error',
+          data: data.data,
+        });
+        safeClose?.();
         session.removeAllListeners();
       }
     });
@@ -233,9 +245,17 @@ export const POST = async (req: Request) => {
     });
 
     req.signal.addEventListener('abort', () => {
-      disconnect();
-      writer.close();
+      disconnect?.();
+      safeClose?.();
     });
+
+    // Start keepalives only after setup succeeds
+    if (!streamClosed) {
+      keepAliveInterval = setInterval(() => {
+        safeWrite({ type: 'keepAlive' });
+      }, keepAliveMs);
+      safeWrite({ type: 'keepAlive' });
+    }
 
     return new Response(responseStream.readable, {
       headers: {
@@ -245,6 +265,8 @@ export const POST = async (req: Request) => {
       },
     });
   } catch (err) {
+    disconnect?.();
+    safeClose?.();
     console.error('An error occurred while processing chat request:', err);
     return Response.json(
       { message: 'An error occurred while processing chat request' },

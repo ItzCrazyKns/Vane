@@ -228,9 +228,29 @@ class ConfigManager {
 
     /* search section */
     this.uiConfigSections.search.forEach((f) => {
-      if (f.env && !this.currentConfig.search[f.key]) {
-        this.currentConfig.search[f.key] =
-          process.env[f.env] ?? f.default ?? '';
+      if (!f.env) return;
+
+      const envValue = process.env[f.env]?.trim();
+      if (envValue) {
+        if (f.key === 'searxngURL') {
+          try {
+            const parsed = new URL(envValue);
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+              this.currentConfig.search[f.key] = f.default ?? '';
+              return;
+            }
+          } catch {
+            this.currentConfig.search[f.key] = f.default ?? '';
+            return;
+          }
+        }
+
+        this.currentConfig.search[f.key] = envValue;
+        return;
+      }
+
+      if (!this.currentConfig.search[f.key]) {
+        this.currentConfig.search[f.key] = f.default ?? '';
       }
     });
 

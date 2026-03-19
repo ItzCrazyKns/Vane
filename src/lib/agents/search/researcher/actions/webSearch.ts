@@ -4,7 +4,6 @@ import { searchSearxng } from '@/lib/searxng';
 import { Chunk, SearchResultsResearchBlock } from '@/lib/types';
 
 const actionSchema = z.object({
-  type: z.literal('web_search'),
   queries: z
     .array(z.string())
     .describe('An array of search queries to perform web searches for.'),
@@ -40,7 +39,7 @@ For example if the user is asking about Tesla, your actions should be like:
 6. done.
 
 You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
-If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
+If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tool, multiple times as needed.
 `;
 
 const qualityModePrompt = `
@@ -53,7 +52,7 @@ Never stop before at least 5-6 iterations of searches unless the user question i
 Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
 
 You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
-If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
+If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tool, multiple times as needed.
 `;
 
 const webSearchAction: ResearchAction<typeof actionSchema> = {
@@ -85,6 +84,13 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     config.sources.includes('web') &&
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {
+    // Guard against undefined or empty queries
+    if (!input.queries || !Array.isArray(input.queries) || input.queries.length === 0) {
+      return {
+        type: 'search_results',
+        results: [],
+      };
+    }
     input.queries = input.queries.slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
@@ -111,9 +117,19 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     let searchResultsEmitted = false;
 
     let results: Chunk[] = [];
+    let failedQueries = 0;
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q);
+      let res;
+      try {
+        res = await searchSearxng(q);
+      } catch (error) {
+        failedQueries++;
+        console.error('SearXNG search failed:', error instanceof Error ? error.message : error);
+        return;
+      }
+
+      if (!res.results || res.results.length === 0) return;
 
       const resultChunks: Chunk[] = res.results.map((r) => ({
         content: r.content || r.title,
@@ -171,6 +187,12 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
     };
 
     await Promise.all(input.queries.map(search));
+
+    if (results.length === 0 && failedQueries > 0) {
+      throw new Error(
+        `All ${failedQueries} search queries failed. SearXNG may be unavailable.`,
+      );
+    }
 
     return {
       type: 'search_results',

@@ -335,6 +335,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           const citationRegex = /\[([^\]]+)\]/g;
           const regex = /\[(\d+)\]/g;
 
+          // Handle missing opening <think> tag (deepseek-r1-671b only emits </think>)
+          if (
+            !processedText.includes('<think>') &&
+            processedText.includes('</think>')
+          ) {
+            processedText = '<think>' + processedText;
+          }
+
           if (processedText.includes('<think>')) {
             const openThinkTag = processedText.match(/<think>/g)?.length || 0;
             const closeThinkTag =
@@ -551,6 +559,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const messageId = message.messageId;
 
     return async (data: any) => {
+      if (data.type === 'keepAlive') {
+        return;
+      }
+
       if (data.type === 'error') {
         toast.error(data.data);
         setLoading(false);
