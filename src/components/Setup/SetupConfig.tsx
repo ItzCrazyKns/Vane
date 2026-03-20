@@ -41,7 +41,7 @@ const SetupConfig = ({
       }
     };
 
-    if (setupState === 2) {
+    if (setupState === 3) {
       fetchProviders();
     }
   }, [setupState]);
@@ -71,7 +71,7 @@ const SetupConfig = ({
 
   return (
     <div className="w-[95vw] md:w-[80vw] lg:w-[65vw] mx-auto px-2 sm:px-4 md:px-6 flex flex-col space-y-6">
-      {setupState === 2 && (
+      {setupState === 3 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{
@@ -132,7 +132,7 @@ const SetupConfig = ({
         </motion.div>
       )}
 
-      {setupState === 3 && (
+      {setupState === 4 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{
@@ -164,7 +164,7 @@ const SetupConfig = ({
 
       <div className="flex flex-row items-center justify-between pt-2">
         <a></a>
-        {setupState === 2 && (
+        {setupState === 3 && (
           <motion.button
             initial={{ opacity: 0, x: 10 }}
             animate={{
@@ -173,7 +173,7 @@ const SetupConfig = ({
               transition: { duration: 0.5 },
             }}
             onClick={() => {
-              setSetupState(3);
+              setSetupState(4);
             }}
             disabled={!hasProviders || isLoading}
             className="flex flex-row items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-lg bg-[#24A0ED] text-white hover:bg-[#1e8fd1] active:scale-95 transition-all duration-200 font-medium text-xs sm:text-sm disabled:bg-light-200 dark:disabled:bg-dark-200 disabled:text-black/40 dark:disabled:text-white/40 disabled:cursor-not-allowed disabled:active:scale-100"
@@ -182,7 +182,7 @@ const SetupConfig = ({
             <ArrowRight className="w-4 h-4 md:w-[18px] md:h-[18px]" />
           </motion.button>
         )}
-        {setupState === 3 && (
+        {setupState === 4 && (
           <motion.button
             initial={{ opacity: 0, x: 10 }}
             animate={{

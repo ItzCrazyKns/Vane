@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { UIConfigSections } from '@/lib/config/types';
 import { AnimatePresence, motion } from 'framer-motion';
 import SetupConfig from './SetupConfig';
+import SetupAccount from './SetupAccount';
 
 const SetupWizard = ({
   configSections,
@@ -13,9 +14,20 @@ const SetupWizard = ({
   const [showWelcome, setShowWelcome] = useState(true);
   const [showSetup, setShowSetup] = useState(false);
   const [setupState, setSetupState] = useState(1);
+  const [needsAccount, setNeedsAccount] = useState(false);
 
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
+
+  useEffect(() => {
+    // Check if admin account needs to be created
+    fetch('/api/auth/setup')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.needsSetup) setNeedsAccount(true);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -25,9 +37,11 @@ const SetupWizard = ({
       setShowSetup(true);
       setSetupState(1);
       await delay(1500);
-      setSetupState(2);
+      // If account creation is needed, show that first (state 2)
+      // Otherwise skip to connections (state 3)
+      setSetupState(needsAccount ? 2 : 3);
     })();
-  }, []);
+  }, [needsAccount]);
 
   return (
     <div className="bg-light-primary dark:bg-dark-primary h-screen w-screen fixed inset-0 overflow-hidden">
@@ -98,7 +112,25 @@ const SetupWizard = ({
                   set up for you
                 </motion.p>
               )}
-              {setupState > 1 && (
+              {setupState === 2 && needsAccount && (
+                <motion.div
+                  key="setup-account"
+                  initial={{ opacity: 0, translateY: '30px' }}
+                  animate={{
+                    opacity: 1,
+                    translateY: '0px',
+                    transition: { duration: 0.6 },
+                  }}
+                >
+                  <SetupAccount
+                    onComplete={() => {
+                      setNeedsAccount(false);
+                      setSetupState(3);
+                    }}
+                  />
+                </motion.div>
+              )}
+              {setupState >= 3 && (
                 <motion.div
                   key="setup-config"
                   initial={{ opacity: 0, translateY: '30px' }}
