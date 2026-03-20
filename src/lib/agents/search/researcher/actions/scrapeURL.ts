@@ -50,7 +50,7 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
           if (res.headers?.get('Content-Type') === 'text/html') {
             // remove comments and spaces
             text = text
-              .replace(/<\!--[\s.]*?-->/gm, '') // comments
+              .replace(/<!--[\s\S]*?-->/gm, '') // comments
               .replace(/^\s+|\s+$</gm, '')      // head and tail spaces
               .replace(/\s+</gm, '<')           // spaces before tags
               .replace(/>\s+/gm, '>')           // spaces after tags
