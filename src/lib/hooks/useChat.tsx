@@ -484,10 +484,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             partialChunk += decoder.decode(value, { stream: true });
 
             try {
-              const messages = partialChunk.split('\n');
-              for (const msg of messages) {
-                if (!msg.trim()) continue;
-                const json = JSON.parse(msg);
+              const lines = partialChunk.split('\n');
+              for (const line of lines) {
+                if (!line.trim()) continue;
+                const json = JSON.parse(line);
                 messageHandler(json);
               }
               partialChunk = '';
@@ -495,8 +495,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
               console.warn('Incomplete JSON, waiting for next chunk...');
             }
           }
+        } catch (err) {
+          console.error('Reconnect stream error:', err);
         } finally {
           isReconnectingRef.current = false;
+          setLoading(false);
         }
       }
     }
@@ -522,6 +525,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setIsMessagesLoaded(false);
       setNotFound(false);
       setNewChatCreated(false);
+      handledMessageEndRef.current = new Set();
     }
   }, [params.chatId, chatId]);
 
@@ -834,23 +838,30 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const messageHandler = getMessageHandler(newMessage);
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-      partialChunk += decoder.decode(value, { stream: true });
+        partialChunk += decoder.decode(value, { stream: true });
 
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
-          messageHandler(json);
+        try {
+          const lines = partialChunk.split('\n');
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const json = JSON.parse(line);
+            messageHandler(json);
+          }
+          partialChunk = '';
+        } catch (error) {
+          console.warn('Incomplete JSON, waiting for next chunk...');
         }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
       }
+    } catch (err) {
+      console.error('Stream read error:', err);
+      toast.error('Connection lost. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 

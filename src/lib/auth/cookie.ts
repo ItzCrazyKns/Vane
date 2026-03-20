@@ -107,6 +107,17 @@ export async function signSessionCookie(
   return `${data}.${bufToHex(sig)}`;
 }
 
+/**
+ * Build the Set-Cookie header value for a signed session cookie.
+ * Secure flag is only added when SECURE_COOKIES=true (e.g. behind HTTPS proxy).
+ * Self-hosted HTTP deployments (Unraid, LAN) must NOT use Secure or the
+ * browser will refuse to store/send the cookie.
+ */
+export function formatCookieHeader(cookie: string): string {
+  const secure = process.env.SECURE_COOKIES === 'true' ? '; Secure' : '';
+  return `session_id=${cookie}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}${secure}`;
+}
+
 export async function verifySessionCookie(
   cookie: string,
 ): Promise<SessionPayload | null> {

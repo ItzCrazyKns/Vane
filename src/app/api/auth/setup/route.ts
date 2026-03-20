@@ -1,4 +1,10 @@
-import { getAuthEnabled, hasAnyUsers, createUser } from '@/lib/auth';
+import {
+  getAuthEnabled,
+  hasAnyUsers,
+  createUser,
+  createSession,
+} from '@/lib/auth';
+import { signSessionCookie, formatCookieHeader } from '@/lib/auth/cookie';
 
 export const GET = async () => {
   const authEnabled = getAuthEnabled();
@@ -23,7 +29,10 @@ export const POST = async (req: Request) => {
     const hasUsers = await hasAnyUsers();
     if (hasUsers) {
       return Response.json(
-        { message: 'Setup already completed. An admin account already exists.' },
+        {
+          message:
+            'Setup already completed. An admin account already exists.',
+        },
         { status: 403 },
       );
     }
@@ -46,7 +55,19 @@ export const POST = async (req: Request) => {
     }
 
     const user = await createUser(username, password, 'admin');
-    return Response.json({ user }, { status: 201 });
+
+    // Auto-login: create session so the setup wizard can make
+    // authenticated API calls without requiring a separate login step.
+    const { sessionId, expiresAt } = createSession(user.id);
+    const cookie = await signSessionCookie({
+      userId: user.id,
+      sessionId,
+      exp: expiresAt.getTime(),
+    });
+
+    const response = Response.json({ user }, { status: 201 });
+    response.headers.set('Set-Cookie', formatCookieHeader(cookie));
+    return response;
   } catch (err) {
     console.error('Error during setup:', err);
     return Response.json(

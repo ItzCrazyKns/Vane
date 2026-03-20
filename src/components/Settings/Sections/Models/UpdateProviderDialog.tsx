@@ -52,7 +52,8 @@ const UpdateProvider = ({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update provider');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to update provider');
       }
 
       const data: ConfigModelProvider = (await res.json()).provider;
@@ -68,9 +69,9 @@ const UpdateProvider = ({
       });
 
       toast.success('Connection updated successfully.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating provider:', error);
-      toast.error('Failed to update connection.');
+      toast.error(error.message || 'Failed to update connection.');
     } finally {
       setLoading(false);
       setOpen(false);

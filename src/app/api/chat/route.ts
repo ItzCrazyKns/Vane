@@ -81,30 +81,26 @@ const ensureChatExists = async (input: {
   fileIds: string[];
   userId?: string | null;
 }) => {
-  try {
-    const exists = await db.query.chats
-      .findFirst({
-        where: eq(chats.id, input.id),
-      })
-      .execute();
+  const exists = await db.query.chats
+    .findFirst({
+      where: eq(chats.id, input.id),
+    })
+    .execute();
 
-    if (!exists) {
-      await db.insert(chats).values({
-        id: input.id,
-        createdAt: new Date().toISOString(),
-        sources: input.sources,
-        title: input.query,
-        userId: input.userId || null,
-        files: input.fileIds.map((id) => {
-          return {
-            fileId: id,
-            name: UploadManager.getFile(id)?.name || 'Uploaded File',
-          };
-        }),
-      });
-    }
-  } catch (err) {
-    console.error('Failed to check/save chat:', err);
+  if (!exists) {
+    await db.insert(chats).values({
+      id: input.id,
+      createdAt: new Date().toISOString(),
+      sources: input.sources,
+      title: input.query,
+      userId: input.userId || null,
+      files: input.fileIds.map((id) => {
+        return {
+          fileId: id,
+          name: UploadManager.getFile(id)?.name || 'Uploaded File',
+        };
+      }),
+    });
   }
 };
 
@@ -235,6 +231,15 @@ export const POST = async (req: Request) => {
       }
     });
 
+    // Ensure chat row exists before searchAsync inserts messages (FK constraint)
+    await ensureChatExists({
+      id: body.message.chatId,
+      sources: body.sources as SearchSources[],
+      fileIds: body.files,
+      query: body.message.content,
+      userId: req.headers.get('x-user-id'),
+    });
+
     agent.searchAsync(session, {
       chatHistory: history,
       followUp: message.content,
@@ -251,14 +256,6 @@ export const POST = async (req: Request) => {
           ? { effort: body.reasoning.effort || 'medium' }
           : undefined,
       },
-    });
-
-    ensureChatExists({
-      id: body.message.chatId,
-      sources: body.sources as SearchSources[],
-      fileIds: body.files,
-      query: body.message.content,
-      userId: req.headers.get('x-user-id'),
     });
 
     req.signal.addEventListener('abort', () => {

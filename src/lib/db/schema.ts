@@ -6,7 +6,9 @@ import { SearchSources } from '../agents/search/types';
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
   messageId: text('messageId').notNull(),
-  chatId: text('chatId').notNull(),
+  chatId: text('chatId')
+    .notNull()
+    .references(() => chats.id, { onDelete: 'cascade' }),
   backendId: text('backendId').notNull(),
   query: text('query').notNull(),
   createdAt: text('createdAt').notNull(),

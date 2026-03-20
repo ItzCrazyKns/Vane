@@ -10,14 +10,24 @@ export async function middleware(request: NextRequest) {
   }
 
   const cookie = request.cookies.get('session_id')?.value;
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/');
 
   if (!cookie) {
+    // API routes: pass through without user context — each route handles its own auth.
+    // Redirecting API fetches to /login returns HTML, which breaks JSON clients.
+    if (isApiRoute) return NextResponse.next();
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   const payload = await verifySessionCookie(cookie);
 
   if (!payload) {
+    // API routes: pass through (let routes return 401/403 themselves)
+    if (isApiRoute) {
+      const response = NextResponse.next();
+      response.cookies.delete('session_id');
+      return response;
+    }
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('session_id');
     return response;

@@ -1,4 +1,8 @@
 import SessionManager from '@/lib/session';
+import { getAuthEnabled, isAdmin } from '@/lib/auth';
+import db from '@/lib/db';
+import { messages, chats } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const POST = async (
   req: Request,
@@ -14,6 +18,37 @@ export const POST = async (
 
     if (!session) {
       return Response.json({ message: 'Session not found' }, { status: 404 });
+    }
+
+    // Ownership check: verify this session belongs to the requesting user
+    const authEnabled = getAuthEnabled();
+    if (authEnabled) {
+      const userId = req.headers.get('x-user-id');
+      if (!userId) {
+        return Response.json(
+          { message: 'Authentication required' },
+          { status: 401 },
+        );
+      }
+      const msg = await db.query.messages.findFirst({
+        where: eq(messages.backendId, id),
+        columns: { chatId: true },
+      });
+      if (msg) {
+        const chat = await db.query.chats.findFirst({
+          where: eq(chats.id, msg.chatId),
+          columns: { userId: true },
+        });
+        if (chat && chat.userId && chat.userId !== userId) {
+          const admin = await isAdmin(userId);
+          if (!admin) {
+            return Response.json(
+              { message: 'Session not found' },
+              { status: 404 },
+            );
+          }
+        }
+      }
     }
 
     const responseStream = new TransformStream();

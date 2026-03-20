@@ -27,7 +27,8 @@ const DeleteProvider = ({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to delete provider');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to delete provider');
       }
 
       setProviders((prev) => {
@@ -35,9 +36,9 @@ const DeleteProvider = ({
       });
 
       toast.success('Connection deleted successfully.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting provider:', error);
-      toast.error('Failed to delete connection.');
+      toast.error(error.message || 'Failed to delete connection.');
     } finally {
       setLoading(false);
     }

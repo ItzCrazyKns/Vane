@@ -73,8 +73,11 @@ export const DELETE = async (
       }
     }
 
-    await db.delete(chats).where(eq(chats.id, id)).execute();
-    await db.delete(messages).where(eq(messages.chatId, id)).execute();
+    // Delete atomically — messages first (FK will cascade, but explicit is safer)
+    db.transaction((tx) => {
+      tx.delete(messages).where(eq(messages.chatId, id)).run();
+      tx.delete(chats).where(eq(chats.id, id)).run();
+    });
 
     return Response.json(
       { message: 'Chat deleted successfully' },

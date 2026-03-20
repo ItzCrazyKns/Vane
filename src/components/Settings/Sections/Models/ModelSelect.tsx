@@ -11,11 +11,12 @@ const ModelSelect = ({
   providers: ConfigModelProvider[];
   type: 'chat' | 'embedding';
 }) => {
-  const [selectedModel, setSelectedModel] = useState<string>(
-    type === 'chat'
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return type === 'chat'
       ? `${localStorage.getItem('chatModelProviderId')}/${localStorage.getItem('chatModelKey')}`
-      : `${localStorage.getItem('embeddingModelProviderId')}/${localStorage.getItem('embeddingModelKey')}`,
-  );
+      : `${localStorage.getItem('embeddingModelProviderId')}/${localStorage.getItem('embeddingModelKey')}`;
+  });
   const [loading, setLoading] = useState(false);
   const { setChatModelProvider, setEmbeddingModelProvider } = useChat();
 

@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import db from '@/lib/db';
-import { users, sessions } from '@/lib/db/schema';
+import { users, sessions, chats, messages } from '@/lib/db/schema';
 import { eq, lt } from 'drizzle-orm';
 
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -103,9 +103,19 @@ export async function createUser(
   return { id, username, role, createdAt: now };
 }
 
-export function deleteUserById(userId: string) {
-  db.delete(sessions).where(eq(sessions.userId, userId)).run();
-  db.delete(users).where(eq(users.id, userId)).run();
+export async function deleteUserById(userId: string) {
+  const userChats = await db.query.chats.findMany({
+    where: eq(chats.userId, userId),
+    columns: { id: true },
+  });
+  db.transaction((tx) => {
+    for (const chat of userChats) {
+      tx.delete(messages).where(eq(messages.chatId, chat.id)).run();
+    }
+    tx.delete(chats).where(eq(chats.userId, userId)).run();
+    tx.delete(sessions).where(eq(sessions.userId, userId)).run();
+    tx.delete(users).where(eq(users.id, userId)).run();
+  });
 }
 
 export async function resetPasswordById(userId: string, newPassword: string) {
@@ -114,11 +124,13 @@ export async function resetPasswordById(userId: string, newPassword: string) {
     throw new Error('User not found');
   }
   const passwordHash = await hashPassword(newPassword);
-  db.update(users)
-    .set({ passwordHash })
-    .where(eq(users.id, userId))
-    .run();
-  db.delete(sessions).where(eq(sessions.userId, userId)).run();
+  db.transaction((tx) => {
+    tx.update(users)
+      .set({ passwordHash })
+      .where(eq(users.id, userId))
+      .run();
+    tx.delete(sessions).where(eq(sessions.userId, userId)).run();
+  });
 }
 
 export async function isAdmin(userId: string): Promise<boolean> {

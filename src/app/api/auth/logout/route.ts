@@ -21,10 +21,11 @@ export const POST = async (req: Request) => {
       }
     }
 
+    const secure = process.env.SECURE_COOKIES === 'true' ? '; Secure' : '';
     const response = Response.json({ success: true }, { status: 200 });
     response.headers.set(
       'Set-Cookie',
-      `session_id=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`,
+      `session_id=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`,
     );
 
     return response;

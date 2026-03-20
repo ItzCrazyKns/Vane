@@ -127,10 +127,10 @@ class ConfigManager {
   }
 
   private saveConfig() {
-    fs.writeFileSync(
-      this.configPath,
-      JSON.stringify(this.currentConfig, null, 2),
-    );
+    // Write to temp file then atomically rename to prevent corruption
+    const tmpPath = this.configPath + '.tmp';
+    fs.writeFileSync(tmpPath, JSON.stringify(this.currentConfig, null, 2));
+    fs.renameSync(tmpPath, this.configPath);
   }
 
   private initializeConfig() {

@@ -18,7 +18,7 @@ export const DELETE = async (
       );
     }
 
-    deleteUserById(id);
+    await deleteUserById(id);
     return Response.json({ message: 'User deleted' });
   } catch (err) {
     console.error('Error deleting user:', err);

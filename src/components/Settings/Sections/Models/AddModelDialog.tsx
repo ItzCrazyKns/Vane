@@ -36,7 +36,8 @@ const AddModel = ({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to add model');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to add model');
       }
 
       setProviders((prev) =>
@@ -63,9 +64,9 @@ const AddModel = ({
       setModelName('');
       setModelKey('');
       setOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding model:', error);
-      toast.error('Failed to add model.');
+      toast.error(error.message || 'Failed to add model.');
     } finally {
       setLoading(false);
     }

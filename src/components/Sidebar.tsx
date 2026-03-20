@@ -39,15 +39,39 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.authEnabled) {
-          setAuthEnabled(true);
-          if (data.user) setAuthUser(data.user);
-        }
-      })
-      .catch((err) => console.warn('Failed to fetch auth status:', err));
+    const checkAuth = () => {
+      fetch('/api/auth/me')
+        .then((res) => {
+          if (res.status === 401) {
+            setAuthUser(null);
+            return null;
+          }
+          return res.json();
+        })
+        .then((data) => {
+          if (!data) return;
+          if (data.authEnabled) {
+            setAuthEnabled(true);
+            if (data.user) setAuthUser(data.user);
+            else setAuthUser(null);
+          }
+        })
+        .catch((err) => console.warn('Failed to fetch auth status:', err));
+    };
+
+    checkAuth();
+
+    // Re-check auth when user returns to the tab (detects expired sessions)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAuth();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const handleLogout = async () => {

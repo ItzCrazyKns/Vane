@@ -75,7 +75,8 @@ const AddProvider = ({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to add provider');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to add provider');
       }
 
       const data: ConfigModelProvider = (await res.json()).provider;
@@ -83,9 +84,9 @@ const AddProvider = ({
       setProviders((prev) => [...prev, data]);
 
       toast.success('Connection added successfully.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding provider:', error);
-      toast.error('Failed to add connection.');
+      toast.error(error.message || 'Failed to add connection.');
     } finally {
       setLoading(false);
       setOpen(false);

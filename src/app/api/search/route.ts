@@ -75,37 +75,44 @@ export const POST = async (req: Request) => {
           let message = '';
           let sources: any[] = [];
 
-          session.subscribe((event: string, data: Record<string, any>) => {
-            if (event === 'data') {
-              try {
-                if (data.type === 'response') {
-                  message += data.data;
-                } else if (data.type === 'searchResults') {
-                  sources = data.data;
+          const unsubscribe = session.subscribe(
+            (event: string, data: Record<string, any>) => {
+              if (event === 'data') {
+                try {
+                  if (data.type === 'response') {
+                    message += data.data;
+                  } else if (data.type === 'searchResults') {
+                    sources = data.data;
+                  }
+                } catch (error) {
+                  unsubscribe();
+                  reject(
+                    Response.json(
+                      { message: 'Error parsing data' },
+                      { status: 500 },
+                    ),
+                  );
                 }
-              } catch (error) {
+              }
+
+              if (event === 'end') {
+                unsubscribe();
+                resolve(
+                  Response.json({ message, sources }, { status: 200 }),
+                );
+              }
+
+              if (event === 'error') {
+                unsubscribe();
                 reject(
                   Response.json(
-                    { message: 'Error parsing data' },
+                    { message: 'Search error', error: data },
                     { status: 500 },
                   ),
                 );
               }
-            }
-
-            if (event === 'end') {
-              resolve(Response.json({ message, sources }, { status: 200 }));
-            }
-
-            if (event === 'error') {
-              reject(
-                Response.json(
-                  { message: 'Search error', error: data },
-                  { status: 500 },
-                ),
-              );
-            }
-          });
+            },
+          );
         },
       );
     }
@@ -129,14 +136,14 @@ export const POST = async (req: Request) => {
         );
 
         signal.addEventListener('abort', () => {
-          session.removeAllListeners();
+          unsubscribe?.();
 
           try {
             controller.close();
           } catch (error) {}
         });
 
-        session.subscribe((event: string, data: Record<string, any>) => {
+        const unsubscribe = session.subscribe((event: string, data: Record<string, any>) => {
           if (event === 'data') {
             if (signal.aborted) return;
 
@@ -169,6 +176,7 @@ export const POST = async (req: Request) => {
           if (event === 'end') {
             if (signal.aborted) return;
 
+            unsubscribe?.();
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -182,6 +190,7 @@ export const POST = async (req: Request) => {
           if (event === 'error') {
             if (signal.aborted) return;
 
+            unsubscribe?.();
             controller.error(data);
           }
         });

@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "format:write": "prettier . --write",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "user:add": "npx tsx scripts/manage-users.ts add",
     "user:remove": "npx tsx scripts/manage-users.ts remove",
     "user:reset-password": "npx tsx scripts/manage-users.ts reset-password",
@@ -67,6 +69,7 @@
     "@types/react-dom": "^18",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/turndown": "^5.0.6",
+    "@vitest/coverage-v8": "^4.1.0",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.30.5",
     "eslint": "^8",
@@ -75,7 +78,8 @@
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
   },
   "optionalDependencies": {
     "@napi-rs/canvas": "^0.1.87"

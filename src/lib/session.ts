@@ -15,13 +15,21 @@ class SessionManager {
   private events: { event: string; data: any }[] = [];
   private emitter = new EventEmitter();
   private TTL_MS = 30 * 60 * 1000;
+  private ttlTimer: ReturnType<typeof setTimeout>;
 
   constructor(id?: string) {
     this.id = id ?? crypto.randomUUID();
 
-    setTimeout(() => {
-      SessionManager.sessions.delete(this.id);
+    this.ttlTimer = setTimeout(() => {
+      this.cleanup();
     }, this.TTL_MS);
+  }
+
+  /** Remove session from map, clear timer and all listeners. */
+  cleanup() {
+    clearTimeout(this.ttlTimer);
+    this.emitter.removeAllListeners();
+    SessionManager.sessions.delete(this.id);
   }
 
   static getSession(id: string): SessionManager | undefined {
