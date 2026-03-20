@@ -55,16 +55,14 @@ class GroqProvider extends BaseModelProvider<GroqConfig> {
   }
 
   async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
     const configProvider = getConfiguredModelProviderById(this.id)!;
+    const hasUserChat = configProvider.chatModels.length > 0;
 
-    return {
-      embedding: [
-        ...defaultModels.embedding,
-        ...configProvider.embeddingModels,
-      ],
-      chat: [...defaultModels.chat, ...configProvider.chatModels],
-    };
+    if (hasUserChat) {
+      return { chat: configProvider.chatModels, embedding: [] };
+    }
+
+    return this.getDefaultModels();
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {

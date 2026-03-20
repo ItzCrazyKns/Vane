@@ -15,13 +15,35 @@ interface SessionPayload {
 }
 
 function getSecret(): string {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) {
-    throw new Error(
-      'SESSION_SECRET environment variable is required when AUTH_ENABLED=true',
-    );
+  if (process.env.SESSION_SECRET) {
+    return process.env.SESSION_SECRET;
   }
-  return secret;
+
+  // Auto-generate and persist a session secret if not provided
+  const path = require('path');
+  const fs = require('fs');
+  const secretPath = path.join(
+    process.env.DATA_DIR || process.cwd(),
+    'data',
+    'session.secret',
+  );
+
+  try {
+    if (fs.existsSync(secretPath)) {
+      return fs.readFileSync(secretPath, 'utf-8').trim();
+    }
+  } catch {
+    // Fall through to generate
+  }
+
+  const generated = require('crypto').randomBytes(32).toString('hex');
+  try {
+    fs.mkdirSync(path.dirname(secretPath), { recursive: true });
+    fs.writeFileSync(secretPath, generated, { mode: 0o600 });
+  } catch (err) {
+    console.warn('Could not persist session secret:', err);
+  }
+  return generated;
 }
 
 async function getKey(): Promise<CryptoKey> {

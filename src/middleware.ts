@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySessionCookie } from '@/lib/auth/cookie';
 
 export async function middleware(request: NextRequest) {
-  const authEnabled = process.env.AUTH_ENABLED === 'true';
+  // Auth is enabled by default. Set AUTH_ENABLED=false to disable.
+  const authEnabled = process.env.AUTH_ENABLED !== 'false';
 
   if (!authEnabled) {
     return NextResponse.next();
@@ -38,6 +39,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!login|api/auth|_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|.*\\.png$|.*\\.svg$).*)',
+    '/((?!login|setup|api/auth|_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|.*\\.png$|.*\\.svg$).*)',
   ],
 };

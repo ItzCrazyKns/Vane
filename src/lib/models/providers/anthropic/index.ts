@@ -58,13 +58,13 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
   }
 
   async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
-    return {
-      embedding: [],
-      chat: [...defaultModels.chat, ...configProvider.chatModels],
-    };
+    if (configProvider.chatModels.length > 0) {
+      return { chat: configProvider.chatModels, embedding: [] };
+    }
+
+    return this.getDefaultModels();
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {

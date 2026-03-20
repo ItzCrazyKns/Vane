@@ -70,16 +70,19 @@ class LMStudioProvider extends BaseModelProvider<LMStudioConfig> {
   }
 
   async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
     const configProvider = getConfiguredModelProviderById(this.id)!;
+    const hasUserChat = configProvider.chatModels.length > 0;
+    const hasUserEmbed = configProvider.embeddingModels.length > 0;
 
-    return {
-      embedding: [
-        ...defaultModels.embedding,
-        ...configProvider.embeddingModels,
-      ],
-      chat: [...defaultModels.chat, ...configProvider.chatModels],
-    };
+    if (hasUserChat || hasUserEmbed) {
+      const defaults = await this.getDefaultModels();
+      return {
+        chat: hasUserChat ? configProvider.chatModels : defaults.chat,
+        embedding: hasUserEmbed ? configProvider.embeddingModels : defaults.embedding,
+      };
+    }
+
+    return this.getDefaultModels();
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {

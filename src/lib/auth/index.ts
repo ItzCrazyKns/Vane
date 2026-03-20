@@ -6,7 +6,13 @@ import { eq, lt } from 'drizzle-orm';
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export function getAuthEnabled(): boolean {
-  return process.env.AUTH_ENABLED === 'true';
+  // Auth is enabled by default. Set AUTH_ENABLED=false to disable.
+  return process.env.AUTH_ENABLED !== 'false';
+}
+
+export async function hasAnyUsers(): Promise<boolean> {
+  const firstUser = await db.query.users.findFirst();
+  return !!firstUser;
 }
 
 export async function hashPassword(password: string): Promise<string> {

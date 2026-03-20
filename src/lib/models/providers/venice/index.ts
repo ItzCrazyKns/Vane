@@ -68,20 +68,18 @@ class VeniceProvider extends BaseModelProvider<VeniceConfig> {
   }
 
   async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
     const configProvider = getConfiguredModelProviderById(this.id);
+    const hasUserChat = configProvider && configProvider.chatModels.length > 0;
+    const hasUserEmbed = configProvider && configProvider.embeddingModels.length > 0;
 
-    if (!configProvider) {
-      return defaultModels;
+    if (hasUserChat || hasUserEmbed) {
+      return {
+        chat: hasUserChat ? configProvider.chatModels : (await this.getDefaultModels()).chat,
+        embedding: hasUserEmbed ? configProvider.embeddingModels : (await this.getDefaultModels()).embedding,
+      };
     }
 
-    return {
-      embedding: [
-        ...defaultModels.embedding,
-        ...configProvider.embeddingModels,
-      ],
-      chat: [...defaultModels.chat, ...configProvider.chatModels],
-    };
+    return this.getDefaultModels();
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
