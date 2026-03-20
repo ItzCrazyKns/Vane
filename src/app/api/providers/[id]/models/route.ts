@@ -1,11 +1,12 @@
 import ModelRegistry from '@/lib/models/registry';
 import { Model } from '@/lib/models/types';
 import { getAuthEnabled, isAdmin } from '@/lib/auth';
+import configManager from '@/lib/config';
 import { NextRequest } from 'next/server';
 
 const adminGuard = async (req: NextRequest) => {
   const authEnabled = getAuthEnabled();
-  if (authEnabled) {
+  if (authEnabled && configManager.isSetupComplete()) {
     const userId = req.headers.get('x-user-id');
     if (!userId || !(await isAdmin(userId))) {
       return Response.json(

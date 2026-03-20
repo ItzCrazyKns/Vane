@@ -60,7 +60,7 @@ const SetupWizard = ({
                 animate={{ opacity: 1, translateY: '0px' }}
                 className="text-4xl md:text-6xl xl:text-8xl font-normal font-['Instrument_Serif'] tracking-tight"
               >
-                Welcome to
+                Welcome to{' '}
                 <span className="text-[#24A0ED] italic font-['PP_Editorial']">
                   ShloomTheory Search
                 </span>
@@ -105,7 +105,7 @@ const SetupWizard = ({
                   }}
                   className="text-2xl md:text-4xl xl:text-6xl font-normal font-['Instrument_Serif'] tracking-tight"
                 >
-                  Let us get
+                  Let us get{' '}
                   <span className="text-[#24A0ED] italic font-['PP_Editorial']">
                     ShloomTheory Search
                   </span>{' '}

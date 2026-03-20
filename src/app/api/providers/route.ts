@@ -3,6 +3,8 @@ import { getAuthEnabled, isAdmin } from '@/lib/auth';
 import configManager from '@/lib/config';
 import { NextRequest } from 'next/server';
 
+const isSetupPhase = () => !configManager.isSetupComplete();
+
 export const GET = async (req: Request) => {
   try {
     const registry = new ModelRegistry();
@@ -57,9 +59,9 @@ export const GET = async (req: Request) => {
 
 export const POST = async (req: NextRequest) => {
   try {
-    // Admin-only when auth is enabled
+    // Admin-only when auth is enabled (skip during initial setup wizard)
     const authEnabled = getAuthEnabled();
-    if (authEnabled) {
+    if (authEnabled && !isSetupPhase()) {
       const userId = req.headers.get('x-user-id');
       if (!userId || !(await isAdmin(userId))) {
         return Response.json(

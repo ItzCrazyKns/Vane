@@ -11,9 +11,9 @@ type SaveConfigBody = {
 
 export const GET = async (req: NextRequest) => {
   try {
-    // Admin-only when auth is enabled (config contains provider secrets)
+    // Admin-only when auth is enabled (skip during initial setup wizard)
     const authEnabled = getAuthEnabled();
-    if (authEnabled) {
+    if (authEnabled && configManager.isSetupComplete()) {
       const result = await requireAdmin(req);
       if ('error' in result) return result.error;
     }
@@ -53,7 +53,7 @@ export const GET = async (req: NextRequest) => {
 export const POST = async (req: NextRequest) => {
   try {
     const authEnabled = getAuthEnabled();
-    if (authEnabled) {
+    if (authEnabled && configManager.isSetupComplete()) {
       const result = await requireAdmin(req);
       if ('error' in result) return result.error;
     }
