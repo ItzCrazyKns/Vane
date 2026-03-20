@@ -62,7 +62,7 @@ const SetupWizard = ({
               >
                 Welcome to
                 <span className="text-[#24A0ED] italic font-['PP_Editorial']">
-                  Vane
+                  ShloomTheory Search
                 </span>
               </motion.h2>
               <motion.p
@@ -107,7 +107,7 @@ const SetupWizard = ({
                 >
                   Let us get
                   <span className="text-[#24A0ED] italic font-['PP_Editorial']">
-                    Vane
+                    ShloomTheory Search
                   </span>{' '}
                   set up for you
                 </motion.p>

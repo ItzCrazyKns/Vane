@@ -72,7 +72,7 @@ export default function SetupPage() {
     <div className="w-full max-w-sm mx-auto p-6">
       <div className="bg-light-secondary dark:bg-dark-secondary rounded-2xl border border-light-200 dark:border-dark-200 p-8 shadow-sm">
         <h1 className="text-2xl font-bold text-black dark:text-white mb-2 text-center">
-          Welcome to Vane
+          Welcome to ShloomTheory Search
         </h1>
         <p className="text-sm text-black/50 dark:text-white/50 mb-6 text-center">
           Create your admin account to get started.

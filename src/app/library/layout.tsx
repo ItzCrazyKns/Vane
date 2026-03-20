@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Library - Vane',
+  title: 'Library - ShloomTheory Search',
 };
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
