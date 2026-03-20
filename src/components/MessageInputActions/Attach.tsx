@@ -20,7 +20,7 @@ import { AnimatePresence } from 'motion/react';
 import { motion } from 'framer-motion';
 
 const Attach = () => {
-  const { files, setFiles, setFileIds, fileIds } = useChat();
+  const { files, setFiles, setFileIds, fileIds, sendMessage } = useChat();
 
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();
@@ -29,8 +29,28 @@ const Attach = () => {
     setLoading(true);
     const data = new FormData();
 
+    let hasImage = false;
+    let imageFile: File | null = null;
     for (let i = 0; i < e.target.files!.length; i++) {
+      if (e.target.files![i].type.startsWith('image/')) {
+        hasImage = true;
+        imageFile = e.target.files![i];
+      }
       data.append('files', e.target.files![i]);
+    }
+
+    if (hasImage && imageFile) {
+      const visionData = new FormData();
+      visionData.append('image', imageFile);
+      visionData.append('chat_model_provider_id', localStorage.getItem('chatModelProviderId') || '');
+      visionData.append('chat_model_key', localStorage.getItem('chatModelKey') || '');
+      const res = await fetch('/api/vision', { method: 'POST', body: visionData });
+      const resData = await res.json();
+      if (resData.query) {
+        sendMessage(`Search for information based on this image: ${resData.query}`);
+      }
+      setLoading(false);
+      return;
     }
 
     const embeddingModelProvider = localStorage.getItem(
@@ -94,7 +114,7 @@ const Attach = () => {
                           type="file"
                           onChange={handleChange}
                           ref={fileInputRef}
-                          accept=".pdf,.docx,.txt"
+                          accept=".pdf,.docx,.txt,image/*"
                           multiple
                           hidden
                         />
@@ -157,7 +177,7 @@ const Attach = () => {
         type="file"
         onChange={handleChange}
         ref={fileInputRef}
-        accept=".pdf,.docx,.txt"
+        accept=".pdf,.docx,.txt,image/*"
         multiple
         hidden
       />
