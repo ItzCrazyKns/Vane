@@ -48,12 +48,10 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
 
           // if response is an html page, clean it up to reduce the amount of tokens used
           if (res.headers?.get('Content-Type') === 'text/html') {
-            // remove comments and spaces
+            // remove comments and head/tail spaces
             text = text
-              .replace(/<!--[\s\S]*?-->/gm, '') // comments
-              .replace(/^\s+|\s+$</gm, '') // head and tail spaces
-              .replace(/\s+</gm, '<') // spaces before tags
-              .replace(/>\s+/gm, '>'); // spaces after tags
+              .replace(/<!--[\s\S]*?-->/gm, '')
+              .replace(/^\s+|\s+$/gm, '');
             const dom = new JSDOM(text);
             // removed unused tags
             dom.window.document
