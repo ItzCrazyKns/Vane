@@ -51,12 +51,14 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
             // remove comments and spaces
             text = text
               .replace(/<!--[\s\S]*?-->/gm, '') // comments
-              .replace(/^\s+|\s+$</gm, '')      // head and tail spaces
-              .replace(/\s+</gm, '<')           // spaces before tags
-              .replace(/>\s+/gm, '>')           // spaces after tags
+              .replace(/^\s+|\s+$</gm, '') // head and tail spaces
+              .replace(/\s+</gm, '<') // spaces before tags
+              .replace(/>\s+/gm, '>'); // spaces after tags
             const dom = new JSDOM(text);
             // removed unused tags
-            dom.window.document.querySelectorAll('script, style, template').forEach(el => el.remove());
+            dom.window.document
+              .querySelectorAll('script, style, template')
+              .forEach((el) => el.remove());
             text = dom.window.document.documentElement.outerHTML;
           }
 
