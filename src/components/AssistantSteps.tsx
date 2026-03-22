@@ -37,7 +37,8 @@ const getStepTitle = (
   if (step.type === 'reasoning') {
     return isStreaming && !step.reasoning ? 'Thinking...' : 'Thinking';
   } else if (step.type === 'searching') {
-    return `Searching ${step.searching.length} ${step.searching.length === 1 ? 'query' : 'queries'}`;
+    const queries = Array.isArray(step.searching) ? step.searching : [];
+    return `Searching ${queries.length} ${queries.length === 1 ? 'query' : 'queries'}`;
   } else if (step.type === 'search_results') {
     return `Found ${step.reading.length} ${step.reading.length === 1 ? 'result' : 'results'}`;
   } else if (step.type === 'reading') {
@@ -160,6 +161,7 @@ const AssistantSteps = ({
                       )}
 
                       {step.type === 'searching' &&
+                        Array.isArray(step.searching) &&
                         step.searching.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {step.searching.map((query, idx) => (

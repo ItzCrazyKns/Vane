@@ -30,7 +30,7 @@ const academicSearchAction: ResearchAction<typeof schema> = {
     config.classification.classification.skipSearch === false &&
     config.classification.classification.academicSearch === true,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    input.queries = (Array.isArray(input.queries) ? input.queries : [input.queries]).slice(0, 3);
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
