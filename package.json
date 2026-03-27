@@ -25,6 +25,7 @@
     "clsx": "^2.1.0",
     "drizzle-orm": "^0.40.1",
     "js-tiktoken": "^1.0.21",
+    "jsdom": "^29.0.1",
     "jspdf": "^3.0.4",
     "lightweight-charts": "^5.0.9",
     "lucide-react": "^0.556.0",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/jsdom": "^28.0.1",
     "@types/jspdf": "^2.0.0",
     "@types/node": "^24.8.1",
     "@types/pdf-parse": "^1.1.4",

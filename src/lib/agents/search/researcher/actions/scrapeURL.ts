@@ -3,6 +3,7 @@ import { ResearchAction } from '../../types';
 import { Chunk, ReadingResearchBlock } from '@/lib/types';
 import TurnDown from 'turndown';
 import path from 'path';
+import { JSDOM } from 'jsdom';
 
 const turndownService = new TurnDown();
 
@@ -40,10 +41,24 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
       params.urls.map(async (url) => {
         try {
           const res = await fetch(url);
-          const text = await res.text();
+          let text = await res.text();
 
           const title =
             text.match(/<title>(.*?)<\/title>/i)?.[1] || `Content from ${url}`;
+
+          // if response is an html page, clean it up to reduce the amount of tokens used
+          if (res.headers?.get('Content-Type') === 'text/html') {
+            // remove comments and head/tail spaces
+            text = text
+              .replace(/<!--[\s\S]*?-->/gm, '')
+              .replace(/^\s+|\s+$/gm, '');
+            const dom = new JSDOM(text);
+            // removed unused tags
+            dom.window.document
+              .querySelectorAll('script, style, template')
+              .forEach((el) => el.remove());
+            text = dom.window.document.documentElement.outerHTML;
+          }
 
           if (
             !readingEmitted &&
