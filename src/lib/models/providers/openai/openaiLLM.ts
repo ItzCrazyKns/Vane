@@ -20,6 +20,17 @@ import {
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+/**
+ * Strip markdown code block wrappers from LLM responses.
+ * Some models (e.g. Claude via OpenAI-compatible proxies) wrap JSON output in
+ * markdown code blocks (```json ... ```), which causes JSON.parse to fail.
+ */
+function stripCodeBlockWrappers(text: string): string {
+  return text
+    .replace(/^```(?:json)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '');
+}
+
 type OpenAIConfig = {
   apiKey: string;
   model: string;
@@ -216,9 +227,10 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       try {
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
-              extractJson: true,
-            }) as string,
+            repairJson(
+              stripCodeBlockWrappers(response.choices[0].message.content!),
+              { extractJson: true },
+            ) as string,
           ),
         ) as T;
       } catch (err) {
@@ -263,7 +275,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         }
       } else if (chunk.type === 'response.output_text.done' && chunk.text) {
         try {
-          yield parse(chunk.text) as T;
+          yield parse(stripCodeBlockWrappers(chunk.text)) as T;
         } catch (err) {
           throw new Error(`Error parsing response from OpenAI: ${err}`);
         }

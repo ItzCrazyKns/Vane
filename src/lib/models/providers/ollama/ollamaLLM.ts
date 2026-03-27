@@ -13,6 +13,17 @@ import crypto from 'crypto';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+/**
+ * Strip markdown code block wrappers from LLM responses.
+ * Some models (e.g. Claude via OpenAI-compatible proxies) wrap JSON output in
+ * markdown code blocks (```json ... ```), which causes JSON.parse to fail.
+ */
+function stripCodeBlockWrappers(text: string): string {
+  return text
+    .replace(/^```(?:json)?\s*\n?/i, '')
+    .replace(/\n?```\s*$/i, '');
+}
+
 type OllamaConfig = {
   baseURL: string;
   model: string;
@@ -210,9 +221,10 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     try {
       return input.schema.parse(
         JSON.parse(
-          repairJson(response.message.content, {
-            extractJson: true,
-          }) as string,
+          repairJson(
+            stripCodeBlockWrappers(response.message.content),
+            { extractJson: true },
+          ) as string,
         ),
       ) as T;
     } catch (err) {
