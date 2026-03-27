@@ -5,6 +5,7 @@ interface SearxngSearchOptions {
   engines?: string[];
   language?: string;
   pageno?: number;
+  time_range?: string[];
 }
 
 interface SearxngSearchResult {
