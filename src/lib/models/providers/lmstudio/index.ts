@@ -9,6 +9,7 @@ import LMStudioEmbedding from './lmstudioEmbedding';
 
 interface LMStudioConfig {
   baseURL: string;
+  timeout?: number;
 }
 
 const providerConfigFields: UIConfigField[] = [
@@ -20,6 +21,17 @@ const providerConfigFields: UIConfigField[] = [
     required: true,
     placeholder: 'http://localhost:1234',
     env: 'LM_STUDIO_BASE_URL',
+    scope: 'server',
+  },
+  {
+    type: 'number',
+    name: 'Timeout (ms)',
+    key: 'timeout',
+    description: 'Request timeout in milliseconds',
+    required: false,
+    placeholder: '60000',
+    default: 60000,
+    env: 'OPENAI_TIMEOUT',
     scope: 'server',
   },
 ];
@@ -97,6 +109,7 @@ class LMStudioProvider extends BaseModelProvider<LMStudioConfig> {
       apiKey: 'lm-studio',
       model: key,
       baseURL: this.normalizeBaseURL(this.config.baseURL),
+      timeout: this.config.timeout,
     });
   }
 
@@ -114,6 +127,7 @@ class LMStudioProvider extends BaseModelProvider<LMStudioConfig> {
       apiKey: 'lm-studio',
       model: key,
       baseURL: this.normalizeBaseURL(this.config.baseURL),
+      timeout: this.config.timeout,
     });
   }
 
@@ -125,6 +139,7 @@ class LMStudioProvider extends BaseModelProvider<LMStudioConfig> {
 
     return {
       baseURL: String(raw.baseURL),
+      timeout: raw.timeout ? Number(raw.timeout) : undefined,
     };
   }
 

@@ -43,12 +43,19 @@ type SwitchUIConfigField = BaseUIConfigField & {
   default?: boolean;
 };
 
+type NumberUIConfigField = BaseUIConfigField & {
+  type: 'number';
+  placeholder?: string;
+  default?: number;
+};
+
 type UIConfigField =
   | StringUIConfigField
   | SelectUIConfigField
   | PasswordUIConfigField
   | TextareaUIConfigField
-  | SwitchUIConfigField;
+  | SwitchUIConfigField
+  | NumberUIConfigField;
 
 type ConfigModelProvider = {
   id: string;
@@ -106,4 +113,5 @@ export type {
   ConfigModelProvider,
   TextareaUIConfigField,
   SwitchUIConfigField,
+  NumberUIConfigField,
 };
