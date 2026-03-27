@@ -53,12 +53,12 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
         )
       ) {
         defaultEmbeddingModels.push({
-          key: m.name,
+          key: m.name.replace(/^models\//, ''),
           name: m.displayName,
         });
       } else if (m.supportedGenerationMethods.includes('generateContent')) {
         defaultChatModels.push({
-          key: m.name,
+          key: m.name.replace(/^models\//, ''),
           name: m.displayName,
         });
       }
@@ -97,7 +97,6 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
     return new GeminiLLM({
       apiKey: this.config.apiKey,
       model: key,
-      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
     });
   }
 
