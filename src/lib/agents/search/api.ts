@@ -4,6 +4,7 @@ import { classify } from './classifier';
 import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
+import { buildSearchResultsContext } from './context';
 
 class APISearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -52,13 +53,9 @@ class APISearchAgent {
       type: 'researchComplete',
     });
 
-    const finalContext =
-      searchResults?.searchFindings
-        .map(
-          (f, index) =>
-            `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
-        )
-        .join('\n') || '';
+    const finalContext = buildSearchResultsContext(
+      searchResults?.searchFindings || [],
+    );
 
     const widgetContext = widgetOutputs
       .map((o) => {
