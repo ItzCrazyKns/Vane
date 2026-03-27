@@ -140,23 +140,28 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       });
     });
 
-    const stream = await this.openAIClient.chat.completions.create({
-      model: this.config.model,
-      messages: this.convertToOpenAIMessages(input.messages),
-      tools: openaiTools.length > 0 ? openaiTools : undefined,
-      temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
-      top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
-      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
-      frequency_penalty:
-        input.options?.frequencyPenalty ??
-        this.config.options?.frequencyPenalty,
-      presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      stream: true,
-    });
+    const stream = await this.openAIClient.chat.completions.create(
+      {
+        model: this.config.model,
+        messages: this.convertToOpenAIMessages(input.messages),
+        tools: openaiTools.length > 0 ? openaiTools : undefined,
+        temperature:
+          input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+        top_p: input.options?.topP ?? this.config.options?.topP,
+        max_completion_tokens:
+          input.options?.maxTokens ?? this.config.options?.maxTokens,
+        stop:
+          input.options?.stopSequences ?? this.config.options?.stopSequences,
+        frequency_penalty:
+          input.options?.frequencyPenalty ??
+          this.config.options?.frequencyPenalty,
+        presence_penalty:
+          input.options?.presencePenalty ??
+          this.config.options?.presencePenalty,
+        stream: true,
+      },
+      { signal: input.signal },
+    );
 
     let recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];

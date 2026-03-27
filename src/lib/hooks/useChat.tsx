@@ -56,6 +56,7 @@ type ChatContext = {
     messageId?: string,
     rewrite?: boolean,
   ) => Promise<void>;
+  cancelMessage: () => void;
   rewrite: (messageId: string) => void;
   setChatModelProvider: (provider: ChatModelProvider) => void;
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
@@ -258,6 +259,7 @@ export const chatContext = createContext<ChatContext>({
   researchEnded: false,
   rewrite: () => {},
   sendMessage: async () => {},
+  cancelMessage: () => {},
   setFileIds: () => {},
   setFiles: () => {},
   setSources: () => {},
@@ -312,6 +314,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [isReady, setIsReady] = useState(false);
 
   const messagesRef = useRef<Message[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const sections = useMemo<Section[]>(() => {
     return messages.map((msg) => {
@@ -742,67 +745,97 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const messageIndex = messages.findIndex((m) => m.messageId === messageId);
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content: message,
-        message: {
-          messageId: messageId,
-          chatId: chatId!,
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
           content: message,
-        },
-        chatId: chatId!,
-        files: fileIds,
-        sources: sources,
-        optimizationMode: optimizationMode,
-        history: rewrite
-          ? chatHistory.current.slice(
-              0,
-              messageIndex === -1 ? undefined : messageIndex,
-            )
-          : chatHistory.current,
-        chatModel: {
-          key: chatModelProvider.key,
-          providerId: chatModelProvider.providerId,
-        },
-        embeddingModel: {
-          key: embeddingModelProvider.key,
-          providerId: embeddingModelProvider.providerId,
-        },
-        systemInstructions: localStorage.getItem('systemInstructions'),
-      }),
-    });
+          message: {
+            messageId: messageId,
+            chatId: chatId!,
+            content: message,
+          },
+          chatId: chatId!,
+          files: fileIds,
+          sources: sources,
+          optimizationMode: optimizationMode,
+          history: rewrite
+            ? chatHistory.current.slice(
+                0,
+                messageIndex === -1 ? undefined : messageIndex,
+              )
+            : chatHistory.current,
+          chatModel: {
+            key: chatModelProvider.key,
+            providerId: chatModelProvider.providerId,
+          },
+          embeddingModel: {
+            key: embeddingModelProvider.key,
+            providerId: embeddingModelProvider.providerId,
+          },
+          systemInstructions: localStorage.getItem('systemInstructions'),
+        }),
+      });
 
-    if (!res.body) throw new Error('No response body');
+      if (!res.body) throw new Error('No response body');
 
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder('utf-8');
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder('utf-8');
 
-    let partialChunk = '';
+      let partialChunk = '';
 
-    const messageHandler = getMessageHandler(newMessage);
+      const messageHandler = getMessageHandler(newMessage);
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-      partialChunk += decoder.decode(value, { stream: true });
+        partialChunk += decoder.decode(value, { stream: true });
 
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
-          messageHandler(json);
+        try {
+          const messages = partialChunk.split('\n');
+          for (const msg of messages) {
+            if (!msg.trim()) continue;
+            const json = JSON.parse(msg);
+            messageHandler(json);
+          }
+          partialChunk = '';
+        } catch (error) {
+          console.warn('Incomplete JSON, waiting for next chunk...');
         }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
+      }
+    } catch (err: any) {
+      // AbortError is expected when the user cancels
+      if (err.name !== 'AbortError') {
+        throw err;
       }
     }
+
+    abortControllerRef.current = null;
+  };
+
+  const cancelMessage = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.status === 'answering'
+          ? { ...msg, status: 'completed' as const }
+          : msg,
+      ),
+    );
+
+    setLoading(false);
   };
 
   return (
@@ -828,6 +861,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setOptimizationMode,
         rewrite,
         sendMessage,
+        cancelMessage,
         setChatModelProvider,
         chatModelProvider,
         embeddingModelProvider,

@@ -161,7 +161,24 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       },
     });
 
+    if (input.signal) {
+      if (input.signal.aborted) {
+        stream.abort();
+      } else {
+        input.signal.addEventListener(
+          'abort',
+          () => {
+            try {
+              stream.abort();
+            } catch {}
+          },
+          { once: true },
+        );
+      }
+    }
+
     for await (const chunk of stream) {
+      if (input.signal?.aborted) break;
       yield {
         contentChunk: chunk.message.content,
         toolCallChunk:
