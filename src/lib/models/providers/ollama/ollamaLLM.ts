@@ -13,6 +13,23 @@ import crypto from 'crypto';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+/**
+ * Some models wrap their JSON output in markdown code fences like
+ * ```json\n{...}\n```. This strips those fences so we get raw JSON.
+ * Also handles the streaming case where only the opening fence is
+ * present (the closing fence hasn't arrived yet).
+ */
+function stripMarkdownFences(text: string): string {
+  const trimmed = text.trim();
+  // Full fence pair: ```json\n...\n``` (or same-line ```json{...}```)
+  const full = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```\s*$/);
+  if (full) return full[1].trim();
+  // Opening fence only (streaming partial): ```json\n{...
+  const leading = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*)$/);
+  if (leading) return leading[1];
+  return trimmed;
+}
+
 type OllamaConfig = {
   baseURL: string;
   model: string;
@@ -208,9 +225,10 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     try {
+      const cleaned = stripMarkdownFences(response.message.content);
       return input.schema.parse(
         JSON.parse(
-          repairJson(response.message.content, {
+          repairJson(cleaned, {
             extractJson: true,
           }) as string,
         ),
@@ -251,7 +269,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       recievedObj += chunk.message.content;
 
       try {
-        yield parse(recievedObj) as T;
+        yield parse(stripMarkdownFences(recievedObj)) as T;
       } catch (err) {
         console.log('Error parsing partial object from Ollama:', err);
         yield {} as T;
