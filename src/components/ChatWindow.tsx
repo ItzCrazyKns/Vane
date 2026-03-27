@@ -18,6 +18,7 @@ export interface BaseMessage {
 export interface Message extends BaseMessage {
   backendId: string;
   query: string;
+  images: string[]; // base64 data URLs of attached images
   responseBlocks: Block[];
   status: 'answering' | 'completed' | 'error';
 }

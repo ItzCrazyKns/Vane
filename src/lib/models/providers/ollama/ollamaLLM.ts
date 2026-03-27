@@ -40,7 +40,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
   }
 
   convertToOllamaMessages(messages: Message[]): OllamaMessage[] {
-    return messages.map((msg) => {
+    return messages.map((msg): OllamaMessage => {
       if (msg.role === 'tool') {
         return {
           role: 'tool',
@@ -60,9 +60,32 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
               },
             })) || [],
         };
+      } else if (msg.role === 'user' && Array.isArray(msg.content)) {
+        const textParts: string[] = [];
+        const images: string[] = [];
+
+        for (const part of msg.content) {
+          if (part.type === 'text') {
+            textParts.push(part.text);
+          } else if (part.type === 'image_url') {
+            // Strip data URL prefix for Ollama (expects raw base64)
+            const url = part.image_url.url;
+            const base64 = url.includes(',') ? url.split(',')[1] : url;
+            images.push(base64);
+          }
+        }
+
+        return {
+          role: 'user',
+          content: textParts.join('\n'),
+          images: images.length > 0 ? images : undefined,
+        } as OllamaMessage;
       }
 
-      return msg;
+      return {
+        role: msg.role,
+        content: msg.content as string,
+      };
     });
   }
 

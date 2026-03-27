@@ -63,9 +63,25 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
               })),
             }),
         } as ChatCompletionAssistantMessageParam;
+      } else if (msg.role === 'user' && Array.isArray(msg.content)) {
+        return {
+          role: 'user',
+          content: msg.content.map((part) => {
+            if (part.type === 'text') {
+              return { type: 'text' as const, text: part.text };
+            }
+            return {
+              type: 'image_url' as const,
+              image_url: { url: part.image_url.url },
+            };
+          }),
+        };
       }
 
-      return msg;
+      return {
+        role: msg.role,
+        content: msg.content as string,
+      };
     });
   }
 
@@ -234,7 +250,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     const stream = this.openAIClient.responses.stream({
       model: this.config.model,
-      input: input.messages,
+      input: this.convertToOpenAIMessages(input.messages) as any,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
       top_p: input.options?.topP ?? this.config.options?.topP,

@@ -1,5 +1,19 @@
 import { ToolCall } from './models/types';
 
+export type TextContentPart = {
+  type: 'text';
+  text: string;
+};
+
+export type ImageContentPart = {
+  type: 'image_url';
+  image_url: {
+    url: string; // base64 data URL or http(s) URL
+  };
+};
+
+export type ContentPart = TextContentPart | ImageContentPart;
+
 export type SystemMessage = {
   role: 'system';
   content: string;
@@ -13,7 +27,7 @@ export type AssistantMessage = {
 
 export type UserMessage = {
   role: 'user';
-  content: string;
+  content: string | ContentPart[];
 };
 
 export type ToolMessage = {

@@ -42,6 +42,7 @@ const bodySchema = z.object({
     .optional()
     .default([]),
   files: z.array(z.string()).optional().default([]),
+  images: z.array(z.string()).optional().default([]),
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
   systemInstructions: z.string().nullable().optional().default(''),
@@ -222,6 +223,7 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
+        images: body.images,
       },
     });
 
