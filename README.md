@@ -211,6 +211,34 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
 
+### Image Upload Search with Local Ollama Vision
+
+Vane can be extended to support **image upload → vision understanding → automatic search query generation** by pointing the `/api/vision` route to a local Ollama vision model.
+
+A working setup looks like this:
+
+```bash
+docker run -d -p 3000:3000 \
+  -e OLLAMA_BASE_URL=http://host.docker.internal:11434/v1 \
+  -e OLLAMA_VISION_MODEL=qwen3-vl:latest \
+  -v vane-data:/home/vane/data \
+  --name vane vane-image-search:local
+```
+
+Recommended notes:
+
+- `OLLAMA_BASE_URL` should point to an OpenAI-compatible Ollama endpoint.
+- `OLLAMA_VISION_MODEL` must be a **vision-capable** model, for example `qwen3-vl:latest`.
+- Plain text-only Ollama models will not work for image understanding.
+- On Docker for Mac/Windows, `host.docker.internal` is usually the correct host.
+- On Linux, replace it with your host machine IP if needed.
+
+Once configured, uploading an image in the attachment button can:
+
+1. send the image to `/api/vision`
+2. generate a concise search query from the image
+3. automatically submit that query into Vane's existing text search flow
+
 ## Using as a Search Engine
 
 If you wish to use Vane as an alternative to traditional search engines like Google or Bing, or if you want to add a shortcut for quick access from your browser's search bar, follow these steps:
