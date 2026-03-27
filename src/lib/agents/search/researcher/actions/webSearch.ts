@@ -40,7 +40,7 @@ For example if the user is asking about Tesla, your actions should be like:
 6. done.
 
 You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
-If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
+If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tool, multiple times as needed.
 `;
 
 const qualityModePrompt = `
@@ -53,7 +53,7 @@ Never stop before at least 5-6 iterations of searches unless the user question i
 Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
 
 You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
-If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
+If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tool, multiple times as needed.
 `;
 
 const webSearchAction: ResearchAction<typeof actionSchema> = {
