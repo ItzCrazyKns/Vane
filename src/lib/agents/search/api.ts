@@ -7,6 +7,7 @@ import { WidgetExecutor } from './widgets';
 
 class APISearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
+    try {
     const classification = await classify({
       chatHistory: input.chatHistory,
       enabledSources: input.config.sources,
@@ -96,6 +97,13 @@ class APISearchAgent {
     }
 
     session.emit('end', {});
+    } catch (err) {
+      console.error('API search agent error:', err);
+
+      session.emit('error', {
+        data: err instanceof Error ? err.message : 'An error occurred during search',
+      });
+    }
   }
 }
 
