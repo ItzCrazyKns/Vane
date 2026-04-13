@@ -4,7 +4,7 @@ const formatChatHistoryAsString = (history: ChatTurnMessage[]) => {
   return history
     .map(
       (message) =>
-        `${message.role === 'assistant' ? 'AI' : 'User'}: ${message.content}`,
+        `${message.role === 'assistant' ? 'AI' : 'User'}: ${message.content ?? ''}`,
     )
     .join('\n');
 };

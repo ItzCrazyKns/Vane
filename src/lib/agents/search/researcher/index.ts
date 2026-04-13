@@ -157,7 +157,7 @@ class Researcher {
 
       agentMessageHistory.push({
         role: 'assistant',
-        content: '',
+        content: null,
         tool_calls: finalToolCalls,
       });
 

@@ -7,7 +7,7 @@ export type SystemMessage = {
 
 export type AssistantMessage = {
   role: 'assistant';
-  content: string;
+  content: string | null;
   tool_calls?: ToolCall[];
 };
 
