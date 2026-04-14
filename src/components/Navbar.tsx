@@ -12,6 +12,7 @@ import {
 import jsPDF from 'jspdf';
 import { useChat, Section } from '@/lib/hooks/useChat';
 import { SourceBlock } from '@/lib/types';
+import { loadCJKFont, registerCJKFont } from '@/lib/pdfFontLoader';
 
 const downloadFile = (filename: string, content: string, type: string) => {
   const blob = new Blob([content], { type });
@@ -73,13 +74,22 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
 };
 
-const exportAsPDF = (sections: Section[], title: string) => {
+const exportAsPDF = async (sections: Section[], title: string) => {
   const doc = new jsPDF();
+
+  // Load and register CJK font for Chinese/Japanese/Korean support
+  const fontBase64 = await loadCJKFont();
+  const fontFamily = fontBase64 ? 'NotoSansSC' : 'helvetica';
+  if (fontBase64) {
+    registerCJKFont(doc, fontBase64);
+  }
+
   const date = new Date(
     sections[0]?.message?.createdAt || Date.now(),
   ).toLocaleString();
   let y = 15;
   const pageHeight = doc.internal.pageSize.height;
+  doc.setFont(fontFamily, 'normal');
   doc.setFontSize(18);
   doc.text(`Chat Export: ${title}`, 10, y);
   y += 8;
@@ -97,9 +107,9 @@ const exportAsPDF = (sections: Section[], title: string) => {
       doc.addPage();
       y = 15;
     }
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(fontFamily, 'normal');
+    doc.setFontSize(12);
     doc.text('User', 10, y);
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(120);
     doc.text(`${new Date(section.message.createdAt).toLocaleString()}`, 40, y);
@@ -129,9 +139,9 @@ const exportAsPDF = (sections: Section[], title: string) => {
         doc.addPage();
         y = 15;
       }
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(fontFamily, 'normal');
+      doc.setFontSize(12);
       doc.text('Assistant', 10, y);
-      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(120);
       doc.text(
