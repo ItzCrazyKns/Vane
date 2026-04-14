@@ -26,6 +26,9 @@ const schema = z.object({
     showCalculationWidget: z
       .boolean()
       .describe('Indicates whether to show the calculation widget.'),
+    showCurrencyWidget: z
+      .boolean()
+      .describe('Indicates whether to show the currency conversion widget.'),
   }),
   standaloneFollowUp: z
     .string()

@@ -35,6 +35,10 @@ NOTE: BY GENERAL KNOWLEDGE WE MEAN INFORMATION THAT IS OBVIOUS, WIDELY KNOWN, OR
    - Set it to true if the user's query involves mathematical calculations, conversions, or any computation-related tasks.
    - Set it to true for queries like "What is 25% of 80?" or "Convert 100 USD to EUR" or "Calculate the square root of 256" or "What is 2 * 3 + 5?" or other mathematical expressions.
    - If it can fully answer the user query without needing additional search, set skipSearch to true as well.
+8. showCurrencyWidget (boolean): Decide if displaying a currency conversion widget would adequately address the user's query.
+   - Set it to true if the user's query is specifically about currency exchange rates or converting between currencies.
+   - Set it to true for queries like "Convert 100 USD to EUR" or "What's the exchange rate from JPY to GBP?" or "How much is 50 euros in dollars?"
+   - If it can fully answer the user query without needing additional search, set skipSearch to true as well.
 </labels>
 
 <standalone_followup>
@@ -57,6 +61,7 @@ You must respond in the following JSON format without any extra text, explanatio
     "showWeatherWidget": boolean,
     "showStockWidget": boolean,
     "showCalculationWidget": boolean,
+    "showCurrencyWidget": boolean
   },
   "standaloneFollowUp": string
 }

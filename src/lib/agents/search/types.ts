@@ -58,6 +58,7 @@ export type ClassifierOutput = {
     showWeatherWidget: boolean;
     showStockWidget: boolean;
     showCalculationWidget: boolean;
+    showCurrencyWidget: boolean;
   };
   standaloneFollowUp: string;
 };
