@@ -306,14 +306,18 @@ const Weather = ({
           background: weatherInfo.gradient,
         }}
       />
+      <div className="absolute inset-0 bg-black/15" />
 
-      <div className="relative p-4 text-gray-800 dark:text-white">
+      <div
+        className="relative p-4 text-white"
+        style={{ textShadow: '0 1px 2px rgba(0, 0, 0, 0.35)' }}
+      >
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <img
               src={`/weather-ico/${weatherInfo.icon}`}
               alt={weatherInfo.description}
-              className="w-16 h-16 drop-shadow-lg"
+              className="w-16 h-16 object-contain drop-shadow-lg"
             />
             <div>
               <div className="flex items-baseline gap-1">
@@ -337,7 +341,7 @@ const Weather = ({
 
         <div className="mb-3 pb-3 border-b border-gray-800/20 dark:border-white/20">
           <h3 className="text-base font-semibold drop-shadow-md">{location}</h3>
-          <p className="text-xs text-gray-700 dark:text-white/80 drop-shadow mt-0.5">
+          <p className="mt-0.5 text-xs text-white/90 drop-shadow">
             {new Date(current.time).toLocaleString('en-US', {
               weekday: 'short',
               hour: 'numeric',
@@ -350,24 +354,22 @@ const Weather = ({
           {forecast.map((day, idx) => (
             <div
               key={idx}
-              className="flex flex-col items-center bg-gray-800/10 dark:bg-white/10 backdrop-blur-sm rounded-md p-2"
+              className="flex flex-col items-center rounded-md bg-black/15 p-2 backdrop-blur-sm"
             >
               <p className="text-xs font-medium mb-1">{day.day}</p>
               <img
                 src={`/weather-ico/${day.icon}`}
                 alt=""
-                className="w-8 h-8 mb-1"
+                className="mb-1 h-8 w-8 object-contain"
               />
               <div className="flex items-center gap-1 text-xs">
                 <span className="font-semibold">{day.high}°</span>
-                <span className="text-gray-600 dark:text-white/60">
-                  {day.low}°
-                </span>
+                <span className="text-white/70">{day.low}°</span>
               </div>
               {day.precipitation > 0 && (
                 <div className="flex items-center gap-0.5 mt-1">
-                  <Droplets className="w-3 h-3 text-gray-600 dark:text-white/70" />
-                  <span className="text-[10px] text-gray-600 dark:text-white/70">
+                  <Droplets className="h-3 w-3 text-white/75" />
+                  <span className="text-[10px] text-white/75">
                     {day.precipitation}%
                   </span>
                 </div>
@@ -377,36 +379,30 @@ const Weather = ({
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="flex items-center gap-2 bg-gray-800/10 dark:bg-white/10 backdrop-blur-sm rounded-md p-2">
-            <Wind className="w-4 h-4 text-gray-700 dark:text-white/80 flex-shrink-0" />
+          <div className="flex items-center gap-2 rounded-md bg-black/15 p-2 backdrop-blur-sm">
+            <Wind className="h-4 w-4 flex-shrink-0 text-white/80" />
             <div>
-              <p className="text-[10px] text-gray-600 dark:text-white/70">
-                Wind
-              </p>
+              <p className="text-[10px] text-white/70">Wind</p>
               <p className="font-semibold">
                 {formatWind(current.wind_speed_10m)} {windUnitLabel}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-gray-800/10 dark:bg-white/10 backdrop-blur-sm rounded-md p-2">
-            <Droplets className="w-4 h-4 text-gray-700 dark:text-white/80 flex-shrink-0" />
+          <div className="flex items-center gap-2 rounded-md bg-black/15 p-2 backdrop-blur-sm">
+            <Droplets className="h-4 w-4 flex-shrink-0 text-white/80" />
             <div>
-              <p className="text-[10px] text-gray-600 dark:text-white/70">
-                Humidity
-              </p>
+              <p className="text-[10px] text-white/70">Humidity</p>
               <p className="font-semibold">
                 {Math.round(current.relative_humidity_2m)}%
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-gray-800/10 dark:bg-white/10 backdrop-blur-sm rounded-md p-2">
-            <Gauge className="w-4 h-4 text-gray-700 dark:text-white/80 flex-shrink-0" />
+          <div className="flex items-center gap-2 rounded-md bg-black/15 p-2 backdrop-blur-sm">
+            <Gauge className="h-4 w-4 flex-shrink-0 text-white/80" />
             <div>
-              <p className="text-[10px] text-gray-600 dark:text-white/70">
-                Feels Like
-              </p>
+              <p className="text-[10px] text-white/70">Feels Like</p>
               <p className="font-semibold">
                 {formatTemp(current.apparent_temperature)}
                 {tempUnitLabel}
