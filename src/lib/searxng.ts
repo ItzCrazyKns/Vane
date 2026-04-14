@@ -52,8 +52,8 @@ export const searchSearxng = async (
 
     const data = await res.json();
 
-    const results: SearxngSearchResult[] = data.results;
-    const suggestions: string[] = data.suggestions;
+    const results: SearxngSearchResult[] = data.results ?? [];
+    const suggestions: string[] = data.suggestions ?? [];
 
     return { results, suggestions };
   } catch (err: any) {
