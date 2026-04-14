@@ -8,6 +8,7 @@ import AnthropicLLM from './anthropicLLM';
 
 interface AnthropicConfig {
   apiKey: string;
+  baseURL: string;
 }
 
 const providerConfigFields: UIConfigField[] = [
@@ -21,6 +22,17 @@ const providerConfigFields: UIConfigField[] = [
     env: 'ANTHROPIC_API_KEY',
     scope: 'server',
   },
+  {
+    type: 'string',
+    name: 'Base URL',
+    key: 'baseURL',
+    description: 'The base URL for the Anthropic API',
+    required: true,
+    placeholder: 'Anthropic Base URL',
+    default: 'https://api.anthropic.com/v1',
+    env: 'ANTHROPIC_BASE_URL',
+    scope: 'server',
+  },
 ];
 
 class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
@@ -28,8 +40,15 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
     super(id, name, config);
   }
 
+  private normalizeBaseURL(url: string): string {
+    const trimmed = url.trim().replace(/\/+$/, '');
+    return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
+  }
+
   async getDefaultModels(): Promise<ModelList> {
-    const res = await fetch('https://api.anthropic.com/v1/models?limit=999', {
+    const baseURL = this.normalizeBaseURL(this.config.baseURL);
+
+    const res = await fetch(`${baseURL}/models?limit=999`, {
       method: 'GET',
       headers: {
         'x-api-key': this.config.apiKey,
@@ -81,7 +100,7 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
     return new AnthropicLLM({
       apiKey: this.config.apiKey,
       model: key,
-      baseURL: 'https://api.anthropic.com/v1',
+      baseURL: this.normalizeBaseURL(this.config.baseURL),
     });
   }
 
@@ -97,6 +116,7 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
 
     return {
       apiKey: String(raw.apiKey),
+      baseURL: String(raw.baseURL ?? 'https://api.anthropic.com/v1'),
     };
   }
 
