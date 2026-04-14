@@ -16,64 +16,79 @@ export const POST = async (
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
+    const keepAliveMs = 15_000;
+    let streamClosed = false;
+    let keepAliveInterval: ReturnType<typeof setInterval> | undefined;
+
+    const safeWrite = (payload: Record<string, unknown>) => {
+      if (streamClosed) return;
+
+      try {
+        writer.write(encoder.encode(JSON.stringify(payload) + '\n'));
+      } catch (error) {
+        console.warn('Failed to write reconnect stream payload:', error);
+      }
+    };
+
+    const safeClose = () => {
+      if (streamClosed) return;
+
+      streamClosed = true;
+
+      if (keepAliveInterval) {
+        clearInterval(keepAliveInterval);
+      }
+
+      try {
+        writer.close();
+      } catch (error) {
+        console.warn('Failed to close reconnect stream:', error);
+      }
+    };
+
+    keepAliveInterval = setInterval(() => {
+      safeWrite({ type: 'keepAlive' });
+    }, keepAliveMs);
+
+    safeWrite({ type: 'keepAlive' });
 
     const disconnect = session.subscribe((event, data) => {
       if (event === 'data') {
         if (data.type === 'block') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'block',
-                block: data.block,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'block',
+            block: data.block,
+          });
         } else if (data.type === 'updateBlock') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'updateBlock',
-                blockId: data.blockId,
-                patch: data.patch,
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'updateBlock',
+            blockId: data.blockId,
+            patch: data.patch,
+          });
         } else if (data.type === 'researchComplete') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'researchComplete',
-              }) + '\n',
-            ),
-          );
+          safeWrite({
+            type: 'researchComplete',
+          });
         }
       } else if (event === 'end') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'messageEnd',
-            }) + '\n',
-          ),
-        );
-        writer.close();
+        safeWrite({
+          type: 'messageEnd',
+        });
+        safeClose();
         disconnect();
       } else if (event === 'error') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'error',
-              data: data.data,
-            }) + '\n',
-          ),
-        );
-        writer.close();
+        safeWrite({
+          type: 'error',
+          data: data.data,
+        });
+        safeClose();
         disconnect();
       }
     });
 
     req.signal.addEventListener('abort', () => {
       disconnect();
-      writer.close();
+      safeClose();
     });
 
     return new Response(responseStream.readable, {
