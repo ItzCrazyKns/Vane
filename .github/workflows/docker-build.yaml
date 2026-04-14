@@ -36,7 +36,7 @@ jobs:
       - name: Extract version from release tag
         if: github.event_name == 'release'
         id: version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Build and push AMD64 Docker image (master)
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
@@ -104,7 +104,7 @@ jobs:
       - name: Extract version from release tag
         if: github.event_name == 'release'
         id: version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Build and push ARM64 Docker image (master)
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
@@ -161,7 +161,7 @@ jobs:
       - name: Extract version from release tag
         if: github.event_name == 'release'
         id: version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
 
       - name: Create and push manifest for main
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
