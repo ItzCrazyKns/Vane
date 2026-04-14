@@ -425,6 +425,20 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           method: 'POST',
         });
 
+        if (!res.ok) {
+          // Session no longer exists (e.g. server restarted) - mark message as error
+          setLoading(false);
+          isReconnectingRef.current = false;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.messageId === lastMsg.messageId
+                ? { ...msg, status: 'error' as const }
+                : msg,
+            ),
+          );
+          return;
+        }
+
         if (!res.body) throw new Error('No response body');
 
         const reader = res.body?.getReader();
