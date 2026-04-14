@@ -78,8 +78,6 @@ class SessionManager {
   }
 
   subscribe(listener: (event: string, data: any) => void): () => void {
-    const currentEventsLength = this.events.length;
-
     const handler = (event: string) => (data: any) => listener(event, data);
     const dataHandler = handler('data');
     const endHandler = handler('end');
@@ -89,9 +87,23 @@ class SessionManager {
     this.emitter.on('end', endHandler);
     this.emitter.on('error', errorHandler);
 
-    for (let i = 0; i < currentEventsLength; i++) {
-      const { event, data } = this.events[i];
-      listener(event, data);
+    // Send the current state of each block as a snapshot rather than
+    // replaying every historical event. The old approach replayed all
+    // block creation + every incremental updateBlock patch, which caused
+    // reconnecting clients to visually rebuild (and effectively duplicate)
+    // content they had already received before the connection dropped.
+    for (const block of this.blocks.values()) {
+      listener('data', { type: 'block', block: structuredClone(block) });
+    }
+
+    // Replay any non-block milestone events (researchComplete, end, error)
+    // so reconnecting subscribers know if the session already finished.
+    for (const { event, data } of this.events) {
+      if (event === 'end' || event === 'error') {
+        listener(event, data);
+      } else if (event === 'data' && data.type === 'researchComplete') {
+        listener(event, data);
+      }
     }
 
     return () => {
