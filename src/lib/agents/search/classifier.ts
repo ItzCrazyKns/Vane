@@ -34,6 +34,21 @@ const schema = z.object({
     ),
 });
 
+const shouldForceWebSearch = (query: string) => {
+  const normalizedQuery = query.toLowerCase();
+
+  // Queries with strong recency cues should always consult search instead of
+  // relying on model pretraining knowledge.
+  return (
+    /\b(current|latest|today|yesterday|tomorrow|recent|newest|breaking|now)\b/.test(
+      normalizedQuery,
+    ) ||
+    /\bthis\s+(week|month|year)\b/.test(normalizedQuery) ||
+    /\bas of\b/.test(normalizedQuery) ||
+    /\b20\d{2}\b/.test(normalizedQuery)
+  );
+};
+
 export const classify = async (input: ClassifierInput) => {
   const output = await input.llm.generateObject<typeof schema>({
     messages: [
@@ -48,6 +63,18 @@ export const classify = async (input: ClassifierInput) => {
     ],
     schema,
   });
+
+  const isWidgetOnlyQuery =
+    output.classification.showWeatherWidget ||
+    output.classification.showStockWidget ||
+    output.classification.showCalculationWidget;
+
+  if (
+    !isWidgetOnlyQuery &&
+    shouldForceWebSearch(output.standaloneFollowUp || input.query)
+  ) {
+    output.classification.skipSearch = false;
+  }
 
   return output;
 };
