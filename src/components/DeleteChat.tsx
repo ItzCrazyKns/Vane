@@ -107,7 +107,7 @@ const DeleteChat = ({
                     </button>
                     <button
                       onClick={handleDelete}
-                      className="text-red-400 text-sm hover:text-red-500 transition duration200"
+                      className="text-red-400 text-sm hover:text-red-500 transition duration-200"
                     >
                       Delete
                     </button>
