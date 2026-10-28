@@ -15,7 +15,7 @@ COPY drizzle ./drizzle
 RUN mkdir -p /home/vane/data
 RUN yarn build
 
-FROM node:24.5.0-slim
+FROM node:24.22.1-slim
 
 RUN apt-get update && apt-get install -y \
     python3-dev python3-babel python3-venv python-is-python3 \
