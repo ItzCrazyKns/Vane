@@ -1,22 +1,7 @@
 import { getSearxngURL } from './config/serverRegistry';
 
-export interface SearxngSearchOptions {
-  categories?: string[];
-  engines?: string[];
-  language?: string;
-  pageno?: number;
-}
-
-interface SearxngSearchResult {
-  title: string;
-  url: string;
-  img_src?: string;
-  thumbnail_src?: string;
-  thumbnail?: string;
-  content?: string;
-  author?: string;
-  iframe_src?: string;
-}
+import type { SearxngSearchOptions, SearxngSearchResult } from './searchTypes';
+export type { SearxngSearchOptions } from './searchTypes';
 
 export const searchSearxng = async (
   query: string,

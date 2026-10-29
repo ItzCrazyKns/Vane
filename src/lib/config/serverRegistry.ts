@@ -13,3 +13,6 @@ export const getConfiguredModelProviderById = (
 
 export const getSearxngURL = () =>
   configManager.getConfig('search.searxngURL', '');
+
+export const getSearchBackend = (): string =>
+  configManager.getConfig('search.backend', 'searxng');
