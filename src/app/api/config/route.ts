@@ -8,6 +8,28 @@ type SaveConfigBody = {
   value: string;
 };
 
+const CREDENTIAL_KEY = /key|secret|token|password|credential/i;
+
+/** Mask every credential-named string in the response. An unauthenticated
+ *  caller could read each provider's config.apiKey verbatim; the value is
+ *  dropped here instead of being spread through, and the walk is recursive so
+ *  a key nested under preferences or search is masked too. Non-string values
+ *  and an empty string are left as they are: an empty value is not a secret. */
+function redactCredentials(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(redactCredentials);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        typeof entry === 'string' && entry !== '' && CREDENTIAL_KEY.test(key)
+          ? ''
+          : redactCredentials(entry),
+      ]),
+    );
+  }
+  return value;
+}
+
 export const GET = async (req: NextRequest) => {
   try {
     const values = configManager.getCurrentConfig();
@@ -30,7 +52,7 @@ export const GET = async (req: NextRequest) => {
     );
 
     return NextResponse.json({
-      values,
+      values: redactCredentials(values),
       fields,
     });
   } catch (err) {
