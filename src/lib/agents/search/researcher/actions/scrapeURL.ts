@@ -46,8 +46,22 @@ const extractorSchema = z.object({
     ),
 });
 
+const httpUrlSchema = z.string().refine(
+  (value) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  },
+  { message: 'Only http and https URLs can be scraped.' },
+);
+
 const schema = z.object({
-  urls: z.array(z.string()).describe('A list of URLs to scrape content from.'),
+  urls: z
+    .array(httpUrlSchema)
+    .describe('A list of http or https URLs to scrape content from.'),
 });
 
 const actionDescription = `
