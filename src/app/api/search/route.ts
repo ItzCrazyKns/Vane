@@ -4,6 +4,7 @@ import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import APISearchAgent from '@/lib/agents/search/api';
+import sanitizeCitations from '@/lib/utils/sanitizeCitations';
 
 interface ChatRequestBody {
   optimizationMode: 'speed' | 'balanced' | 'quality';
@@ -94,6 +95,8 @@ export const POST = async (req: Request) => {
             }
 
             if (event === 'end') {
+              /* Drop citation markers that point past the returned sources. */
+              message = sanitizeCitations(message, sources.length).text;
               resolve(Response.json({ message, sources }, { status: 200 }));
             }
 
