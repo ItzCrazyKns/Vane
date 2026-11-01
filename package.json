@@ -53,7 +53,7 @@
     "tailwind-merge": "^2.2.2",
     "yahoo-finance2": "^3.10.2",
     "yet-another-react-lightbox": "^3.17.2",
-    "zod": "^4.1.12"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

@@ -36,12 +36,13 @@ const bodySchema = z.object({
   optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
     message: 'Optimization mode must be one of: speed, balanced, quality',
   }),
-  sources: z.array(z.string()).optional().default([]),
+  sources: z.array(z.string()).max(1000).optional().default([]),
   history: z
     .array(z.tuple([z.string(), z.string()]))
+    .max(1000)
     .optional()
     .default([]),
-  files: z.array(z.string()).optional().default([]),
+  files: z.array(z.string()).max(100).optional().default([]),
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
   systemInstructions: z.string().nullable().optional().default(''),
