@@ -8,6 +8,7 @@ import computeSimilarity from '@/lib/utils/computeSimilarity';
 import z from 'zod';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+import { normalizeUrl } from '@/lib/utils/normalizeUrl';
 
 export const executeSearch = async (input: {
   queries: string[];
@@ -288,18 +289,20 @@ export const executeSearch = async (input: {
       .map((i) => searchResults[i])
       .filter((r) => r !== undefined);
 
-    const alreadyExtractedURLs: string[] = [];
+    /* Normalised keys so tracking-param, http/https and trailing-slash
+       variants of a page that was already read are not read again. */
+    const alreadyExtractedURLs = new Set<string>();
 
     researchBlock.data.subSteps.forEach((step) => {
       if (step.type === 'reading') {
         step.reading.forEach((chunk) => {
-          alreadyExtractedURLs.push(chunk.metadata.url);
+          alreadyExtractedURLs.add(normalizeUrl(chunk.metadata.url));
         });
       }
     });
 
     const filteredResults = pickedResults.filter(
-      (r) => !alreadyExtractedURLs.find((url) => url === r.metadata.url),
+      (r) => !alreadyExtractedURLs.has(normalizeUrl(r.metadata.url)),
     );
 
     if (filteredResults.length > 0) {
