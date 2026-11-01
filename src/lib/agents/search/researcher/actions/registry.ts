@@ -87,20 +87,18 @@ class ActionRegistry {
       mode: SearchAgentConfig['mode'];
     },
   ): Promise<ActionOutput[]> {
-    const results: ActionOutput[] = [];
-
-    await Promise.all(
-      actions.map(async (actionConfig) => {
-        const output = await this.execute(
+    /* Results must come back in call order: the researcher pairs
+       results[i] with the tool call at the same index. Pushing in
+       completion order mixed up results between parallel calls. */
+    return Promise.all(
+      actions.map((actionConfig) =>
+        this.execute(
           actionConfig.name,
           actionConfig.arguments,
           additionalConfig,
-        );
-        results.push(output);
-      }),
+        ),
+      ),
     );
-
-    return results;
   }
 }
 
