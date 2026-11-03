@@ -123,6 +123,7 @@ class SearchAgent {
       finalContextWithWidgets,
       input.config.systemInstructions,
       input.config.mode,
+      classification.classification.skipSearch,
     );
 
     const answerStream = input.config.llm.streamText({
