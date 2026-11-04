@@ -1,5 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
+import { assertProviderBaseUrlField } from '@/lib/security/privateNetwork';
 
 export const GET = async (req: Request) => {
   try {
@@ -46,6 +47,21 @@ export const POST = async (req: NextRequest) => {
           status: 400,
         },
       );
+    }
+
+    if (config.baseURL !== undefined) {
+      try {
+        await assertProviderBaseUrlField(config.baseURL);
+      } catch (error) {
+        return Response.json(
+          {
+            message: `Invalid provider base URL: ${(error as Error).message}`,
+          },
+          {
+            status: 400,
+          },
+        );
+      }
     }
 
     const registry = new ModelRegistry();
