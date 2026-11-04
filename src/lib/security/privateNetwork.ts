@@ -16,11 +16,14 @@ import { isIP } from 'node:net';
  *   benchmark, documentation and multicast space is refused, because a page
  *   must not be able to reach a service on the same host.
  * - `assertProviderBaseUrl` is the rule for an operator-configured provider
- *   base URL. Ollama and LM Studio commonly run on the same host as Vane, so
- *   loopback destinations (127.0.0.0/8, ::1, localhost) are legal there while
- *   every other blocked range still applies. The two rules stay separate
- *   because the same address is a safe provider endpoint and an unsafe
- *   scraping target.
+ *   base URL. Ollama and LM Studio commonly run on the same host as Vane, and
+ *   the README documents the Docker and Linux endpoints
+ *   `http://host.docker.internal` and `http://<private_ip_of_host>`, so
+ *   loopback destinations (127.0.0.0/8, ::1, localhost), the reserved
+ *   `host.docker.internal` name and the private LAN ranges (10.0.0.0/8,
+ *   172.16.0.0/12, 192.168.0.0/16) are legal there while every other blocked
+ *   range still applies. The two rules stay separate because the same address
+ *   is a safe provider endpoint and an unsafe scraping target.
  *
  * IPv6 addresses that carry an embedded IPv4 address (IPv4-mapped,
  * IPv4-compatible, NAT64 and 6to4) are decoded and checked against the IPv4
@@ -67,13 +70,35 @@ function ipv4ToInt(address: string): number {
   );
 }
 
-export function isBlockedIpv4Address(address: string): boolean {
-  if (isIP(address) !== 4) return true;
+function ipv4InRanges(
+  address: string,
+  ranges: ReadonlyArray<readonly [string, number]>,
+): boolean {
   const value = ipv4ToInt(address);
-  return BLOCKED_IPV4_RANGES.some(([base, bits]) => {
+  return ranges.some(([base, bits]) => {
     const size = 2 ** (32 - bits);
     return value >= ipv4ToInt(base) && value < ipv4ToInt(base) + size;
   });
+}
+
+export function isBlockedIpv4Address(address: string): boolean {
+  if (isIP(address) !== 4) return true;
+  return ipv4InRanges(address, BLOCKED_IPV4_RANGES);
+}
+
+/**
+ * The private LAN ranges the README documents as the Linux Ollama and
+ * Lemonade endpoint, `http://<private_ip_of_host>`. Only these three ranges
+ * are exempt from the provider rule; every other blocked range stays refused.
+ */
+const PRIVATE_LAN_IPV4_RANGES: ReadonlyArray<readonly [string, number]> = [
+  ['10.0.0.0', 8], // private
+  ['172.16.0.0', 12], // private
+  ['192.168.0.0', 16], // private
+];
+
+function isPrivateLanIpv4Address(address: string): boolean {
+  return isIP(address) === 4 && ipv4InRanges(address, PRIVATE_LAN_IPV4_RANGES);
 }
 
 function ipv4FromHextets(high: number, low: number): string {
@@ -181,8 +206,8 @@ export function isBlockedAddress(address: string): boolean {
 }
 
 /**
- * Loopback addresses are the only destinations a provider base URL may use
- * that a scraping target may not.
+ * Loopback addresses. The provider rule admits these directly; the scraping
+ * rule refuses them.
  */
 export function isLoopbackAddress(address: string): boolean {
   const family = isIP(address);
@@ -206,17 +231,60 @@ export function isLoopbackAddress(address: string): boolean {
   return false;
 }
 
-const LOOPBACK_HOSTNAMES = new Set(['localhost', 'localhost.']);
+/**
+ * Every destination a provider base URL may use that a scraping target may
+ * not: loopback and the private LAN ranges, including IPv4 addresses carried
+ * inside an IPv6 literal.
+ */
+function isLocalNetworkAddress(address: string): boolean {
+  if (isLoopbackAddress(address)) return true;
+  const family = isIP(address);
+  if (family === 4) return isPrivateLanIpv4Address(address);
+  if (family !== 6) return false;
 
-interface DestinationRules {
-  /** Provider base URLs may name a service on the same host. */
-  allowLoopback: boolean;
+  const hextets = ipv6ToHextets(address);
+  if (!hextets) return false;
+  const firstFiveZero = hextets.slice(0, 5).every((part) => part === 0);
+  if (firstFiveZero && (hextets[5] === 0xffff || hextets[5] === 0)) {
+    return isPrivateLanIpv4Address(ipv4FromHextets(hextets[6], hextets[7]));
+  }
+  return false;
 }
 
-const PUBLIC_DESTINATIONS: DestinationRules = { allowLoopback: false };
-const PROVIDER_BASE_URL_DESTINATIONS: DestinationRules = {
-  allowLoopback: true,
+interface DestinationRules {
+  /** Provider base URLs may name a service on the local host or LAN. */
+  allowLocalNetwork: boolean;
+  /** Reserved names that are accepted without a DNS lookup. */
+  reservedHostnames: ReadonlySet<string>;
+}
+
+const EMPTY_HOSTNAMES: ReadonlySet<string> = new Set();
+
+/** The provider endpoints the README documents for a Docker deployment. */
+const PROVIDER_RESERVED_HOSTNAMES: ReadonlySet<string> = new Set([
+  'localhost',
+  'localhost.',
+  'host.docker.internal',
+  'host.docker.internal.',
+]);
+
+const PUBLIC_DESTINATIONS: DestinationRules = {
+  allowLocalNetwork: false,
+  reservedHostnames: EMPTY_HOSTNAMES,
 };
+
+const PROVIDER_BASE_URL_DESTINATIONS: DestinationRules = {
+  allowLocalNetwork: true,
+  reservedHostnames: PROVIDER_RESERVED_HOSTNAMES,
+};
+
+function isAllowedDestinationAddress(
+  address: string,
+  rules: DestinationRules,
+): boolean {
+  if (rules.allowLocalNetwork && isLocalNetworkAddress(address)) return true;
+  return !isBlockedAddress(address);
+}
 
 async function assertUrlDestination(
   value: string,
@@ -237,8 +305,7 @@ async function assertUrlDestination(
   if (host === '') throw new Error('the URL names no host');
 
   if (isIP(host)) {
-    const loopback = rules.allowLoopback && isLoopbackAddress(host);
-    if (!loopback && isBlockedAddress(host)) {
+    if (!isAllowedDestinationAddress(host, rules)) {
       throw new Error(
         `refusing a loopback, link-local or private destination: ${host}`,
       );
@@ -246,9 +313,9 @@ async function assertUrlDestination(
     return url;
   }
 
-  // The reserved localhost name never needs a resolver; letting it through
-  // only for the provider rule keeps the scraping rule strict.
-  if (rules.allowLoopback && LOOPBACK_HOSTNAMES.has(host.toLowerCase())) {
+  // The documented local provider names never need a resolver; letting them
+  // through only for the provider rule keeps the scraping rule strict.
+  if (rules.reservedHostnames.has(host.toLowerCase())) {
     return url;
   }
 
@@ -261,8 +328,7 @@ async function assertUrlDestination(
   }
   if (addresses.length === 0) throw new Error(`${host} did not resolve`);
   for (const entry of addresses) {
-    const loopback = rules.allowLoopback && isLoopbackAddress(entry.address);
-    if (!loopback && isBlockedAddress(entry.address)) {
+    if (!isAllowedDestinationAddress(entry.address, rules)) {
       throw new Error(
         `refusing a loopback, link-local or private destination: ${host} resolves to ${entry.address}`,
       );
@@ -283,8 +349,9 @@ export async function assertPublicHttpUrl(
 }
 
 /**
- * Provider rule: like the scraping rule, except a loopback destination is
- * allowed because a self-hosted provider may run on this host.
+ * Provider rule: like the scraping rule, except loopback and private LAN
+ * destinations are allowed because a self-hosted provider may run on this
+ * host or on the local network.
  */
 export async function assertProviderBaseUrl(
   value: string,
@@ -319,7 +386,7 @@ export async function assertPublicUrlField(
 
 /**
  * Validate a user-supplied provider baseURL field against the provider rule,
- * which admits loopback destinations.
+ * which admits loopback and private LAN destinations.
  */
 export async function assertProviderBaseUrlField(
   value: unknown,

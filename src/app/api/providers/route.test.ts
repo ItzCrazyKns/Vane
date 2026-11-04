@@ -115,12 +115,46 @@ test('PATCH /api/providers/[id] accepts a loopback base URL', async () => {
   assert.equal(response.status, 200);
 });
 
-test('POST /api/providers still refuses a private non-loopback base URL', async () => {
+test('POST /api/providers accepts the documented Docker and LAN Ollama base URLs', async () => {
+  for (const baseURL of [
+    'http://host.docker.internal:11434',
+    'http://10.0.0.5:11434',
+    'http://192.168.1.10:11434',
+  ]) {
+    const response = await providersRoute.POST(
+      jsonRequest('http://localhost/api/providers', 'POST', {
+        type: 'ollama',
+        name: 'Ollama',
+        config: { baseURL },
+      }) as unknown as NextRequest,
+    );
+
+    assert.equal(response.status, 200, baseURL);
+    const body = (await response.json()) as {
+      provider: { config: { baseURL: string } };
+    };
+    assert.equal(body.provider.config.baseURL, baseURL);
+  }
+});
+
+test('PATCH /api/providers/[id] accepts a LAN base URL', async () => {
+  const response = await providerRoute.PATCH(
+    jsonRequest('http://localhost/api/providers/provider-1', 'PATCH', {
+      name: 'Ollama',
+      config: { baseURL: 'http://172.16.0.1:11434' },
+    }) as unknown as NextRequest,
+    { params: Promise.resolve({ id: 'provider-1' }) },
+  );
+
+  assert.equal(response.status, 200);
+});
+
+test('POST /api/providers still refuses a link-local base URL', async () => {
   const response = await providersRoute.POST(
     jsonRequest('http://localhost/api/providers', 'POST', {
       type: 'ollama',
       name: 'Ollama',
-      config: { baseURL: 'http://10.0.0.1:11434' },
+      config: { baseURL: 'http://169.254.169.254:11434' },
     }) as unknown as NextRequest,
   );
 

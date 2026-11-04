@@ -251,15 +251,47 @@ test('provider base URLs accept loopback destinations', async () => {
   });
 });
 
-test('the provider base URL rule still refuses non-loopback blocked destinations', async () => {
-  const blocked = [
-    'http://10.0.0.1:11434',
+test('provider base URLs accept the documented Docker and LAN endpoints', async () => {
+  const local = [
+    'http://host.docker.internal:11434',
+    'http://host.docker.internal.:11434/v1',
+    'http://10.0.0.5:11434',
+    'http://10.255.255.254:11434',
     'http://172.16.0.1:11434',
+    'http://172.31.255.255:11434',
     'http://192.168.1.10:11434',
+    'http://192.168.255.255:11434',
+    'http://[::ffff:10.0.0.5]:11434',
+    'http://[::ffff:192.168.1.10]:11434',
+  ];
+  for (const value of local) {
+    await assertProviderBaseUrlField(value, { lookup: publicLookup });
+  }
+
+  // A LAN hostname is the same destination as the private address it
+  // resolves to.
+  await assertProviderBaseUrlField('http://ollama.lan:11434', {
+    lookup: lookupAnswers({ 'ollama.lan': ['192.168.1.20'] }),
+  });
+
+  // The scraping rule is unchanged: a page must not reach the LAN either.
+  for (const value of ['http://10.0.0.5:11434', 'http://192.168.1.10:11434']) {
+    await assert.rejects(
+      assertPublicUrlField(value, { lookup: publicLookup }),
+      /private destination/,
+      value,
+    );
+  }
+});
+
+test('the provider base URL rule still refuses the other blocked destinations', async () => {
+  const blocked = [
+    'http://0.0.0.0:11434',
+    'http://100.64.0.1:11434',
     'http://169.254.169.254/latest/meta-data/',
     'http://[fd00::1]:11434',
     'http://[fe80::1]:11434',
-    'http://[::ffff:10.0.0.1]:11434',
+    'http://[::ffff:169.254.169.254]:11434',
   ];
   for (const value of blocked) {
     await assert.rejects(
@@ -268,6 +300,14 @@ test('the provider base URL rule still refuses non-loopback blocked destinations
       value,
     );
   }
+
+  // A hostname that resolves to a still-blocked destination stays refused.
+  await assert.rejects(
+    assertProviderBaseUrlField('http://metadata.example/v1', {
+      lookup: lookupAnswers({ 'metadata.example': ['169.254.169.254'] }),
+    }),
+    /private destination/,
+  );
 
   // The scraping rule is unchanged: the same loopback address is refused
   // there because a page must not be able to reach a service on this host.
@@ -283,6 +323,43 @@ test('the provider base URL rule still refuses non-loopback blocked destinations
     }),
     /private destination/,
   );
+});
+
+test('the provider base URL rule refuses each remaining reserved range', async (t) => {
+  const refused: ReadonlyArray<readonly [string, string]> = [
+    ['0.0.0.0/8 this network', 'http://0.1.2.3:11434'],
+    ['100.64.0.0/10 carrier-grade NAT', 'http://100.64.0.1:11434'],
+    ['169.254.0.0/16 link-local', 'http://169.254.169.254/latest/meta-data/'],
+    ['192.0.0.0/24 protocol assignments', 'http://192.0.0.8:11434'],
+    ['192.0.2.0/24 TEST-NET-1', 'http://192.0.2.10:11434'],
+    ['192.88.99.0/24 6to4 relay anycast', 'http://192.88.99.1:11434'],
+    ['198.18.0.0/15 benchmarking', 'http://198.18.0.1:11434'],
+    ['198.51.100.0/24 TEST-NET-2', 'http://198.51.100.10:11434'],
+    ['203.0.113.0/24 TEST-NET-3', 'http://203.0.113.10:11434'],
+    ['224.0.0.0/4 multicast', 'http://224.0.0.1:11434'],
+    ['240.0.0.0/4 reserved', 'http://240.0.0.1:11434'],
+    ['fc00::/7 unique local', 'http://[fd00::1]:11434'],
+    ['fe80::/10 link-local', 'http://[fe80::1]:11434'],
+    ['ff00::/8 multicast', 'http://[ff02::1]:11434'],
+    ['100::/64 discard-only', 'http://[100::1]:11434'],
+    ['2001:db8::/32 documentation', 'http://[2001:db8::1]:11434'],
+    ['64:ff9b:1::/48 local NAT64', 'http://[64:ff9b:1::1]:11434'],
+    ['2001:10::/28 ORCHID', 'http://[2001:10::1]:11434'],
+    ['2001:20::/28 ORCHIDv2', 'http://[2001:20::1]:11434'],
+    [
+      '2002::/16 with a private IPv4 endpoint',
+      'http://[2002:c0a8:101::1]:11434',
+    ],
+  ];
+  for (const [range, value] of refused) {
+    await t.test(range, async () => {
+      await assert.rejects(
+        assertProviderBaseUrlField(value, { lookup: publicLookup }),
+        /private destination/,
+        value,
+      );
+    });
+  }
 });
 
 test('refuses a hostname that does not resolve', async () => {
