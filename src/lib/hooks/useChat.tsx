@@ -776,6 +776,28 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }),
     });
 
+    if (!res.ok) {
+      let errorMessage = 'The server rejected the request.';
+      try {
+        const data = await res.json();
+        if (data && typeof data.message === 'string') {
+          errorMessage = data.message;
+        }
+      } catch {
+        // The response had no JSON body.
+      }
+      toast.error(errorMessage);
+      setLoading(false);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.messageId === messageId
+            ? { ...msg, status: 'error' as const }
+            : msg,
+        ),
+      );
+      return;
+    }
+
     if (!res.body) throw new Error('No response body');
 
     const reader = res.body?.getReader();
