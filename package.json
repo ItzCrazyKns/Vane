@@ -8,6 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
+    "test": "node --test 'src/**/*.test.ts'",
     "format:write": "prettier . --write"
   },
   "dependencies": {

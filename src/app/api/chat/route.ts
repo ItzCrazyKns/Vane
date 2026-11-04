@@ -9,6 +9,7 @@ import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { chats } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
+import { chatHistorySchema } from '@/lib/utils/chatHistory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -37,11 +38,7 @@ const bodySchema = z.object({
     message: 'Optimization mode must be one of: speed, balanced, quality',
   }),
   sources: z.array(z.string()).max(1000).optional().default([]),
-  history: z
-    .array(z.tuple([z.string(), z.string()]))
-    .max(1000)
-    .optional()
-    .default([]),
+  history: chatHistorySchema,
   files: z.array(z.string()).max(100).optional().default([]),
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
