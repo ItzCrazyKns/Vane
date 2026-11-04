@@ -219,25 +219,6 @@ export async function assertPublicHttpUrl(
 }
 
 /**
- * Decide whether a request URL may be sent. Non-network schemes (data:, blob:,
- * about:) are served by the browser itself and are allowed; every http(s) URL
- * must pass the destination policy. Used for subframes, subresources and
- * popups, which must be checked just like a top-level navigation.
- */
-export async function isAllowedRequestUrl(
-  value: string,
-  options: UrlPolicyOptions = {},
-): Promise<boolean> {
-  if (!/^https?:/i.test(value.trim())) return true;
-  try {
-    await assertPublicHttpUrl(value, options);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Validate a user-supplied baseURL field. A present value must be a non-empty
  * string and must pass the destination policy; a non-string value is rejected
  * rather than coerced, because provider parsing later calls String() on it.

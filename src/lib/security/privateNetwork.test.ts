@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   assertPublicHttpUrl,
   assertPublicUrlField,
-  isAllowedRequestUrl,
   isBlockedAddress,
   isBlockedIpv4Address,
 } from './privateNetwork.ts';
@@ -210,39 +209,6 @@ test('refuses a hostname when any resolved address is private', async () => {
     assertPublicHttpUrl('https://mapped.example/', { lookup: mappedLookup }),
     /private destination/,
   );
-});
-
-test('subframe and subresource requests get the same destination policy', async () => {
-  const allowed = [
-    'https://public.example/app.js',
-    'https://public.example/frame',
-    'data:image/png;base64,AAAA',
-    'blob:https://public.example/5f2c',
-    'about:blank',
-  ];
-  for (const value of allowed) {
-    assert.equal(
-      await isAllowedRequestUrl(value, { lookup: publicLookup }),
-      true,
-      value,
-    );
-  }
-
-  const blocked = [
-    'http://127.0.0.1:8080/script.js',
-    'http://10.0.0.1/logo.png',
-    'http://169.254.169.254/latest/meta-data/',
-    'http://[::ffff:127.0.0.1]/frame',
-    'http://[::ffff:7f00:1]/frame',
-    'https://missing.example/x.js',
-  ];
-  for (const value of blocked) {
-    assert.equal(
-      await isAllowedRequestUrl(value, { lookup: publicLookup }),
-      false,
-      value,
-    );
-  }
 });
 
 test('a present baseURL field must be a non-empty string', async () => {
