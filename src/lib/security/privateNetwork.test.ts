@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  assertProviderBaseUrlField,
   assertPublicHttpUrl,
   assertPublicUrlField,
   isBlockedAddress,
@@ -226,6 +227,59 @@ test('a present baseURL field must be a non-empty string', async () => {
   await assert.rejects(
     assertPublicUrlField('http://127.0.0.1:11434/api', {
       lookup: publicLookup,
+    }),
+    /private destination/,
+  );
+});
+
+test('provider base URLs accept loopback destinations', async () => {
+  const loopback = [
+    'http://127.0.0.1:11434',
+    'http://127.1.2.3:11434/api',
+    'http://127.255.255.254:11434',
+    'http://[::1]:11434',
+    'http://[::ffff:127.0.0.1]:11434',
+    'http://[::ffff:7f00:1]:11434',
+    'http://localhost:11434',
+    'http://localhost.:1234/v1',
+  ];
+  for (const value of loopback) {
+    await assertProviderBaseUrlField(value, { lookup: publicLookup });
+  }
+  await assertProviderBaseUrlField('https://public.example/v1', {
+    lookup: publicLookup,
+  });
+});
+
+test('the provider base URL rule still refuses non-loopback blocked destinations', async () => {
+  const blocked = [
+    'http://10.0.0.1:11434',
+    'http://172.16.0.1:11434',
+    'http://192.168.1.10:11434',
+    'http://169.254.169.254/latest/meta-data/',
+    'http://[fd00::1]:11434',
+    'http://[fe80::1]:11434',
+    'http://[::ffff:10.0.0.1]:11434',
+  ];
+  for (const value of blocked) {
+    await assert.rejects(
+      assertProviderBaseUrlField(value, { lookup: publicLookup }),
+      /private destination/,
+      value,
+    );
+  }
+
+  // The scraping rule is unchanged: the same loopback address is refused
+  // there because a page must not be able to reach a service on this host.
+  await assert.rejects(
+    assertPublicUrlField('http://127.0.0.1:11434', {
+      lookup: publicLookup,
+    }),
+    /private destination/,
+  );
+  await assert.rejects(
+    assertPublicHttpUrl('http://localhost:11434', {
+      lookup: lookupAnswers({ localhost: ['::1'] }),
     }),
     /private destination/,
   );

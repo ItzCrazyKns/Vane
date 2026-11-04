@@ -1,6 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
-import { assertPublicUrlField } from '@/lib/security/privateNetwork';
+import { assertProviderBaseUrlField } from '@/lib/security/privateNetwork';
 
 export const DELETE = async (
   req: NextRequest,
@@ -66,7 +66,7 @@ export const PATCH = async (
 
     if (config.baseURL !== undefined) {
       try {
-        await assertPublicUrlField(config.baseURL);
+        await assertProviderBaseUrlField(config.baseURL);
       } catch (error) {
         return Response.json(
           {

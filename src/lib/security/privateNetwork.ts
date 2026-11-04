@@ -9,12 +9,22 @@ import { isIP } from 'node:net';
  * between features. It answers one question: may this process send a request
  * to this URL?
  *
- * Only http and https are allowed. Every address the host resolves to must be
- * a public unicast address: loopback, link-local, private, CGNAT, benchmark,
- * documentation and multicast space is refused. IPv6 addresses that carry an
- * embedded IPv4 address (IPv4-mapped, IPv4-compatible, NAT64 and 6to4) are
- * decoded and checked against the IPv4 ranges, so `[::ffff:127.0.0.1]` is
- * treated exactly like `127.0.0.1`.
+ * Only http and https are allowed. Two destination rules share this module:
+ *
+ * - `assertPublicHttpUrl` is the rule for URLs fetched on behalf of a page. A
+ *   scraping target must be public: loopback, link-local, private, CGNAT,
+ *   benchmark, documentation and multicast space is refused, because a page
+ *   must not be able to reach a service on the same host.
+ * - `assertProviderBaseUrl` is the rule for an operator-configured provider
+ *   base URL. Ollama and LM Studio commonly run on the same host as Vane, so
+ *   loopback destinations (127.0.0.0/8, ::1, localhost) are legal there while
+ *   every other blocked range still applies. The two rules stay separate
+ *   because the same address is a safe provider endpoint and an unsafe
+ *   scraping target.
+ *
+ * IPv6 addresses that carry an embedded IPv4 address (IPv4-mapped,
+ * IPv4-compatible, NAT64 and 6to4) are decoded and checked against the IPv4
+ * ranges, so `[::ffff:127.0.0.1]` is treated exactly like `127.0.0.1`.
  */
 
 type ResolvedAddress = { address: string; family: number };
@@ -171,11 +181,46 @@ export function isBlockedAddress(address: string): boolean {
 }
 
 /**
- * Parse a URL and refuse it unless it is http(s), names a host and every
- * address that host resolves to is public.
+ * Loopback addresses are the only destinations a provider base URL may use
+ * that a scraping target may not.
  */
-export async function assertPublicHttpUrl(
+export function isLoopbackAddress(address: string): boolean {
+  const family = isIP(address);
+  if (family === 4) {
+    return address.split('.')[0] === '127'; // 127.0.0.0/8
+  }
+  if (family !== 6) return false;
+
+  const hextets = ipv6ToHextets(address);
+  if (!hextets) return false;
+  if (hextets.slice(0, 7).every((part) => part === 0) && hextets[7] === 1) {
+    return true; // ::1
+  }
+
+  const firstFiveZero = hextets.slice(0, 5).every((part) => part === 0);
+  if (firstFiveZero && (hextets[5] === 0xffff || hextets[5] === 0)) {
+    // IPv4-mapped and IPv4-compatible addresses carry their payload in the
+    // last 32 bits, so apply the IPv4 loopback rule to it.
+    return isLoopbackAddress(ipv4FromHextets(hextets[6], hextets[7]));
+  }
+  return false;
+}
+
+const LOOPBACK_HOSTNAMES = new Set(['localhost', 'localhost.']);
+
+interface DestinationRules {
+  /** Provider base URLs may name a service on the same host. */
+  allowLoopback: boolean;
+}
+
+const PUBLIC_DESTINATIONS: DestinationRules = { allowLoopback: false };
+const PROVIDER_BASE_URL_DESTINATIONS: DestinationRules = {
+  allowLoopback: true,
+};
+
+async function assertUrlDestination(
   value: string,
+  rules: DestinationRules,
   options: UrlPolicyOptions = {},
 ): Promise<URL> {
   let url: URL;
@@ -192,11 +237,18 @@ export async function assertPublicHttpUrl(
   if (host === '') throw new Error('the URL names no host');
 
   if (isIP(host)) {
-    if (isBlockedAddress(host)) {
+    const loopback = rules.allowLoopback && isLoopbackAddress(host);
+    if (!loopback && isBlockedAddress(host)) {
       throw new Error(
         `refusing a loopback, link-local or private destination: ${host}`,
       );
     }
+    return url;
+  }
+
+  // The reserved localhost name never needs a resolver; letting it through
+  // only for the provider rule keeps the scraping rule strict.
+  if (rules.allowLoopback && LOOPBACK_HOSTNAMES.has(host.toLowerCase())) {
     return url;
   }
 
@@ -209,7 +261,8 @@ export async function assertPublicHttpUrl(
   }
   if (addresses.length === 0) throw new Error(`${host} did not resolve`);
   for (const entry of addresses) {
-    if (isBlockedAddress(entry.address)) {
+    const loopback = rules.allowLoopback && isLoopbackAddress(entry.address);
+    if (!loopback && isBlockedAddress(entry.address)) {
       throw new Error(
         `refusing a loopback, link-local or private destination: ${host} resolves to ${entry.address}`,
       );
@@ -219,17 +272,58 @@ export async function assertPublicHttpUrl(
 }
 
 /**
- * Validate a user-supplied baseURL field. A present value must be a non-empty
- * string and must pass the destination policy; a non-string value is rejected
- * rather than coerced, because provider parsing later calls String() on it.
+ * Scraping rule: parse a URL and refuse it unless it is http(s), names a host
+ * and every address that host resolves to is public.
  */
-export async function assertPublicUrlField(
-  value: unknown,
+export async function assertPublicHttpUrl(
+  value: string,
   options: UrlPolicyOptions = {},
+): Promise<URL> {
+  return assertUrlDestination(value, PUBLIC_DESTINATIONS, options);
+}
+
+/**
+ * Provider rule: like the scraping rule, except a loopback destination is
+ * allowed because a self-hosted provider may run on this host.
+ */
+export async function assertProviderBaseUrl(
+  value: string,
+  options: UrlPolicyOptions = {},
+): Promise<URL> {
+  return assertUrlDestination(value, PROVIDER_BASE_URL_DESTINATIONS, options);
+}
+
+async function assertUrlField(
+  value: unknown,
+  assertUrl: (value: string, options: UrlPolicyOptions) => Promise<URL>,
+  options: UrlPolicyOptions,
 ): Promise<void> {
   if (value === undefined) return;
   if (typeof value !== 'string' || value.trim() === '') {
     throw new Error('it must be a non-empty string');
   }
-  await assertPublicHttpUrl(value, options);
+  await assertUrl(value, options);
+}
+
+/**
+ * Validate a user-supplied baseURL field against the scraping rule. A present
+ * value must be a non-empty string; a non-string value is rejected rather
+ * than coerced, because provider parsing later calls String() on it.
+ */
+export async function assertPublicUrlField(
+  value: unknown,
+  options: UrlPolicyOptions = {},
+): Promise<void> {
+  await assertUrlField(value, assertPublicHttpUrl, options);
+}
+
+/**
+ * Validate a user-supplied provider baseURL field against the provider rule,
+ * which admits loopback destinations.
+ */
+export async function assertProviderBaseUrlField(
+  value: unknown,
+  options: UrlPolicyOptions = {},
+): Promise<void> {
+  await assertUrlField(value, assertProviderBaseUrl, options);
 }

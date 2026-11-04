@@ -1,6 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
-import { assertPublicUrlField } from '@/lib/security/privateNetwork';
+import { assertProviderBaseUrlField } from '@/lib/security/privateNetwork';
 
 export const GET = async (req: Request) => {
   try {
@@ -51,7 +51,7 @@ export const POST = async (req: NextRequest) => {
 
     if (config.baseURL !== undefined) {
       try {
-        await assertPublicUrlField(config.baseURL);
+        await assertProviderBaseUrlField(config.baseURL);
       } catch (error) {
         return Response.json(
           {
