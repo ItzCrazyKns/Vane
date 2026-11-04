@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_HISTORY_TURNS, chatHistorySchema } from './chatHistory.ts';
+import {
+  MAX_HISTORY_INPUT_TUPLES,
+  MAX_HISTORY_TURNS,
+  chatHistorySchema,
+} from './chatHistory.ts';
 
 test('keeps the most recent turns instead of rejecting a long chat', () => {
   const tuples: Array<[string, string]> = Array.from(
@@ -18,6 +22,34 @@ test('keeps the most recent turns instead of rejecting a long chat', () => {
   ]);
 });
 
+test('keeps only the most recent window of a long history', () => {
+  const tuples: Array<[string, string]> = Array.from(
+    { length: MAX_HISTORY_INPUT_TUPLES },
+    (_, index) => ['human', `message ${index}`],
+  );
+
+  const parsed = chatHistorySchema.parse(tuples);
+
+  assert.equal(parsed.length, MAX_HISTORY_TURNS);
+  assert.deepEqual(parsed[0], [
+    'human',
+    `message ${MAX_HISTORY_INPUT_TUPLES - MAX_HISTORY_TURNS}`,
+  ]);
+});
+
+test('truncates before tuple validation so a malformed array stays bounded', () => {
+  const malformed = Array.from(
+    { length: MAX_HISTORY_INPUT_TUPLES - 1 },
+    () => 'not a tuple',
+  );
+
+  const result = chatHistorySchema.safeParse(malformed);
+
+  assert.equal(result.success, false);
+  assert.ok(result.error.issues.length <= MAX_HISTORY_TURNS);
+  assert.ok(result.error.issues.length > 0);
+});
+
 test('keeps a short chat unchanged', () => {
   const tuples: Array<[string, string]> = [
     ['human', 'hello'],
@@ -31,10 +63,10 @@ test('treats an absent history as empty', () => {
 });
 
 test('still refuses an oversized array', () => {
-  const tuples: Array<[string, string]> = Array.from({ length: 100001 }, () => [
-    'human',
-    'x',
-  ]);
+  const tuples: Array<[string, string]> = Array.from(
+    { length: MAX_HISTORY_INPUT_TUPLES + 1 },
+    () => ['human', 'x'],
+  );
   const result = chatHistorySchema.safeParse(tuples);
   assert.equal(result.success, false);
 });
