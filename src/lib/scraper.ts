@@ -1,86 +1,12 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Mutex } from 'async-mutex';
-import { lookup } from 'node:dns/promises';
-import { isIP } from 'node:net';
-
-const BLOCKED_V4_RANGES: Array<[string, number]> = [
-  ['0.0.0.0', 8],
-  ['10.0.0.0', 8],
-  ['100.64.0.0', 10],
-  ['127.0.0.0', 8],
-  ['169.254.0.0', 16],
-  ['172.16.0.0', 12],
-  ['192.0.0.0', 24],
-  ['192.168.0.0', 16],
-  ['198.18.0.0', 15],
-  ['224.0.0.0', 4],
-  ['240.0.0.0', 4],
-];
-
-function ipv4ToInt(address: string): number {
-  return address
-    .split('.')
-    .reduce((acc, octet) => acc * 256 + Number(octet), 0) >>> 0;
-}
-
-/** Loopback, link-local, private, CGNAT, documentation and multicast space. */
-function isPrivateAddress(address: string): boolean {
-  if (isIP(address) === 4) {
-    const value = ipv4ToInt(address);
-    return BLOCKED_V4_RANGES.some(([base, bits]) => {
-      const size = 2 ** (32 - bits);
-      return value >= ipv4ToInt(base) && value < ipv4ToInt(base) + size;
-    });
-  }
-  if (isIP(address) === 6) {
-    const lower = address.toLowerCase();
-    if (lower === '::' || lower === '::1') return true;
-    const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-    if (mapped) return isPrivateAddress(mapped[1]);
-    return (
-      lower.startsWith('fc') ||
-      lower.startsWith('fd') ||
-      /^fe[89ab]/.test(lower) ||
-      lower.startsWith('ff')
-    );
-  }
-  return true;
-}
-
-/** A URL the scraper may load: http(s) only, and every address the hostname
- *  resolves to is public. Checked before the browser is started and again on
- *  every navigation request, so a redirect into a private address is refused
- *  before the request leaves the process. */
-async function assertScrapableUrl(value: string): Promise<URL> {
-  let url: URL;
-  try {
-    url = new URL(value);
-  } catch {
-    throw new Error(`unsupported URL: ${value}`);
-  }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new Error(`unsupported URL scheme: ${url.protocol}`);
-  }
-  const host = url.hostname.replace(/^\[|\]$/g, '');
-  if (host === '') throw new Error('the URL names no host');
-  if (isIP(host)) {
-    if (isPrivateAddress(host)) {
-      throw new Error(`refusing a loopback, link-local or private destination: ${host}`);
-    }
-    return url;
-  }
-  const addresses = await lookup(host, { all: true, verbatim: true });
-  if (addresses.length === 0) throw new Error(`${host} did not resolve`);
-  for (const entry of addresses) {
-    if (isPrivateAddress(entry.address)) {
-      throw new Error(
-        `refusing a loopback, link-local or private destination: ${host} resolves to ${entry.address}`,
-      );
-    }
-  }
-  return url;
-}
+import type { Response, Route } from 'playwright';
+import {
+  assertPublicHttpUrl,
+  isAllowedRequestUrl,
+  isBlockedAddress,
+} from '@/lib/security/privateNetwork';
 
 class Scraper {
   private static browser: any | undefined;
@@ -129,7 +55,7 @@ class Scraper {
   static async scrape(
     url: string,
   ): Promise<{ content: string; title: string }> {
-    await assertScrapableUrl(url);
+    await assertPublicHttpUrl(url);
 
     await this.initBrowser();
 
@@ -138,35 +64,49 @@ class Scraper {
     const context = await this.browser.newContext({
       userAgent:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+      // Requests made by a service worker are not visible to request
+      // interception, so the destination policy could be bypassed.
+      serviceWorkers: 'block',
     });
 
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     });
 
-    const page = await context.newPage();
-
-    // A redirect is a second navigation request; validate every navigation
-    // before it is sent so a public URL cannot bounce the browser into a
-    // loopback or private address.
-    await page.route('**/*', async (route) => {
-      const request = route.request();
-      if (!request.isNavigationRequest() || request.frame() !== page.mainFrame()) {
+    // Every request this context makes, including subframes, subresources and
+    // popups, is validated before it leaves the browser. Requests the browser
+    // can serve itself (data:, blob:, about:) are allowed through.
+    await context.route('**/*', async (route: Route) => {
+      if (await isAllowedRequestUrl(route.request().url())) {
         await route.continue();
-        return;
-      }
-      try {
-        await assertScrapableUrl(request.url());
-        await route.continue();
-      } catch {
+      } else {
         await route.abort('blockedbyclient');
       }
     });
 
+    // A hostname can resolve to a public address for our check and to a
+    // private one for the browser's own lookup. Record the address the
+    // browser actually connected to for every response so a rebound request
+    // is detected before the page content is used.
+    const responseAddresses: Array<{ ipAddress: string } | null> = [];
+    const addressChecks: Array<Promise<void>> = [];
+    context.on('response', (response: Response) => {
+      addressChecks.push(
+        response
+          .serverAddr()
+          .then((address) => {
+            responseAddresses.push(address);
+          })
+          .catch(() => undefined),
+      );
+    });
+
+    const page = await context.newPage();
+
     this.userCount++;
 
     try {
-      await page.goto(url, {
+      const response = await page.goto(url, {
         waitUntil: 'domcontentloaded',
         timeout: this.NAVIGATION_TIMEOUT,
       });
@@ -176,7 +116,26 @@ class Scraper {
         .catch(() => undefined);
       await page.waitForTimeout(500);
 
-      await assertScrapableUrl(page.url());
+      await assertPublicHttpUrl(page.url());
+
+      // Do not let a response that never reports its address hang the scrape.
+      await Promise.race([
+        Promise.all(addressChecks),
+        page.waitForTimeout(2000),
+      ]);
+
+      const documentAddress = await response?.serverAddr().catch(() => null);
+      const reachedPrivate =
+        responseAddresses.some(
+          (address) => address && isBlockedAddress(address.ipAddress),
+        ) ||
+        (documentAddress && isBlockedAddress(documentAddress.ipAddress));
+
+      if (reachedPrivate) {
+        throw new Error(
+          'the page was served from a loopback, link-local or private address',
+        );
+      }
 
       const html = await page.content();
 
