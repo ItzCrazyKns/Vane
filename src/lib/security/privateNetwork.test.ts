@@ -273,6 +273,9 @@ test('provider base URLs accept the documented Docker and LAN endpoints', async 
   await assertProviderBaseUrlField('http://ollama.lan:11434', {
     lookup: lookupAnswers({ 'ollama.lan': ['192.168.1.20'] }),
   });
+  await assertProviderBaseUrlField('http://private.example/v1', {
+    lookup: lookupAnswers({ 'private.example': ['10.0.0.1'] }),
+  });
 
   // The scraping rule is unchanged: a page must not reach the LAN either.
   for (const value of ['http://10.0.0.5:11434', 'http://192.168.1.10:11434']) {

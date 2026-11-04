@@ -162,3 +162,17 @@ test('POST /api/providers still refuses a link-local base URL', async () => {
   const body = (await response.json()) as { message: string };
   assert.match(body.message, /private destination/);
 });
+
+test('PATCH /api/providers/[id] still refuses a link-local base URL', async () => {
+  const response = await providerRoute.PATCH(
+    jsonRequest('http://localhost/api/providers/provider-1', 'PATCH', {
+      name: 'Ollama',
+      config: { baseURL: 'http://169.254.169.254:11434' },
+    }) as unknown as NextRequest,
+    { params: Promise.resolve({ id: 'provider-1' }) },
+  );
+
+  assert.equal(response.status, 400);
+  const body = (await response.json()) as { message: string };
+  assert.match(body.message, /private destination/);
+});
