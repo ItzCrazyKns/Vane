@@ -175,13 +175,20 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                   arguments: tc.function?.arguments || '',
                 };
                 recievedToolCalls.push(call);
-                return { ...call, arguments: parse(call.arguments || '{}') };
+                return {
+                  ...call,
+                  arguments: parse(call.arguments.trim() || '{}'),
+                };
               } else {
                 const existingCall = recievedToolCalls[tc.index];
                 existingCall.arguments += tc.function?.arguments || '';
+                // Some providers (e.g. Anthropic's OpenAI-compatible endpoint)
+                // stream tool-call deltas where the accumulated arguments are
+                // still empty. partial-json's parse() throws " is empty" on an
+                // empty/whitespace string, so fall back to an empty object.
                 return {
                   ...existingCall,
-                  arguments: parse(existingCall.arguments),
+                  arguments: parse(existingCall.arguments.trim() || '{}'),
                 };
               }
             }) || [],
