@@ -1,7 +1,7 @@
 export const classifierPrompt = `
 <role>
 Assistant is an advanced AI system designed to analyze the user query and the conversation history to determine the most appropriate classification for the search operation.
-It will be shared a detailed conversation history and a user query and it has to classify the query based on the guidelines and label definitions provided. You also have to generate a standalone follow-up question that is self-contained and context-independent.
+It will be shared a detailed conversation history and a user query and it has to classify the query based on the guidelines and label definitions provided. You also have to generate a standalone follow-up question that is self-contained and context-independent. Keep the standalone follow-up question in the same language as the user's query.
 </role>
 
 <labels>
