@@ -6,6 +6,7 @@ import { splitText } from "../utils/splitText";
 import { PDFParse } from 'pdf-parse';
 import { CanvasFactory } from 'pdf-parse/worker';
 import officeParser from 'officeparser'
+import { resolveUploadsDirs } from "./paths";
 
 const supportedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'] as const
 
@@ -31,8 +32,13 @@ type FileRes = {
 
 class UploadManager {
     private embeddingModel: BaseEmbedding<any>;
-    static uploadsDir = path.join(process.cwd(), 'data', 'uploads');
+    // New uploads go to DATA_DIR/data/uploads (cwd/data/uploads when DATA_DIR
+    // is unset). Files uploaded before that, when uploads always went to
+    // cwd/data/uploads, are left where they are and found through
+    // legacyUploadsDir on a lookup miss; nothing is moved or rewritten there.
+    static uploadsDir = resolveUploadsDirs().uploadsDir;
     static uploadedFilesRecordPath = path.join(this.uploadsDir, 'uploaded_files.json');
+    static legacyUploadsDir: string | null = resolveUploadsDirs().legacyUploadsDir;
 
     constructor(private params: UploadManagerParams) {
         this.embeddingModel = params.embeddingModel;
@@ -66,7 +72,22 @@ class UploadManager {
     static getFile(fileId: string): RecordedFile | null {
         const recordedFiles = this.getRecordedFiles();
 
-        return recordedFiles.find(f => f.id === fileId) || null;
+        return recordedFiles.find(f => f.id === fileId) || this.getLegacyFile(fileId);
+    }
+
+    private static getLegacyFile(fileId: string): RecordedFile | null {
+        if (!this.legacyUploadsDir) return null;
+
+        const legacyRecordPath = path.join(this.legacyUploadsDir, 'uploaded_files.json');
+        if (!fs.existsSync(legacyRecordPath)) return null;
+
+        try {
+            const files: RecordedFile[] = JSON.parse(fs.readFileSync(legacyRecordPath, 'utf-8')).files;
+            return files.find(f => f.id === fileId) || null;
+        } catch (err) {
+            console.log('Error reading legacy uploads record:', err);
+            return null;
+        }
     }
 
     static getFileChunks(fileId: string): { content: string; embedding: number[] }[] {
