@@ -171,7 +171,7 @@ const loadMessages = async (
   chatId: string,
   setMessages: (messages: Message[]) => void,
   setIsMessagesLoaded: (loaded: boolean) => void,
-  chatHistory: React.MutableRefObject<[string, string][]>,
+  setChatHistory: (history: [string, string][]) => void,
   setSources: (sources: string[]) => void,
   setNotFound: (notFound: boolean) => void,
   setFiles: (files: File[]) => void,
@@ -229,7 +229,7 @@ const loadMessages = async (
   setFiles(files);
   setFileIds(files.map((file: File) => file.fileId));
 
-  chatHistory.current = history;
+  setChatHistory(history);
   setSources(data.chat.sources);
   setIsMessagesLoaded(true);
 };
@@ -278,7 +278,16 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [researchEnded, setResearchEnded] = useState(false);
 
+  // The ref is read by the async handlers (always the latest value); the
+  // state copy is what the context exposes to rendering components.
   const chatHistory = useRef<[string, string][]>([]);
+  const [chatHistoryState, setChatHistoryState] = useState<[string, string][]>(
+    [],
+  );
+  const setChatHistory = (history: [string, string][]) => {
+    chatHistory.current = history;
+    setChatHistoryState(history);
+  };
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [files, setFiles] = useState<File[]>([]);
@@ -457,7 +466,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           ],
         ];
 
-        chatHistory.current = newHistory;
+        setChatHistory(newHistory);
 
         setMessages((prev) =>
           prev.map((msg) =>
@@ -682,7 +691,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     if (params.chatId && params.chatId !== chatId) {
       setChatId(params.chatId);
       setMessages([]);
-      chatHistory.current = [];
+      setChatHistory([]);
       setFiles([]);
       setFileIds([]);
       setIsMessagesLoaded(false);
@@ -702,7 +711,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         chatId,
         setMessages,
         setIsMessagesLoaded,
-        chatHistory,
+        setChatHistory,
         setSources,
         setNotFound,
         setFiles,
@@ -738,7 +747,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     setMessages((prev) => prev.slice(0, index));
 
-    chatHistory.current = chatHistory.current.slice(0, index * 2);
+    setChatHistory(chatHistory.current.slice(0, index * 2));
 
     const messageToRewrite = messages[index];
     sendMessage(messageToRewrite.query, messageToRewrite.messageId, true);
@@ -760,7 +769,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         messages,
         sections,
-        chatHistory: chatHistory.current,
+        chatHistory: chatHistoryState,
         files,
         fileIds,
         sources,
