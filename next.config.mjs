@@ -14,11 +14,13 @@ const canvasLibc = process.report?.getReport?.().header?.glibcVersionRuntime
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  serverExternalPackages: [
-    'pdf-parse',
-    'officeparser',
-    'file-type',
-  ],
+  /* The build type-checks only the app. Tests (checked by `tsc --noEmit`
+   * and Vitest) import fixtures from perf-audit/, which is not in the
+   * Docker build context. */
+  typescript: {
+    tsconfigPath: 'tsconfig.build.json',
+  },
+  serverExternalPackages: ['pdf-parse', 'officeparser', 'file-type'],
   outputFileTracingIncludes: {
     '/api/**': [
       './node_modules/@napi-rs/canvas/**',
