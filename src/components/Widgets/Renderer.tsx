@@ -1,9 +1,17 @@
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { Widget } from '../ChatWindow';
 import Weather from './Weather';
 import Calculation from './Calculation';
-import Stock from './Stock';
 import { useTranslations } from 'next-intl';
+
+// O widget de ações traz o lightweight-charts (~150 KB); só é baixado
+// quando uma resposta tem esse widget.
+const Stock = dynamic(() => import('./Stock'), {
+  loading: () => (
+    <div className="h-[420px] rounded-lg border border-light-200 dark:border-dark-200 bg-light-secondary dark:bg-dark-secondary animate-pulse" />
+  ),
+});
 
 const Renderer = ({ widgets }: { widgets: Widget[] }) => {
   const t = useTranslations('Widgets');
