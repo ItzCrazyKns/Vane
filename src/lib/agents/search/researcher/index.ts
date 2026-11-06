@@ -1,4 +1,5 @@
 import { ActionOutput, ResearcherInput, ResearcherOutput } from '../types';
+import { trace } from '@/lib/trace';
 import { ActionRegistry } from './actions';
 import { getResearcherPrompt } from '@/lib/prompts/search/researcher';
 import SessionManager from '@/lib/session';
@@ -259,6 +260,12 @@ class Researcher {
       if (finalToolCalls.length === 0) {
         break;
       }
+
+      trace({
+        type: 'research_iteration',
+        iteration: i,
+        actions: finalToolCalls.map((tc) => tc.name),
+      });
 
       const actionConfig = {
         llm: input.config.llm,
