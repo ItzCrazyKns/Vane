@@ -315,7 +315,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [isConfigReady, setIsConfigReady] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  // Ready once the messages (or a new empty chat) and the model config are in.
+  const isReady = isMessagesLoaded && isConfigReady;
 
   const messagesRef = useRef<Message[]>([]);
 
@@ -624,9 +625,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const checkReconnect = async () => {
     if (isReconnectingRef.current) return;
 
-    setIsReady(true);
-    console.debug(new Date(), 'app:ready');
-
     if (messages.length > 0) {
       const lastMsg = messages[messages.length - 1];
 
@@ -730,15 +728,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   }, [messages]);
 
   useEffect(() => {
-    if (isMessagesLoaded && isConfigReady && newChatCreated) {
-      setIsReady(true);
-      console.debug(new Date(), 'app:ready');
-    } else if (isMessagesLoaded && isConfigReady && !newChatCreated) {
-      checkReconnect();
-    } else {
-      setIsReady(false);
-    }
-  }, [isMessagesLoaded, isConfigReady, newChatCreated]);
+    if (!isReady) return;
+    console.debug(new Date(), 'app:ready');
+    // A saved chat may still be answering: resume its stream.
+    if (!newChatCreated) checkReconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, newChatCreated]);
 
   const rewrite = (messageId: string) => {
     const index = messages.findIndex((msg) => msg.messageId === messageId);
