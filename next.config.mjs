@@ -16,7 +16,6 @@ const nextConfig = {
   },
   serverExternalPackages: [
     'pdf-parse',
-    'playwright',
     'officeparser',
     'file-type',
   ],

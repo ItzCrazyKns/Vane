@@ -43,7 +43,6 @@
     "openai": "^6.9.0",
     "partial-json": "^0.1.7",
     "pdf-parse": "^2.4.5",
-    "playwright": "^1.59.1",
     "react": "^18",
     "react-dom": "^18",
     "react-syntax-highlighter": "^16.1.0",
