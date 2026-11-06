@@ -59,7 +59,11 @@ describe('database migrations with DATA_DIR outside the app folder', () => {
     });
     const ran = db.prepare('SELECT name FROM ran_migrations').all();
     db.close();
-    expect(ran).toHaveLength(3);
+    // One row per migration file, even after running twice.
+    const files = fs
+      .readdirSync(path.join(process.cwd(), 'drizzle'))
+      .filter((f) => f.endsWith('.sql'));
+    expect(ran).toHaveLength(files.length);
   });
 
   it('throws a clear error when the migrations folder is missing', async () => {
