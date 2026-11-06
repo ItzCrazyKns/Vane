@@ -2,7 +2,8 @@ import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import BaseEmbedding from '../../base/embedding';
-import BaseModelProvider from '../../base/provider';
+import BaseModelProvider, { ModelListOptions } from '../../base/provider';
+import { modelListSignal } from '../../modelListCache';
 import BaseLLM from '../../base/llm';
 import GroqLLM from './groqLLM';
 
@@ -31,6 +32,7 @@ class GroqProvider extends BaseModelProvider<GroqConfig> {
   async getDefaultModels(): Promise<ModelList> {
     const res = await fetch(`https://api.groq.com/openai/v1/models`, {
       method: 'GET',
+      signal: modelListSignal(),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.config.apiKey}`,
@@ -54,8 +56,8 @@ class GroqProvider extends BaseModelProvider<GroqConfig> {
     };
   }
 
-  async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
+  async getModelList(opts?: ModelListOptions): Promise<ModelList> {
+    const defaultModels = await this.cachedDefaultModels(opts);
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
     return {
@@ -68,11 +70,7 @@ class GroqProvider extends BaseModelProvider<GroqConfig> {
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
-    const modelList = await this.getModelList();
-
-    const exists = modelList.chat.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('chat', key))) {
       throw new Error('Error Loading Groq Chat Model. Invalid Model Selected');
     }
 

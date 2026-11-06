@@ -11,7 +11,9 @@ import { Ollama, Tool as OllamaTool, Message as OllamaMessage } from 'ollama';
 import { parse } from 'partial-json';
 import crypto from 'crypto';
 import { Message } from '@/lib/types';
-import { repairJson } from '@toolsycc/json-repair';
+import { parseModelJson } from '../../utils/json';
+import { objectMaxTokens, objectTemperature } from '../../utils/objectDefaults';
+import { fetchWithHeadersTimeout, llmTimeoutMs } from '../../utils/timeout';
 
 type OllamaConfig = {
   baseURL: string;
@@ -48,6 +50,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     this.ollamaClient = new Ollama({
       host: this.config.baseURL || 'http://localhost:11434',
+      fetch: fetchWithHeadersTimeout(llmTimeoutMs()),
     });
   }
 
@@ -204,9 +207,14 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
-          input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+          input.options?.temperature ??
+          this.config.options?.temperature ??
+          objectTemperature(),
         num_ctx: numCtx,
-        num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
+        num_predict:
+          input.options?.maxTokens ??
+          this.config.options?.maxTokens ??
+          objectMaxTokens(),
         frequency_penalty:
           input.options?.frequencyPenalty ??
           this.config.options?.frequencyPenalty,
@@ -219,13 +227,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
 
     try {
-      return input.schema.parse(
-        JSON.parse(
-          repairJson(response.message.content, {
-            extractJson: true,
-          }) as string,
-        ),
-      ) as T;
+      return input.schema.parse(parseModelJson(response.message.content)) as T;
     } catch (err) {
       throw new Error(`Error parsing response from Ollama: ${err}`);
     }

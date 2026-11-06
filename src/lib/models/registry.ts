@@ -9,6 +9,7 @@ import { BIFROST_PROVIDER_ID, BIFROST_PROVIDER_NAME } from '../bifrost';
 import { providers } from './providers';
 import { MinimalProvider, ModelList } from './types';
 import configManager from '../config';
+import { invalidateModelListCache } from './modelListCache';
 
 class ModelRegistry {
   activeProviders: (ConfigModelProvider & {
@@ -73,7 +74,9 @@ class ModelRegistry {
         let m: ModelList = { chat: [], embedding: [] };
 
         try {
-          m = await p.provider.getModelList();
+          /* The settings and model pickers read this: always ask the provider,
+             which also refreshes the cache that loadChatModel reads. */
+          m = await p.provider.getModelList({ fresh: true });
         } catch (err: any) {
           console.error(
             `Failed to get model list. Type: ${p.type}, ID: ${p.id}, Error: ${err.message}`,
@@ -173,6 +176,7 @@ class ModelRegistry {
 
   async removeProvider(providerId: string): Promise<void> {
     configManager.removeModelProvider(providerId);
+    invalidateModelListCache(providerId);
     this.activeProviders = this.activeProviders.filter(
       (p) => p.id !== providerId,
     );
@@ -190,6 +194,7 @@ class ModelRegistry {
       name,
       config,
     );
+    invalidateModelListCache(providerId);
     const instance = createProviderInstance(
       providers[updated.type],
       providerId,
