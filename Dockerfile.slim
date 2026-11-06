@@ -15,6 +15,20 @@ COPY drizzle ./drizzle
 RUN mkdir -p /home/vane/data
 RUN yarn build
 
+# onnxruntime-node (local Transformers embeddings) ships binaries for every
+# OS/arch plus CUDA and TensorRT providers (~330 MB) that need NVIDIA
+# libraries this image does not have. Keep only the CPU runtime for the
+# architecture being built, which is what Transformers.js loads by default.
+RUN set -eu; \
+    ort=.next/standalone/node_modules/onnxruntime-node/bin/napi-v3; \
+    if [ -d "$ort" ]; then \
+      arch="$(node -p process.arch)"; \
+      find "$ort" -mindepth 1 -maxdepth 1 ! -name linux -exec rm -rf {} +; \
+      find "$ort/linux" -mindepth 1 -maxdepth 1 ! -name "$arch" -exec rm -rf {} +; \
+      rm -f "$ort"/linux/*/libonnxruntime_providers_cuda.so \
+            "$ort"/linux/*/libonnxruntime_providers_tensorrt.so; \
+    fi
+
 FROM node:24.5.0-slim
 
 RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
