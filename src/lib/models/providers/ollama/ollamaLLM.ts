@@ -12,6 +12,7 @@ import { parse } from 'partial-json';
 import crypto from 'crypto';
 import { Message } from '@/lib/types';
 import { parseModelJson } from '../../utils/json';
+import { fetchWithHeadersTimeout, llmTimeoutMs } from '../../utils/timeout';
 
 type OllamaConfig = {
   baseURL: string;
@@ -48,6 +49,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     this.ollamaClient = new Ollama({
       host: this.config.baseURL || 'http://localhost:11434',
+      fetch: fetchWithHeadersTimeout(llmTimeoutMs()),
     });
   }
 

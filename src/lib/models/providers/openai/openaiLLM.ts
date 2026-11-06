@@ -19,6 +19,7 @@ import {
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
 import { parseModelJson } from '../../utils/json';
+import { llmTimeoutMs } from '../../utils/timeout';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -38,6 +39,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       apiKey: this.config.apiKey,
       baseURL: this.config.baseURL || 'https://api.openai.com/v1',
       defaultHeaders: this.config.defaultHeaders,
+      timeout: llmTimeoutMs(),
     });
   }
 
