@@ -14,6 +14,21 @@ import { Message } from '@/lib/types';
 import { parseModelJson } from '../../utils/json';
 import { objectMaxTokens, objectTemperature } from '../../utils/objectDefaults';
 import { fetchWithHeadersTimeout, llmTimeoutMs } from '../../utils/timeout';
+import { reportUsage } from '@/lib/trace';
+
+/* Ollama reports token counts and server-side timings (in nanoseconds) on
+   the final response; read only by the benchmark. */
+const ollamaUsage = (r: any, reasoningChars = 0) => {
+  const ms = (ns: unknown) =>
+    typeof ns === 'number' ? Math.round(ns / 1e6) : undefined;
+  return {
+    promptTokens: r?.prompt_eval_count,
+    completionTokens: r?.eval_count,
+    generationMs: ms(r?.eval_duration),
+    promptMs: ms(r?.prompt_eval_duration),
+    ...(reasoningChars ? { reasoningChars } : {}),
+  };
+};
 
 type OllamaConfig = {
   baseURL: string;
@@ -119,6 +134,8 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       },
     });
 
+    reportUsage(ollamaUsage(res, res.message.thinking?.length ?? 0));
+
     return {
       content: res.message.content,
       toolCalls:
@@ -174,7 +191,10 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       },
     });
 
+    let reasoningChars = 0;
     for await (const chunk of stream) {
+      reasoningChars += chunk.message.thinking?.length ?? 0;
+      if (chunk.done) reportUsage(ollamaUsage(chunk, reasoningChars));
       yield {
         contentChunk: chunk.message.content,
         toolCallChunk:
@@ -225,6 +245,8 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
           input.options?.stopSequences ?? this.config.options?.stopSequences,
       },
     });
+
+    reportUsage(ollamaUsage(response, response.message.thinking?.length ?? 0));
 
     try {
       return input.schema.parse(parseModelJson(response.message.content)) as T;

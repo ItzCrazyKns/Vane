@@ -45,7 +45,25 @@ export type TraceEvent =
 /** What an LLM call is for: classifier, widget, researcher, writer... */
 export type TraceLabel = string;
 
-type Ctx = { emit: (e: TraceEvent) => void; label?: TraceLabel };
+/** Token counts a provider reports for one call (any field may be missing). */
+export type Usage = {
+  promptTokens?: number;
+  completionTokens?: number;
+  /** Reasoning tokens, when the server counts them separately. */
+  reasoningTokens?: number;
+  /** Characters of reasoning text the server sent and the app discards. */
+  reasoningChars?: number;
+  /** Server-side time generating the answer (Ollama reports it). */
+  generationMs?: number;
+  /** Server-side time reading the prompt (Ollama reports it). */
+  promptMs?: number;
+};
+
+type Ctx = {
+  emit: (e: TraceEvent) => void;
+  label?: TraceLabel;
+  usage?: (u: Usage) => void;
+};
 
 const store = new AsyncLocalStorage<Ctx>();
 
@@ -67,3 +85,16 @@ export const withTraceLabel = <T>(label: TraceLabel, fn: () => T): T => {
 
 export const currentTraceLabel = (): TraceLabel | undefined =>
   store.getStore()?.label;
+
+/** True inside a benchmark call that wants token counts. Providers ask the
+    server for usage in streams only then, so normal requests are unchanged. */
+export const isUsageTracked = () => store.getStore()?.usage !== undefined;
+
+/** Providers call this with what the server reported; no-op otherwise. */
+export const reportUsage = (u: Usage) => store.getStore()?.usage?.(u);
+
+/** Runs fn with reportUsage() going to sink; a plain call when not tracing. */
+export const withUsageSink = <T>(sink: (u: Usage) => void, fn: () => T): T => {
+  const ctx = store.getStore();
+  return ctx ? store.run({ ...ctx, usage: sink }, fn) : fn();
+};
