@@ -10,8 +10,31 @@ import {
 import { fitSourcesToBudget } from '@/lib/context/compact';
 import type { SearchAgentConfig } from './types';
 
-export const formatSearchResult = (f: Chunk, index: number) =>
-  `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`;
+const attr = (value: unknown) =>
+  `"${String(value).replace(/"/g, "'").replace(/\s+/g, ' ').trim()}"`;
+
+const hostOf = (url: unknown) => {
+  if (typeof url !== 'string') return undefined;
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * One source as the writer sees it. Besides the citation number and title,
+ * the site (so the writer can weigh how authoritative it is) and the
+ * publication date when the search engine knew it (so it can prefer the
+ * newest source and give dates), as Perplexity's search results do.
+ */
+export const formatSearchResult = (f: Chunk, index: number) => {
+  const site = hostOf(f.metadata?.url);
+  const date = f.metadata?.publishedDate;
+  return `<result index=${index + 1} title=${attr(f.metadata?.title ?? '')}${
+    site ? ` source=${attr(site)}` : ''
+  }${date ? ` date=${attr(date)}` : ''}>${f.content}</result>`;
+};
 
 /**
  * Cuts the writer's sources down to what fits in the context window next

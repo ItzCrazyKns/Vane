@@ -55,6 +55,11 @@ export const buildFirecrawlSearchBody = (
     body.lang = opts.language;
   }
 
+  /* SearXNG's time_range in Google's tbs form, which Firecrawl accepts. */
+  if (opts?.time_range) {
+    body.tbs = `qdr:${opts.time_range[0]}`;
+  }
+
   return body;
 };
 

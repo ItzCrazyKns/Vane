@@ -19,6 +19,8 @@ export interface SearxngSearchResult {
   content?: string;
   author?: string;
   iframe_src?: string;
+  /** Publication date when the engine knows it (mostly news results). */
+  publishedDate?: string | null;
 }
 
 export const searchSearxng = async (
