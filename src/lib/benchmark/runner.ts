@@ -13,8 +13,10 @@ import {
   InstrumentedLLM,
   LLMCallStat,
   newRecorder,
+  TraceURLs,
   withHttpTrace,
 } from './instrument';
+import { TraceEvent, runTraced, withTraceLabel } from '@/lib/trace';
 
 export type CaseResult = {
   id: string;
@@ -36,6 +38,8 @@ export type CaseResult = {
   llm: LLMCallStat[];
   embedding: EmbeddingCallStat[];
   http: HttpStat[];
+  /** Search funnel: results per query, filter, dedup, writer sources. */
+  events: TraceEvent[];
 };
 
 const toHistory = (h?: [string, string][]): ChatTurnMessage[] =>
@@ -47,7 +51,7 @@ const toHistory = (h?: [string, string][]): ChatTurnMessage[] =>
 export const runCase = async (
   c: BenchmarkCase,
   models: { llm: BaseLLM<any>; embedding: BaseEmbedding<any> },
-  urls: { searxng?: string; firecrawl?: string },
+  urls: TraceURLs,
 ): Promise<CaseResult> => {
   const rec = newRecorder();
   const llm = new InstrumentedLLM(models.llm, rec);
@@ -69,15 +73,17 @@ export const runCase = async (
     llm: rec.llm,
     embedding: rec.embedding,
     http: rec.http,
+    events: rec.events,
   };
 
   try {
-    await withHttpTrace(rec, urls, async () => {
+    const traced = (fn: () => Promise<void>) =>
+      withHttpTrace(rec, urls, () => runTraced((e) => rec.events.push(e), fn));
+    await traced(async () => {
       if (c.kind === 'images' || c.kind === 'videos') {
         const fn = c.kind === 'images' ? searchImages : searchVideos;
-        const out = await fn(
-          { query: c.query, chatHistory: toHistory(c.history) },
-          llm,
+        const out = await withTraceLabel(`media:${c.kind}`, () =>
+          fn({ query: c.query, chatHistory: toHistory(c.history) }, llm),
         );
         result.resultCount = out.length;
         return;
