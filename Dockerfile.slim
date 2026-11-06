@@ -31,7 +31,11 @@ RUN set -eu; \
 
 FROM node:24.5.0-slim
 
-RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
+# Runtime only: the app needs no Python or compilers (better-sqlite3 and the
+# other native modules come prebuilt in the standalone output). The sqlite3
+# CLI stays for inspecting data/db.sqlite.
+RUN apt-get update && apt-get install -y --no-install-recommends sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/vane
 
