@@ -1,5 +1,6 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
+import { getFirecrawlConfig, firecrawlHeaders } from './firecrawl';
 
 type ScrapeResult = { content: string; title: string };
 
@@ -22,7 +23,8 @@ const USER_AGENT =
 /**
  * Reads web pages for the researcher.
  *
- * When `FIRECRAWL_API_URL` is set, pages are fetched through Firecrawl's
+ * When a Firecrawl URL is configured (Settings > Search, or
+ * `FIRECRAWL_API_URL`), pages are fetched through Firecrawl's
  * `/v2/scrape` endpoint as markdown. Otherwise a plain `fetch` + Readability
  * fallback is used (no JavaScript execution).
  *
@@ -37,19 +39,9 @@ class Scraper {
   /** Timeout for the fetch + Readability fallback. */
   static FETCH_TIMEOUT_MS = 20000;
 
-  private static getFirecrawlConfig() {
-    const apiURL = process.env.FIRECRAWL_API_URL?.trim();
-    if (!apiURL) return null;
-
-    return {
-      apiURL: apiURL.replace(/\/+$/, ''),
-      apiKey: process.env.FIRECRAWL_API_KEY?.trim() || undefined,
-    };
-  }
-
   static async scrape(url: string): Promise<ScrapeResult> {
     try {
-      const firecrawl = this.getFirecrawlConfig();
+      const firecrawl = getFirecrawlConfig();
 
       if (firecrawl) {
         return await this.scrapeWithFirecrawl(
@@ -80,17 +72,9 @@ class Scraper {
     apiURL: string,
     apiKey?: string,
   ): Promise<ScrapeResult> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-    }
-
     const res = await fetch(`${apiURL}/v2/scrape`, {
       method: 'POST',
-      headers,
+      headers: firecrawlHeaders(apiKey),
       body: JSON.stringify({
         url,
         formats: ['markdown'],
