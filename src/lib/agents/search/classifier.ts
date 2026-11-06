@@ -27,6 +27,13 @@ const schema = z.object({
       .boolean()
       .describe('Indicates whether to show the calculation widget.'),
   }),
+  /* Missing or malformed from a small model -> [] (no fast path), so the
+     classification itself never fails because of this field. */
+  searchQueries: z
+    .preprocess((v) => (Array.isArray(v) ? v : []), z.array(z.string()))
+    .describe(
+      'Up to 3 short keyword web search queries that would answer the standalone question. Empty when skipSearch is true.',
+    ),
   standaloneFollowUp: z
     .string()
     .describe(
