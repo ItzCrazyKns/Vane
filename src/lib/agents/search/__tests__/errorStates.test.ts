@@ -36,7 +36,22 @@ vi.mock('@/lib/searxng', () => ({
   searchSearxng: vi.fn(async () => ({ results: [], suggestions: [] })),
 }));
 
+const llmHolder = vi.hoisted(() => ({ llm: null as any }));
+
+vi.mock('@/lib/models/registry', () => ({
+  default: class {
+    async loadChatModel() {
+      return llmHolder.llm;
+    }
+    async loadEmbeddingModel() {
+      return {};
+    }
+  },
+}));
+
 import SearchAgent from '../index';
+import APISearchAgent from '../api';
+import { POST as searchRoute } from '@/app/api/search/route';
 
 const classification = (skipSearch: boolean) => ({
   classification: {
@@ -139,5 +154,91 @@ describe('SearchAgent failure persistence', () => {
     await new SearchAgent().searchAsync(session as any, input(llm));
 
     expect(lastUpdate().status).toBe('completed');
+  });
+});
+
+const withTimeout = <T>(p: Promise<T>, ms = 2000): Promise<T> =>
+  Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms),
+    ),
+  ]);
+
+describe('APISearchAgent failure', () => {
+  it('emits an error event instead of rejecting', async () => {
+    const llm = new FakeLLM({
+      generateObject: () => {
+        throw new Error('classifier exploded');
+      },
+    });
+    const session = createFakeSession();
+
+    await expect(
+      new APISearchAgent().searchAsync(session as any, input(llm)),
+    ).resolves.toBeUndefined();
+
+    expect(session.events.at(-1)).toEqual({
+      event: 'error',
+      data: { data: 'classifier exploded' },
+    });
+  });
+});
+
+describe('POST /api/search on agent failure', () => {
+  const request = (stream: boolean) =>
+    new Request('http://localhost/api/search', {
+      method: 'POST',
+      body: JSON.stringify({
+        sources: ['web'],
+        query: 'q',
+        stream,
+        chatModel: { providerId: 'p', key: 'k' },
+        embeddingModel: { providerId: 'p', key: 'e' },
+      }),
+    });
+
+  beforeEach(() => {
+    llmHolder.llm = new FakeLLM({
+      generateObject: () => {
+        throw new Error('classifier exploded');
+      },
+    });
+  });
+
+  it('returns a 500 JSON with a message (non-stream), without hanging', async () => {
+    const res = await withTimeout(searchRoute(request(false)));
+
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.message).toEqual(expect.any(String));
+    expect(body.error).toBe('classifier exploded');
+  });
+
+  it('sends an error event and closes the stream, without hanging', async () => {
+    const res = await withTimeout(searchRoute(request(true)));
+    const text = await withTimeout(res.text());
+    const lines = text
+      .trim()
+      .split('\n')
+      .map((l) => JSON.parse(l));
+
+    expect(lines[0].type).toBe('init');
+    expect(lines.at(-1)).toEqual({
+      type: 'error',
+      data: 'classifier exploded',
+    });
+  });
+
+  it('keeps the success shape unchanged', async () => {
+    llmHolder.llm = new FakeLLM({
+      generateObject: () => classification(true),
+      streamText: () => [{ contentChunk: 'hi', toolCallChunk: [] }],
+    });
+
+    const res = await withTimeout(searchRoute(request(false)));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ message: 'hi', sources: [] });
   });
 });
