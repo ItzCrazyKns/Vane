@@ -1,114 +1,178 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
-import { Mutex } from 'async-mutex';
 
+type ScrapeResult = { content: string; title: string };
+
+type FirecrawlScrapeResponse = {
+  success?: boolean;
+  error?: string;
+  data?: {
+    markdown?: string;
+    metadata?: {
+      title?: string | string[];
+      statusCode?: number;
+      error?: string;
+    };
+  };
+};
+
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36';
+
+/**
+ * Reads web pages for the researcher.
+ *
+ * When `FIRECRAWL_API_URL` is set, pages are fetched through Firecrawl's
+ * `/v2/scrape` endpoint as markdown. Otherwise a plain `fetch` + Readability
+ * fallback is used (no JavaScript execution).
+ *
+ * `scrape` never throws: a failed page returns a "Failed to scrape" result so
+ * the caller can carry on with the other pages.
+ */
 class Scraper {
-  private static browser: any | undefined;
-  private static IDLE_KILL_TIMEOUT = 30000;
-  private static NAVIGATION_TIMEOUT = 20000;
-  private static idleTimeout: NodeJS.Timeout | undefined;
-  private static browserMutex = new Mutex();
-  private static userCount = 0;
+  /** Time Firecrawl is allowed to spend on a page (sent in the request). */
+  static FIRECRAWL_TIMEOUT_MS = 60000;
+  /** Extra time we wait for Firecrawl's HTTP response on top of its own timeout. */
+  private static FIRECRAWL_RESPONSE_GRACE_MS = 5000;
+  /** Timeout for the fetch + Readability fallback. */
+  static FETCH_TIMEOUT_MS = 20000;
 
-  private static async initBrowser() {
-    await this.browserMutex.runExclusive(async () => {
-      if (!this.browser) {
-        const { chromium } = await import('playwright');
-        this.browser = await chromium.launch({
-          headless: true,
-          channel: 'chromium-headless-shell',
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--disable-blink-features=AutomationControlled',
-          ],
-        });
+  private static getFirecrawlConfig() {
+    const apiURL = process.env.FIRECRAWL_API_URL?.trim();
+    if (!apiURL) return null;
+
+    return {
+      apiURL: apiURL.replace(/\/+$/, ''),
+      apiKey: process.env.FIRECRAWL_API_KEY?.trim() || undefined,
+    };
+  }
+
+  static async scrape(url: string): Promise<ScrapeResult> {
+    try {
+      const firecrawl = this.getFirecrawlConfig();
+
+      if (firecrawl) {
+        return await this.scrapeWithFirecrawl(
+          url,
+          firecrawl.apiURL,
+          firecrawl.apiKey,
+        );
       }
 
-      if (this.idleTimeout) clearTimeout(this.idleTimeout);
-    });
-  }
+      return await this.scrapeWithFetch(url);
+    } catch (err: any) {
+      const reason =
+        err?.name === 'AbortError' || err?.name === 'TimeoutError'
+          ? 'timed out'
+          : err?.message || String(err);
 
-  private static scheduleIdleKill() {
-    if (this.idleTimeout) clearTimeout(this.idleTimeout);
-
-    this.idleTimeout = setTimeout(async () => {
-      await this.browserMutex.runExclusive(async () => {
-        if (this.browser && this.userCount === 0) {
-          {
-            await this.browser.close();
-            this.browser = undefined;
-          }
-        }
-      });
-    }, this.IDLE_KILL_TIMEOUT);
-  }
-
-  static async scrape(
-    url: string,
-  ): Promise<{ content: string; title: string }> {
-    await this.initBrowser();
-
-    if (!this.browser) throw new Error('Browser not initialized');
-
-    const context = await this.browser.newContext({
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-    });
-
-    await context.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    });
-
-    const page = await context.newPage();
-
-    this.userCount++;
-
-    try {
-      await page.goto(url, {
-        waitUntil: 'domcontentloaded',
-        timeout: this.NAVIGATION_TIMEOUT,
-      });
-
-      await page
-        .waitForLoadState('load', { timeout: 5000 })
-        .catch(() => undefined);
-      await page.waitForTimeout(500);
-
-      const html = await page.content();
-
-      const dom = new JSDOM(html, {
-        url,
-      });
-
-      const content = new Readability(dom.window.document).parse();
-
-      const title = await page.title();
-
-      return {
-        content: `
-        # ${title ?? 'No title'} - ${url}
-        ${content?.textContent?.trim() ?? 'No content available'}
-        `,
-        title,
-      };
-    } catch (err) {
-      console.log(`Error scraping ${url}:`, err);
+      console.log(`Error scraping ${url}: ${reason}`);
 
       return {
         title: 'Failed to scrape',
         content: `# ${url}\n\nError scraping content.`,
       };
+    }
+  }
+
+  private static async scrapeWithFirecrawl(
+    url: string,
+    apiURL: string,
+    apiKey?: string,
+  ): Promise<ScrapeResult> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    const res = await fetch(`${apiURL}/v2/scrape`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        url,
+        formats: ['markdown'],
+        timeout: this.FIRECRAWL_TIMEOUT_MS,
+      }),
+      signal: AbortSignal.timeout(
+        this.FIRECRAWL_TIMEOUT_MS + this.FIRECRAWL_RESPONSE_GRACE_MS,
+      ),
+    });
+
+    const body = (await res
+      .json()
+      .catch(() => null)) as FirecrawlScrapeResponse | null;
+
+    if (!res.ok || !body?.success) {
+      throw new Error(
+        `Firecrawl returned ${res.status}${body?.error ? `: ${body.error}` : ''}`,
+      );
+    }
+
+    const markdown = body.data?.markdown?.trim();
+
+    if (!markdown) {
+      throw new Error('Firecrawl returned no markdown content');
+    }
+
+    const rawTitle = body.data?.metadata?.title;
+    const title =
+      (Array.isArray(rawTitle) ? rawTitle[0] : rawTitle)?.trim() || url;
+
+    return {
+      content: `# ${title} - ${url}\n\n${markdown}`,
+      title,
+    };
+  }
+
+  private static async scrapeWithFetch(url: string): Promise<ScrapeResult> {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(this.FETCH_TIMEOUT_MS),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const contentType = res.headers.get('content-type') || '';
+
+    if (contentType && !/html|xml|text\/|json/i.test(contentType)) {
+      throw new Error(`Unsupported content type: ${contentType}`);
+    }
+
+    const raw = await res.text();
+
+    if (contentType && !/html|xml/i.test(contentType)) {
+      const text = raw.trim();
+      if (!text) throw new Error('Empty response');
+
+      return {
+        content: `# ${url} - ${url}\n\n${text}`,
+        title: url,
+      };
+    }
+
+    const dom = new JSDOM(raw, { url: res.url || url });
+
+    try {
+      const pageTitle = dom.window.document.title?.trim();
+      const article = new Readability(dom.window.document).parse();
+      const title = article?.title?.trim() || pageTitle || url;
+      const text = article?.textContent?.trim();
+
+      return {
+        content: `# ${title} - ${url}\n\n${text || 'No content available'}`,
+        title,
+      };
     } finally {
-      this.userCount--;
-
-      await context.close().catch(() => undefined);
-
-      if (this.userCount === 0) {
-        this.scheduleIdleKill();
-      }
+      dom.window.close();
     }
   }
 }
