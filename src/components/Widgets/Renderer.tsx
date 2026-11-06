@@ -3,8 +3,11 @@ import { Widget } from '../ChatWindow';
 import Weather from './Weather';
 import Calculation from './Calculation';
 import Stock from './Stock';
+import { useTranslations } from 'next-intl';
 
 const Renderer = ({ widgets }: { widgets: Widget[] }) => {
+  const t = useTranslations('Widgets');
+
   return widgets.map((widget, index) => {
     switch (widget.widgetType) {
       case 'weather':
@@ -68,7 +71,9 @@ const Renderer = ({ widgets }: { widgets: Widget[] }) => {
           />
         );
       default:
-        return <div key={index}>Unknown widget type: {widget.widgetType}</div>;
+        return (
+          <div key={index}>{t('unknownType', { type: widget.widgetType })}</div>
+        );
     }
   });
 };

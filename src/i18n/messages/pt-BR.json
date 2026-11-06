@@ -1,0 +1,322 @@
+{
+  "Metadata": {
+    "title": "Vane - Direcione sua curiosidade",
+    "description": "Vane é um mecanismo de respostas com inteligência artificial.",
+    "libraryTitle": "Biblioteca - Vane",
+    "chatTitle": "Chat - Vane",
+    "chatDescription": "Converse com a internet, converse com o Vane."
+  },
+  "MessageActions": {
+    "citations": "Citações",
+    "uploadedFile": "Arquivo enviado"
+  },
+  "ThinkBox": {
+    "title": "Processo de raciocínio"
+  },
+  "Theme": {
+    "light": "Claro",
+    "dark": "Escuro"
+  },
+  "EmptyChat": {
+    "title": "A pesquisa começa aqui."
+  },
+  "Calculation": {
+    "expression": "Expressão",
+    "result": "Resultado"
+  },
+  "NewsWidget": {
+    "error": "Não foi possível carregar as notícias.",
+    "summaryQuery": "Resumo: {url}"
+  },
+  "ChatWindow": {
+    "connectionError": "Falha ao conectar ao servidor. Tente novamente mais tarde."
+  },
+  "Widgets": {
+    "unknownType": "Tipo de widget desconhecido: {type}"
+  },
+  "MessageInput": {
+    "askAnything": "Pergunte qualquer coisa...",
+    "followUp": "Faça uma pergunta de acompanhamento"
+  },
+  "Sources": {
+    "web": "Web",
+    "academic": "Acadêmico",
+    "social": "Social"
+  },
+  "Common": {
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "save": "Salvar",
+    "loading": "Carregando..."
+  },
+  "Models": {
+    "selectModels": "Selecionar modelos",
+    "manageConnections": "Gerenciar conexões",
+    "noConnections": "Nenhuma conexão ainda",
+    "noConnectionsDescription": "Adicione sua primeira conexão para começar a usar modelos de IA. Conecte-se à OpenAI, Anthropic, Ollama e outros.",
+    "saveConfigError": "Falha ao salvar a configuração.",
+    "selectChatModel": "Selecionar modelo de chat",
+    "selectEmbeddingModel": "Selecionar modelo de embeddings",
+    "chatModelDescription": "Escolha qual modelo usar para gerar respostas",
+    "embeddingModelDescription": "Escolha qual modelo usar para gerar embeddings",
+    "deleteSuccess": "Conexão excluída com sucesso.",
+    "deleteError": "Falha ao excluir a conexão.",
+    "deleteConnection": "Excluir conexão",
+    "deleteConfirm": "Tem certeza de que deseja excluir a conexão \"{name}\"? Esta ação não pode ser desfeita. Todos os modelos associados também serão removidos.",
+    "addModelError": "Falha ao adicionar o modelo.",
+    "addModelSuccess": "Modelo adicionado com sucesso.",
+    "add": "Adicionar",
+    "addChatModelTitle": "Adicionar novo modelo de chat",
+    "addEmbeddingModelTitle": "Adicionar novo modelo de embeddings",
+    "modelName": "Nome do modelo*",
+    "modelNamePlaceholder": "ex.: GPT-4",
+    "modelKey": "Chave do modelo*",
+    "modelKeyPlaceholder": "ex.: gpt-4",
+    "addModel": "Adicionar modelo",
+    "addConnectionError": "Falha ao adicionar a conexão.",
+    "addConnectionSuccess": "Conexão adicionada com sucesso.",
+    "addConnection": "Adicionar conexão",
+    "addConnectionTitle": "Adicionar nova conexão",
+    "connectionType": "Selecione o tipo de conexão",
+    "connectionName": "Nome da conexão",
+    "connectionNamePlaceholder": "ex.: Minha conexão OpenAI",
+    "updateConnectionError": "Falha ao atualizar a conexão.",
+    "updateConnectionSuccess": "Conexão atualizada com sucesso.",
+    "updateConnectionTitle": "Atualizar conexão",
+    "updateConnection": "Atualizar conexão",
+    "deleteModelError": "Falha ao excluir o modelo.",
+    "deleteModelSuccess": "Modelo excluído com sucesso.",
+    "chatModels": "Modelos de chat",
+    "noChatModels": "Nenhum modelo de chat configurado",
+    "embeddingModels": "Modelos de embeddings",
+    "noEmbeddingModels": "Nenhum modelo de embeddings configurado"
+  },
+  "Optimization": {
+    "beta": "Beta",
+    "speed": {
+      "title": "Velocidade",
+      "description": "Priorize a velocidade e obtenha a resposta mais rápida possível."
+    },
+    "balanced": {
+      "title": "Equilibrado",
+      "description": "Encontre o equilíbrio certo entre velocidade e precisão"
+    },
+    "quality": {
+      "title": "Qualidade",
+      "description": "Obtenha a resposta mais completa e precisa"
+    }
+  },
+  "DeleteChat": {
+    "error": "Falha ao excluir o chat",
+    "title": "Confirmar exclusão",
+    "confirm": "Tem certeza de que deseja excluir este chat?"
+  },
+  "Setup": {
+    "welcomeTo": "Bem-vindo ao",
+    "webSearch": "Busca na web,",
+    "reimagined": "reinventada",
+    "letUsGet": "Vamos configurar o",
+    "setUpForYou": "para você",
+    "loadProvidersError": "Falha ao carregar os provedores",
+    "finishError": "Falha ao concluir a configuração",
+    "manageConnections": "Gerenciar conexões",
+    "manageConnectionsDescription": "Adicione conexões para acessar modelos de IA",
+    "loadingProviders": "Carregando provedores...",
+    "noConnections": "Nenhuma conexão configurada",
+    "noConnectionsHint": "Clique em \"Adicionar conexão\" acima para começar",
+    "selectModels": "Selecionar modelos",
+    "selectModelsDescription": "Selecione os modelos que você deseja usar.",
+    "next": "Próximo",
+    "finishing": "Finalizando...",
+    "finish": "Concluir"
+  },
+  "Sidebar": {
+    "home": "Início",
+    "discover": "Descobrir",
+    "library": "Biblioteca"
+  },
+  "Attach": {
+    "embeddingRequired": "Selecione um modelo de embeddings antes de enviar arquivos.",
+    "uploadFailed": "Falha ao enviar o(s) arquivo(s).",
+    "invalidResponse": "Resposta de envio inválida do servidor.",
+    "attachedFiles": "Arquivos anexados",
+    "add": "Adicionar",
+    "clear": "Limpar"
+  },
+  "SearchImages": {
+    "search": "Buscar imagens",
+    "viewMore": "Ver mais {count}"
+  },
+  "MessageSources": {
+    "uploadedFile": "Arquivo enviado",
+    "viewMore": "Ver mais {count}",
+    "title": "Fontes"
+  },
+  "WeatherWidget": {
+    "humidity": "Umidade {value}%",
+    "now": "Agora",
+    "unavailable": "Dados do clima indisponíveis para {location}",
+    "wind": "Vento",
+    "humidityLabel": "Umidade",
+    "feelsLike": "Sensação térmica"
+  },
+  "TimeAgo": {
+    "second": "há {count, plural, one {# segundo} other {# segundos}}",
+    "minute": "há {count, plural, one {# minuto} other {# minutos}}",
+    "hour": "há {count, plural, one {# hora} other {# horas}}",
+    "day": "há {count, plural, one {# dia} other {# dias}}",
+    "year": "há {count, plural, one {# ano} other {# anos}}"
+  },
+  "Library": {
+    "title": "Biblioteca",
+    "subtitle": "Chats anteriores, fontes e arquivos enviados.",
+    "loading": "Carregando…",
+    "chatCount": "{count, plural, one {# chat} other {# chats}}",
+    "empty": "Nenhum chat encontrado.",
+    "startNew": "<link>Inicie um novo chat</link> para vê-lo listado aqui.",
+    "fileCount": "{count, plural, one {# arquivo} other {# arquivos}}"
+  },
+  "Navbar": {
+    "newConversation": "Nova conversa",
+    "exportChat": "Exportar chat",
+    "markdownFormat": "Formato .md",
+    "pdfFormat": "Formato de documento",
+    "chatExport": "Exportação de chat",
+    "exportedOn": "Exportado em",
+    "user": "Usuário",
+    "assistant": "Assistente",
+    "citations": "Citações"
+  },
+  "Settings": {
+    "loadError": "Falha ao carregar a configuração.",
+    "back": "Voltar",
+    "version": "Versão: {version}",
+    "sections": {
+      "preferences": {
+        "name": "Preferências",
+        "description": "Personalize as preferências do aplicativo."
+      },
+      "personalization": {
+        "name": "Personalização",
+        "description": "Personalize o comportamento e o tom do modelo."
+      },
+      "models": {
+        "name": "Modelos",
+        "description": "Conecte-se a serviços de IA e gerencie conexões."
+      },
+      "search": {
+        "name": "Busca",
+        "description": "Gerencie as configurações de busca."
+      }
+    }
+  },
+  "ModelSelector": {
+    "loadError": "Falha ao carregar os provedores",
+    "search": "Buscar modelos...",
+    "noResults": "Nenhum modelo encontrado",
+    "noModels": "Nenhum modelo de chat configurado"
+  },
+  "SearchVideos": {
+    "search": "Buscar vídeos",
+    "video": "Vídeo",
+    "viewMore": "Ver mais {count}"
+  },
+  "MessageBox": {
+    "sources": "Fontes",
+    "brainstorming": "Pensando...",
+    "answer": "Resposta",
+    "related": "Relacionadas"
+  },
+  "AssistantSteps": {
+    "thinkingActive": "Pensando...",
+    "thinking": "Raciocínio",
+    "searching": "Pesquisando {count, plural, one {# consulta} other {# consultas}}",
+    "found": "{count, plural, one {# resultado encontrado} other {# resultados encontrados}}",
+    "reading": "Lendo {count, plural, one {# fonte} other {# fontes}}",
+    "scanningUploads": "Analisando seus documentos enviados",
+    "readingDocuments": "Lendo {count, plural, one {# documento} other {# documentos}}",
+    "processing": "Processando",
+    "progress": "Progresso da pesquisa ({count, plural, one {# etapa} other {# etapas}})",
+    "untitled": "Sem título",
+    "untitledDocument": "Documento sem título"
+  },
+  "Discover": {
+    "title": "Descobrir",
+    "fetchError": "Erro ao carregar os dados",
+    "topics": {
+      "tech": "Tecnologia e ciência",
+      "finance": "Finanças",
+      "art": "Arte e cultura",
+      "sports": "Esportes",
+      "entertainment": "Entretenimento"
+    }
+  },
+  "WeatherConditions": {
+    "clear": "Céu limpo",
+    "mostlyClear": "Predominantemente limpo",
+    "mainlyClear": "Predominantemente limpo",
+    "partlyCloudy": "Parcialmente nublado",
+    "cloudy": "Nublado",
+    "foggy": "Neblina",
+    "fog": "Neblina",
+    "rimeFog": "Neblina com geada",
+    "lightDrizzle": "Garoa fraca",
+    "drizzle": "Garoa",
+    "moderateDrizzle": "Garoa moderada",
+    "heavyDrizzle": "Garoa forte",
+    "denseDrizzle": "Garoa intensa",
+    "lightFreezingDrizzle": "Garoa congelante fraca",
+    "denseFreezingDrizzle": "Garoa congelante intensa",
+    "lightRain": "Chuva fraca",
+    "slightRain": "Chuva fraca",
+    "rain": "Chuva",
+    "moderateRain": "Chuva moderada",
+    "heavyRain": "Chuva forte",
+    "lightFreezingRain": "Chuva congelante fraca",
+    "heavyFreezingRain": "Chuva congelante forte",
+    "lightSnow": "Neve fraca",
+    "slightSnowFall": "Neve fraca",
+    "snow": "Neve",
+    "moderateSnowFall": "Neve moderada",
+    "heavySnow": "Neve forte",
+    "heavySnowFall": "Neve forte",
+    "snowGrains": "Grãos de neve",
+    "lightShowers": "Pancadas de chuva fracas",
+    "slightRainShowers": "Pancadas de chuva fracas",
+    "showers": "Pancadas de chuva",
+    "moderateRainShowers": "Pancadas de chuva moderadas",
+    "heavyShowers": "Pancadas de chuva fortes",
+    "heavyRainShowers": "Pancadas de chuva fortes",
+    "lightSnowShowers": "Pancadas de neve fracas",
+    "slightSnowShowers": "Pancadas de neve fracas",
+    "snowShowers": "Pancadas de neve",
+    "moderateSnowShowers": "Pancadas de neve moderadas",
+    "heavySnowShowers": "Pancadas de neve fortes",
+    "thunderstorm": "Tempestade",
+    "thunderstormHail": "Tempestade com granizo",
+    "thunderstormWithSlightHail": "Tempestade com granizo fraco",
+    "thunderstormWithHeavyHail": "Tempestade com granizo forte",
+    "severeThunderstorm": "Tempestade severa"
+  },
+  "Stock": {
+    "error": "Erro: {error}",
+    "live": "Ao vivo",
+    "preMarket": "Pré-mercado",
+    "afterHours": "Após o fechamento",
+    "prevClose": "Fech. anterior",
+    "marketCap": "Valor de mercado",
+    "open": "Abertura",
+    "peRatio": "P/L",
+    "dividendYield": "Dividend yield",
+    "dayRange": "Variação do dia",
+    "volume": "Volume",
+    "eps": "LPA"
+  },
+  "Chat": {
+    "configNotReady": "Não é possível enviar a mensagem antes de a configuração estar pronta",
+    "providerFetchFailed": "Falha ao carregar os provedores (código {status})",
+    "noProviders": "Nenhum provedor de modelos encontrado. Configure um na página de configurações.",
+    "noChatModels": "Nenhum modelo de chat encontrado. Configure um na página de configurações.",
+    "noEmbeddingModels": "Nenhum modelo de embeddings encontrado. Configure um na página de configurações."
+  }
+}

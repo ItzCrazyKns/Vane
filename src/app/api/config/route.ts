@@ -57,7 +57,14 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    configManager.updateConfig(body.key, body.value);
+    try {
+      configManager.updateConfig(body.key, body.value);
+    } catch (err: any) {
+      if (String(err?.message).startsWith('Invalid config key')) {
+        return Response.json({ message: err.message }, { status: 400 });
+      }
+      throw err;
+    }
 
     return Response.json(
       {

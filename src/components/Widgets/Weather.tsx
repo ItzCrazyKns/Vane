@@ -3,6 +3,8 @@
 import { getMeasurementUnit } from '@/lib/config/clientRegistry';
 import { Wind, Droplets, Gauge } from 'lucide-react';
 import { useMemo, useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
+import type messages from '@/i18n/messages/en.json';
 
 type WeatherWidgetProps = {
   location: string;
@@ -28,16 +30,18 @@ type WeatherWidgetProps = {
   timezone: string;
 };
 
+type WeatherConditionKey = keyof (typeof messages)['WeatherConditions'];
+
 const getWeatherInfo = (code: number, isDay: boolean, isDarkMode: boolean) => {
   const dayNight = isDay ? 'day' : 'night';
 
   const weatherMap: Record<
     number,
-    { icon: string; description: string; gradient: string }
+    { icon: string; description: WeatherConditionKey; gradient: string }
   > = {
     0: {
       icon: `clear-${dayNight}.svg`,
-      description: 'Clear',
+      description: 'clear',
       gradient: isDarkMode
         ? isDay
           ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #E8F1FA, #7A9DBF 35%, #4A7BA8 60%, #2F5A88)'
@@ -48,7 +52,7 @@ const getWeatherInfo = (code: number, isDay: boolean, isDarkMode: boolean) => {
     },
     1: {
       icon: `clear-${dayNight}.svg`,
-      description: 'Mostly Clear',
+      description: 'mostlyClear',
       gradient: isDarkMode
         ? isDay
           ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #E8F1FA, #7A9DBF 35%, #4A7BA8 60%, #2F5A88)'
@@ -59,7 +63,7 @@ const getWeatherInfo = (code: number, isDay: boolean, isDarkMode: boolean) => {
     },
     2: {
       icon: `cloudy-1-${dayNight}.svg`,
-      description: 'Partly Cloudy',
+      description: 'partlyCloudy',
       gradient: isDarkMode
         ? isDay
           ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #D4E1ED, #8BA3B8 35%, #617A93 60%, #426070)'
@@ -70,147 +74,147 @@ const getWeatherInfo = (code: number, isDay: boolean, isDarkMode: boolean) => {
     },
     3: {
       icon: `cloudy-1-${dayNight}.svg`,
-      description: 'Cloudy',
+      description: 'cloudy',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #B8C3CF, #758190 38%, #546270 65%, #3D4A58)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #F5F8FA, #CBD5E1 32%, #94A3B8 65%, #64748B)',
     },
     45: {
       icon: `fog-${dayNight}.svg`,
-      description: 'Foggy',
+      description: 'foggy',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #C5CDD8, #8892A0 38%, #697380 65%, #4F5A68)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #FFFFFF, #E2E8F0 30%, #CBD5E1 62%, #94A3B8)',
     },
     48: {
       icon: `fog-${dayNight}.svg`,
-      description: 'Rime Fog',
+      description: 'rimeFog',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #C5CDD8, #8892A0 38%, #697380 65%, #4F5A68)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #FFFFFF, #E2E8F0 30%, #CBD5E1 62%, #94A3B8)',
     },
     51: {
       icon: `rainy-1-${dayNight}.svg`,
-      description: 'Light Drizzle',
+      description: 'lightDrizzle',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #B8D4E5, #6FA4C5 35%, #4A85AC 60%, #356A8E)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #E5FBFF, #A5F3FC 28%, #67E8F9 60%, #22D3EE)',
     },
     53: {
       icon: `rainy-1-${dayNight}.svg`,
-      description: 'Drizzle',
+      description: 'drizzle',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #B8D4E5, #6FA4C5 35%, #4A85AC 60%, #356A8E)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #E5FBFF, #A5F3FC 28%, #67E8F9 60%, #22D3EE)',
     },
     55: {
       icon: `rainy-2-${dayNight}.svg`,
-      description: 'Heavy Drizzle',
+      description: 'heavyDrizzle',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #A5C5D8, #5E92B0 35%, #3F789D 60%, #2A5F82)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #D4F3FF, #7DD3FC 30%, #38BDF8 62%, #0EA5E9)',
     },
     61: {
       icon: `rainy-2-${dayNight}.svg`,
-      description: 'Light Rain',
+      description: 'lightRain',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #A5C5D8, #5E92B0 35%, #3F789D 60%, #2A5F82)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #D4F3FF, #7DD3FC 30%, #38BDF8 62%, #0EA5E9)',
     },
     63: {
       icon: `rainy-2-${dayNight}.svg`,
-      description: 'Rain',
+      description: 'rain',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #8DB3C8, #4D819F 38%, #326A87 65%, #215570)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #B8E8FF, #38BDF8 32%, #0EA5E9 65%, #0284C7)',
     },
     65: {
       icon: `rainy-3-${dayNight}.svg`,
-      description: 'Heavy Rain',
+      description: 'heavyRain',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #7BA3B8, #3D6F8A 38%, #295973 65%, #1A455D)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #9CD9F5, #0EA5E9 32%, #0284C7 65%, #0369A1)',
     },
     71: {
       icon: `snowy-1-${dayNight}.svg`,
-      description: 'Light Snow',
+      description: 'lightSnow',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #E5F0FA, #9BB5CE 32%, #7496B8 58%, #527A9E)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #FFFFFF, #F0F9FF 25%, #E0F2FE 55%, #BAE6FD)',
     },
     73: {
       icon: `snowy-2-${dayNight}.svg`,
-      description: 'Snow',
+      description: 'snow',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #D4E5F3, #85A1BD 35%, #6584A8 60%, #496A8E)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #FAFEFF, #E0F2FE 28%, #BAE6FD 60%, #7DD3FC)',
     },
     75: {
       icon: `snowy-3-${dayNight}.svg`,
-      description: 'Heavy Snow',
+      description: 'heavySnow',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #BDD8EB, #6F92AE 35%, #4F7593 60%, #365A78)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #F0FAFF, #BAE6FD 30%, #7DD3FC 62%, #38BDF8)',
     },
     77: {
       icon: `snowy-1-${dayNight}.svg`,
-      description: 'Snow Grains',
+      description: 'snowGrains',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #E5F0FA, #9BB5CE 32%, #7496B8 58%, #527A9E)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #FFFFFF, #F0F9FF 25%, #E0F2FE 55%, #BAE6FD)',
     },
     80: {
       icon: `rainy-2-${dayNight}.svg`,
-      description: 'Light Showers',
+      description: 'lightShowers',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #A5C5D8, #5E92B0 35%, #3F789D 60%, #2A5F82)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #D4F3FF, #7DD3FC 30%, #38BDF8 62%, #0EA5E9)',
     },
     81: {
       icon: `rainy-2-${dayNight}.svg`,
-      description: 'Showers',
+      description: 'showers',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #8DB3C8, #4D819F 38%, #326A87 65%, #215570)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #B8E8FF, #38BDF8 32%, #0EA5E9 65%, #0284C7)',
     },
     82: {
       icon: `rainy-3-${dayNight}.svg`,
-      description: 'Heavy Showers',
+      description: 'heavyShowers',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #7BA3B8, #3D6F8A 38%, #295973 65%, #1A455D)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #9CD9F5, #0EA5E9 32%, #0284C7 65%, #0369A1)',
     },
     85: {
       icon: `snowy-2-${dayNight}.svg`,
-      description: 'Light Snow Showers',
+      description: 'lightSnowShowers',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #D4E5F3, #85A1BD 35%, #6584A8 60%, #496A8E)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #FAFEFF, #E0F2FE 28%, #BAE6FD 60%, #7DD3FC)',
     },
     86: {
       icon: `snowy-3-${dayNight}.svg`,
-      description: 'Snow Showers',
+      description: 'snowShowers',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #BDD8EB, #6F92AE 35%, #4F7593 60%, #365A78)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #F0FAFF, #BAE6FD 30%, #7DD3FC 62%, #38BDF8)',
     },
     95: {
       icon: `scattered-thunderstorms-${dayNight}.svg`,
-      description: 'Thunderstorm',
+      description: 'thunderstorm',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #8A95A3, #5F6A7A 38%, #475260 65%, #2F3A48)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #C8D1DD, #94A3B8 32%, #64748B 65%, #475569)',
     },
     96: {
       icon: 'severe-thunderstorm.svg',
-      description: 'Thunderstorm + Hail',
+      description: 'thunderstormHail',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #7A8593, #515C6D 38%, #3A4552 65%, #242D3A)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #B0BBC8, #64748B 32%, #475569 65%, #334155)',
     },
     99: {
       icon: 'severe-thunderstorm.svg',
-      description: 'Severe Thunderstorm',
+      description: 'severeThunderstorm',
       gradient: isDarkMode
         ? 'radial-gradient(ellipse 150% 100% at 50% 100%, #6A7583, #434E5D 40%, #2F3A47 68%, #1C2530)'
         : 'radial-gradient(ellipse 150% 100% at 50% 100%, #9BA8B8, #475569 35%, #334155 68%, #1E293B)',
@@ -226,6 +230,9 @@ const Weather = ({
   daily,
   timezone,
 }: WeatherWidgetProps) => {
+  const t = useTranslations('WeatherWidget');
+  const tc = useTranslations('WeatherConditions');
+  const locale = useLocale();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const unit = getMeasurementUnit();
   const isImperial = unit === 'imperial';
@@ -273,7 +280,7 @@ const Weather = ({
 
     return daily.time.slice(1, 7).map((time, idx) => {
       const date = new Date(time);
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
       const isDay = true;
       const weatherCode = daily.weather_code[idx + 1];
       const info = getWeatherInfo(weatherCode, isDay, isDarkMode);
@@ -286,13 +293,13 @@ const Weather = ({
         precipitation: daily.precipitation_probability_max[idx + 1] || 0,
       };
     });
-  }, [daily, isDarkMode, isImperial]);
+  }, [daily, isDarkMode, isImperial, locale]);
 
   if (!current || !daily || !daily.time || daily.time.length === 0) {
     return (
       <div className="relative overflow-hidden rounded-lg shadow-md bg-gray-200 dark:bg-gray-800">
         <div className="p-4 text-black dark:text-white">
-          <p className="text-sm">Weather data unavailable for {location}</p>
+          <p className="text-sm">{t('unavailable', { location })}</p>
         </div>
       </div>
     );
@@ -312,7 +319,7 @@ const Weather = ({
           <div className="flex items-center gap-3">
             <img
               src={`/weather-ico/${weatherInfo.icon}`}
-              alt={weatherInfo.description}
+              alt={tc(weatherInfo.description)}
               className="w-16 h-16 drop-shadow-lg"
             />
             <div>
@@ -323,7 +330,7 @@ const Weather = ({
                 <span className="text-lg">{tempUnitLabel}</span>
               </div>
               <p className="text-sm font-medium drop-shadow mt-0.5">
-                {weatherInfo.description}
+                {tc(weatherInfo.description)}
               </p>
             </div>
           </div>
@@ -338,7 +345,7 @@ const Weather = ({
         <div className="mb-3 pb-3 border-b border-gray-800/20 dark:border-white/20">
           <h3 className="text-base font-semibold drop-shadow-md">{location}</h3>
           <p className="text-xs text-gray-700 dark:text-white/80 drop-shadow mt-0.5">
-            {new Date(current.time).toLocaleString('en-US', {
+            {new Date(current.time).toLocaleString(locale, {
               weekday: 'short',
               hour: 'numeric',
               minute: '2-digit',
@@ -381,7 +388,7 @@ const Weather = ({
             <Wind className="w-4 h-4 text-gray-700 dark:text-white/80 flex-shrink-0" />
             <div>
               <p className="text-[10px] text-gray-600 dark:text-white/70">
-                Wind
+                {t('wind')}
               </p>
               <p className="font-semibold">
                 {formatWind(current.wind_speed_10m)} {windUnitLabel}
@@ -393,7 +400,7 @@ const Weather = ({
             <Droplets className="w-4 h-4 text-gray-700 dark:text-white/80 flex-shrink-0" />
             <div>
               <p className="text-[10px] text-gray-600 dark:text-white/70">
-                Humidity
+                {t('humidityLabel')}
               </p>
               <p className="font-semibold">
                 {Math.round(current.relative_humidity_2m)}%
@@ -405,7 +412,7 @@ const Weather = ({
             <Gauge className="w-4 h-4 text-gray-700 dark:text-white/80 flex-shrink-0" />
             <div>
               <p className="text-[10px] text-gray-600 dark:text-white/70">
-                Feels Like
+                {t('feelsLike')}
               </p>
               <p className="font-semibold">
                 {formatTemp(current.apparent_temperature)}

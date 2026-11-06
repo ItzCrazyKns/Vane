@@ -184,7 +184,10 @@ class UploadManager {
 
             const fileId = crypto.randomBytes(16).toString('hex');
 
-            const fileExtension = file.name.split('.').pop();
+            // The original file name is client-controlled; keep only a short
+            // alphanumeric extension so it can never inject path separators.
+            const rawExtension = file.name.includes('.') ? file.name.split('.').pop() || '' : '';
+            const fileExtension = /^[a-zA-Z0-9]{1,10}$/.test(rawExtension) ? rawExtension.toLowerCase() : 'bin';
             const fileName = `${crypto.randomBytes(16).toString('hex')}.${fileExtension}`;
             const filePath = path.join(UploadManager.uploadsDir, fileName);
 

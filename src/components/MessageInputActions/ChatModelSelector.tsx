@@ -7,8 +7,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { MinimalProvider } from '@/lib/models/types';
 import { useChat } from '@/lib/hooks/useChat';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 
 const ModelSelector = () => {
+  const t = useTranslations('ModelSelector');
   const [providers, setProviders] = useState<MinimalProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,7 +24,7 @@ const ModelSelector = () => {
         const res = await fetch('/api/providers');
 
         if (!res.ok) {
-          throw new Error('Failed to fetch providers');
+          throw new Error(t('loadError'));
         }
 
         const data: { providers: MinimalProvider[] } = await res.json();
@@ -104,7 +106,7 @@ const ModelSelector = () => {
                       />
                       <input
                         type="text"
-                        placeholder="Search models..."
+                        placeholder={t('search')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-8 pr-3 py-2 bg-light-secondary dark:bg-dark-secondary rounded-lg placeholder:text-xs placeholder:-translate-y-[1.5px] text-xs text-black dark:text-white placeholder:text-black/40 dark:placeholder:text-white/40 focus:outline-none border border-transparent transition duration-200"
@@ -122,9 +124,7 @@ const ModelSelector = () => {
                       </div>
                     ) : filteredProviders.length === 0 ? (
                       <div className="text-center py-16 px-4 text-black/60 dark:text-white/60 text-sm">
-                        {searchQuery
-                          ? 'No models found'
-                          : 'No chat models configured'}
+                        {searchQuery ? t('noResults') : t('noModels')}
                       </div>
                     ) : (
                       <div className="flex flex-col">

@@ -18,41 +18,34 @@ import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
+import { useTranslations } from 'next-intl';
 
 const sections = [
   {
     key: 'preferences',
-    name: 'Preferences',
-    description: 'Customize your application preferences.',
     icon: Sliders,
     component: Preferences,
     dataAdd: 'preferences',
   },
   {
     key: 'personalization',
-    name: 'Personalization',
-    description: 'Customize the behavior and tone of the model.',
     icon: ToggleRight,
     component: Personalization,
     dataAdd: 'personalization',
   },
   {
     key: 'models',
-    name: 'Models',
-    description: 'Connect to AI services and manage connections.',
     icon: BrainCog,
     component: Models,
     dataAdd: 'modelProviders',
   },
   {
     key: 'search',
-    name: 'Search',
-    description: 'Manage search settings.',
     icon: Search,
     component: SearchSection,
     dataAdd: 'search',
   },
-];
+] as const;
 
 const SettingsDialogue = ({
   isOpen,
@@ -61,10 +54,15 @@ const SettingsDialogue = ({
   isOpen: boolean;
   setIsOpen: (active: boolean) => void;
 }) => {
+  const t = useTranslations('Settings');
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
-  const [activeSection, setActiveSection] = useState<string>(sections[0].key);
-  const [selectedSection, setSelectedSection] = useState(sections[0]);
+  const [activeSection, setActiveSection] = useState<
+    (typeof sections)[number]['key']
+  >(sections[0].key);
+  const [selectedSection, setSelectedSection] = useState<
+    (typeof sections)[number]
+  >(sections[0]);
 
   useEffect(() => {
     setSelectedSection(sections.find((s) => s.key === activeSection)!);
@@ -86,7 +84,7 @@ const SettingsDialogue = ({
           setConfig(data);
         } catch (error) {
           console.error('Error fetching config:', error);
-          toast.error('Failed to load configuration.');
+          toast.error(t('loadError'));
         } finally {
           setIsLoading(false);
         }
@@ -127,7 +125,7 @@ const SettingsDialogue = ({
                       className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70"
                     />
                     <p className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70 text-[14px]">
-                      Back
+                      {t('back')}
                     </p>
                   </button>
 
@@ -144,14 +142,16 @@ const SettingsDialogue = ({
                         onClick={() => setActiveSection(section.key)}
                       >
                         <section.icon size={17} />
-                        <p>{section.name}</p>
+                        <p>{t(`sections.${section.key}.name`)}</p>
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="flex flex-col space-y-1 py-[18px] px-2">
                   <p className="text-xs text-black/70 dark:text-white/70">
-                    Version: {process.env.NEXT_PUBLIC_VERSION}
+                    {t('version', {
+                      version: process.env.NEXT_PUBLIC_VERSION ?? '',
+                    })}
                   </p>
                   <a
                     href="https://github.com/itzcrazykns/vane"
@@ -180,12 +180,14 @@ const SettingsDialogue = ({
                       return {
                         value: section.key,
                         key: section.key,
-                        label: section.name,
+                        label: t(`sections.${section.key}.name`),
                       };
                     })}
                     value={activeSection}
                     onChange={(e) => {
-                      setActiveSection(e.target.value);
+                      setActiveSection(
+                        e.target.value as (typeof sections)[number]['key'],
+                      );
                     }}
                     className="!text-xs lg:!text-sm"
                   />
@@ -195,10 +197,10 @@ const SettingsDialogue = ({
                     <div className="border-b border-light-200/60 px-6 pb-6 lg:pt-6 dark:border-dark-200/60 flex-shrink-0">
                       <div className="flex flex-col">
                         <h4 className="font-medium text-black dark:text-white text-sm lg:text-sm">
-                          {selectedSection.name}
+                          {t(`sections.${selectedSection.key}.name`)}
                         </h4>
                         <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-                          {selectedSection.description}
+                          {t(`sections.${selectedSection.key}.description`)}
                         </p>
                       </div>
                     </div>

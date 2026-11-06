@@ -3,6 +3,7 @@ import { Message } from '../ChatWindow';
 import { useState } from 'react';
 import { Section } from '@/lib/hooks/useChat';
 import { SourceBlock } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 
 const Copy = ({
   section,
@@ -12,6 +13,7 @@ const Copy = ({
   initialMessage: string;
 }) => {
   const [copied, setCopied] = useState(false);
+  const t = useTranslations('MessageActions');
 
   return (
     <button
@@ -22,12 +24,12 @@ const Copy = ({
 
         const contentToCopy = `${initialMessage}${
           sources.length > 0
-            ? `\n\nCitations:\n${sources
+            ? `\n\n${t('citations')}:\n${sources
                 .map((source) => source.data)
                 .flat()
                 .map(
                   (s, i) =>
-                    `[${i + 1}] ${s.metadata.url.startsWith('file_id://') ? s.metadata.fileName || 'Uploaded File' : s.metadata.url}`,
+                    `[${i + 1}] ${s.metadata.url.startsWith('file_id://') ? s.metadata.fileName || t('uploadedFile') : s.metadata.url}`,
                 )
                 .join(`\n`)}`
             : ''

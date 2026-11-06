@@ -19,6 +19,7 @@ import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
 import { claimMessageEnd } from '@/lib/utils/messageEndGuard';
+import { useTranslations } from 'next-intl';
 
 export type Section = {
   message: Message;
@@ -83,6 +84,7 @@ const checkConfig = async (
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
   setIsConfigReady: (ready: boolean) => void,
   setHasError: (hasError: boolean) => void,
+  t: ReturnType<typeof useTranslations<'Chat'>>,
 ) => {
   try {
     let chatModelKey = localStorage.getItem('chatModelKey');
@@ -99,18 +101,14 @@ const checkConfig = async (
     });
 
     if (!res.ok) {
-      throw new Error(
-        `Provider fetching failed with status code ${res.status}`,
-      );
+      throw new Error(t('providerFetchFailed', { status: res.status }));
     }
 
     const data = await res.json();
     const providers: MinimalProvider[] = data.providers;
 
     if (providers.length === 0) {
-      throw new Error(
-        'No chat model providers found, please configure them in the settings page.',
-      );
+      throw new Error(t('noProviders'));
     }
 
     const chatModelProvider =
@@ -118,9 +116,7 @@ const checkConfig = async (
       providers.find((p) => p.chatModels.length > 0);
 
     if (!chatModelProvider) {
-      throw new Error(
-        'No chat models found, pleae configure them in the settings page.',
-      );
+      throw new Error(t('noChatModels'));
     }
 
     chatModelProviderId = chatModelProvider.id;
@@ -135,9 +131,7 @@ const checkConfig = async (
       providers.find((p) => p.embeddingModels.length > 0);
 
     if (!embeddingModelProvider) {
-      throw new Error(
-        'No embedding models found, pleae configure them in the settings page.',
-      );
+      throw new Error(t('noEmbeddingModels'));
     }
 
     embeddingModelProviderId = embeddingModelProvider.id;
@@ -269,6 +263,7 @@ export const chatContext = createContext<ChatContext>({
 });
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
+  const t = useTranslations('Chat');
   const params: { chatId: string } = useParams();
 
   const searchParams = useSearchParams();
@@ -467,6 +462,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setEmbeddingModelProvider,
       setIsConfigReady,
       setHasError,
+      t,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -540,7 +536,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
       if (!isConfigReady) {
-        toast.error('Cannot send message before the configuration is ready');
+        toast.error(t('configNotReady'));
         return;
       }
       sendMessage(initialMessage);

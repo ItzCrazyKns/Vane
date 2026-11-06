@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import AddProvider from '../Settings/Sections/Models/AddProviderDialog';
 import ModelProvider from '../Settings/Sections/Models/ModelProvider';
 import ModelSelect from '@/components/Settings/Sections/Models/ModelSelect';
+import { useTranslations } from 'next-intl';
 
 const SetupConfig = ({
   configSections,
@@ -20,6 +21,7 @@ const SetupConfig = ({
   setupState: number;
   setSetupState: (state: number) => void;
 }) => {
+  const t = useTranslations('Setup');
   const [providers, setProviders] = useState<ConfigModelProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinishing, setIsFinishing] = useState(false);
@@ -29,13 +31,13 @@ const SetupConfig = ({
       try {
         setIsLoading(true);
         const res = await fetch('/api/providers');
-        if (!res.ok) throw new Error('Failed to fetch providers');
+        if (!res.ok) throw new Error(t('loadProvidersError'));
 
         const data = await res.json();
         setProviders(data.providers || []);
       } catch (error) {
         console.error('Error fetching providers:', error);
-        toast.error('Failed to load providers');
+        toast.error(t('loadProvidersError'));
       } finally {
         setIsLoading(false);
       }
@@ -53,12 +55,12 @@ const SetupConfig = ({
         method: 'POST',
       });
 
-      if (!res.ok) throw new Error('Failed to complete setup');
+      if (!res.ok) throw new Error(t('finishError'));
 
       window.location.reload();
     } catch (error) {
       console.error('Error completing setup:', error);
-      toast.error('Failed to complete setup');
+      toast.error(t('finishError'));
       setIsFinishing(false);
     }
   };
@@ -85,10 +87,10 @@ const SetupConfig = ({
             <div className="flex flex-row justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-light-200 dark:border-dark-200">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-black dark:text-white">
-                  Manage Connections
+                  {t('manageConnections')}
                 </p>
                 <p className="text-[10px] sm:text-xs text-black/50 dark:text-white/50 mt-0.5">
-                  Add connections to access AI models
+                  {t('manageConnectionsDescription')}
                 </p>
               </div>
               <AddProvider
@@ -101,16 +103,16 @@ const SetupConfig = ({
               {isLoading ? (
                 <div className="flex items-center justify-center py-8 md:py-12">
                   <p className="text-xs sm:text-sm text-black/50 dark:text-white/50">
-                    Loading providers...
+                    {t('loadingProviders')}
                   </p>
                 </div>
               ) : visibleProviders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
                   <p className="text-xs sm:text-sm font-medium text-black/70 dark:text-white/70">
-                    No connections configured
+                    {t('noConnections')}
                   </p>
                   <p className="text-[10px] sm:text-xs text-black/50 dark:text-white/50 mt-1">
-                    Click &quot;Add Connection&quot; above to get started
+                    {t('noConnectionsHint')}
                   </p>
                 </div>
               ) : (
@@ -146,10 +148,10 @@ const SetupConfig = ({
             <div className="flex flex-row justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-light-200 dark:border-dark-200">
               <div>
                 <p className="text-xs sm:text-sm font-medium text-black dark:text-white">
-                  Select models
+                  {t('selectModels')}
                 </p>
                 <p className="text-[10px] sm:text-xs text-black/50 dark:text-white/50 mt-0.5">
-                  Select models which you wish to use.
+                  {t('selectModelsDescription')}
                 </p>
               </div>
             </div>
@@ -178,7 +180,7 @@ const SetupConfig = ({
             disabled={!hasProviders || isLoading}
             className="flex flex-row items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-lg bg-[#24A0ED] text-white hover:bg-[#1e8fd1] active:scale-95 transition-all duration-200 font-medium text-xs sm:text-sm disabled:bg-light-200 dark:disabled:bg-dark-200 disabled:text-black/40 dark:disabled:text-white/40 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            <span>Next</span>
+            <span>{t('next')}</span>
             <ArrowRight className="w-4 h-4 md:w-[18px] md:h-[18px]" />
           </motion.button>
         )}
@@ -194,7 +196,7 @@ const SetupConfig = ({
             disabled={!hasProviders || isLoading || isFinishing}
             className="flex flex-row items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-lg bg-[#24A0ED] text-white hover:bg-[#1e8fd1] active:scale-95 transition-all duration-200 font-medium text-xs sm:text-sm disabled:bg-light-200 dark:disabled:bg-dark-200 disabled:text-black/40 dark:disabled:text-white/40 disabled:cursor-not-allowed disabled:active:scale-100"
           >
-            <span>{isFinishing ? 'Finishing...' : 'Finish'}</span>
+            <span>{isFinishing ? t('finishing') : t('finish')}</span>
             <Check className="w-4 h-4 md:w-[18px] md:h-[18px]" />
           </motion.button>
         )}

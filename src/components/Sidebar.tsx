@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from '@headlessui/react';
 import SettingsButton from './Settings/SettingsButton';
+import { useTranslations } from 'next-intl';
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return <div className="flex flex-col items-center w-full">{children}</div>;
@@ -29,25 +30,26 @@ const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
   const [isOpen, setIsOpen] = useState<boolean>(true);
+  const t = useTranslations('Sidebar');
 
   const navLinks = [
     {
       icon: Home,
       href: '/',
       active: segments.length === 0 || segments.includes('c'),
-      label: 'Home',
+      label: t('home'),
     },
     {
       icon: Search,
       href: '/discover',
       active: segments.includes('discover'),
-      label: 'Discover',
+      label: t('discover'),
     },
     {
       icon: BookOpenText,
       href: '/library',
       active: segments.includes('library'),
-      label: 'Library',
+      label: t('library'),
     },
   ];
 
