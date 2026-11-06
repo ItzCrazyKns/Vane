@@ -10,6 +10,7 @@ import z from 'zod';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
 import { createLimiter } from '@/lib/utils/limit';
+import { normalizeUrl } from '@/lib/utils/normalizeUrl';
 
 /**
  * Embedding requests allowed in flight at once, across every search in
@@ -25,6 +26,34 @@ const withEmbeddingSlot = createLimiter(EMBEDDING_CONCURRENCY);
 const SIMILARITY_THRESHOLD = 0.5;
 /** Results kept, best first, when the threshold would drop all of a query's. */
 const FALLBACK_RESULTS = 10;
+
+/**
+ * One result per page, comparing normalized URLs (host case, utm_* /
+ * fbclid / gclid, #fragment, trailing slash ignored), so a page found by
+ * several queries is ranked, picked and read once (upstream #1228). The
+ * first copy is kept, with the other copies' different snippets appended,
+ * as the researcher already does for identical URLs.
+ */
+const dedupeByUrl = (chunks: Chunk[]): Chunk[] => {
+  const kept = new Map<string, Chunk>();
+  const out: Chunk[] = [];
+  for (const c of chunks) {
+    const url = c.metadata?.url;
+    if (typeof url !== 'string') {
+      out.push(c);
+      continue;
+    }
+    const key = normalizeUrl(url);
+    const first = kept.get(key);
+    if (!first) {
+      kept.set(key, c);
+      out.push(c);
+    } else if (c.content && !first.content.split('\n\n').includes(c.content)) {
+      first.content += `\n\n${c.content}`;
+    }
+  }
+  return out;
+};
 
 /**
  * Runs one query, returning no results instead of throwing: one failed
@@ -74,7 +103,7 @@ export const executeSearch = async (input: {
     const searchResultsBlockId = crypto.randomUUID();
     let searchResultsEmitted = false;
 
-    const results: Chunk[] = [];
+    const scoredResults: Chunk[] = [];
 
     const search = async (q: string) => {
       const res = await searchSafely(q, {
@@ -129,7 +158,7 @@ export const executeSearch = async (input: {
           };
         });
       } finally {
-        results.push(...resultChunks);
+        scoredResults.push(...resultChunks);
       }
 
       if (!searchResultsEmitted) {
@@ -171,7 +200,10 @@ export const executeSearch = async (input: {
 
     await Promise.all(input.queries.map(search));
 
-    results.sort((a, b) => b.metadata.similarity - a.metadata.similarity);
+    scoredResults.sort((a, b) => b.metadata.similarity - a.metadata.similarity);
+
+    /* After sorting, so the best-scored copy of a page is the one kept. */
+    const results = dedupeByUrl(scoredResults);
 
     const uniqueSearchResultIndices: Set<number> = new Set();
 
@@ -285,6 +317,9 @@ export const executeSearch = async (input: {
 
     if (searchResults.length === 0) return [];
 
+    /* The picker sees, and may pick, each page only once. */
+    const uniqueResults = dedupeByUrl(searchResults);
+
     const pickerPrompt = `
       Assistant is an AI search result picker. Assistant's task is to pick 2-3 of the most relevant search results based off the query which can be then scraped for information to answer the query.
       Assistant will be shared with the search results retrieved from a search engine along with the queries used to retrieve those results and, when available, the user's question. Relevance is judged against the user's question first and the queries second. Assistant will then pick maxiumum 3 of the most relevant search results based on the queries and the content of the search results. Assistant should only pick search results that are relevant to the query and can help in answering the question.
@@ -326,14 +361,14 @@ export const executeSearch = async (input: {
         },
         {
           role: 'user',
-          content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<search_results>${searchResults.map((result, index) => `<result indice=${index}>${JSON.stringify(result)}</result>`).join('\n')}</search_results>`,
+          content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<search_results>${uniqueResults.map((result, index) => `<result indice=${index}>${JSON.stringify(result)}</result>`).join('\n')}</search_results>`,
         },
       ],
     });
 
     const pickedIndices = pickerResponse.picked_indices.slice(0, 3);
     const pickedResults = pickedIndices
-      .map((i) => searchResults[i])
+      .map((i) => uniqueResults[i])
       .filter((r) => r !== undefined);
 
     const alreadyExtractedURLs: string[] = [];
@@ -341,13 +376,13 @@ export const executeSearch = async (input: {
     researchBlock.data.subSteps.forEach((step) => {
       if (step.type === 'reading') {
         step.reading.forEach((chunk) => {
-          alreadyExtractedURLs.push(chunk.metadata.url);
+          alreadyExtractedURLs.push(normalizeUrl(chunk.metadata.url));
         });
       }
     });
 
     const filteredResults = pickedResults.filter(
-      (r) => !alreadyExtractedURLs.find((url) => url === r.metadata.url),
+      (r) => !alreadyExtractedURLs.includes(normalizeUrl(r.metadata.url)),
     );
 
     if (filteredResults.length > 0) {
