@@ -57,6 +57,8 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
     <div>
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-[72px] lg:flex-col border-r border-light-200 dark:border-dark-200">
         <div className="flex grow flex-col items-center justify-between gap-y-5 overflow-y-auto bg-light-secondary dark:bg-dark-secondary px-2 py-8 shadow-sm shadow-light-200/10 dark:shadow-black/25">
+          {/* Full reload on purpose: it resets the chat state kept by ChatProvider. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             className="p-2.5 rounded-full bg-light-200 text-black/70 dark:bg-dark-200 dark:text-white/70 hover:opacity-70 hover:scale-105 tansition duration-200"
             href="/"
