@@ -42,6 +42,12 @@ export const splitText = (
       chunkEnd++;
     }
 
+    /* A single segment larger than maxTokens never fits. Put it in a chunk
+       on its own so the loop always moves forward. */
+    if (chunkEnd === chunkStart) {
+      chunkEnd = chunkStart + 1;
+    }
+
     let overlapBeforeStart = Math.max(0, chunkStart - 1);
     let overlapBeforeTokenCount = 0;
 

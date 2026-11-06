@@ -12,6 +12,20 @@ import { getTokenCount } from '@/lib/utils/splitText';
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
+    try {
+      await this._searchAsync(session, input);
+    } catch (err) {
+      console.error('SearchAgent error:', err);
+      session.emit('error', {
+        data:
+          err instanceof Error
+            ? err.message
+            : 'An unknown error occurred during search',
+      });
+    }
+  }
+
+  private async _searchAsync(session: SessionManager, input: SearchAgentInput) {
     const exists = await db.query.messages.findFirst({
       where: and(
         eq(messages.chatId, input.chatId),
@@ -123,6 +137,7 @@ class SearchAgent {
       finalContextWithWidgets,
       input.config.systemInstructions,
       input.config.mode,
+      classification.classification.skipSearch,
     );
 
     const answerStream = input.config.llm.streamText({
