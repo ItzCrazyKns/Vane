@@ -60,6 +60,8 @@ export type ClassifierOutput = {
     showCalculationWidget: boolean;
   };
   standaloneFollowUp: string;
+  /** Keyword queries proposed by the classifier (speed fast path). */
+  searchQueries?: string[];
 };
 
 export type AdditionalConfig = {

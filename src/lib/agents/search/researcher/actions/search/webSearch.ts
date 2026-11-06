@@ -1,7 +1,8 @@
 import z from 'zod';
 import { ResearchAction } from '../../../types';
 import { ResearchBlock } from '@/lib/types';
-import { executeSearch, pageReading } from './baseSearch';
+import { executeSearch } from './baseSearch';
+import { getEffort } from '../../../effort';
 import { NO_NEW_QUERIES_NOTE, normalizeQueries } from './queries';
 import {
   FILTERS_TOOL_GUIDE,
@@ -141,8 +142,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
       filters: hasFilters(filters) ? filters : undefined,
       /* Balanced reads the best passages of its top pages; speed stays
          on snippets, quality already reads pages with the extractor. */
-      readPages:
-        additionalConfig.mode === 'balanced' ? pageReading.balancedPages : 0,
+      readPages: getEffort(additionalConfig.mode).readPages,
     });
 
     return {

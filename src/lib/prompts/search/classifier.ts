@@ -46,6 +46,13 @@ Do not contain excess information or everything that has been discussed before, 
 The standalone follow-up should be concise and to the point.
 </standalone_followup>
 
+<search_queries>
+Also propose up to 3 web search queries that would find the answer to the standalone question.
+- Short, keyword style (as typed into a search engine), not full sentences. Example: for "How long does the iPhone 17 battery last?" use "iPhone 17 battery life hours", "iPhone 17 battery test".
+- Use the language most likely to have the best sources; add an English query when it helps.
+- Return an empty array when skipSearch is true.
+</search_queries>
+
 <output_format>
 You must respond in the following JSON format without any extra text, explanations or filler sentences:
 {
@@ -58,6 +65,7 @@ You must respond in the following JSON format without any extra text, explanatio
     "showStockWidget": boolean,
     "showCalculationWidget": boolean,
   },
+  "searchQueries": string[],
   "standaloneFollowUp": string
 }
 </output_format>
