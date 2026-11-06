@@ -9,6 +9,17 @@ import computeSimilarity from '@/lib/utils/computeSimilarity';
 import z from 'zod';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+import { createLimiter } from '@/lib/utils/limit';
+
+/**
+ * Embedding requests allowed in flight at once, across every search in
+ * the process. Parallel search actions used to fire one request per query
+ * at the same time, and a local server (Ollama) answers 502 when flooded
+ * (upstream issue #1147). Three keeps one action's queries (at most
+ * three) fully parallel.
+ */
+export const EMBEDDING_CONCURRENCY = 3;
+const withEmbeddingSlot = createLimiter(EMBEDDING_CONCURRENCY);
 
 /**
  * Runs one query, returning no results instead of throwing: one failed
@@ -73,8 +84,9 @@ export const executeSearch = async (input: {
         /* One embedding call for the query and all its results, instead of
            one call per result. */
         const contents = res.results.map((r) => r.content || r.title);
-        const [queryEmbedding, ...chunkEmbeddings] =
-          await input.embedding.embedText([q, ...contents]);
+        const [queryEmbedding, ...chunkEmbeddings] = await withEmbeddingSlot(
+          () => input.embedding.embedText([q, ...contents]),
+        );
 
         resultChunks = res.results
           .map((r, i) => ({
