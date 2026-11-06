@@ -233,7 +233,8 @@
     "sources": "Sources",
     "brainstorming": "Brainstorming...",
     "answer": "Answer",
-    "related": "Related"
+    "related": "Related",
+    "answerFailed": "This answer could not be completed."
   },
   "AssistantSteps": {
     "thinkingActive": "Thinking...",
@@ -339,7 +340,8 @@
     "providerFetchFailed": "Provider fetching failed with status code {status}",
     "noProviders": "No chat model providers found, please configure them in the settings page.",
     "noChatModels": "No chat models found, please configure them in the settings page.",
-    "noEmbeddingModels": "No embedding models found, please configure them in the settings page."
+    "noEmbeddingModels": "No embedding models found, please configure them in the settings page.",
+    "reconnectFailed": "Lost the connection to this answer. Try rewriting it."
   },
   "Benchmark": {
     "intro": "Runs fixed test questions on each search type, times every step (model, embeddings, SearXNG, pages) and suggests improvements. None of your history or files are used.",

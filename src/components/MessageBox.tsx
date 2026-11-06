@@ -11,6 +11,7 @@ import {
   Layers3,
   Plus,
   CornerDownRight,
+  AlertCircle,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX, RuleType } from 'markdown-to-jsx';
 import { safeMarkdownRenderRule } from '@/lib/markdownSafety';
@@ -286,6 +287,21 @@ const MessageBox = ({
                     </div>
                   )}
               </>
+            )}
+
+            {section.message.status === 'error' && !(isLast && loading) && (
+              <div className="flex flex-row items-center justify-between gap-2 p-3 rounded-lg border border-red-500/30 bg-red-500/5 text-sm text-red-600 dark:text-red-400">
+                <span className="flex flex-row items-center gap-2">
+                  <AlertCircle size={16} className="flex-shrink-0" />
+                  {t('answerFailed')}
+                </span>
+                {!hasContent && (
+                  <Rewrite
+                    rewrite={rewrite}
+                    messageId={section.message.messageId}
+                  />
+                )}
+              </div>
             )}
           </div>
         </div>

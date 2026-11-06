@@ -172,6 +172,7 @@ Clients should process each line as a separate JSON object. The different messag
 - **`sources`**: All sources used for the response
 - **`response`**: Chunks of the generated answer text
 - **`done`**: Indicates the stream is complete
+- **`error`**: The search failed; `data` holds the error message and the stream closes after it
 
 ### Fields in the Response
 
@@ -187,4 +188,4 @@ Clients should process each line as a separate JSON object. The different messag
 If an error occurs during the search process, the API will return an appropriate error message with an HTTP status code.
 
 - **400**: If the request is malformed or missing required fields (e.g., no `sources` or `query`).
-- **500**: If an internal server error occurs during the search.
+- **500**: If an internal server error occurs during the search. The body is `{"message": "Search error", "error": "<details>"}`, or `{"message": "An error has occurred."}` if the search could not start. When streaming, a failure after the stream opened arrives as an `error` line instead.

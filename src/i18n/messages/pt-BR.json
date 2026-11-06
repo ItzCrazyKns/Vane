@@ -233,7 +233,8 @@
     "sources": "Fontes",
     "brainstorming": "Pensando...",
     "answer": "Resposta",
-    "related": "Relacionadas"
+    "related": "Relacionadas",
+    "answerFailed": "Não foi possível concluir esta resposta."
   },
   "AssistantSteps": {
     "thinkingActive": "Pensando...",
@@ -339,7 +340,8 @@
     "providerFetchFailed": "Falha ao carregar os provedores (código {status})",
     "noProviders": "Nenhum provedor de modelos encontrado. Configure um na página de configurações.",
     "noChatModels": "Nenhum modelo de chat encontrado. Configure um na página de configurações.",
-    "noEmbeddingModels": "Nenhum modelo de embeddings encontrado. Configure um na página de configurações."
+    "noEmbeddingModels": "Nenhum modelo de embeddings encontrado. Configure um na página de configurações.",
+    "reconnectFailed": "A conexão com esta resposta foi perdida. Tente gerá-la de novo."
   },
   "Benchmark": {
     "intro": "Roda perguntas fixas de teste em cada tipo de busca, mede o tempo de cada etapa (modelo, embeddings, SearxNG, páginas) e gera sugestões. Nenhum histórico ou arquivo seu é usado.",
