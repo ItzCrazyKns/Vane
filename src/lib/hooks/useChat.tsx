@@ -18,6 +18,7 @@ import { MinimalProvider } from '../models/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
+import { claimMessageEnd } from '@/lib/utils/messageEndGuard';
 
 export type Section = {
   message: Message;
@@ -630,11 +631,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.type === 'messageEnd') {
-        if (handledMessageEndRef.current.has(messageId)) {
+        // Keyed by backendId (one per stream): a rewrite reuses messageId.
+        if (!claimMessageEnd(handledMessageEndRef.current, message.backendId)) {
           return;
         }
-
-        handledMessageEndRef.current.add(messageId);
 
         const currentMsg = messagesRef.current.find(
           (msg) => msg.messageId === messageId,
