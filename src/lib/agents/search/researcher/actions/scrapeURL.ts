@@ -46,6 +46,27 @@ const extractorSchema = z.object({
     ),
 });
 
+/** Pages a single scrape_url call may read. */
+const MAX_URLS_PER_CALL = 3;
+
+/**
+ * Cleans the `urls` argument the model sent: it may be missing, a single
+ * string, or hold non-strings (upstream issue #964). Keeps trimmed,
+ * non-empty, distinct strings, at most three.
+ */
+export const normalizeURLArgs = (raw: unknown): string[] => {
+  const list = (Array.isArray(raw) ? raw : [raw]).flat();
+  const urls: string[] = [];
+  for (const item of list) {
+    if (typeof item !== 'string') continue;
+    const url = item.trim();
+    if (!url || urls.includes(url)) continue;
+    urls.push(url);
+    if (urls.length >= MAX_URLS_PER_CALL) break;
+  }
+  return urls;
+};
+
 const schema = z.object({
   urls: z.array(z.string()).describe('A list of URLs to scrape content from.'),
 });
@@ -65,7 +86,15 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
   getDescription: () => actionDescription,
   enabled: (_) => true,
   execute: async (params, additionalConfig) => {
-    params.urls = params.urls.slice(0, 3);
+    params.urls = normalizeURLArgs(params.urls);
+
+    if (params.urls.length === 0) {
+      return {
+        type: 'search_results',
+        results: [],
+        note: 'No page was read: send the URLs to read as a list of strings.',
+      };
+    }
 
     let readingBlockId = crypto.randomUUID();
     let readingEmitted = false;
