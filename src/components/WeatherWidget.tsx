@@ -1,8 +1,8 @@
 'use client';
 
 import { Wind } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { getApproxLocation } from '@/lib/actions';
+import { useEffect, useRef, useState } from 'react';
+import { getApproxLocation, reverseGeocode } from '@/lib/serverActions';
 import { useTranslations } from 'next-intl';
 
 const WeatherWidget = () => {
@@ -34,23 +34,12 @@ const WeatherWidget = () => {
 
       if (result.state === 'granted') {
         navigator.geolocation.getCurrentPosition(async (position) => {
-          const res = await fetch(
-            `https://api-bdc.io/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`,
-            {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            },
+          callback(
+            await reverseGeocode(
+              position.coords.latitude,
+              position.coords.longitude,
+            ),
           );
-
-          const data = await res.json();
-
-          callback({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            city: data.locality,
-          });
         });
       } else if (result.state === 'prompt') {
         callback(await getApproxLocation());
@@ -63,10 +52,33 @@ const WeatherWidget = () => {
     }
   };
 
+  /* Looked up once; the 30 s refresh reuses it instead of asking the
+     geolocation services again. */
+  const locationRef = useRef<{
+    latitude: number;
+    longitude: number;
+    city: string;
+  } | null>(null);
+
+  const withLocation = (
+    callback: (location: {
+      latitude: number;
+      longitude: number;
+      city: string;
+    }) => void,
+  ) => {
+    if (locationRef.current) return callback(locationRef.current);
+    getLocation((location) => {
+      locationRef.current = location;
+      callback(location);
+    });
+  };
+
   const updateWeather = async () => {
-    getLocation(async (location) => {
+    withLocation(async (location) => {
       const res = await fetch(`/api/weather`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lat: location.latitude,
           lng: location.longitude,

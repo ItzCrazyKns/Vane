@@ -8,7 +8,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/ItzCrazyKns/Vane?color=green)](https://github.com/ItzCrazyKns/Vane/commits/master)
 [![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
 
-Vane is a **privacy-focused AI answering engine** that runs entirely on your own hardware. It combines knowledge from the vast internet with support for **local LLMs** (Ollama) and cloud providers (OpenAI, Claude, Groq), delivering accurate answers with **cited sources** while keeping your searches completely private.
+Vane is a **privacy-focused AI answering engine** that runs entirely on your own hardware. It combines knowledge from the vast internet with support for **local LLMs** (Ollama) and cloud providers (OpenAI, Claude, Groq), delivering accurate answers with **cited sources**. Your chats, settings and API keys stay on your machine; queries go only to the search engine and model providers you configure (see [Security and privacy](#security-and-privacy)).
 
 ![preview](.assets/vane-screenshot.png)
 
@@ -68,8 +68,10 @@ There are mainly 2 ways of installing Vane - With Docker, Without Docker. Using 
 Vane can be easily run using Docker. Simply run the following command:
 
 ```bash
-docker run -d -p 3000:3000 -v vane-data:/home/vane/data --name vane itzcrazykns1337/vane:latest
+docker run -d -p 127.0.0.1:3000:3000 -v vane-data:/home/vane/data --name vane itzcrazykns1337/vane:latest
 ```
+
+`127.0.0.1:` keeps Vane reachable only from this computer. Vane has no login, so read [Expose Vane to network](#expose-vane-to-network) before publishing it to other devices.
 
 This will pull and start the Vane container with the bundled SearxNG search engine. Once running, open your browser and navigate to http://localhost:3000. You can then configure your settings (API keys, models, etc.) directly in the setup screen.
 
@@ -301,7 +303,21 @@ For more details, check out the full documentation [here](https://github.com/Itz
 
 ## Expose Vane to network
 
-Vane runs on Next.js and handles all API requests. It works right away on the same network and stays accessible even with port forwarding.
+Vane has **no login**: anyone who can reach its port can read your chats and use your configured models. The Docker examples bind to `127.0.0.1` for that reason. To use Vane from other devices, publish the port on all interfaces (`-p 3000:3000`) only on a network you trust, or put it behind a reverse proxy that adds authentication.
+
+Local names (`localhost`, IP addresses, single-label names such as `vane`, and `.local`/`.lan`/`.internal`/`.home.arpa` hosts) work out of the box. If you reach Vane through a public domain name, add it to `VANE_ALLOWED_HOSTS` (comma-separated, `*.example.com` wildcards allowed), otherwise the API answers `403`:
+
+```bash
+docker run -d -p 3000:3000 -e VANE_ALLOWED_HOSTS=vane.example.com -v vane-data:/home/vane/data --name vane itzcrazykns1337/vane:latest
+```
+
+## Security and privacy
+
+- **Requests from other web sites are refused.** The API only accepts changes (POST, PATCH, DELETE) from Vane's own page and ignores unknown host names, so a page you visit cannot reconfigure Vane or read it through DNS rebinding.
+- **API keys are never sent back to the browser.** The settings screen shows `••••••••` for saved keys; leave it as is to keep the stored key.
+- **The researcher cannot read your network.** Pages the model asks to read must resolve to public addresses, so a malicious page cannot make Vane fetch `localhost`, your LAN or cloud metadata. Set `VANE_ALLOW_PRIVATE_URLS=true` if you want it to read intranet pages.
+- **Answers cannot load remote content.** HTML and images written by the model are shown as text or links, never loaded automatically.
+- **Third parties:** favicons are fetched by the Vane server (only the site's domain is used). The weather widget looks up your city on the server with coordinates rounded to about 1 km (BigDataCloud) or from the server's IP (freeipapi.com), and gets the forecast from Open-Meteo. Turn the widget off in Settings to avoid these lookups.
 
 ## One-Click Deployment
 

@@ -4,7 +4,11 @@ services:
     build:
       context: .
     ports:
-      - '3000:3000'
+      # Only this computer can reach Vane (it has no login). Use '3000:3000'
+      # to publish it on your network; see "Expose Vane to network" in the README.
+      - '127.0.0.1:3000:3000'
+    # environment:
+    #   - VANE_ALLOWED_HOSTS=vane.example.com  # public domain names you use
     volumes:
       - data:/home/vane/data
     restart: unless-stopped

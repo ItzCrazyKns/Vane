@@ -7,13 +7,6 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  images: {
-    remotePatterns: [
-      {
-        hostname: 's2.googleusercontent.com',
-      },
-    ],
-  },
   serverExternalPackages: [
     'pdf-parse',
     'officeparser',

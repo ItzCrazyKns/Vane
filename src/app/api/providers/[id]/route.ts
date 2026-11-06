@@ -1,5 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
+import { maskProvider } from '@/lib/config/secrets';
 
 export const DELETE = async (
   req: NextRequest,
@@ -69,7 +70,7 @@ export const PATCH = async (
 
     return Response.json(
       {
-        provider: updatedProvider,
+        provider: maskProvider(updatedProvider),
       },
       {
         status: 200,

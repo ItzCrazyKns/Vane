@@ -10,6 +10,7 @@ import { File } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Chunk } from '@/lib/types';
 import { useTranslations } from 'next-intl';
+import { faviconSrc, hideBrokenImage } from '@/lib/favicon';
 
 const MessageSources = ({ sources }: { sources: Chunk[] }) => {
   const t = useTranslations('MessageSources');
@@ -45,7 +46,8 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                 </div>
               ) : (
                 <img
-                  src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                  src={faviconSrc(source.metadata.url)}
+                  onError={hideBrokenImage}
                   width={16}
                   height={16}
                   alt="favicon"
@@ -82,7 +84,8 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
               ) : (
                 <img
                   key={i}
-                  src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                  src={faviconSrc(source.metadata.url)}
+                  onError={hideBrokenImage}
                   width={16}
                   height={16}
                   alt="favicon"
@@ -132,7 +135,8 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                               </div>
                             ) : (
                               <img
-                                src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                                src={faviconSrc(source.metadata.url)}
+                                onError={hideBrokenImage}
                                 width={16}
                                 height={16}
                                 alt="favicon"
