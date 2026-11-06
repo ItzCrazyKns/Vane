@@ -54,14 +54,14 @@ Cada pergunta roda nos três modos: 90 respostas por rodada.
 
 ## 4. O que muda em relação ao que já está no repositório
 
-1. **Ollama.** O roteiro novo pede um modelo fixo no Ollama; o harness atual chama o LM Studio. Vou acrescentar `EVAL_PROVIDER=ollama`, que usa a classe `OllamaLLM` do próprio Vane (o mesmo caminho de produção do Ollama), mantendo o LM Studio como opção.
+1. **Modelo fixo: LM Studio** (decidido por você em 06/11/2026, no lugar do Ollama citado no roteiro). O harness já chama o LM Studio pelas classes do próprio Vane, com temperatura 0; nada muda no código dele.
 2. **Playwright saiu do Vane.** O README do harness ainda fala em Playwright; o wrapper já envolve `Scraper.scrape`, que agora usa `fetch` + Readability ou Firecrawl. Só a documentação muda.
-3. **Uso de tokens.** O harness passa a registrar o campo `usage` de cada chamada (para provedores pagos e para o Ollama, que informa `prompt_eval_count` e `eval_count`), o que alimenta a Fase 4.
+3. **Uso de tokens.** O harness passa a registrar o campo `usage` de cada chamada (LM Studio e provedores pagos informam), o que alimenta a Fase 4.
 4. **Falta o arquivo `dom-casmurro-cap.txt`.** Será baixado do Projeto Gutenberg na máquina que gravar as referências.
 
 ## 5. Decisões que preciso de você
 
 1. **Onde gravar as referências e rodar o modelo fixo.** Este container não tem GPU nem Ollama, e não alcança os motores de busca. A gravação precisa rodar no seu Mac (pelos comandos do README do harness ou por uma sessão do Remote Control, se ela funcionar).
-2. **Modelo fixo:** antes você escolheu o LM Studio; o roteiro novo diz Ollama. Recomendo `qwen3:8b` no Ollama (aceita ferramentas e o Vane já desliga o raciocínio dele). Se preferir continuar no LM Studio, o harness já funciona.
+2. **Modelo fixo:** decidido, LM Studio.
 3. **Juiz:** você escolheu um modelo maior local. Mantenho, a menos que prefira um pago.
 4. **Lint:** continua quebrado; consertar exige migrar para o ESLint 9 (só desenvolvimento). Você não aprovou na rodada anterior; sigo sem lint, usando `tsc` e testes como portão.
