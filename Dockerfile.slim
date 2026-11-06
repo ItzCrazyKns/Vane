@@ -15,9 +15,27 @@ COPY drizzle ./drizzle
 RUN mkdir -p /home/vane/data
 RUN yarn build
 
+# onnxruntime-node (local Transformers embeddings) ships binaries for every
+# OS/arch plus CUDA and TensorRT providers (~330 MB) that need NVIDIA
+# libraries this image does not have. Keep only the CPU runtime for the
+# architecture being built, which is what Transformers.js loads by default.
+RUN set -eu; \
+    ort=.next/standalone/node_modules/onnxruntime-node/bin/napi-v3; \
+    if [ -d "$ort" ]; then \
+      arch="$(node -p process.arch)"; \
+      find "$ort" -mindepth 1 -maxdepth 1 ! -name linux -exec rm -rf {} +; \
+      find "$ort/linux" -mindepth 1 -maxdepth 1 ! -name "$arch" -exec rm -rf {} +; \
+      rm -f "$ort"/linux/*/libonnxruntime_providers_cuda.so \
+            "$ort"/linux/*/libonnxruntime_providers_tensorrt.so; \
+    fi
+
 FROM node:24.5.0-slim
 
-RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
+# Runtime only: the app needs no Python or compilers (better-sqlite3 and the
+# other native modules come prebuilt in the standalone output). The sqlite3
+# CLI stays for inspecting data/db.sqlite.
+RUN apt-get update && apt-get install -y --no-install-recommends sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/vane
 
@@ -29,10 +47,11 @@ COPY --from=builder /home/vane/.next/static ./public/_next/static
 # they would resolve package.json ranges again and swap in a different
 # Next.js version than the one used for the build.
 COPY --from=builder /home/vane/.next/standalone ./
-COPY --from=builder /home/vane/data ./data
 COPY drizzle ./drizzle
 
-RUN mkdir /home/vane/uploads
+# data/ starts empty: the server creates config.json and db.sqlite on first
+# start, so the ones the build left behind are not shipped.
+RUN mkdir -p /home/vane/data /home/vane/uploads
 
 EXPOSE 3000
 

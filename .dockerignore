@@ -1,1 +1,13 @@
 **/node_modules
+# Not used by the image builds; keeps the build context small and stops local
+# settings, chats and uploads (data/) from being sent to the Docker daemon.
+.git
+.github
+.claude
+.next
+data
+docs
+perf-audit
+*.md
+*.log
+*.tsbuildinfo
