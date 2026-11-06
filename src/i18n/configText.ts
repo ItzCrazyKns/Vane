@@ -37,6 +37,12 @@ const configText: Partial<Record<Locale, Record<string, string>>> = {
       'ex.: "Responda em um tom amigável e conciso" ou "Formate as respostas em tópicos."',
     'SearXNG URL': 'URL do SearXNG',
     'The URL of your SearXNG instance': 'A URL da sua instância do SearXNG',
+    'Search Provider': 'Provedor de busca',
+    'Engine used for web searches. Firecrawl needs the Firecrawl URL below.':
+      'Mecanismo usado nas buscas na web. O Firecrawl precisa da URL do Firecrawl abaixo.',
+    'Firecrawl URL': 'URL do Firecrawl',
+    'Base URL of your Firecrawl API, without /v2. Used for web search when Firecrawl is the provider, and for reading pages.':
+      'URL base da API do Firecrawl, sem /v2. Usada na busca quando o Firecrawl é o provedor e na leitura de páginas.',
     'API Key': 'Chave de API',
     'Base URL': 'URL base',
     'Your Anthropic API key': 'Sua chave de API da Anthropic',
