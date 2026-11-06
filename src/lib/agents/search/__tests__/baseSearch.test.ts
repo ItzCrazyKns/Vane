@@ -187,8 +187,12 @@ describe('executeSearch (similarity fallback)', () => {
         embedding: new LowScoreEmbedding(),
       });
 
-      expect(results.map((r) => r.metadata.url)).toEqual(
-        [11, 10, 9, 8, 7, 6, 5, 4, 3, 2].map((i) => `https://low.test/${i}`),
+      /* The ten best by similarity are kept; their order comes from the
+         hybrid ranking. */
+      expect(results.map((r) => r.metadata.url).sort()).toEqual(
+        [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
+          .map((i) => `https://low.test/${i}`)
+          .sort(),
       );
     },
   );

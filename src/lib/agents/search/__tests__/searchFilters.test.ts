@@ -185,7 +185,9 @@ describe('executeSearch with filters, dates and the result budget', () => {
     const undated = await run(['vacina dengue'], {
       filters: parseSearchFilters({ domains: ['blog.test'] }),
     });
-    expect(undated.map((r) => r.metadata.url)).toEqual(['https://blog.test/x']);
+    /* The filtered result comes first; fewer than three results also
+       triggers the unfiltered retry, whose results follow. */
+    expect(undated[0].metadata.url).toBe('https://blog.test/x');
     expect(undated[0].metadata).not.toHaveProperty('publishedDate');
   });
 
