@@ -17,7 +17,22 @@ export const POST = async (
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
 
-    const disconnect = session.subscribe((event, data) => {
+    let closed = false;
+    // subscribe() replays past events synchronously, so for a session that
+    // already finished the 'end' event fires before `disconnect` is assigned.
+    // Track the unsubscribe function in a mutable variable and close once.
+    let disconnect: (() => void) | undefined;
+
+    const closeStream = () => {
+      if (closed) return;
+      closed = true;
+      disconnect?.();
+      writer.close().catch(() => undefined);
+    };
+
+    disconnect = session.subscribe((event, data) => {
+      if (closed) return;
+
       if (event === 'data') {
         if (data.type === 'block') {
           writer.write(
@@ -55,8 +70,7 @@ export const POST = async (
             }) + '\n',
           ),
         );
-        writer.close();
-        disconnect();
+        closeStream();
       } else if (event === 'error') {
         writer.write(
           encoder.encode(
@@ -66,15 +80,15 @@ export const POST = async (
             }) + '\n',
           ),
         );
-        writer.close();
-        disconnect();
+        closeStream();
       }
     });
 
-    req.signal.addEventListener('abort', () => {
-      disconnect();
-      writer.close();
-    });
+    // If the replay already closed the stream, unsubscribe now that the
+    // disconnect function exists.
+    if (closed) disconnect();
+
+    req.signal.addEventListener('abort', closeStream);
 
     return new Response(responseStream.readable, {
       headers: {

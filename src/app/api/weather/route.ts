@@ -9,7 +9,21 @@ export const POST = async (req: Request) => {
       measureUnit: 'Imperial' | 'Metric';
     } = await req.json();
 
-    if (!body.lat || !body.lng) {
+    // 0 is a valid coordinate (equator / prime meridian), so don't use a
+    // falsy check here.
+    const lat = Number(body.lat);
+    const lng = Number(body.lng);
+
+    if (
+      body.lat === null ||
+      body.lat === undefined ||
+      body.lng === null ||
+      body.lng === undefined ||
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      Math.abs(lat) > 90 ||
+      Math.abs(lng) > 180
+    ) {
       return Response.json(
         {
           message: 'Invalid request.',
@@ -19,7 +33,7 @@ export const POST = async (req: Request) => {
     }
 
     const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${
         body.measureUnit === 'Metric' ? '' : '&temperature_unit=fahrenheit'
       }${body.measureUnit === 'Metric' ? '' : '&wind_speed_unit=mph'}`,
     );

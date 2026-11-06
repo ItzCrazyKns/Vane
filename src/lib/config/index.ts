@@ -255,6 +255,11 @@ class ConfigManager {
     const parts = key.split('.');
     if (parts.length === 0) return;
 
+    const forbiddenKeys = ['__proto__', 'constructor', 'prototype'];
+    if (parts.some((p) => p === '' || forbiddenKeys.includes(p))) {
+      throw new Error(`Invalid config key: ${key}`);
+    }
+
     let target: any = this.currentConfig;
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
