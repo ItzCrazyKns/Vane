@@ -1,6 +1,8 @@
 # Plano da Fase 2: rede de segurança
 
-Status: **proposta para aprovação**. Nada desta fase foi implementado ainda.
+Status: **em andamento**. Testes de caracterização prontos (`yarn test`). Harness de avaliação pronto em `perf-audit/eval/` (ver o README de lá); falta gravar as fontes e a referência.
+
+Decisões tomadas: rodar a avaliação localmente no LM Studio (no lugar do Ollama) e usar como juiz um modelo maior no LM Studio. O ESLint 9 não foi aprovado e não será migrado.
 
 Skills do plugin ECC que vou usar: `ai-regression-testing`, `eval-harness` e `tdd-workflow` (todas disponíveis nesta sessão).
 
@@ -8,26 +10,27 @@ Skills do plugin ECC que vou usar: `ai-regression-testing`, `eval-harness` e `td
 
 Framework: **Vitest** como dependência de desenvolvimento (não mexe em Next, ORM nem bibliotecas de LLM). Script novo `yarn test`. Os testes ficam em `src/**/__tests__/` e as fixtures em `perf-audit/fixtures/`.
 
-| Alvo | Arquivo | O que o teste fixa |
-|---|---|---|
-| Prompts | `src/lib/prompts/**` | Snapshot do texto de cada prompt (com data congelada), para qualquer mudança aparecer no diff. |
-| Montagem do contexto do redator | `src/lib/agents/search/index.ts:116-134` | Formato exato de `<search_results>` e `<widgets_result>` (extraído para uma função pura, sem mudar o resultado). |
-| Resposta do SearxNG | `src/lib/searxng.ts` | Parsing de respostas gravadas, parâmetros da URL, cabeçalhos e timeout. |
-| Busca speed/balanced | `baseSearch.ts:37-170` | Com embeddings falsos e determinísticos: filtro de 0,5, deduplicação de 0,75, ordenação, top 20 e o que vai para a interface. |
-| Busca quality | `baseSearch.ts:172-420` | Com LLM falso: índices do seletor, URLs já lidos, junção dos fatos extraídos. |
-| Extração de texto | `src/lib/scraper.ts` | HTML gravado servido por um servidor local; título e texto do Readability. |
-| Chunking | `src/lib/utils/splitText.ts` | Tamanhos, sobreposição, segmento maior que o limite, texto vazio. |
-| Reranking dos uploads | `src/lib/uploads/store.ts` | Ordem do RRF com vetores fixos. O teste documenta o comportamento atual, inclusive o problema do hash com a nota. |
-| Deduplicação de fontes | `researcher/index.ts:185-208` | Junção de resultados com o mesmo URL. |
-| Citações | `src/components/MessageRenderer/Citation.tsx` e o parser de `[n]` | Números viram links para a fonte certa. |
-| Stream e sessão | `src/lib/session.ts`, `src/app/api/chat/route.ts` | Sequência de eventos `block`, `updateBlock`, `researchComplete`, `messageEnd` e o replay da reconexão. |
-| API de busca | `src/app/api/search/route.ts` | Formato de `message` e `sources`, com e sem `stream`, com o agente falso. |
+| Alvo                            | Arquivo                                                           | O que o teste fixa                                                                                                            |
+| ------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Prompts                         | `src/lib/prompts/**`                                              | Snapshot do texto de cada prompt (com data congelada), para qualquer mudança aparecer no diff.                                |
+| Montagem do contexto do redator | `src/lib/agents/search/index.ts:116-134`                          | Formato exato de `<search_results>` e `<widgets_result>` (extraído para uma função pura, sem mudar o resultado).              |
+| Resposta do SearxNG             | `src/lib/searxng.ts`                                              | Parsing de respostas gravadas, parâmetros da URL, cabeçalhos e timeout.                                                       |
+| Busca speed/balanced            | `baseSearch.ts:37-170`                                            | Com embeddings falsos e determinísticos: filtro de 0,5, deduplicação de 0,75, ordenação, top 20 e o que vai para a interface. |
+| Busca quality                   | `baseSearch.ts:172-420`                                           | Com LLM falso: índices do seletor, URLs já lidos, junção dos fatos extraídos.                                                 |
+| Extração de texto               | `src/lib/scraper.ts`                                              | HTML gravado servido por um servidor local; título e texto do Readability.                                                    |
+| Chunking                        | `src/lib/utils/splitText.ts`                                      | Tamanhos, sobreposição, segmento maior que o limite, texto vazio.                                                             |
+| Reranking dos uploads           | `src/lib/uploads/store.ts`                                        | Ordem do RRF com vetores fixos. O teste documenta o comportamento atual, inclusive o problema do hash com a nota.             |
+| Deduplicação de fontes          | `researcher/index.ts:185-208`                                     | Junção de resultados com o mesmo URL.                                                                                         |
+| Citações                        | `src/components/MessageRenderer/Citation.tsx` e o parser de `[n]` | Números viram links para a fonte certa.                                                                                       |
+| Stream e sessão                 | `src/lib/session.ts`, `src/app/api/chat/route.ts`                 | Sequência de eventos `block`, `updateBlock`, `researchComplete`, `messageEnd` e o replay da reconexão.                        |
+| API de busca                    | `src/app/api/search/route.ts`                                     | Formato de `message` e `sources`, com e sem `stream`, com o agente falso.                                                     |
 
 ## 2. Conjunto de avaliação de qualidade (30 perguntas)
 
 Cada pergunta roda nos três modos. As respostas atuais viram a referência. As fontes (SearxNG e páginas) são gravadas uma vez e repetidas em todas as rodadas, para que só a mudança testada mude o resultado.
 
 ### A. Fatos simples (7)
+
 1. Qual é a capital da Austrália?
 2. Em que ano foi lançado o primeiro iPhone e por qual preço?
 3. Qual é a altura oficial do Monte Everest segundo a medição de 2020?
@@ -37,6 +40,7 @@ Cada pergunta roda nos três modos. As respostas atuais viram a referência. As 
 7. Quem ganhou a Copa do Mundo de 2022 e qual foi o placar da final?
 
 ### B. Perguntas que exigem várias fontes (8)
+
 8. Compare Rust e Go para serviços web: desempenho, ecossistema e curva de aprendizado.
 9. Quais são as diferenças entre PGBL e VGBL e para quem cada um é indicado?
 10. What were the main causes and consequences of the 2008 financial crisis?
@@ -47,6 +51,7 @@ Cada pergunta roda nos três modos. As respostas atuais viram a referência. As 
 15. What has the Artemis program achieved so far and what are the next missions?
 
 ### C. Acadêmicas, com a fonte "acadêmico" ligada (5)
+
 16. O que dizem os estudos recentes sobre jejum intermitente e perda de peso?
 17. What does the research say about spaced repetition and long-term retention?
 18. Quais foram os avanços recentes em baterias de estado sólido?
@@ -54,20 +59,15 @@ Cada pergunta roda nos três modos. As respostas atuais viram a referência. As 
 20. Que evidências científicas existem sobre o efeito da cafeína na memória?
 
 ### D. Busca restrita por domínio (4)
-Não existe um recurso dedicado no código: a restrição só funciona com `site:` na pergunta. Estas perguntas fixam esse comportamento.
-21. site:gov.br como emitir a segunda via do CPF?
-22. site:wikipedia.org história do Santos Dumont e do 14-bis
-23. site:docs.python.org what is the difference between asyncio.gather and TaskGroup?
-24. site:ibge.gov.br qual é a taxa de desemprego mais recente?
+
+Não existe um recurso dedicado no código: a restrição só funciona com `site:` na pergunta. Estas perguntas fixam esse comportamento. 21. site:gov.br como emitir a segunda via do CPF? 22. site:wikipedia.org história do Santos Dumont e do 14-bis 23. site:docs.python.org what is the difference between asyncio.gather and TaskGroup? 24. site:ibge.gov.br qual é a taxa de desemprego mais recente?
 
 ### E. Perguntas sobre arquivo enviado (4)
-Arquivos de domínio público ou criados por mim, guardados em `perf-audit/fixtures/uploads/`. Nenhum arquivo de usuário real.
-25. (PDF: trecho do art. 5º da Constituição Federal) O que o documento garante sobre liberdade de expressão?
-26. (PDF: artigo do arXiv com licença CC-BY) Quem são os autores e qual é a principal contribuição?
-27. (TXT: um capítulo de *Dom Casmurro*) Resuma o capítulo e liste os personagens que aparecem.
-28. (DOCX: relatório fictício que vou criar) Quais são os três números mais importantes do relatório?
+
+Arquivos de domínio público ou criados por mim, guardados em `perf-audit/fixtures/uploads/`. Nenhum arquivo de usuário real. 25. (PDF: trecho do art. 5º da Constituição Federal) O que o documento garante sobre liberdade de expressão? 26. (PDF: artigo do arXiv com licença CC-BY) Quem são os autores e qual é a principal contribuição? 27. (TXT: um capítulo de _Dom Casmurro_) Resuma o capítulo e liste os personagens que aparecem. 28. (DOCX: relatório fictício que vou criar) Quais são os três números mais importantes do relatório?
 
 ### F. Conversa com contexto e widget (2)
+
 29. Histórico "Quem é o atual presidente da França?", seguido de "E quantos anos ele tem?" (testa a reescrita da pergunta).
 30. Quanto é 15% de 2.340? (testa o widget de cálculo e o `skipSearch`).
 
@@ -78,6 +78,7 @@ Clima e cotação dependem de APIs ao vivo. Eles ficam nos testes de caracteriza
 Duas camadas.
 
 **Verificações automáticas, sem LLM (precisam passar em 100%):**
+
 - todo `[n]` aponta para uma fonte que existe (1 a N);
 - nenhuma citação quando a busca foi pulada;
 - resposta no mesmo idioma da pergunta;
@@ -86,16 +87,17 @@ Duas camadas.
 
 **Juiz LLM com rubrica fixa** (temperatura 0, prompt versionado em `perf-audit/eval/judge-prompt.md`), notas de 1 a 5:
 
-| Critério | Pergunta ao juiz |
-|---|---|
-| Relevância das fontes | As fontes citadas tratam da pergunta? |
-| Fundamentação | Para até 10 afirmações com citação, o trecho da fonte `[n]` sustenta a afirmação? Nota = fração sustentada. |
-| Completude | A resposta cobre os pontos-chave da referência? (Lista de pontos-chave por pergunta, gerada uma vez a partir da referência e revisada por você.) |
-| Formato das citações | As citações estão no lugar certo, sem citar widgets nem inventar fontes? |
+| Critério              | Pergunta ao juiz                                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Relevância das fontes | As fontes citadas tratam da pergunta?                                                                                                            |
+| Fundamentação         | Para até 10 afirmações com citação, o trecho da fonte `[n]` sustenta a afirmação? Nota = fração sustentada.                                      |
+| Completude            | A resposta cobre os pontos-chave da referência? (Lista de pontos-chave por pergunta, gerada uma vez a partir da referência e revisada por você.) |
+| Formato das citações  | As citações estão no lugar certo, sem citar widgets nem inventar fontes?                                                                         |
 
 Também faço uma comparação lado a lado (nova contra referência, com as posições trocadas numa segunda rodada para evitar viés de ordem).
 
 **Regra de aprovação de uma mudança:**
+
 - nenhum critério cai mais de 0,3 ponto na média de qualquer modo;
 - nenhuma pergunta cai 2 pontos ou mais em qualquer critério;
 - as verificações automáticas passam em 100%.

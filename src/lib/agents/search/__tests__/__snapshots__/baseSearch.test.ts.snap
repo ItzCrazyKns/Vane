@@ -1,0 +1,15 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`executeSearch (speed and balanced) > balanced: embeds query and each result, filters, dedups and keeps the top 20 1`] = `
+[
+  "https://a.test/rust",
+  "https://e.test/go",
+]
+`;
+
+exports[`executeSearch (speed and balanced) > speed: embeds query and each result, filters, dedups and keeps the top 20 1`] = `
+[
+  "https://a.test/rust",
+  "https://e.test/go",
+]
+`;

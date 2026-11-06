@@ -1,0 +1,38 @@
+{
+  "query": "rust vs go web services",
+  "number_of_results": 0,
+  "results": [
+    {
+      "url": "https://example.org/rust-vs-go",
+      "title": "Rust vs Go for web services",
+      "content": "Rust offers memory safety without garbage collection, while Go has a simpler concurrency model with goroutines.",
+      "engine": "duckduckgo",
+      "engines": ["duckduckgo", "brave"],
+      "score": 2.0,
+      "category": "general"
+    },
+    {
+      "url": "https://example.com/go-concurrency",
+      "title": "Go concurrency explained",
+      "content": "Goroutines are lightweight threads managed by the Go runtime.",
+      "engine": "brave",
+      "engines": ["brave"],
+      "score": 1.5,
+      "category": "general"
+    },
+    {
+      "url": "https://example.net/rust-async",
+      "title": "Async Rust with Tokio",
+      "content": "",
+      "engine": "duckduckgo",
+      "engines": ["duckduckgo"],
+      "score": 1.0,
+      "category": "general"
+    }
+  ],
+  "answers": [],
+  "corrections": [],
+  "infoboxes": [],
+  "suggestions": ["rust vs go performance", "go vs rust learning curve"],
+  "unresponsive_engines": []
+}
