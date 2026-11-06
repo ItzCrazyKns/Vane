@@ -34,9 +34,40 @@ export type CaseBreakdown = {
   answerChars: number;
   maxPromptChars: number;
   writerCharsPerSec: number | null;
+  /** Real generation speed, when the server reported token counts. */
+  writerTokensPerSec: number | null;
+  /** Token totals the server reported for this case (null: none did). */
+  tokens: TokenTotals | null;
   /** Model time per purpose (classifier, researcher, writer, widget...). */
   llmMsByLabel: Record<string, number>;
   funnel: Funnel;
+};
+
+export type TokenTotals = {
+  prompt: number;
+  completion: number;
+  /** Reasoning tokens, when the server counts them. */
+  reasoning: number;
+  /** Characters of reasoning text the server sent (LM Studio, Ollama). */
+  reasoningChars: number;
+};
+
+const hasUsage = (c: CaseResult['llm'][number]) =>
+  !!c.usage &&
+  Object.values(c.usage).some((v) => typeof v === 'number' && v > 0);
+
+export const tokenTotals = (calls: CaseResult['llm']): TokenTotals | null => {
+  const withUsage = calls.filter(hasUsage);
+  if (!withUsage.length) return null;
+  const sum = (
+    f: (u: NonNullable<(typeof calls)[number]['usage']>) => number | undefined,
+  ) => withUsage.reduce((t, c) => t + (f(c.usage!) ?? 0), 0);
+  return {
+    prompt: sum((u) => u.promptTokens),
+    completion: sum((u) => u.completionTokens),
+    reasoning: sum((u) => u.reasoningTokens),
+    reasoningChars: sum((u) => u.reasoningChars),
+  };
 };
 
 /** Where search results went, from the trace events. */
@@ -196,6 +227,13 @@ export const breakdown = (r: CaseResult): CaseBreakdown => {
       lastWriter && genMs > 500
         ? Math.round(lastWriter.outputChars / (genMs / 1000))
         : null,
+    writerTokensPerSec: (() => {
+      const done = lastWriter?.usage?.completionTokens;
+      if (!lastWriter || !done) return null;
+      const ms = lastWriter.usage?.generationMs ?? genMs;
+      return ms > 500 ? Math.round((done / (ms / 1000)) * 10) / 10 : null;
+    })(),
+    tokens: tokenTotals(r.llm),
     llmMsByLabel: r.llm.reduce<Record<string, number>>(
       (a, c) => (
         (a[c.label ?? c.kind] = (a[c.label ?? c.kind] ?? 0) + c.ms),
@@ -490,7 +528,18 @@ export const analyze = (
         cases: [r.id],
       });
 
-    if (b.writerCharsPerSec !== null && b.writerCharsPerSec < 40)
+    if (b.writerTokensPerSec !== null && b.writerTokensPerSec < 10)
+      add({
+        severity: 'gargalo',
+        title: 'Geração da resposta lenta',
+        detail: `O redator gerou ${b.writerTokensPerSec} tokens/s (contagem do servidor, com o raciocínio incluído). Um modelo menor ou quantizado, ou GPU offload completo no LM Studio, acelera a resposta.`,
+        cases: [r.id],
+      });
+    else if (
+      b.writerTokensPerSec === null &&
+      b.writerCharsPerSec !== null &&
+      b.writerCharsPerSec < 40
+    )
       add({
         severity: 'gargalo',
         title: 'Geração da resposta lenta',
@@ -537,8 +586,52 @@ export const analyze = (
   }
   /* Structured calls (classifier, widgets, media query rewrite) that spend
      far more time than their output needs. */
+  /* Measured: the server reported reasoning tokens or reasoning text. */
+  const reasoned = results.flatMap((r) =>
+    r.llm
+      .filter(
+        (c) =>
+          (c.usage?.reasoningTokens ?? 0) > 0 ||
+          (c.usage?.reasoningChars ?? 0) > 0,
+      )
+      .map((c) => ({ id: r.id, c })),
+  );
+  if (reasoned.length) {
+    const byLabel = new Map<
+      string,
+      { calls: number; tokens: number; chars: number; ms: number }
+    >();
+    for (const { c } of reasoned) {
+      const k = c.label ?? c.kind;
+      const e = byLabel.get(k) ?? { calls: 0, tokens: 0, chars: 0, ms: 0 };
+      e.calls++;
+      e.tokens += c.usage?.reasoningTokens ?? 0;
+      e.chars += c.usage?.reasoningChars ?? 0;
+      e.ms += c.ms;
+      byLabel.set(k, e);
+    }
+    merged.set('reasoning-measured', {
+      severity: 'gargalo',
+      title: 'O modelo gera raciocínio que o app descarta',
+      detail: `${reasoned.length} chamadas geraram raciocínio antes da resposta. Por etapa: ${[
+        ...byLabel.entries(),
+      ]
+        .map(
+          ([k, e]) =>
+            `${k} ${e.calls}× (${e.tokens ? `${n(e.tokens)} tokens` : `~${n(Math.round(e.chars / 3.5))} tokens, ${n(e.chars)} caracteres`}, ${sec(e.ms)} no total)`,
+        )
+        .join(
+          '; ',
+        )}. Desligar o raciocínio nas chamadas estruturadas muda o comportamento do modelo, então precisa de decisão e da avaliação.`,
+      cases: [...new Set(reasoned.map((h) => h.id))],
+    });
+  }
+
+  /* Estimated, for calls the server reported nothing about. */
   const hidden = results.flatMap((r) =>
-    r.llm.filter(looksLikeHiddenReasoning).map((c) => ({ id: r.id, c })),
+    r.llm
+      .filter((c) => !hasUsage(c) && looksLikeHiddenReasoning(c))
+      .map((c) => ({ id: r.id, c })),
   );
   if (hidden.length) {
     const structured = results.flatMap((r) =>
