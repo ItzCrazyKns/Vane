@@ -211,6 +211,10 @@
       "bifrost": {
         "name": "Bifrost",
         "description": "Use um gateway Bifrost para modelos e ferramentas MCP."
+      },
+      "benchmark": {
+        "name": "Benchmark",
+        "description": "Mede cada tipo de busca com seus modelos e aponta gargalos e bugs."
       }
     }
   },
@@ -322,5 +326,37 @@
     "noProviders": "Nenhum provedor de modelos encontrado. Configure um na página de configurações.",
     "noChatModels": "Nenhum modelo de chat encontrado. Configure um na página de configurações.",
     "noEmbeddingModels": "Nenhum modelo de embeddings encontrado. Configure um na página de configurações."
+  },
+  "Benchmark": {
+    "intro": "Roda perguntas fixas de teste em cada tipo de busca, mede o tempo de cada etapa (modelo, embeddings, SearxNG, páginas) e gera sugestões. Nenhum histórico ou arquivo seu é usado.",
+    "usingModels": "Modelos (os escolhidos em Modelos)",
+    "noModels": "Escolha um modelo de chat e um de embeddings em Modelos antes de rodar.",
+    "cases": "Testes",
+    "slow": "lento",
+    "run": "Rodar benchmark",
+    "stop": "Parar",
+    "runningHint": "Os testes rodam um de cada vez. Com modelos locais, pode levar alguns minutos.",
+    "downloadReport": "Baixar relatório (.md)",
+    "downloadLog": "Baixar log completo (.json)",
+    "results": "Resultados",
+    "findings": "Achados e sugestões",
+    "busyNote": "Modelo, Embeddings, SearxNG e Páginas mostram o tempo em que havia ao menos uma chamada daquele tipo em andamento. As etapas rodam em paralelo, então a soma pode passar do total.",
+    "col": {
+      "case": "Teste",
+      "total": "Total",
+      "firstToken": "1º token",
+      "model": "Modelo",
+      "embeddings": "Embeddings",
+      "search": "SearxNG",
+      "pages": "Páginas",
+      "calls": "Chamadas LLM",
+      "sources": "Fontes"
+    },
+    "severity": {
+      "bug": "Bug",
+      "gargalo": "Gargalo",
+      "aviso": "Aviso",
+      "sugestao": "Sugestão"
+    }
   }
 }

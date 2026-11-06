@@ -46,6 +46,19 @@ npx tsx perf-audit/eval/compare.ts --run referencia-2 --ref referencia-1
 
 Para avaliar uma mudança: aplicar a mudança, rodar `run.ts --label <nome>`, depois `checks.ts --run <nome> --ref referencia-1`, `judge.ts --run <nome> --ref referencia-1` e `compare.ts --run <nome> --ref referencia-1`.
 
+### Outros provedores de modelo
+
+Qualquer endpoint compatível com a API da OpenAI funciona. As chaves vêm só do ambiente e nunca vão para os arquivos de saída.
+
+| Variável | Uso | Padrão |
+| --- | --- | --- |
+| `EVAL_BASE_URL`, `EVAL_API_KEY` | modelo avaliado | LM Studio local, `lm-studio` |
+| `EVAL_EMBEDDING_PROVIDER` | `openai` (mesmo endpoint) ou `transformers` (local, na CPU) | `openai` |
+| `EVAL_EMBEDDING_BASE_URL`, `EVAL_EMBEDDING_API_KEY` | embeddings por API | os do modelo avaliado |
+| `EVAL_JUDGE_BASE_URL`, `EVAL_JUDGE_API_KEY` | juiz | os do modelo avaliado |
+
+A busca na web passa sempre pela SearxNG gravada, mesmo com `FIRECRAWL_API_URL` definido. Essa variável só troca o leitor de páginas, que fica registrado em `summary.json` (`scraper`).
+
 Opções úteis de `run.ts`: `--modes speed,balanced` e `--ids A01,B08` para rodar só uma parte.
 
 ## Regra de aprovação (`compare.ts`)

@@ -211,6 +211,10 @@
       "bifrost": {
         "name": "Bifrost",
         "description": "Route models and MCP tools through a Bifrost gateway."
+      },
+      "benchmark": {
+        "name": "Benchmark",
+        "description": "Measures every search type with your models and points out bottlenecks and bugs."
       }
     }
   },
@@ -322,5 +326,37 @@
     "noProviders": "No chat model providers found, please configure them in the settings page.",
     "noChatModels": "No chat models found, please configure them in the settings page.",
     "noEmbeddingModels": "No embedding models found, please configure them in the settings page."
+  },
+  "Benchmark": {
+    "intro": "Runs fixed test questions on each search type, times every step (model, embeddings, SearXNG, pages) and suggests improvements. None of your history or files are used.",
+    "usingModels": "Models (the ones chosen in Models)",
+    "noModels": "Pick a chat model and an embedding model in Models first.",
+    "cases": "Tests",
+    "slow": "slow",
+    "run": "Run benchmark",
+    "stop": "Stop",
+    "runningHint": "Tests run one at a time. With local models this can take a few minutes.",
+    "downloadReport": "Download report (.md)",
+    "downloadLog": "Download full log (.json)",
+    "results": "Results",
+    "findings": "Findings and suggestions",
+    "busyNote": "Model, Embeddings, SearXNG and Pages show the time at least one call of that kind was running. Steps run in parallel, so they can add up to more than the total.",
+    "col": {
+      "case": "Test",
+      "total": "Total",
+      "firstToken": "First token",
+      "model": "Model",
+      "embeddings": "Embeddings",
+      "search": "SearxNG",
+      "pages": "Pages",
+      "calls": "LLM calls",
+      "sources": "Sources"
+    },
+    "severity": {
+      "bug": "Bug",
+      "gargalo": "Bottleneck",
+      "aviso": "Warning",
+      "sugestao": "Suggestion"
+    }
   }
 }

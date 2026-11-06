@@ -4,6 +4,7 @@ import {
   BrainCog,
   ChevronLeft,
   ExternalLink,
+  Gauge,
   Network,
   Search,
   Sliders,
@@ -18,6 +19,7 @@ import { cn } from '@/lib/utils';
 import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import BifrostSection from './Sections/Bifrost';
+import BenchmarkSection from './Sections/Benchmark';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
 import { useTranslations } from 'next-intl';
@@ -52,6 +54,12 @@ const sections = [
     icon: Network,
     component: BifrostSection,
     dataAdd: 'bifrost',
+  },
+  {
+    key: 'benchmark',
+    icon: Gauge,
+    component: BenchmarkSection,
+    dataAdd: 'benchmark',
   },
 ] as const;
 
