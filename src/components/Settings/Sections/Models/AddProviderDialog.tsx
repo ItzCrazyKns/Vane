@@ -6,7 +6,7 @@ import {
 } from '@headlessui/react';
 import { Loader2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ConfigModelProvider,
   ModelProviderUISection,

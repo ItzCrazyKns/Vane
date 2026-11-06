@@ -11,7 +11,7 @@ import {
   ToggleRight,
 } from 'lucide-react';
 import Preferences from './Sections/Preferences';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Loader from '../ui/Loader';
