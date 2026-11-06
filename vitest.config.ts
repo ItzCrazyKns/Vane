@@ -7,7 +7,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'perf-audit/eval/**/*.test.ts'],
     testTimeout: 20000,
   },
 });

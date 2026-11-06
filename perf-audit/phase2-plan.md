@@ -1,6 +1,8 @@
 # Plano da Fase 2: rede de segurança
 
-Status: **proposta para aprovação**. Nada desta fase foi implementado ainda.
+Status: **em andamento**. Testes de caracterização prontos (`yarn test`). Harness de avaliação pronto em `perf-audit/eval/` (ver o README de lá); falta gravar as fontes e a referência.
+
+Decisões tomadas: rodar a avaliação localmente no LM Studio (no lugar do Ollama) e usar como juiz um modelo maior no LM Studio. O ESLint 9 não foi aprovado e não será migrado.
 
 Skills do plugin ECC que vou usar: `ai-regression-testing`, `eval-harness` e `tdd-workflow` (todas disponíveis nesta sessão).
 
