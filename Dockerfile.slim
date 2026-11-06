@@ -24,14 +24,15 @@ WORKDIR /home/vane
 COPY --from=builder /home/vane/public ./public
 COPY --from=builder /home/vane/.next/static ./public/_next/static
 
+# The standalone output already contains the traced node_modules installed
+# from yarn.lock in the builder stage. Do not run yarn/npm installs here:
+# they would resolve package.json ranges again and swap in a different
+# Next.js version than the one used for the build.
 COPY --from=builder /home/vane/.next/standalone ./
 COPY --from=builder /home/vane/data ./data
 COPY drizzle ./drizzle
 
 RUN mkdir /home/vane/uploads
-
-RUN yarn add playwright
-RUN yarn playwright install --with-deps --only-shell chromium
 
 EXPOSE 3000
 

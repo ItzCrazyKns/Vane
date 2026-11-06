@@ -90,6 +90,50 @@ docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v va
 
 Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
 
+#### Reading Web Pages with Firecrawl
+
+Vane reads full web pages when you ask it about a specific URL and in **Quality** mode. It does not ship a headless browser. Instead:
+
+- If `FIRECRAWL_API_URL` is set, pages are fetched through [Firecrawl](https://github.com/firecrawl/firecrawl) (`POST /v2/scrape`, markdown output, 60 s timeout per page). This works with Firecrawl Cloud or a self-hosted instance and handles JavaScript-heavy sites.
+- If it is not set, Vane falls back to a plain HTTP fetch plus [Readability](https://github.com/mozilla/readability). This needs no extra service but does not run JavaScript, so some dynamic pages may come back empty.
+
+A page that fails or times out is skipped and the answer is built from the other results.
+
+| Variable            | Required | Description                                                                                                                          |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `FIRECRAWL_API_URL` | No       | Base URL of your Firecrawl API, without `/v2`. For example `https://api.firecrawl.dev` or `http://host.docker.internal:3002`.        |
+| `FIRECRAWL_API_KEY` | No       | Sent as `Authorization: Bearer <key>`. Needed for Firecrawl Cloud; leave it unset for a self-hosted instance without authentication. |
+
+Example `docker-compose.yaml` that builds the slim image and uses SearxNG, LM Studio and Firecrawl running on the host:
+
+```yaml
+services:
+  vane:
+    build:
+      context: https://github.com/module195/Vane.git#master
+      dockerfile: Dockerfile.slim
+    image: vane:local
+    pull_policy: build
+    container_name: vane
+    restart: unless-stopped
+    ports:
+      - '3003:3000'
+    environment:
+      SEARXNG_API_URL: http://host.docker.internal:8081
+      LM_STUDIO_BASE_URL: http://host.docker.internal:1234/v1
+      FIRECRAWL_API_URL: http://host.docker.internal:3002
+      # FIRECRAWL_API_KEY: fc-...   # only if your Firecrawl requires a key
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - vane-data:/home/vane/data
+
+volumes:
+  vane-data:
+```
+
+If Firecrawl runs in another Compose project, you can also attach both to the same Docker network and point `FIRECRAWL_API_URL` at the Firecrawl API service name instead of `host.docker.internal`.
+
 #### Advanced Setup (Building from Source)
 
 If you prefer to build from source or need more control:
