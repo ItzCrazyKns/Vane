@@ -14,7 +14,7 @@
     "i18n:check": "node .claude/skills/i18n-sync/scripts/check-keys.mjs"
   },
   "dependencies": {
-    "@google/genai": "^1.34.0",
+    "@google/genai": "^1.52.0",
     "@headlessui/react": "^2.2.0",
     "@headlessui/tailwindcss": "^0.2.2",
     "@huggingface/transformers": "^3.8.1",
@@ -25,7 +25,7 @@
     "@tailwindcss/typography": "^0.5.12",
     "@toolsycc/json-repair": "^0.1.22",
     "async-mutex": "^0.5.0",
-    "axios": "^1.8.3",
+    "axios": "^1.21.0",
     "better-sqlite3": "^11.9.1",
     "clsx": "^2.1.0",
     "drizzle-orm": "^0.45.2",
@@ -38,7 +38,7 @@
     "markdown-to-jsx": "^7.7.2",
     "mathjs": "^15.1.0",
     "motion": "^12.23.26",
-    "next": "^16.0.7",
+    "next": "^16.4.5",
     "next-intl": "^4",
     "next-themes": "^0.3.0",
     "officeparser": "^6.0.7",
@@ -56,7 +56,7 @@
     "tailwind-merge": "^2.2.2",
     "yahoo-finance2": "^3.10.2",
     "yet-another-react-lightbox": "^3.17.2",
-    "zod": "^4.1.12"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
