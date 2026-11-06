@@ -38,6 +38,11 @@ const reasoningModels = [
 class OllamaLLM extends BaseLLM<OllamaConfig> {
   ollamaClient: Ollama;
 
+  /** Vane sends this num_ctx on every request, so it is the real window. */
+  async getContextWindow(): Promise<number | undefined> {
+    return Number.isFinite(numCtx) && numCtx > 0 ? numCtx : undefined;
+  }
+
   constructor(protected config: OllamaConfig) {
     super(config);
 

@@ -6,6 +6,16 @@ import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
 import { syncMCPActions } from './actions/mcp';
+import {
+  RESERVED_OUTPUT_TOKENS,
+  computeBudget,
+  estimateTokens,
+  getContextWindow,
+} from '@/lib/context/budget';
+import { compactResearchHistory } from '@/lib/context/compact';
+
+/** Rough per-tool cost of the tool schema sent with each request. */
+const TOOL_SCHEMA_OVERHEAD_TOKENS = 60;
 
 class Researcher {
   async research(
@@ -59,6 +69,11 @@ class Researcher {
       },
     ];
 
+    const researcherBudget = computeBudget(
+      await getContextWindow(input.config.llm),
+      RESERVED_OUTPUT_TOKENS.researcher,
+    );
+
     for (let i = 0; i < maxIteration; i++) {
       const researcherPrompt = getResearcherPrompt(
         availableActionsDescription,
@@ -67,6 +82,33 @@ class Researcher {
         maxIteration,
         input.config.fileIds,
       );
+
+      const fixedTokens =
+        estimateTokens(researcherPrompt) +
+        availableTools.reduce(
+          (sum, t) =>
+            sum +
+            estimateTokens(`${t.name} ${t.description}`) +
+            TOOL_SCHEMA_OVERHEAD_TOKENS,
+          0,
+        );
+
+      const compaction = compactResearchHistory(
+        agentMessageHistory,
+        researcherBudget,
+        fixedTokens,
+      );
+
+      if (compaction.report.cleared > 0 || compaction.report.truncated > 0) {
+        agentMessageHistory.splice(
+          0,
+          agentMessageHistory.length,
+          ...compaction.history,
+        );
+        console.log(
+          `[context] researcher history compacted: ~${compaction.report.before} -> ~${compaction.report.after} tokens (budget ${researcherBudget}; ${compaction.report.cleared} result(s) cleared, ${compaction.report.truncated} truncated)`,
+        );
+      }
 
       const actionStream = input.config.llm.streamText({
         messages: [

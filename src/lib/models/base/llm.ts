@@ -17,6 +17,15 @@ abstract class BaseLLM<CONFIG> {
   abstract streamObject<T>(
     input: GenerateObjectInput,
   ): AsyncGenerator<Partial<z.infer<T>>>;
+
+  /**
+   * Size of the model's context window in tokens, when the provider can
+   * tell. Providers that cannot return undefined and the caller falls back
+   * to LLM_CONTEXT_WINDOW or a default (see lib/context/budget.ts).
+   */
+  async getContextWindow(): Promise<number | undefined> {
+    return undefined;
+  }
 }
 
 export default BaseLLM;
