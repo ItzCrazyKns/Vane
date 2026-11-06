@@ -134,6 +134,16 @@ volumes:
 
 If Firecrawl runs in another Compose project, you can also attach both to the same Docker network and point `FIRECRAWL_API_URL` at the Firecrawl API service name instead of `host.docker.internal`.
 
+#### Context window
+
+Vane keeps each prompt inside the model's context window. Before every research step it estimates the prompt size; above 75% of the budget it replaces older tool results with a one-line stub (titles and URLs only), and before the answer it trims the sources to what fits, keeping their order so citations stay correct. Nothing changes while the prompt is small.
+
+The window is taken from the provider when it can tell (Ollama: `OLLAMA_NUM_CTX`; LM Studio: the context length the model is loaded with), otherwise 32,000 tokens.
+
+| Variable             | Required | Description                                                                                                    |
+| -------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| `LLM_CONTEXT_WINDOW` | No       | Context window in tokens to plan against, for any provider. Overrides what the provider reports. E.g. `16384`. |
+
 #### Searching with Firecrawl instead of SearxNG
 
 Web searches use SearxNG by default. To run them through Firecrawl's `POST /v2/search` instead, pick **Firecrawl** under **Settings > Search > Search Provider** (the **Firecrawl URL** field there must be filled), or set `SEARCH_PROVIDER=firecrawl` before the first start.

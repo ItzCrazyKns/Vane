@@ -4,10 +4,11 @@ import { classify } from './classifier';
 import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
+import { fitWriterSources, formatSearchResult } from './writerContext';
 import db from '@/lib/db';
 import { messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
-import { TextBlock } from '@/lib/types';
+import { Message, TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
 
 class SearchAgent {
@@ -113,25 +114,44 @@ class SearchAgent {
       type: 'researchComplete',
     });
 
-    let finalContext =
-      '<Query to be answered without searching; Search not made>';
-
-    if (searchResults) {
-      finalContext = searchResults?.searchFindings
-        .map(
-          (f, index) =>
-            `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
-        )
-        .join('\n');
-    }
-
     const widgetContext = widgetOutputs
       .map((o) => {
         return `<result>${o.llmContext}</result>`;
       })
       .join('\n-------------\n');
 
-    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
+    const wrapContext = (results: string) =>
+      `<search_results note="These are the search results and assistant can cite these">\n${results}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
+
+    const writerMessages: Message[] = [
+      ...input.chatHistory,
+      {
+        role: 'user',
+        content: input.followUp,
+      },
+    ];
+
+    let finalContext =
+      '<Query to be answered without searching; Search not made>';
+
+    if (searchResults) {
+      const findings = await fitWriterSources({
+        findings: searchResults.searchFindings,
+        llm: input.config.llm,
+        mode: input.config.mode,
+        promptWithoutSources: getWriterPrompt(
+          wrapContext(''),
+          input.config.systemInstructions,
+          input.config.mode,
+          classification.classification.skipSearch,
+        ),
+        messages: writerMessages,
+      });
+
+      finalContext = findings.map(formatSearchResult).join('\n');
+    }
+
+    const finalContextWithWidgets = wrapContext(finalContext);
 
     const writerPrompt = getWriterPrompt(
       finalContextWithWidgets,
@@ -146,11 +166,7 @@ class SearchAgent {
           role: 'system',
           content: writerPrompt,
         },
-        ...input.chatHistory,
-        {
-          role: 'user',
-          content: input.followUp,
-        },
+        ...writerMessages,
       ],
     });
 
