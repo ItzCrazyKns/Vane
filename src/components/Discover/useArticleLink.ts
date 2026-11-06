@@ -1,11 +1,14 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   DiscoverClickAction,
   getDiscoverClickAction,
 } from '@/lib/config/clientRegistry';
+
+const subscribe = () => () => {};
+const getServerAction = (): DiscoverClickAction => 'summarize';
 
 /**
  * Link for a Discover article: either a chat that summarizes it, or the
@@ -13,11 +16,12 @@ import {
  */
 export const useArticleLink = (url: string) => {
   const t = useTranslations('NewsWidget');
-  const [action, setAction] = useState<DiscoverClickAction>('summarize');
-
-  useEffect(() => {
-    setAction(getDiscoverClickAction());
-  }, []);
+  // The preference lives in localStorage: read it only on the client.
+  const action = useSyncExternalStore(
+    subscribe,
+    getDiscoverClickAction,
+    getServerAction,
+  );
 
   if (action === 'open') {
     return { href: url, external: true };
