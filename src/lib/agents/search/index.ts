@@ -23,6 +23,29 @@ class SearchAgent {
             ? err.message
             : 'An unknown error occurred during search',
       });
+      await this.saveFailure(session, input);
+    }
+  }
+
+  /* Persists the error status and the blocks produced so far, so a failed
+     answer does not stay 'answering' forever in the chat history. */
+  private async saveFailure(session: SessionManager, input: SearchAgentInput) {
+    try {
+      await db
+        .update(messages)
+        .set({
+          status: 'error',
+          responseBlocks: session.getAllBlocks(),
+        })
+        .where(
+          and(
+            eq(messages.chatId, input.chatId),
+            eq(messages.messageId, input.messageId),
+          ),
+        )
+        .execute();
+    } catch (dbErr) {
+      console.error('SearchAgent: failed to save error status:', dbErr);
     }
   }
 
