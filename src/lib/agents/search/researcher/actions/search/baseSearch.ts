@@ -10,6 +10,23 @@ import z from 'zod';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
 
+/**
+ * Runs one query, returning no results instead of throwing: one failed
+ * query (SearXNG down, rate limited after retries, timeout) must not abort
+ * the other queries or the whole research.
+ */
+const searchSafely = async (q: string, opts?: SearxngSearchOptions) => {
+  try {
+    return await searchWeb(q, opts);
+  } catch (err) {
+    console.log(
+      `[search] query "${q}" failed, continuing without it:`,
+      err instanceof Error ? err.message : err,
+    );
+    return { results: [], suggestions: [] };
+  }
+};
+
 export const executeSearch = async (input: {
   queries: string[];
   mode: SearchAgentConfig['mode'];
@@ -18,6 +35,8 @@ export const executeSearch = async (input: {
   session: InstanceType<typeof SessionManager>;
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
+  /** The user's question, so the picker and extractor judge relevance by it. */
+  question?: string;
 }) => {
   const researchBlock = input.researchBlock;
 
@@ -42,35 +61,32 @@ export const executeSearch = async (input: {
     const results: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchWeb(q, {
+      const res = await searchSafely(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 
       let resultChunks: Chunk[] = [];
 
+      if (res.results.length === 0) return;
+
       try {
-        const queryEmbedding = (await input.embedding.embedText([q]))[0];
+        /* One embedding call for the query and all its results, instead of
+           one call per result. */
+        const contents = res.results.map((r) => r.content || r.title);
+        const [queryEmbedding, ...chunkEmbeddings] =
+          await input.embedding.embedText([q, ...contents]);
 
-        resultChunks = (
-          await Promise.all(
-            res.results.map(async (r) => {
-              const content = r.content || r.title;
-              const chunkEmbedding = (
-                await input.embedding.embedText([content])
-              )[0];
-
-              return {
-                content,
-                metadata: {
-                  title: r.title,
-                  url: r.url,
-                  similarity: computeSimilarity(queryEmbedding, chunkEmbedding),
-                  embedding: chunkEmbedding,
-                },
-              };
-            }),
-          )
-        ).filter((c) => c.metadata.similarity > 0.5);
+        resultChunks = res.results
+          .map((r, i) => ({
+            content: contents[i],
+            metadata: {
+              title: r.title,
+              url: r.url,
+              similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
+              embedding: chunkEmbeddings[i],
+            },
+          }))
+          .filter((c) => c.metadata.similarity > 0.5);
       } catch (err) {
         resultChunks = res.results.map((r) => {
           const content = r.content || r.title;
@@ -177,9 +193,11 @@ export const executeSearch = async (input: {
     const searchResults: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchWeb(q, {
+      const res = await searchSafely(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
+
+      if (res.results.length === 0) return;
 
       let resultChunks: Chunk[] = [];
 
@@ -238,9 +256,11 @@ export const executeSearch = async (input: {
 
     await Promise.all(input.queries.map(search));
 
+    if (searchResults.length === 0) return [];
+
     const pickerPrompt = `
       Assistant is an AI search result picker. Assistant's task is to pick 2-3 of the most relevant search results based off the query which can be then scraped for information to answer the query.
-      Assistant will be shared with the search results retrieved from a search engine along with the queries used to retrieve those results. Assistant will then pick maxiumum 3 of the most relevant search results based on the queries and the content of the search results. Assistant should only pick search results that are relevant to the query and can help in answering the question.
+      Assistant will be shared with the search results retrieved from a search engine along with the queries used to retrieve those results and, when available, the user's question. Relevance is judged against the user's question first and the queries second. Assistant will then pick maxiumum 3 of the most relevant search results based on the queries and the content of the search results. Assistant should only pick search results that are relevant to the query and can help in answering the question.
       
       ## Things to taken into consideration when picking the search results:
       1. Relevance to the query: The search results should be relevant to the query provided. Irrelevant results should be ignored.
@@ -279,7 +299,7 @@ export const executeSearch = async (input: {
         },
         {
           role: 'user',
-          content: `<queries>${input.queries.join(', ')}</queries>\n<search_results>${searchResults.map((result, index) => `<result indice=${index}>${JSON.stringify(result)}</result>`).join('\n')}</search_results>`,
+          content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<search_results>${searchResults.map((result, index) => `<result indice=${index}>${JSON.stringify(result)}</result>`).join('\n')}</search_results>`,
         },
       ],
     });
@@ -322,7 +342,7 @@ export const executeSearch = async (input: {
     const extractedFacts: Chunk[] = [];
 
     const extractorPrompt = `
-      Assistant is an AI information extractor. Assistant will be shared with scraped information from a website along with the queries used to retrieve that information. Assistant's task is to extract relevant facts from the scraped data to answer the queries.
+      Assistant is an AI information extractor. Assistant will be shared with scraped information from a website along with the queries used to retrieve that information and, when available, the user's question. Prefer facts that help answer the user's question. Assistant's task is to extract relevant facts from the scraped data to answer the queries.
 
       ## Things to taken into consideration when extracting information:
       1. Relevance to the query: The extracted information must dynamically adjust based on the query's intent. If the query asks "What is [X]", you must extract the definition/identity. If the query asks for "[X] specs" or "features", you must provide deep, granular technical details.
@@ -391,7 +411,7 @@ export const executeSearch = async (input: {
                     },
                     {
                       role: 'user',
-                      content: `<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
+                      content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
                     },
                   ],
                 });

@@ -1,4 +1,5 @@
 import { getFirecrawlConfig, firecrawlHeaders } from './firecrawl';
+import { SearchHttpError, parseRetryAfter } from './searchErrors';
 import type { SearxngSearchOptions, SearxngSearchResult } from './searxng';
 
 type FirecrawlWebResult = {
@@ -96,8 +97,10 @@ export const searchFirecrawl = async (
     .catch(() => null)) as FirecrawlSearchResponse | null;
 
   if (!res.ok || !body?.success) {
-    throw new Error(
+    throw new SearchHttpError(
       `Firecrawl search error: ${res.status}${body?.error ? ` ${body.error}` : ''}`,
+      res.status,
+      parseRetryAfter(res.headers?.get?.('retry-after')),
     );
   }
 

@@ -2,6 +2,7 @@ import z from 'zod';
 import { ResearchAction } from '../../../types';
 import { ResearchBlock } from '@/lib/types';
 import { executeSearch } from './baseSearch';
+import { NO_NEW_QUERIES_NOTE, normalizeQueries } from './queries';
 
 const schema = z.object({
   queries: z.array(z.string()).describe('List of social search queries'),
@@ -30,21 +31,28 @@ const socialSearchAction: ResearchAction<typeof schema> = {
     config.classification.classification.skipSearch === false &&
     config.classification.classification.discussionSearch === true,
   execute: async (input, additionalConfig) => {
-    input.queries = (
-      Array.isArray(input.queries) ? input.queries : [input.queries]
-    ).slice(0, 3);
-
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
     ) as ResearchBlock | undefined;
 
     if (!researchBlock) throw new Error('Failed to retrieve research block');
 
+    const queries = normalizeQueries(input.queries, researchBlock);
+
+    if (queries.length === 0) {
+      return {
+        type: 'search_results',
+        results: [],
+        note: NO_NEW_QUERIES_NOTE,
+      };
+    }
+
     const results = await executeSearch({
       llm: additionalConfig.llm,
       embedding: additionalConfig.embedding,
       mode: additionalConfig.mode,
-      queries: input.queries,
+      queries,
+      question: additionalConfig.question,
       researchBlock: researchBlock,
       session: additionalConfig.session,
       searchConfig: {

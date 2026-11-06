@@ -196,7 +196,30 @@ class Researcher {
         break;
       }
 
-      if (finalToolCalls[finalToolCalls.length - 1].name === 'done') {
+      const actionConfig = {
+        llm: input.config.llm,
+        embedding: input.config.embedding,
+        session: session,
+        researchBlockId: researchBlockId,
+        fileIds: input.config.fileIds,
+        mode: input.config.mode,
+        question:
+          input.classification.standaloneFollowUp?.trim() || input.followUp,
+      };
+
+      if (finalToolCalls.some((tc) => tc.name === 'done')) {
+        /* Small models often send a last search together with done. Run
+           those calls so their results reach the answer, then stop. */
+        const remaining = finalToolCalls.filter(
+          (tc) => tc.name !== 'done' && tc.name !== '__reasoning_preamble',
+        );
+
+        if (remaining.length > 0) {
+          actionOutput.push(
+            ...(await ActionRegistry.executeAll(remaining, actionConfig)),
+          );
+        }
+
         break;
       }
 
@@ -206,14 +229,10 @@ class Researcher {
         tool_calls: finalToolCalls,
       });
 
-      const actionResults = await ActionRegistry.executeAll(finalToolCalls, {
-        llm: input.config.llm,
-        embedding: input.config.embedding,
-        session: session,
-        researchBlockId: researchBlockId,
-        fileIds: input.config.fileIds,
-        mode: input.config.mode,
-      });
+      const actionResults = await ActionRegistry.executeAll(
+        finalToolCalls,
+        actionConfig,
+      );
 
       actionOutput.push(...actionResults);
 

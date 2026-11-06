@@ -77,9 +77,16 @@ describe('executeSearch (speed and balanced)', () => {
         embedding,
       });
 
-      // 1 query embedding + 1 call per result, one text per call.
-      expect(embedding.calls.every((c) => c.length === 1)).toBe(true);
-      expect(embedding.calls).toHaveLength(2 + 4 + 2);
+      // One embedding call per query, holding the query and its results.
+      expect(embedding.calls).toHaveLength(2);
+      expect(embedding.calls.map((c) => c[0]).sort()).toEqual([
+        'go concurrency',
+        'rust web',
+      ]);
+      expect(embedding.calls.map((c) => c.length).sort()).toEqual([
+        1 + 2,
+        1 + 4,
+      ]);
       expect(vi.mocked(searchSearxng)).toHaveBeenCalledTimes(2);
 
       // Similarity metadata is stripped before returning.
