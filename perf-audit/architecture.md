@@ -6,17 +6,17 @@ Legenda dos diagramas: setas são etapas em sequência; blocos `par` rodam em pa
 
 ## 1. Visão geral
 
-| Peça | Onde | Observação |
-|---|---|---|
-| Rota do chat | `src/app/api/chat/route.ts:103` | Valida, carrega os modelos em paralelo, cria a sessão e devolve o stream NDJSON na hora. O agente roda em segundo plano. |
-| Orquestrador | `src/lib/agents/search/index.ts:28` | Classificação, depois widgets e pesquisa em paralelo, depois o redator. |
-| Classificador | `src/lib/agents/search/classifier.ts:37` | 1 chamada LLM em JSON. Decide `skipSearch`, fontes e widgets, e reescreve a pergunta. |
-| Pesquisador (agente com ferramentas) | `src/lib/agents/search/researcher/index.ts:59` | Laço de até 2, 6 ou 25 iterações (speed, balanced, quality). Cada iteração é 1 chamada LLM com ferramentas. |
-| Busca | `src/lib/agents/search/researcher/actions/search/baseSearch.ts:12` | SearxNG + embeddings (speed e balanced) ou SearxNG + seletor LLM + Playwright + extrator LLM (quality). |
-| Redator | `src/lib/agents/search/index.ts:143` | 1 chamada LLM em streaming, com todo o contexto no prompt de sistema. |
-| Sessão e stream | `src/lib/session.ts` | Guarda os blocos e **todos** os eventos por 30 min, para permitir reconexão (`/api/reconnect/[id]`). |
-| Banco | `src/lib/db` | **SQLite** via `better-sqlite3` + Drizzle (`data/db.sqlite`). Tabelas `chats` e `messages`, sem índices além das chaves primárias. |
-| Modelos | `src/lib/models/providers` | OpenAI, Anthropic, Gemini, Groq, Lemonade e LM Studio passam todos pela classe `OpenAILLM` (SDK `openai`, endpoint compatível). Ollama tem cliente próprio. Embeddings: OpenAI, Gemini, Ollama, Lemonade, LM Studio ou Transformers.js local. |
+| Peça                                 | Onde                                                               | Observação                                                                                                                                                                                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rota do chat                         | `src/app/api/chat/route.ts:103`                                    | Valida, carrega os modelos em paralelo, cria a sessão e devolve o stream NDJSON na hora. O agente roda em segundo plano.                                                                                                                      |
+| Orquestrador                         | `src/lib/agents/search/index.ts:28`                                | Classificação, depois widgets e pesquisa em paralelo, depois o redator.                                                                                                                                                                       |
+| Classificador                        | `src/lib/agents/search/classifier.ts:37`                           | 1 chamada LLM em JSON. Decide `skipSearch`, fontes e widgets, e reescreve a pergunta.                                                                                                                                                         |
+| Pesquisador (agente com ferramentas) | `src/lib/agents/search/researcher/index.ts:59`                     | Laço de até 2, 6 ou 25 iterações (speed, balanced, quality). Cada iteração é 1 chamada LLM com ferramentas.                                                                                                                                   |
+| Busca                                | `src/lib/agents/search/researcher/actions/search/baseSearch.ts:12` | SearxNG + embeddings (speed e balanced) ou SearxNG + seletor LLM + Playwright + extrator LLM (quality).                                                                                                                                       |
+| Redator                              | `src/lib/agents/search/index.ts:143`                               | 1 chamada LLM em streaming, com todo o contexto no prompt de sistema.                                                                                                                                                                         |
+| Sessão e stream                      | `src/lib/session.ts`                                               | Guarda os blocos e **todos** os eventos por 30 min, para permitir reconexão (`/api/reconnect/[id]`).                                                                                                                                          |
+| Banco                                | `src/lib/db`                                                       | **SQLite** via `better-sqlite3` + Drizzle (`data/db.sqlite`). Tabelas `chats` e `messages`, sem índices além das chaves primárias.                                                                                                            |
+| Modelos                              | `src/lib/models/providers`                                         | OpenAI, Anthropic, Gemini, Groq, Lemonade e LM Studio passam todos pela classe `OpenAILLM` (SDK `openai`, endpoint compatível). Ollama tem cliente próprio. Embeddings: OpenAI, Gemini, Ollama, Lemonade, LM Studio ou Transformers.js local. |
 
 Um único modelo de chat, escolhido pelo usuário, atende **todas** as etapas: classificação, pesquisa, seleção, extração, widgets, redação, sugestões e mídia. Não existe modelo por etapa.
 
@@ -64,6 +64,7 @@ sequenceDiagram
 ```
 
 Pontos importantes:
+
 - O tempo até o primeiro token (TTFT) é a soma, em sequência, de: classificação + pesquisa inteira (ou o widget mais lento, se for mais lento que a pesquisa) + TTFT do redator.
 - Quando a busca é pulada (`skipSearch`), o widget mais lento vira o caminho crítico.
 - Durante a pesquisa a interface recebe os passos intermediários (plano, consultas, fontes lidas), mas nenhum texto da resposta.
@@ -91,6 +92,7 @@ flowchart TD
 ### 2.3 Balanced (até 6 iterações, com `__reasoning_preamble`)
 
 Igual ao speed na busca (só trechos + embeddings), mas:
+
 - cada iteração é uma chamada LLM que reenvia o histórico inteiro do agente, incluindo cada resultado anterior serializado em JSON (`researcher/index.ts:180`). O custo de entrada cresce de forma quadrática com o número de iterações;
 - o modelo é instruído a chamar o plano antes de cada ação, então há normalmente de 2 a 4 iterações com busca e 1 com `done`;
 - as iterações são em sequência; as ferramentas de uma mesma iteração rodam em paralelo (`registry.ts:93`).
@@ -128,32 +130,39 @@ flowchart TD
 ## 3. Outros recursos
 
 ### 3.1 Upload de arquivos
+
 - `POST /api/uploads` chama `UploadManager.processFiles` (`src/lib/uploads/manager.ts:174`): grava o arquivo, extrai o texto (TXT; PDF com `pdf-parse`; DOCX com `officeparser`), divide em pedaços de 512 tokens com 128 de sobreposição e calcula todos os embeddings numa única chamada. Grava um `.content.json` indentado (texto + vetores) e atualiza um JSON de registro.
 - Tipos aceitos hoje: PDF, DOCX e TXT. **Imagens não são aceitas**, ao contrário do que diz a descrição do projeto.
-- Consulta (`src/lib/uploads/store.ts:53`): a cada chamada da ferramenta, lê e faz o parse síncrono de todos os `.content.json`, calcula o embedding das consultas (1 chamada em lote), compara com todos os pedaços e combina por RRF (k = 60). O hash usado para juntar o mesmo pedaço entre consultas inclui a nota, então o mesmo pedaço nunca é unificado: o RRF não soma de fato. Isso afeta a qualidade, não só o desempenho.
+- Consulta (`src/lib/uploads/store.ts:53`): a cada chamada da ferramenta, lê e faz o parse síncrono de todos os `.content.json`, calcula o embedding das consultas (1 chamada em lote), compara com todos os pedaços e combina por RRF (k = 60). O hash usado para juntar o mesmo pedaço entre consultas (`hashObj`) só considera a nota: o filtro de chaves do `JSON.stringify` também apaga os campos internos do pedaço. Na prática, pedaços diferentes com a mesma nota viram um só (os outros somem do resultado), e o mesmo pedaço vindo de duas consultas nunca é somado. O teste `src/lib/uploads/__tests__/store.test.ts` mostra o caso. É um bug de qualidade, não só de desempenho.
 - O prompt do pesquisador inclui os 3 primeiros pedaços de cada arquivo em toda iteração, relendo os arquivos do disco a cada iteração (`researcher.ts:332`).
 
 ### 3.2 Discover
+
 - `GET /api/discover` (`src/app/api/discover/route.ts:28`): no modo normal faz 3 sites × 4 consultas = 12 buscas no SearxNG em paralelo (motor bing news), sem cache, e embaralha o resultado. Sem LLM.
 
 ### 3.3 Widgets
+
 - Clima, cotação e cálculo: 1 chamada LLM cada para extrair o parâmetro (com o histórico inteiro, sem corte) + API externa (Open-Meteo, Yahoo Finance com 4 a 6 gráficos, mathjs).
 - O widget de clima da página inicial usa `/api/weather` direto, sem LLM.
 
 ### 3.4 Histórico
+
 - Lista (`/api/chats`): carrega **todas** as conversas e inverte a ordem em memória, sem paginação.
 - Conversa (`/api/chats/[id]`): carrega todas as mensagens com o JSON completo de `responseBlocks`, que inclui todos os passos da pesquisa e todos os trechos lidos. `messages.chatId` não tem índice.
 - Escritas: 1 insert ou update antes da classificação (pequeno e síncrono) e 1 update com todos os blocos depois do fim do stream (fora do caminho do TTFT).
 
 ### 3.5 API de busca (`POST /api/search`, `docs/API/SEARCH.md`)
+
 - Mesmo pipeline via `APISearchAgent` (`src/lib/agents/search/api.ts`), sem banco e sem uploads, com stream opcional. Mesmas chamadas LLM do chat, menos as sugestões.
 
 ### 3.6 Imagens e vídeos
+
 - `/api/images` e `/api/videos`: 1 LLM para gerar a consulta (com exemplos few-shot e o histórico inteiro) + 1 SearxNG.
 
 ## 4. Inventário de chamadas a LLM e a embeddings
 
 Configuração comum a todas as chamadas de chat:
+
 - **Modelo**: o modelo de chat escolhido pelo usuário, o mesmo para todas as etapas.
 - **Temperatura**: nenhuma chamada passa `options`. Vale o padrão do código: **1,0** em `OpenAILLM` (`openaiLLM.ts:91`, enviado explicitamente a todos os provedores pagos) e **0,7** em `OllamaLLM` (`ollamaLLM.ts:100`).
 - **max_tokens**: nunca é definido (`max_completion_tokens` e `num_predict` vão vazios). Vale o limite de cada provedor.
@@ -163,40 +172,40 @@ Configuração comum a todas as chamadas de chat:
 
 Tamanho dos prompts fixos, em tokens cl100k medidos no código: classificador cerca de 1,2 mil; pesquisador cerca de 0,8 mil (speed), 1,3 mil (balanced) e 1,8 mil (quality), mais de 0,3 a 0,5 mil por ferramenta descrita; redator cerca de 1,1 mil + contexto; seletor cerca de 0,5 mil; extrator cerca de 0,6 mil; sugestões cerca de 0,2 mil.
 
-| # | Arquivo:linha | Etapa | Prompt de sistema | Streaming | Saída | Chamadas por busca |
-|---|---|---|---|---|---|---|
-| 1 | `src/lib/agents/search/classifier.ts:38` | Classificação e reescrita da pergunta | `classifierPrompt` (`src/lib/prompts/search/classifier.ts:1`) | não | JSON | 1 |
-| 2 | `src/lib/agents/search/researcher/index.ts:68` | Pesquisador (escolha de ferramentas) | `getResearcherPrompt` (`src/lib/prompts/search/researcher.ts:323`) + descrições das ferramentas | sim (só para mostrar o plano) | chamadas de ferramenta | speed ≤ 2, balanced ≤ 6, quality ≤ 25 |
-| 3 | `src/lib/agents/search/researcher/actions/search/baseSearch.ts:272` | Seletor de resultados (só quality) | `pickerPrompt` (`baseSearch.ts:229`) | não | JSON | 1 por chamada de busca |
-| 4 | `src/lib/agents/search/researcher/actions/search/baseSearch.ts:382` | Extrator de fatos das páginas (só quality) | `extractorPrompt` (`baseSearch.ts:312`) | não | JSON | 1 por pedaço de 4000 tokens, até 3 páginas por chamada de busca |
-| 5 | `src/lib/agents/search/researcher/actions/scrapeURL.ts:155` | Extrator para URL pedido pelo usuário | `extractorPrompt` (`scrapeURL.ts:7`, cópia do nº 4) | não | JSON | 1 por pedaço, só se a página passar de 4000 tokens |
-| 6 | `src/lib/agents/search/index.ts:143` | Redator (chat) | `getWriterPrompt` (`src/lib/prompts/search/writer.ts:1`), com o contexto dentro do prompt de sistema | sim | texto | 1 |
-| 7 | `src/lib/agents/search/api.ts:78` | Redator (API de busca) | igual ao nº 6 | sim | texto | 1 |
-| 8 | `src/lib/agents/search/widgets/weatherWidget.ts:58` | Widget de clima | `systemPrompt` do arquivo | não | JSON | 0 ou 1 |
-| 9 | `src/lib/agents/search/widgets/stockWidget.ts:56` | Widget de cotação | `systemPrompt` do arquivo | não | JSON | 0 ou 1 |
-| 10 | `src/lib/agents/search/widgets/calculationWidget.ts:40` | Widget de cálculo | `system` do arquivo | não | JSON | 0 ou 1 |
-| 11 | `src/lib/agents/suggestions/index.ts:21` | Sugestões de perguntas | `suggestionGeneratorPrompt` (`src/lib/prompts/suggestions/index.ts:1`) | não | JSON | 1 (pedida pelo navegador depois da resposta) |
-| 12 | `src/lib/agents/media/image.ts:32` | Consulta para busca de imagens | `imageSearchPrompt` + few-shot (`src/lib/prompts/media/image.ts`) | não | JSON | 0 ou 1, sob demanda |
-| 13 | `src/lib/agents/media/video.ts:31` | Consulta para busca de vídeos | `videoSearchPrompt` + few-shot (`src/lib/prompts/media/videos.ts`) | não | JSON | 0 ou 1, sob demanda |
+| #   | Arquivo:linha                                                       | Etapa                                      | Prompt de sistema                                                                                    | Streaming                     | Saída                  | Chamadas por busca                                              |
+| --- | ------------------------------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------- | ----------------------------- | ---------------------- | --------------------------------------------------------------- |
+| 1   | `src/lib/agents/search/classifier.ts:38`                            | Classificação e reescrita da pergunta      | `classifierPrompt` (`src/lib/prompts/search/classifier.ts:1`)                                        | não                           | JSON                   | 1                                                               |
+| 2   | `src/lib/agents/search/researcher/index.ts:68`                      | Pesquisador (escolha de ferramentas)       | `getResearcherPrompt` (`src/lib/prompts/search/researcher.ts:323`) + descrições das ferramentas      | sim (só para mostrar o plano) | chamadas de ferramenta | speed ≤ 2, balanced ≤ 6, quality ≤ 25                           |
+| 3   | `src/lib/agents/search/researcher/actions/search/baseSearch.ts:272` | Seletor de resultados (só quality)         | `pickerPrompt` (`baseSearch.ts:229`)                                                                 | não                           | JSON                   | 1 por chamada de busca                                          |
+| 4   | `src/lib/agents/search/researcher/actions/search/baseSearch.ts:382` | Extrator de fatos das páginas (só quality) | `extractorPrompt` (`baseSearch.ts:312`)                                                              | não                           | JSON                   | 1 por pedaço de 4000 tokens, até 3 páginas por chamada de busca |
+| 5   | `src/lib/agents/search/researcher/actions/scrapeURL.ts:155`         | Extrator para URL pedido pelo usuário      | `extractorPrompt` (`scrapeURL.ts:7`, cópia do nº 4)                                                  | não                           | JSON                   | 1 por pedaço, só se a página passar de 4000 tokens              |
+| 6   | `src/lib/agents/search/index.ts:143`                                | Redator (chat)                             | `getWriterPrompt` (`src/lib/prompts/search/writer.ts:1`), com o contexto dentro do prompt de sistema | sim                           | texto                  | 1                                                               |
+| 7   | `src/lib/agents/search/api.ts:78`                                   | Redator (API de busca)                     | igual ao nº 6                                                                                        | sim                           | texto                  | 1                                                               |
+| 8   | `src/lib/agents/search/widgets/weatherWidget.ts:58`                 | Widget de clima                            | `systemPrompt` do arquivo                                                                            | não                           | JSON                   | 0 ou 1                                                          |
+| 9   | `src/lib/agents/search/widgets/stockWidget.ts:56`                   | Widget de cotação                          | `systemPrompt` do arquivo                                                                            | não                           | JSON                   | 0 ou 1                                                          |
+| 10  | `src/lib/agents/search/widgets/calculationWidget.ts:40`             | Widget de cálculo                          | `system` do arquivo                                                                                  | não                           | JSON                   | 0 ou 1                                                          |
+| 11  | `src/lib/agents/suggestions/index.ts:21`                            | Sugestões de perguntas                     | `suggestionGeneratorPrompt` (`src/lib/prompts/suggestions/index.ts:1`)                               | não                           | JSON                   | 1 (pedida pelo navegador depois da resposta)                    |
+| 12  | `src/lib/agents/media/image.ts:32`                                  | Consulta para busca de imagens             | `imageSearchPrompt` + few-shot (`src/lib/prompts/media/image.ts`)                                    | não                           | JSON                   | 0 ou 1, sob demanda                                             |
+| 13  | `src/lib/agents/media/video.ts:31`                                  | Consulta para busca de vídeos              | `videoSearchPrompt` + few-shot (`src/lib/prompts/media/videos.ts`)                                   | não                           | JSON                   | 0 ou 1, sob demanda                                             |
 
 Temperatura e `max_tokens` são iguais em todas as linhas: temperatura 1,0 (OpenAI e compatíveis) ou 0,7 (Ollama), e `max_tokens` sem limite.
 
 Embeddings (modelo de embedding escolhido pelo usuário):
 
-| # | Arquivo:linha | Etapa | Em lote? | Chamadas por busca |
-|---|---|---|---|---|
-| E1 | `baseSearch.ts:51` | Embedding da consulta (speed e balanced) | 1 texto | 1 por consulta |
-| E2 | `baseSearch.ts:58` | Embedding de cada resultado do SearxNG (speed e balanced) | **não, 1 texto por chamada** | cerca de 20 por consulta, até cerca de 60 por iteração |
-| E3 | `src/lib/uploads/store.ts:54` | Embedding das consultas nos arquivos | sim | 1 por chamada da ferramenta |
-| E4 | `src/lib/uploads/manager.ts:95`, `:126`, `:152` | Embedding dos pedaços no upload (TXT, PDF, DOCX) | sim, todos numa chamada só | por upload |
+| #   | Arquivo:linha                                   | Etapa                                                     | Em lote?                     | Chamadas por busca                                     |
+| --- | ----------------------------------------------- | --------------------------------------------------------- | ---------------------------- | ------------------------------------------------------ |
+| E1  | `baseSearch.ts:51`                              | Embedding da consulta (speed e balanced)                  | 1 texto                      | 1 por consulta                                         |
+| E2  | `baseSearch.ts:58`                              | Embedding de cada resultado do SearxNG (speed e balanced) | **não, 1 texto por chamada** | cerca de 20 por consulta, até cerca de 60 por iteração |
+| E3  | `src/lib/uploads/store.ts:54`                   | Embedding das consultas nos arquivos                      | sim                          | 1 por chamada da ferramenta                            |
+| E4  | `src/lib/uploads/manager.ts:95`, `:126`, `:152` | Embedding dos pedaços no upload (TXT, PDF, DOCX)          | sim, todos numa chamada só   | por upload                                             |
 
 Chamadas LLM típicas por busca (estimativa pelo código; a Fase 3 vai medir):
 
-| Modo | Classificador | Pesquisador | Seletor | Extrator | Redator | Sugestões | Total |
-|---|---|---|---|---|---|---|---|
-| Speed | 1 | 2 | 0 | 0 | 1 | 1 | cerca de 5 |
-| Balanced | 1 | 3 a 6 | 0 | 0 | 1 | 1 | cerca de 6 a 9 |
-| Quality | 1 | 6 a 25 | 3 a 12 | 10 a 100 | 1 | 1 | cerca de 25 a 140 |
+| Modo     | Classificador | Pesquisador | Seletor | Extrator | Redator | Sugestões | Total             |
+| -------- | ------------- | ----------- | ------- | -------- | ------- | --------- | ----------------- |
+| Speed    | 1             | 2           | 0       | 0        | 1       | 1         | cerca de 5        |
+| Balanced | 1             | 3 a 6       | 0       | 0        | 1       | 1         | cerca de 6 a 9    |
+| Quality  | 1             | 6 a 25      | 3 a 12  | 10 a 100 | 1       | 1         | cerca de 25 a 140 |
 
 Mais 1 por widget acionado.
 
@@ -213,17 +222,17 @@ Anoto o que vi lendo o código, para guiar o benchmark. Nada foi alterado, e cad
 7. **Temperatura 1,0** nas etapas que devolvem JSON, e nenhum `max_tokens`. Mudar isso mexe em qualidade e passa pela avaliação.
 8. **Sugestões só depois do fim da resposta**. Poderiam começar em paralelo, desde que usem o mesmo histórico.
 9. **Banco**: sem índice em `messages.chatId`, sem WAL, lista de conversas sem paginação. Criar índice é mudança de schema e exige sua aprovação.
-10. **Uploads**: leitura e parse síncronos dos JSON a cada iteração e a cada consulta; o hash com a nota quebra o RRF.
+10. **Uploads**: leitura e parse síncronos dos JSON a cada iteração e a cada consulta; o hash que só considera a nota descarta pedaços e quebra o RRF.
 11. **Build e Docker**: o `.next/standalone` tem 638 MB, dos quais 405 MB são do `onnxruntime-node` (usado só pelos embeddings locais do Transformers.js); entram também as variantes `gnu` e `musl` do `@napi-rs/canvas` e do `sharp`. A imagem completa instala `build-essential`, `git` e bibliotecas de desenvolvimento na imagem final, clona o SearxNG do `HEAD` (não reproduzível) e roda `yarn add playwright` de novo na imagem final.
 12. **Front-end**: o maior pedaço de JS do cliente tem 1,1 MB; `jspdf`, `react-syntax-highlighter` e `lightweight-charts` são importados de forma estática; `framer-motion` e `motion` aparecem juntos.
 
 ## 6. Estado atual de testes, lint e build
 
-| Verificação | Resultado |
-|---|---|
-| Testes automatizados | **Não existem**: nenhum arquivo de teste nem script `test`. |
-| CI (`.github/workflows/docker-build.yaml`) | Só monta e publica as imagens Docker no push para `master` ou `canary` e em releases. Não roda lint nem testes. |
-| `yarn install --frozen-lockfile` | OK (81 s). Aviso: `eslint-config-next@16.2.2` exige `eslint >= 9`, e o projeto usa `eslint 8`. |
-| `npm run lint` | **Quebrado**: o Next 16 removeu o `next lint` (`Invalid project directory provided ... /lint`). Rodar o `eslint` direto também falha, porque o `eslint-config-next` 16 não carrega no ESLint 8. |
-| `tsc --noEmit` | OK, sem erros. |
-| `npm run build` | OK em 93 s (webpack, sem cache). 14 páginas geradas; `.next/static` com 4,1 MB; `.next/standalone` com 638 MB. Só avisos (browserslist desatualizado e cache do webpack com `next-intl`). |
+| Verificação                                | Resultado                                                                                                                                                                                       |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Testes automatizados                       | **Não existem**: nenhum arquivo de teste nem script `test`.                                                                                                                                     |
+| CI (`.github/workflows/docker-build.yaml`) | Só monta e publica as imagens Docker no push para `master` ou `canary` e em releases. Não roda lint nem testes.                                                                                 |
+| `yarn install --frozen-lockfile`           | OK (81 s). Aviso: `eslint-config-next@16.2.2` exige `eslint >= 9`, e o projeto usa `eslint 8`.                                                                                                  |
+| `npm run lint`                             | **Quebrado**: o Next 16 removeu o `next lint` (`Invalid project directory provided ... /lint`). Rodar o `eslint` direto também falha, porque o `eslint-config-next` 16 não carrega no ESLint 8. |
+| `tsc --noEmit`                             | OK, sem erros.                                                                                                                                                                                  |
+| `npm run build`                            | OK em 93 s (webpack, sem cache). 14 páginas geradas; `.next/static` com 4,1 MB; `.next/standalone` com 638 MB. Só avisos (browserslist desatualizado e cache do webpack com `next-intl`).       |
