@@ -270,8 +270,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
-  const [chatId, setChatId] = useState<string | undefined>(params.chatId);
-  const [newChatCreated, setNewChatCreated] = useState(false);
+  // Without a chatId in the URL this is a new chat: it gets a fresh id and
+  // has no messages to load.
+  const [chatId, setChatId] = useState<string | undefined>(
+    () => params.chatId ?? crypto.randomBytes(20).toString('hex'),
+  );
+  const [newChatCreated, setNewChatCreated] = useState(() => !params.chatId);
 
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
@@ -296,7 +300,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [sources, setSources] = useState<string[]>(['web']);
   const [optimizationMode, setOptimizationMode] = useState('speed');
 
-  const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
+  const [isMessagesLoaded, setIsMessagesLoaded] = useState(
+    () => !params.chatId,
+  );
 
   const [notFound, setNotFound] = useState(false);
 
@@ -685,18 +691,23 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Opening another chat (client-side navigation to /c/<id>): reset the
+  // per-chat state while rendering, so the old chat is never shown for it.
+  if (params.chatId && params.chatId !== chatId) {
+    setChatId(params.chatId);
+    setMessages([]);
+    setChatHistoryState([]);
+    setFiles([]);
+    setFileIds([]);
+    setIsMessagesLoaded(false);
+    setNotFound(false);
+    setNewChatCreated(false);
+  }
+
+  // Keep the ref in step with resets done during render above.
   useEffect(() => {
-    if (params.chatId && params.chatId !== chatId) {
-      setChatId(params.chatId);
-      setMessages([]);
-      setChatHistory([]);
-      setFiles([]);
-      setFileIds([]);
-      setIsMessagesLoaded(false);
-      setNotFound(false);
-      setNewChatCreated(false);
-    }
-  }, [params.chatId, chatId]);
+    chatHistory.current = chatHistoryState;
+  }, [chatHistoryState]);
 
   useEffect(() => {
     if (
@@ -715,12 +726,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setFiles,
         setFileIds,
       );
-    } else if (!chatId) {
-      setNewChatCreated(true);
-      setIsMessagesLoaded(true);
-      setChatId(crypto.randomBytes(20).toString('hex'));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
 
   useEffect(() => {
