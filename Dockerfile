@@ -47,10 +47,11 @@ COPY --from=builder /home/vane/.next/static ./public/_next/static
 # they would resolve package.json ranges again and swap in a different
 # Next.js version than the one used for the build.
 COPY --from=builder /home/vane/.next/standalone ./
-COPY --from=builder /home/vane/data ./data
 COPY drizzle ./drizzle
 
-RUN mkdir /home/vane/uploads
+# data/ starts empty: the server creates config.json and db.sqlite on first
+# start, so the ones the build left behind are not shipped.
+RUN mkdir -p /home/vane/data /home/vane/uploads
 
 RUN useradd --shell /bin/bash --system \
     --home-dir "/usr/local/searxng" \
