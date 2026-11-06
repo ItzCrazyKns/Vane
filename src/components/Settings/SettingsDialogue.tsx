@@ -73,6 +73,7 @@ const SettingsDialogue = ({
   const t = useTranslations('Settings');
   const [isLoading, setIsLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
+  const [configVersion, setConfigVersion] = useState(0);
   const [activeSection, setActiveSection] = useState<
     (typeof sections)[number]['key']
   >(sections[0].key);
@@ -93,6 +94,7 @@ const SettingsDialogue = ({
           const data = await res.json();
 
           setConfig(data);
+          setConfigVersion((v) => v + 1);
         } catch (error) {
           console.error('Error fetching config:', error);
           toast.error(t('loadError'));
@@ -215,11 +217,29 @@ const SettingsDialogue = ({
                         </p>
                       </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
-                      <selectedSection.component
-                        fields={config.fields[selectedSection.dataAdd]}
-                        values={config.values[selectedSection.dataAdd]}
-                      />
+                    {/* Every section stays mounted and only the active one is
+                        shown. Each field keeps what the user saved in its own
+                        state, and config is only fetched when the dialog
+                        opens, so remounting a section on a tab switch would
+                        show the values from that fetch, not the saved ones.
+                        The key remounts them with the values of each new
+                        fetch (reopening the dialog). */}
+                    <div
+                      key={configVersion}
+                      className="flex-1 flex flex-col overflow-hidden"
+                    >
+                      {sections.map((section) => (
+                        <div
+                          key={section.key}
+                          hidden={section.key !== selectedSection.key}
+                          className="flex-1 overflow-y-auto"
+                        >
+                          <section.component
+                            fields={config.fields[section.dataAdd]}
+                            values={config.values[section.dataAdd]}
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
