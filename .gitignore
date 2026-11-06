@@ -38,4 +38,4 @@ Thumbs.db
 db.sqlite
 /searxng
 
-certificates
+certificates*.tsbuildinfo
