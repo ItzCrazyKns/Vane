@@ -14,6 +14,7 @@ import {
   getContextWindow,
 } from '@/lib/context/budget';
 import { compactResearchHistory } from '@/lib/context/compact';
+import { MAX_FAST_PATH_QUERIES, getEffort } from '../effort';
 
 /**
  * Sent back as the result of `done` when the research has found no source
@@ -21,6 +22,45 @@ import { compactResearchHistory } from '@/lib/context/compact';
  */
 export const NO_EVIDENCE_NOTE =
   'No sources were found yet, so the answer would have nothing to cite. Before finishing, search again once with broader or differently worded queries (and without recency/domain filters). Call done only if that search also finds nothing.';
+
+/** Tools the fast path can stand in for: a plain web search, then done. */
+const FAST_PATH_TOOLS = new Set(['web_search', 'done', 'scrape_url']);
+
+/**
+ * The classifier's queries when the speed fast path applies: the mode
+ * allows it, web search is the only research tool in play (no uploads,
+ * academic or discussion sources, MCP tools or URL to read), and the
+ * classifier proposed at least one query. Otherwise undefined, and the
+ * normal tool-calling loop runs.
+ */
+export const fastPathQueries = (
+  input: ResearcherInput,
+  toolNames: string[],
+): string[] | undefined => {
+  if (!getEffort(input.config.mode).fastPath) return undefined;
+  if (!toolNames.includes('web_search')) return undefined;
+  if (toolNames.some((n) => !FAST_PATH_TOOLS.has(n))) return undefined;
+  if (input.config.fileIds.length > 0) return undefined;
+  if (/https?:\/\//i.test(input.followUp)) return undefined;
+
+  const c = input.classification.classification;
+  if (c.personalSearch || c.academicSearch || c.discussionSearch)
+    return undefined;
+
+  const seen = new Set<string>();
+  const queries = (input.classification.searchQueries ?? [])
+    .filter((q): q is string => typeof q === 'string')
+    .map((q) => q.trim())
+    .filter((q) => {
+      const key = q.toLowerCase();
+      if (!q || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, MAX_FAST_PATH_QUERIES);
+
+  return queries.length > 0 ? queries : undefined;
+};
 
 /** Rough per-tool cost of the tool schema sent with each request. */
 const TOOL_SCHEMA_OVERHEAD_TOKENS = 60;
@@ -62,12 +102,7 @@ class Researcher {
     input: ResearcherInput,
   ): Promise<ResearcherOutput> {
     let actionOutput: ActionOutput[] = [];
-    let maxIteration =
-      input.config.mode === 'speed'
-        ? 2
-        : input.config.mode === 'balanced'
-          ? 6
-          : 25;
+    let maxIteration = getEffort(input.config.mode).maxIterations;
 
     await syncMCPActions();
 
@@ -133,6 +168,56 @@ class Researcher {
         `,
       },
     ];
+
+    const actionConfig = {
+      llm: input.config.llm,
+      embedding: input.config.embedding,
+      session: session,
+      researchBlockId: researchBlockId,
+      fileIds: input.config.fileIds,
+      mode: input.config.mode,
+      question:
+        input.classification.standaloneFollowUp?.trim() || input.followUp,
+    };
+
+    /* Speed fast path: the classifier already wrote the queries, so search
+       with them and go straight to the answer, saving the researcher's LLM
+       round trip. With no results, the normal loop runs as before. */
+    const fastQueries = fastPathQueries(
+      input,
+      availableTools.map((t) => t.name),
+    );
+
+    if (fastQueries) {
+      trace({
+        type: 'research_iteration',
+        iteration: -1,
+        actions: ['fast_path'],
+      });
+      actionOutput.push(
+        ...(await ActionRegistry.executeAll(
+          [
+            {
+              id: 'fast-path-search',
+              name: 'web_search',
+              arguments: { queries: fastQueries },
+            },
+          ],
+          actionConfig,
+        )),
+      );
+
+      if (mergeSearchFindings(actionOutput).length > 0) {
+        return {
+          findings: actionOutput,
+          searchFindings: publishSources(true),
+        };
+      }
+
+      console.log(
+        '[research] fast path found nothing; running the researcher loop',
+      );
+    }
 
     const researcherBudget = computeBudget(
       await getContextWindow(input.config.llm),
@@ -266,17 +351,6 @@ class Researcher {
         iteration: i,
         actions: finalToolCalls.map((tc) => tc.name),
       });
-
-      const actionConfig = {
-        llm: input.config.llm,
-        embedding: input.config.embedding,
-        session: session,
-        researchBlockId: researchBlockId,
-        fileIds: input.config.fileIds,
-        mode: input.config.mode,
-        question:
-          input.classification.standaloneFollowUp?.trim() || input.followUp,
-      };
 
       if (finalToolCalls.some((tc) => tc.name === 'done')) {
         /* Small models often send a last search together with done. Run

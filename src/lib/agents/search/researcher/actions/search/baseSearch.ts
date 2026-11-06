@@ -79,8 +79,6 @@ export const MIN_FILTERED_RESULTS = 3;
 
 /** Page reading in balanced mode (span retrieval). */
 export const pageReading = {
-  /** Pages read per web_search call in balanced mode. */
-  balancedPages: 2,
   /** Passages of a page added to its result. */
   passagesPerPage: 2,
   /** Passage size, in tokens, and the overlap between passages. */
