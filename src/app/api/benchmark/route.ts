@@ -3,6 +3,7 @@ import { ModelWithProvider } from '@/lib/models/types';
 import { BENCHMARK_CASES } from '@/lib/benchmark/cases';
 import { runCase, CaseResult } from '@/lib/benchmark/runner';
 import { buildReport } from '@/lib/benchmark/report';
+import { isInContainer, runProbes } from '@/lib/benchmark/probe';
 import {
   getBifrostConfig,
   getConfiguredModelProviderById,
@@ -71,7 +72,13 @@ export const POST = async (req: Request) => {
 
   const providerType = (id: string) =>
     getConfiguredModelProviderById(id)?.type ?? id;
-  const urls = { searxng: getSearxngURL(), firecrawl: getFirecrawlURL() };
+  const bifrost = getBifrostConfig();
+  const urls = {
+    searxng: getSearxngURL(),
+    firecrawl: getFirecrawlURL(),
+    bifrost: bifrost.enabled ? bifrost.url : undefined,
+  };
+  const contextWindow = await llm.getContextWindow().catch(() => undefined);
   const environment = {
     appVersion: process.env.NEXT_PUBLIC_VERSION ?? '',
     node: process.version,
@@ -87,7 +94,9 @@ export const POST = async (req: Request) => {
     searchProvider: getSearchProvider(),
     searxngConfigured: !!urls.searxng,
     firecrawlConfigured: !!urls.firecrawl,
-    bifrostEnabled: getBifrostConfig().enabled,
+    bifrostEnabled: bifrost.enabled,
+    contextWindow: contextWindow ?? null,
+    inContainer: isInContainer(),
   };
 
   const encoder = new TextEncoder();
@@ -102,6 +111,14 @@ export const POST = async (req: Request) => {
         type: 'start',
         cases: cases.map((c) => ({ id: c.id, label: c.label })),
       });
+
+      const probes = await runProbes({
+        searxngURL: urls.searxng,
+        firecrawlURL: urls.firecrawl,
+        bifrost: bifrost.enabled ? bifrost : undefined,
+        needsSearxng: true,
+      });
+      send({ type: 'probes', count: probes.length });
 
       const results: CaseResult[] = [];
       /* One case at a time, so cases don't compete for the model. */
@@ -122,7 +139,10 @@ export const POST = async (req: Request) => {
         });
       }
 
-      send({ type: 'report', report: buildReport(environment, results) });
+      send({
+        type: 'report',
+        report: buildReport(environment, results, probes),
+      });
       try {
         controller.close();
       } catch {}
