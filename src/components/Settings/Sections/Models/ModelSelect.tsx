@@ -55,6 +55,26 @@ const ModelSelect = ({
     }
   };
 
+  const options =
+    type === 'chat'
+      ? providers.flatMap((provider) =>
+          provider.chatModels.map((model) => ({
+            value: `${provider.id}/${model.key}`,
+            label: `${provider.name} - ${model.name}`,
+          })),
+        )
+      : providers.flatMap((provider) =>
+          provider.embeddingModels.map((model) => ({
+            value: `${provider.id}/${model.key}`,
+            label: `${provider.name} - ${model.name}`,
+          })),
+        );
+
+  // The saved model may have been deleted: show no selection instead of the first option.
+  const isSelectedAvailable = options.some(
+    (option) => option.value === selectedModel,
+  );
+
   return (
     <section className="rounded-xl border border-light-200 bg-light-primary/80 p-4 lg:p-6 transition-colors dark:border-dark-200 dark:bg-dark-primary/80">
       <div className="space-y-3 lg:space-y-5">
@@ -69,22 +89,15 @@ const ModelSelect = ({
           </p>
         </div>
         <Select
-          value={selectedModel}
+          value={isSelectedAvailable ? selectedModel : ''}
           onChange={(event) => handleSave(event.target.value)}
           options={
-            type === 'chat'
-              ? providers.flatMap((provider) =>
-                  provider.chatModels.map((model) => ({
-                    value: `${provider.id}/${model.key}`,
-                    label: `${provider.name} - ${model.name}`,
-                  })),
-                )
-              : providers.flatMap((provider) =>
-                  provider.embeddingModels.map((model) => ({
-                    value: `${provider.id}/${model.key}`,
-                    label: `${provider.name} - ${model.name}`,
-                  })),
-                )
+            isSelectedAvailable
+              ? options
+              : [
+                  { value: '', label: 'Select a model', disabled: true },
+                  ...options,
+                ]
           }
           className="!text-xs lg:!text-[13px]"
           loading={loading}
