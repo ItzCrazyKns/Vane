@@ -252,8 +252,22 @@
       "finance": "Finance",
       "art": "Art & Culture",
       "sports": "Sports",
-      "entertainment": "Entertainment"
-    }
+      "entertainment": "Entertainment",
+      "science": "Science"
+    },
+    "add": "Add",
+    "addPlaceholder": "Subject to follow",
+    "editTopics": "Edit topics",
+    "doneEditing": "Done editing",
+    "remove": "Remove {topic}",
+    "restore": "Restore defaults",
+    "filterPlaceholder": "Filter loaded news",
+    "clearFilter": "Clear filter",
+    "follow": "Follow “{topic}”",
+    "askAi": "Ask AI",
+    "noTopics": "No topics. Use “Add” to follow a subject, or restore the defaults.",
+    "noMatches": "No loaded article matches the filter.",
+    "empty": "No articles found for this topic."
   },
   "WeatherConditions": {
     "clear": "Clear",
