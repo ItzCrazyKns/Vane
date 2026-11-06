@@ -10,6 +10,7 @@ import {
   LineSeries,
 } from 'lightweight-charts';
 import { useTranslations } from 'next-intl';
+import { faviconSrc } from '@/lib/favicon';
 
 type StockWidgetProps = {
   symbol: string;
@@ -298,7 +299,7 @@ const Stock = (props: StockWidgetProps) => {
             <div className="flex items-center gap-2 mb-1">
               {props.website && (
                 <img
-                  src={`https://logo.clearbit.com/${new URL(props.website).hostname}`}
+                  src={faviconSrc(props.website)}
                   alt={`${props.symbol} logo`}
                   className="w-8 h-8 rounded-lg"
                   onError={(e) => {

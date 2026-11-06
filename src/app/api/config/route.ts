@@ -2,6 +2,7 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
+import { maskConfig } from '@/lib/config/secrets';
 
 type SaveConfigBody = {
   key: string;
@@ -30,7 +31,7 @@ export const GET = async (req: NextRequest) => {
     );
 
     return NextResponse.json({
-      values,
+      values: maskConfig(values, fields),
       fields,
     });
   } catch (err) {
@@ -58,14 +59,12 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    try {
-      configManager.updateConfig(body.key, body.value);
-    } catch (err: any) {
-      if (String(err?.message).startsWith('Invalid config key')) {
-        return Response.json({ message: err.message }, { status: 400 });
-      }
-      throw err;
+    const invalid = configManager.validateUIConfigWrite(body.key, body.value);
+    if (invalid) {
+      return Response.json({ message: invalid }, { status: 400 });
     }
+
+    configManager.updateUIConfig(body.key, body.value);
 
     return Response.json(
       {

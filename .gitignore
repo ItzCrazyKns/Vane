@@ -39,3 +39,4 @@ db.sqlite
 /searxng
 
 certificates
+*.tsbuildinfo

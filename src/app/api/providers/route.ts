@@ -1,5 +1,6 @@
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
+import { maskProvider } from '@/lib/config/secrets';
 
 export const GET = async (req: Request) => {
   try {
@@ -54,7 +55,7 @@ export const POST = async (req: NextRequest) => {
 
     return Response.json(
       {
-        provider: newProvider,
+        provider: maskProvider(newProvider),
       },
       {
         status: 200,

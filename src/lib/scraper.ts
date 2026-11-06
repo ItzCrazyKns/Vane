@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { getFirecrawlConfig, firecrawlHeaders } from './firecrawl';
+import { assertPublicHttpURL, fetchPublicURL } from './security/urlGuard';
 
 type ScrapeResult = { content: string; title: string };
 
@@ -41,6 +42,9 @@ class Scraper {
 
   static async scrape(url: string): Promise<ScrapeResult> {
     try {
+      /* URLs come from the model, so refuse internal addresses (SSRF). */
+      await assertPublicHttpURL(url);
+
       const firecrawl = getFirecrawlConfig();
 
       if (firecrawl) {
@@ -112,12 +116,11 @@ class Scraper {
   }
 
   private static async scrapeWithFetch(url: string): Promise<ScrapeResult> {
-    const res = await fetch(url, {
+    const res = await fetchPublicURL(url, {
       headers: {
         'User-Agent': USER_AGENT,
         Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
       },
-      redirect: 'follow',
       signal: AbortSignal.timeout(this.FETCH_TIMEOUT_MS),
     });
 

@@ -194,7 +194,7 @@ class ModelRegistry {
       providers[updated.type],
       providerId,
       name,
-      config,
+      updated.config,
     );
 
     let m: ModelList = { chat: [], embedding: [] };

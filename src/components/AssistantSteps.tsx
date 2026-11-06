@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { ResearchBlock, ResearchBlockSubStep } from '@/lib/types';
 import { useChat } from '@/lib/hooks/useChat';
 import { useTranslations } from 'next-intl';
+import { faviconSrc } from '@/lib/favicon';
 
 const getStepIcon = (step: ResearchBlockSubStep) => {
   if (step.type === 'reasoning') {
@@ -189,7 +190,7 @@ const AssistantSteps = ({
                                 result.metadata.title || t('untitled');
                               const domain = url ? new URL(url).hostname : '';
                               const faviconUrl = domain
-                                ? `https://s2.googleusercontent.com/s2/favicons?domain=${domain}&sz=128`
+                                ? faviconSrc(domain)
                                 : '';
 
                               return (

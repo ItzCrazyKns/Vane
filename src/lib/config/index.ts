@@ -1,8 +1,14 @@
 import path from 'node:path';
 import fs from 'fs';
-import { Config, ConfigModelProvider, UIConfigSections } from './types';
+import {
+  Config,
+  ConfigModelProvider,
+  UIConfigField,
+  UIConfigSections,
+} from './types';
 import { hashObj } from '../utils/hash';
 import { getModelProvidersUIConfigSection } from '../models/providers';
+import { isMaskedSecret, restoreMaskedProviderSecrets } from './secrets';
 
 class ConfigManager {
   configPath: string = path.join(
@@ -383,6 +389,56 @@ class ConfigManager {
     return obj === undefined ? defaultValue : obj;
   }
 
+  /**
+   * Checks a `POST /api/config` write. Only server-scoped fields declared in
+   * `uiConfigSections` can be written, as `<section>.<field>`, with a value of
+   * the field's type. Provider settings have their own routes, so paths into
+   * `modelProviders` (and anything else not declared) are refused. Returns an
+   * error message, or null when the write is allowed.
+   */
+  public validateUIConfigWrite(key: string, val: unknown): string | null {
+    const parts = key.split('.');
+    if (parts.length !== 2) return `Invalid config key: ${key}`;
+
+    const [section, fieldKey] = parts;
+    if (section === 'modelProviders') return `Invalid config key: ${key}`;
+
+    const fields = (
+      this.uiConfigSections as unknown as Record<string, UIConfigField[]>
+    )[section];
+    const field = Array.isArray(fields)
+      ? fields.find((f) => f.key === fieldKey)
+      : undefined;
+
+    if (!field || field.scope !== 'server') {
+      return `Invalid config key: ${key}`;
+    }
+
+    if (field.type === 'switch') {
+      return typeof val === 'boolean' ? null : `Invalid value for ${key}`;
+    }
+
+    if (typeof val !== 'string') return `Invalid value for ${key}`;
+
+    if (
+      field.type === 'select' &&
+      !field.options.some((o) => o.value === val)
+    ) {
+      return `Invalid value for ${key}`;
+    }
+
+    return null;
+  }
+
+  /**
+   * Applies a write already accepted by validateUIConfigWrite. A password
+   * field sent back as the mask keeps its stored value.
+   */
+  public updateUIConfig(key: string, val: string | boolean) {
+    if (isMaskedSecret(val)) return;
+    this.updateConfig(key, val);
+  }
+
   public updateConfig(key: string, val: any) {
     const parts = key.split('.');
     if (parts.length === 0) return;
@@ -446,7 +502,11 @@ class ConfigManager {
     if (!provider) throw new Error('Provider not found');
 
     provider.name = name;
-    provider.config = config;
+    provider.config = restoreMaskedProviderSecrets(
+      provider.type,
+      config,
+      provider.config,
+    );
 
     this.saveConfig();
 

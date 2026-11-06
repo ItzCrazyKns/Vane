@@ -13,6 +13,7 @@ import {
   CornerDownRight,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX, RuleType } from 'markdown-to-jsx';
+import { safeMarkdownRenderRule } from '@/lib/markdownSafety';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
@@ -90,7 +91,7 @@ const MessageBox = ({
         );
       }
 
-      return next();
+      return safeMarkdownRenderRule(next, node, renderChildren, state);
     },
     overrides: {
       think: {
