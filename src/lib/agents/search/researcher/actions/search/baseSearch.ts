@@ -9,6 +9,69 @@ import computeSimilarity from '@/lib/utils/computeSimilarity';
 import z from 'zod';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+import { createLimiter } from '@/lib/utils/limit';
+import { normalizeUrl } from '@/lib/utils/normalizeUrl';
+
+/**
+ * Embedding requests allowed in flight at once, across every search in
+ * the process. Parallel search actions used to fire one request per query
+ * at the same time, and a local server (Ollama) answers 502 when flooded
+ * (upstream issue #1147). Three keeps one action's queries (at most
+ * three) fully parallel.
+ */
+export const EMBEDDING_CONCURRENCY = 3;
+/** A request still pending after this frees its slot (and fails) so one
+ *  hung embedding server call cannot block every later search. */
+export const EMBEDDING_TIMEOUT_MS = 120_000;
+const withEmbeddingSlot = createLimiter(EMBEDDING_CONCURRENCY, {
+  timeoutMs: EMBEDDING_TIMEOUT_MS,
+});
+
+/** Results scoring at or below this (cosine) against the query are dropped. */
+const SIMILARITY_THRESHOLD = 0.5;
+/** Results kept, best first, when the threshold would drop all of a query's. */
+const FALLBACK_RESULTS = 10;
+
+/**
+ * Extractor LLM calls in flight at once for one quality search. Every
+ * chunk of every picked page used to go out at the same time (60+ calls
+ * for three long pages), which a local LM Studio/Ollama can only queue.
+ */
+export const EXTRACTOR_CONCURRENCY = 3;
+/**
+ * Page text kept before chunking (~25k tokens, ~7 chunks of 4000 tokens).
+ * The relevant part of a page is nearly always near the top; the rest of
+ * a huge page (listings, comment threads) only multiplied extractor calls.
+ */
+export const MAX_PAGE_CHARS = 100_000;
+
+/**
+ * One result per page, comparing normalized URLs (host case, utm_* /
+ * fbclid / gclid, #fragment, trailing slash ignored), so a page found by
+ * several queries is ranked, picked and read once (upstream #1228). The
+ * first copy is kept, with the other copies' different snippets appended,
+ * as the researcher already does for identical URLs.
+ */
+const dedupeByUrl = (chunks: Chunk[]): Chunk[] => {
+  const kept = new Map<string, Chunk>();
+  const out: Chunk[] = [];
+  for (const c of chunks) {
+    const url = c.metadata?.url;
+    if (typeof url !== 'string') {
+      out.push(c);
+      continue;
+    }
+    const key = normalizeUrl(url);
+    const first = kept.get(key);
+    if (!first) {
+      kept.set(key, c);
+      out.push(c);
+    } else if (c.content && !first.content.split('\n\n').includes(c.content)) {
+      first.content += `\n\n${c.content}`;
+    }
+  }
+  return out;
+};
 
 /**
  * Runs one query, returning no results instead of throwing: one failed
@@ -58,7 +121,7 @@ export const executeSearch = async (input: {
     const searchResultsBlockId = crypto.randomUUID();
     let searchResultsEmitted = false;
 
-    const results: Chunk[] = [];
+    const scoredResults: Chunk[] = [];
 
     const search = async (q: string) => {
       const res = await searchSafely(q, {
@@ -73,20 +136,31 @@ export const executeSearch = async (input: {
         /* One embedding call for the query and all its results, instead of
            one call per result. */
         const contents = res.results.map((r) => r.content || r.title);
-        const [queryEmbedding, ...chunkEmbeddings] =
-          await input.embedding.embedText([q, ...contents]);
+        const [queryEmbedding, ...chunkEmbeddings] = await withEmbeddingSlot(
+          () => input.embedding.embedText([q, ...contents]),
+        );
 
-        resultChunks = res.results
-          .map((r, i) => ({
-            content: contents[i],
-            metadata: {
-              title: r.title,
-              url: r.url,
-              similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
-              embedding: chunkEmbeddings[i],
-            },
-          }))
-          .filter((c) => c.metadata.similarity > 0.5);
+        const scored = res.results.map((r, i) => ({
+          content: contents[i],
+          metadata: {
+            title: r.title,
+            url: r.url,
+            similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
+            embedding: chunkEmbeddings[i],
+          },
+        }));
+
+        resultChunks = scored.filter(
+          (c) => c.metadata.similarity > SIMILARITY_THRESHOLD,
+        );
+
+        /* Some embedding models score everything low; rather than
+           "Found 0 results" (upstream #1119), keep the best ones. */
+        if (resultChunks.length === 0) {
+          resultChunks = scored
+            .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
+            .slice(0, FALLBACK_RESULTS);
+        }
       } catch (err) {
         resultChunks = res.results.map((r) => {
           const content = r.content || r.title;
@@ -102,7 +176,7 @@ export const executeSearch = async (input: {
           };
         });
       } finally {
-        results.push(...resultChunks);
+        scoredResults.push(...resultChunks);
       }
 
       if (!searchResultsEmitted) {
@@ -144,7 +218,10 @@ export const executeSearch = async (input: {
 
     await Promise.all(input.queries.map(search));
 
-    results.sort((a, b) => b.metadata.similarity - a.metadata.similarity);
+    scoredResults.sort((a, b) => b.metadata.similarity - a.metadata.similarity);
+
+    /* After sorting, so the best-scored copy of a page is the one kept. */
+    const results = dedupeByUrl(scoredResults);
 
     const uniqueSearchResultIndices: Set<number> = new Set();
 
@@ -258,6 +335,9 @@ export const executeSearch = async (input: {
 
     if (searchResults.length === 0) return [];
 
+    /* The picker sees, and may pick, each page only once. */
+    const uniqueResults = dedupeByUrl(searchResults);
+
     const pickerPrompt = `
       Assistant is an AI search result picker. Assistant's task is to pick 2-3 of the most relevant search results based off the query which can be then scraped for information to answer the query.
       Assistant will be shared with the search results retrieved from a search engine along with the queries used to retrieve those results and, when available, the user's question. Relevance is judged against the user's question first and the queries second. Assistant will then pick maxiumum 3 of the most relevant search results based on the queries and the content of the search results. Assistant should only pick search results that are relevant to the query and can help in answering the question.
@@ -299,14 +379,14 @@ export const executeSearch = async (input: {
         },
         {
           role: 'user',
-          content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<search_results>${searchResults.map((result, index) => `<result indice=${index}>${JSON.stringify(result)}</result>`).join('\n')}</search_results>`,
+          content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<search_results>${uniqueResults.map((result, index) => `<result indice=${index}>${JSON.stringify(result)}</result>`).join('\n')}</search_results>`,
         },
       ],
     });
 
     const pickedIndices = pickerResponse.picked_indices.slice(0, 3);
     const pickedResults = pickedIndices
-      .map((i) => searchResults[i])
+      .map((i) => uniqueResults[i])
       .filter((r) => r !== undefined);
 
     const alreadyExtractedURLs: string[] = [];
@@ -314,13 +394,13 @@ export const executeSearch = async (input: {
     researchBlock.data.subSteps.forEach((step) => {
       if (step.type === 'reading') {
         step.reading.forEach((chunk) => {
-          alreadyExtractedURLs.push(chunk.metadata.url);
+          alreadyExtractedURLs.push(normalizeUrl(chunk.metadata.url));
         });
       }
     });
 
     const filteredResults = pickedResults.filter(
-      (r) => !alreadyExtractedURLs.find((url) => url === r.metadata.url),
+      (r) => !alreadyExtractedURLs.includes(normalizeUrl(r.metadata.url)),
     );
 
     if (filteredResults.length > 0) {
@@ -383,6 +463,8 @@ export const executeSearch = async (input: {
         ),
     });
 
+    const withExtractorSlot = createLimiter(EXTRACTOR_CONCURRENCY);
+
     await Promise.all(
       filteredResults.map(async (result, i) => {
         try {
@@ -395,26 +477,30 @@ export const executeSearch = async (input: {
           if (!scrapedData) return;
 
           let accumulatedContent = '';
-          const chunks = splitText(scrapedData.content, 4000, 500);
+          const chunks = splitText(
+            scrapedData.content.slice(0, MAX_PAGE_CHARS),
+            4000,
+            500,
+          );
 
           await Promise.all(
             chunks.map(async (chunk) => {
               try {
-                const extractorOutput = await input.llm.generateObject<
-                  typeof extractorSchema
-                >({
-                  schema: extractorSchema,
-                  messages: [
-                    {
-                      role: 'system',
-                      content: extractorPrompt,
-                    },
-                    {
-                      role: 'user',
-                      content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
-                    },
-                  ],
-                });
+                const extractorOutput = await withExtractorSlot(() =>
+                  input.llm.generateObject<typeof extractorSchema>({
+                    schema: extractorSchema,
+                    messages: [
+                      {
+                        role: 'system',
+                        content: extractorPrompt,
+                      },
+                      {
+                        role: 'user',
+                        content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
+                      },
+                    ],
+                  }),
+                );
 
                 accumulatedContent += extractorOutput.extracted_facts + '\n';
               } catch (err) {

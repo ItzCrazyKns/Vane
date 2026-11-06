@@ -39,6 +39,12 @@ class Scraper {
   private static FIRECRAWL_RESPONSE_GRACE_MS = 5000;
   /** Timeout for the fetch + Readability fallback. */
   static FETCH_TIMEOUT_MS = 20000;
+  /**
+   * Bytes read from a page body on the fetch path; the rest is dropped.
+   * A page bigger than this is a dump or a listing, and the researcher
+   * keeps only its first 100k characters of text anyway.
+   */
+  static MAX_FETCH_BYTES = 5 * 1024 * 1024;
 
   static async scrape(url: string): Promise<ScrapeResult> {
     try {
@@ -134,7 +140,7 @@ class Scraper {
       throw new Error(`Unsupported content type: ${contentType}`);
     }
 
-    const raw = await res.text();
+    const raw = await this.readLimited(res, this.MAX_FETCH_BYTES);
 
     if (contentType && !/html|xml/i.test(contentType)) {
       const text = raw.trim();
@@ -160,6 +166,33 @@ class Scraper {
       };
     } finally {
       dom.window.close();
+    }
+  }
+
+  /** Reads at most `maxBytes` of the body as UTF-8, then cancels it. */
+  private static async readLimited(
+    res: Response,
+    maxBytes: number,
+  ): Promise<string> {
+    if (!res.body) return res.text();
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let text = '';
+    let received = 0;
+
+    try {
+      while (received < maxBytes) {
+        const { done, value } = await reader.read();
+        if (done) return text + decoder.decode();
+        const part = value.subarray(0, maxBytes - received);
+        received += part.byteLength;
+        text += decoder.decode(part, { stream: true });
+      }
+      await reader.cancel().catch(() => {});
+      return text + decoder.decode();
+    } finally {
+      reader.releaseLock();
     }
   }
 }

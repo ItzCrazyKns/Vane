@@ -44,16 +44,23 @@ export const DELETE = async (
   try {
     const { id } = await params;
 
-    const chatExists = await db.query.chats.findFirst({
-      where: eq(chats.id, id),
+    /* One transaction: either the chat and all its messages go, or nothing
+     * does (no orphaned messages, no chat left without its history). */
+    const deleted = db.transaction((tx) => {
+      const chat = tx
+        .select({ id: chats.id })
+        .from(chats)
+        .where(eq(chats.id, id))
+        .get();
+      if (!chat) return false;
+      tx.delete(messages).where(eq(messages.chatId, id)).run();
+      tx.delete(chats).where(eq(chats.id, id)).run();
+      return true;
     });
 
-    if (!chatExists) {
+    if (!deleted) {
       return Response.json({ message: 'Chat not found' }, { status: 404 });
     }
-
-    await db.delete(chats).where(eq(chats.id, id)).execute();
-    await db.delete(messages).where(eq(messages.chatId, id)).execute();
 
     return Response.json(
       { message: 'Chat deleted successfully' },

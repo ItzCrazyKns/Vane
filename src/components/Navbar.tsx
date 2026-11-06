@@ -9,7 +9,6 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import jsPDF from 'jspdf';
 import { useChat, Section } from '@/lib/hooks/useChat';
 import { SourceBlock } from '@/lib/types';
 import { useTranslations } from 'next-intl';
@@ -86,11 +85,13 @@ const exportAsMarkdown = (
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
 };
 
-const exportAsPDF = (
+const exportAsPDF = async (
   sections: Section[],
   title: string,
   labels: ExportLabels,
 ) => {
+  // jspdf (~320 KB) só é baixado quando o usuário exporta.
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   const date = new Date(
     sections[0]?.message?.createdAt || Date.now(),
@@ -317,9 +318,15 @@ const Navbar = () => {
                       </button>
                       <button
                         className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
-                        onClick={() =>
-                          exportAsPDF(sections, title || '', exportLabels)
-                        }
+                        onClick={() => {
+                          exportAsPDF(
+                            sections,
+                            title || '',
+                            exportLabels,
+                          ).catch((err) =>
+                            console.error('PDF export failed:', err),
+                          );
+                        }}
                       >
                         <FileDown size={16} className="text-[#24A0ED]" />
                         <div>

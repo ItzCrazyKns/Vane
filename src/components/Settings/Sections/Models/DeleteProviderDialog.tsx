@@ -1,7 +1,7 @@
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Loader2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { ConfigModelProvider } from '@/lib/config/types';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';

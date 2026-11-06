@@ -1,7 +1,7 @@
 import { Settings } from 'lucide-react';
 import { useState } from 'react';
 import SettingsDialogue from './SettingsDialogue';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 
 const SettingsButtonMobile = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);

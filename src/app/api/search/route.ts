@@ -98,9 +98,9 @@ export const POST = async (req: Request) => {
             }
 
             if (event === 'error') {
-              reject(
+              resolve(
                 Response.json(
-                  { message: 'Search error', error: data },
+                  { message: 'Search error', error: data.data },
                   { status: 500 },
                 ),
               );
@@ -182,7 +182,15 @@ export const POST = async (req: Request) => {
           if (event === 'error') {
             if (signal.aborted) return;
 
-            controller.error(data);
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: 'error',
+                  data: data.data,
+                }) + '\n',
+              ),
+            );
+            controller.close();
           }
         });
       },

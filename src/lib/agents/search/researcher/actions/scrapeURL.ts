@@ -3,6 +3,8 @@ import { ResearchAction } from '../../types';
 import { Chunk, ReadingResearchBlock } from '@/lib/types';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+import { createLimiter } from '@/lib/utils/limit';
+import { EXTRACTOR_CONCURRENCY, MAX_PAGE_CHARS } from './search/baseSearch';
 
 const extractorPrompt = `
                   Assistant is an AI information extractor. Assistant will be shared with scraped information from a website along with the queries used to retrieve that information. Assistant's task is to extract relevant facts from the scraped data to answer the queries.
@@ -46,6 +48,27 @@ const extractorSchema = z.object({
     ),
 });
 
+/** Pages a single scrape_url call may read. */
+const MAX_URLS_PER_CALL = 3;
+
+/**
+ * Cleans the `urls` argument the model sent: it may be missing, a single
+ * string, or hold non-strings (upstream issue #964). Keeps trimmed,
+ * non-empty, distinct strings, at most three.
+ */
+export const normalizeURLArgs = (raw: unknown): string[] => {
+  const list = (Array.isArray(raw) ? raw : [raw]).flat();
+  const urls: string[] = [];
+  for (const item of list) {
+    if (typeof item !== 'string') continue;
+    const url = item.trim();
+    if (!url || urls.includes(url)) continue;
+    urls.push(url);
+    if (urls.length >= MAX_URLS_PER_CALL) break;
+  }
+  return urls;
+};
+
 const schema = z.object({
   urls: z.array(z.string()).describe('A list of URLs to scrape content from.'),
 });
@@ -65,7 +88,15 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
   getDescription: () => actionDescription,
   enabled: (_) => true,
   execute: async (params, additionalConfig) => {
-    params.urls = params.urls.slice(0, 3);
+    params.urls = normalizeURLArgs(params.urls);
+
+    if (params.urls.length === 0) {
+      return {
+        type: 'search_results',
+        results: [],
+        note: 'No page was read: send the URLs to read as a list of strings.',
+      };
+    }
 
     let readingBlockId = crypto.randomUUID();
     let readingEmitted = false;
@@ -75,6 +106,7 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
     );
 
     const results: Chunk[] = [];
+    const withExtractorSlot = createLimiter(EXTRACTOR_CONCURRENCY);
 
     await Promise.all(
       params.urls.map(async (url) => {
@@ -144,7 +176,11 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
             );
           }
 
-          const chunks = splitText(scraped.content, 4000, 500);
+          const chunks = splitText(
+            scraped.content.slice(0, MAX_PAGE_CHARS),
+            4000,
+            500,
+          );
 
           let accumulatedContent = '';
 
@@ -152,21 +188,23 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
             try {
               await Promise.all(
                 chunks.map(async (chunk) => {
-                  const extracted = await additionalConfig.llm.generateObject<
-                    typeof extractorSchema
-                  >({
-                    messages: [
+                  const extracted = await withExtractorSlot(() =>
+                    additionalConfig.llm.generateObject<typeof extractorSchema>(
                       {
-                        role: 'system',
-                        content: extractorPrompt,
+                        messages: [
+                          {
+                            role: 'system',
+                            content: extractorPrompt,
+                          },
+                          {
+                            role: 'user',
+                            content: `<queries>Summarize</queries>\n<scraped_data>${chunk}</scraped_data>`,
+                          },
+                        ],
+                        schema: extractorSchema,
                       },
-                      {
-                        role: 'user',
-                        content: `<queries>Summarize</queries>\n<scraped_data>${chunk}</scraped_data>`,
-                      },
-                    ],
-                    schema: extractorSchema,
-                  });
+                    ),
+                  );
 
                   accumulatedContent += extracted.extracted_facts + '\n';
                 }),

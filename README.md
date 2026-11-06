@@ -77,6 +77,8 @@ This will pull and start the Vane container with the bundled SearxNG search engi
 
 **Note**: The image includes both Vane and SearxNG, so no additional setup is required. The `-v` flags create persistent volumes for your data and uploaded files.
 
+**Backups**: the database runs in SQLite WAL mode, so recent changes may still be in `db.sqlite-wal`. Back up the whole data folder (or `db.sqlite` together with `db.sqlite-wal` and `db.sqlite-shm`), ideally with Vane stopped.
+
 #### Using Vane with Your Own SearxNG Instance
 
 If you already have SearxNG running, you can use the slim version of Vane:
