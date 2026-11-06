@@ -2,7 +2,8 @@ import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import BaseEmbedding from '../../base/embedding';
-import BaseModelProvider from '../../base/provider';
+import BaseModelProvider, { ModelListOptions } from '../../base/provider';
+import { modelListSignal } from '../../modelListCache';
 import BaseLLM from '../../base/llm';
 import AnthropicLLM from './anthropicLLM';
 
@@ -31,6 +32,7 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
   async getDefaultModels(): Promise<ModelList> {
     const res = await fetch('https://api.anthropic.com/v1/models?limit=999', {
       method: 'GET',
+      signal: modelListSignal(),
       headers: {
         'x-api-key': this.config.apiKey,
         'anthropic-version': '2023-06-01',
@@ -57,8 +59,8 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
     };
   }
 
-  async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
+  async getModelList(opts?: ModelListOptions): Promise<ModelList> {
+    const defaultModels = await this.cachedDefaultModels(opts);
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
     return {
@@ -68,11 +70,7 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
-    const modelList = await this.getModelList();
-
-    const exists = modelList.chat.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('chat', key))) {
       throw new Error(
         'Error Loading Anthropic Chat Model. Invalid Model Selected',
       );

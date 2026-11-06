@@ -1,6 +1,7 @@
 import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
-import BaseModelProvider from '../../base/provider';
+import BaseModelProvider, { ModelListOptions } from '../../base/provider';
+import { modelListSignal } from '../../modelListCache';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import BaseLLM from '../../base/llm';
 import LemonadeLLM from './lemonadeLLM';
@@ -44,6 +45,7 @@ class LemonadeProvider extends BaseModelProvider<LemonadeConfig> {
     try {
       const res = await fetch(`${this.config.baseURL}/models`, {
         method: 'GET',
+        signal: modelListSignal(),
         headers: {
           'Content-Type': 'application/json',
           ...(this.config.apiKey
@@ -78,8 +80,8 @@ class LemonadeProvider extends BaseModelProvider<LemonadeConfig> {
     }
   }
 
-  async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
+  async getModelList(opts?: ModelListOptions): Promise<ModelList> {
+    const defaultModels = await this.cachedDefaultModels(opts);
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
     return {
@@ -92,11 +94,7 @@ class LemonadeProvider extends BaseModelProvider<LemonadeConfig> {
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
-    const modelList = await this.getModelList();
-
-    const exists = modelList.chat.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('chat', key))) {
       throw new Error(
         'Error Loading Lemonade Chat Model. Invalid Model Selected',
       );
@@ -110,10 +108,7 @@ class LemonadeProvider extends BaseModelProvider<LemonadeConfig> {
   }
 
   async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
-    const modelList = await this.getModelList();
-    const exists = modelList.embedding.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('embedding', key))) {
       throw new Error(
         'Error Loading Lemonade Embedding Model. Invalid Model Selected.',
       );

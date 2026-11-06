@@ -3,7 +3,8 @@ import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import GeminiEmbedding from './geminiEmbedding';
 import BaseEmbedding from '../../base/embedding';
-import BaseModelProvider from '../../base/provider';
+import BaseModelProvider, { ModelListOptions } from '../../base/provider';
+import { modelListSignal } from '../../modelListCache';
 import BaseLLM from '../../base/llm';
 import GeminiLLM from './geminiLLM';
 
@@ -34,6 +35,7 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
       `https://generativelanguage.googleapis.com/v1beta/models?key=${this.config.apiKey}`,
       {
         method: 'GET',
+        signal: modelListSignal(),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -70,8 +72,8 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
     };
   }
 
-  async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
+  async getModelList(opts?: ModelListOptions): Promise<ModelList> {
+    const defaultModels = await this.cachedDefaultModels(opts);
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
     return {
@@ -84,11 +86,7 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
-    const modelList = await this.getModelList();
-
-    const exists = modelList.chat.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('chat', key))) {
       throw new Error(
         'Error Loading Gemini Chat Model. Invalid Model Selected',
       );
@@ -102,10 +100,7 @@ class GeminiProvider extends BaseModelProvider<GeminiConfig> {
   }
 
   async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
-    const modelList = await this.getModelList();
-    const exists = modelList.embedding.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('embedding', key))) {
       throw new Error(
         'Error Loading Gemini Embedding Model. Invalid Model Selected.',
       );

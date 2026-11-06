@@ -1,6 +1,7 @@
 import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
-import BaseModelProvider from '../../base/provider';
+import BaseModelProvider, { ModelListOptions } from '../../base/provider';
+import { modelListSignal } from '../../modelListCache';
 import { Model, ModelList, ProviderMetadata } from '../../types';
 import BaseLLM from '../../base/llm';
 import BaseEmbedding from '../../base/embedding';
@@ -35,6 +36,7 @@ class OllamaProvider extends BaseModelProvider<OllamaConfig> {
     try {
       const res = await fetch(`${this.config.baseURL}/api/tags`, {
         method: 'GET',
+        signal: modelListSignal(),
         headers: {
           'Content-type': 'application/json',
         },
@@ -64,8 +66,8 @@ class OllamaProvider extends BaseModelProvider<OllamaConfig> {
     }
   }
 
-  async getModelList(): Promise<ModelList> {
-    const defaultModels = await this.getDefaultModels();
+  async getModelList(opts?: ModelListOptions): Promise<ModelList> {
+    const defaultModels = await this.cachedDefaultModels(opts);
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
     return {
@@ -78,11 +80,7 @@ class OllamaProvider extends BaseModelProvider<OllamaConfig> {
   }
 
   async loadChatModel(key: string): Promise<BaseLLM<any>> {
-    const modelList = await this.getModelList();
-
-    const exists = modelList.chat.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('chat', key))) {
       throw new Error(
         'Error Loading Ollama Chat Model. Invalid Model Selected',
       );
@@ -95,10 +93,7 @@ class OllamaProvider extends BaseModelProvider<OllamaConfig> {
   }
 
   async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
-    const modelList = await this.getModelList();
-    const exists = modelList.embedding.find((m) => m.key === key);
-
-    if (!exists) {
+    if (!(await this.hasModel('embedding', key))) {
       throw new Error(
         'Error Loading Ollama Embedding Model. Invalid Model Selected.',
       );
