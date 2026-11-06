@@ -73,6 +73,9 @@ type Config = {
   search: {
     [key: string]: any;
   };
+  bifrost: {
+    [key: string]: any;
+  };
 };
 
 type EnvMap = {
@@ -93,6 +96,7 @@ type UIConfigSections = {
   personalization: UIConfigField[];
   modelProviders: ModelProviderUISection[];
   search: UIConfigField[];
+  bifrost: UIConfigField[];
 };
 
 export type {

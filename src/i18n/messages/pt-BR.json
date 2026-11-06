@@ -207,6 +207,10 @@
       "search": {
         "name": "Busca",
         "description": "Gerencie as configurações de busca."
+      },
+      "bifrost": {
+        "name": "Bifrost",
+        "description": "Use um gateway Bifrost para modelos e ferramentas MCP."
       }
     }
   },

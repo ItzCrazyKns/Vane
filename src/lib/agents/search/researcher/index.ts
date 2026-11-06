@@ -5,6 +5,7 @@ import SessionManager from '@/lib/session';
 import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
+import { syncMCPActions } from './actions/mcp';
 
 class Researcher {
   async research(
@@ -18,6 +19,8 @@ class Researcher {
         : input.config.mode === 'balanced'
           ? 6
           : 25;
+
+    await syncMCPActions();
 
     const availableTools = ActionRegistry.getAvailableActionTools({
       classification: input.classification,

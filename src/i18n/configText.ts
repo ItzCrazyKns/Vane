@@ -43,6 +43,21 @@ const configText: Partial<Record<Locale, Record<string, string>>> = {
     'Firecrawl URL': 'URL do Firecrawl',
     'Base URL of your Firecrawl API, without /v2. Used for web search when Firecrawl is the provider, and for reading pages.':
       'URL base da API do Firecrawl, sem /v2. Usada na busca quando o Firecrawl é o provedor e na leitura de páginas.',
+    'Use Bifrost': 'Usar o Bifrost',
+    'Route models through a Bifrost gateway. Its models appear as the "Bifrost" provider in the model picker.':
+      'Encaminha os modelos por um gateway Bifrost. Os modelos dele aparecem como o provedor "Bifrost" no seletor de modelos.',
+    'Bifrost URL': 'URL do Bifrost',
+    'Base URL of your Bifrost gateway, without /v1. Vane calls /v1/models, /v1/chat/completions and /mcp under it.':
+      'URL base do seu gateway Bifrost, sem /v1. O Vane chama /v1/models, /v1/chat/completions e /mcp a partir dela.',
+    'Bifrost Virtual Key': 'Chave virtual do Bifrost',
+    'Sent as x-bf-vk. Leave empty if your gateway does not require a virtual key.':
+      'Enviada como x-bf-vk. Deixe vazio se o seu gateway não exige chave virtual.',
+    'Use Bifrost MCP tools': 'Usar ferramentas MCP do Bifrost',
+    'Let the researcher call tools from the MCP servers connected to Bifrost (through its /mcp endpoint).':
+      'Permite que a pesquisa chame ferramentas dos servidores MCP conectados ao Bifrost (pelo endpoint /mcp).',
+    'Allowed MCP tools': 'Ferramentas MCP permitidas',
+    'Comma-separated tool names, * works as a wildcard (e.g. "brave-*,github-search_code"). When empty, only tools marked read-only are used.':
+      'Nomes de ferramentas separados por vírgula, com * como curinga (ex.: "brave-*,github-search_code"). Vazio usa só as ferramentas marcadas como somente leitura.',
     'API Key': 'Chave de API',
     'Base URL': 'URL base',
     'Your Anthropic API key': 'Sua chave de API da Anthropic',

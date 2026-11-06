@@ -21,6 +21,7 @@ class ConfigManager {
       searxngURL: '',
       firecrawlURL: '',
     },
+    bifrost: {},
   };
   uiConfigSections: UIConfigSections = {
     preferences: [
@@ -149,6 +150,66 @@ class ConfigManager {
         env: 'FIRECRAWL_API_URL',
       },
     ],
+    bifrost: [
+      {
+        name: 'Use Bifrost',
+        key: 'enabled',
+        type: 'switch',
+        required: false,
+        description:
+          'Route models through a Bifrost gateway. Its models appear as the "Bifrost" provider in the model picker.',
+        default: false,
+        scope: 'server',
+        env: 'BIFROST_ENABLED',
+      },
+      {
+        name: 'Bifrost URL',
+        key: 'url',
+        type: 'string',
+        required: false,
+        description:
+          'Base URL of your Bifrost gateway, without /v1. Vane calls /v1/models, /v1/chat/completions and /mcp under it.',
+        placeholder: 'http://localhost:8080',
+        default: '',
+        scope: 'server',
+        env: 'BIFROST_URL',
+      },
+      {
+        name: 'Bifrost Virtual Key',
+        key: 'virtualKey',
+        type: 'password',
+        required: false,
+        description:
+          'Sent as x-bf-vk. Leave empty if your gateway does not require a virtual key.',
+        placeholder: 'sk-bf-...',
+        default: '',
+        scope: 'server',
+        env: 'BIFROST_VIRTUAL_KEY',
+      },
+      {
+        name: 'Use Bifrost MCP tools',
+        key: 'mcpEnabled',
+        type: 'switch',
+        required: false,
+        description:
+          'Let the researcher call tools from the MCP servers connected to Bifrost (through its /mcp endpoint).',
+        default: false,
+        scope: 'server',
+        env: 'BIFROST_MCP_ENABLED',
+      },
+      {
+        name: 'Allowed MCP tools',
+        key: 'mcpTools',
+        type: 'string',
+        required: false,
+        description:
+          'Comma-separated tool names, * works as a wildcard (e.g. "brave-*,github-search_code"). When empty, only tools marked read-only are used.',
+        placeholder: 'brave-*,github-search_code',
+        default: '',
+        scope: 'server',
+        env: 'BIFROST_MCP_TOOLS',
+      },
+    ],
   };
 
   constructor() {
@@ -203,7 +264,10 @@ class ConfigManager {
   }
 
   private migrateConfig(config: Config): Config {
-    /* TODO: Add migrations */
+    /* Config files written before a section existed lack its key. */
+    if (!config.bifrost || typeof config.bifrost !== 'object') {
+      config.bifrost = {};
+    }
     return config;
   }
 
@@ -266,6 +330,19 @@ class ConfigManager {
       if (f.env && !this.currentConfig.search[f.key]) {
         this.currentConfig.search[f.key] =
           process.env[f.env] ?? f.default ?? '';
+      }
+    });
+
+    /* bifrost section: env fills keys that are unset or empty. A switch
+       turned off in the UI is saved as false, so env never flips it back
+       on, and nothing is written when the env var is absent (the build
+       also runs this, before the container's env exists). */
+    this.uiConfigSections.bifrost.forEach((f) => {
+      const fromEnv = f.env ? process.env[f.env] : undefined;
+      const current = this.currentConfig.bifrost[f.key];
+      if (fromEnv !== undefined && (current === undefined || current === '')) {
+        this.currentConfig.bifrost[f.key] =
+          f.type === 'switch' ? fromEnv === 'true' : fromEnv;
       }
     });
 

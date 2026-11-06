@@ -15,6 +15,12 @@ class ActionRegistry {
     this.actions.set(action.name, action);
   }
 
+  static unregisterWhere(predicate: (name: string) => boolean) {
+    for (const name of Array.from(this.actions.keys())) {
+      if (predicate(name)) this.actions.delete(name);
+    }
+  }
+
   static get(name: string): ResearchAction | undefined {
     return this.actions.get(name);
   }

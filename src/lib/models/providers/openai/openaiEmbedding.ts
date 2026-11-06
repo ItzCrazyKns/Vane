@@ -6,6 +6,7 @@ type OpenAIConfig = {
   apiKey: string;
   model: string;
   baseURL?: string;
+  defaultHeaders?: Record<string, string>;
 };
 
 class OpenAIEmbedding extends BaseEmbedding<OpenAIConfig> {
@@ -17,6 +18,7 @@ class OpenAIEmbedding extends BaseEmbedding<OpenAIConfig> {
     this.openAIClient = new OpenAI({
       apiKey: config.apiKey,
       baseURL: config.baseURL,
+      defaultHeaders: config.defaultHeaders,
     });
   }
 
