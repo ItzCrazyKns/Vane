@@ -207,6 +207,10 @@
       "search": {
         "name": "Search",
         "description": "Manage search settings."
+      },
+      "bifrost": {
+        "name": "Bifrost",
+        "description": "Route models and MCP tools through a Bifrost gateway."
       }
     }
   },

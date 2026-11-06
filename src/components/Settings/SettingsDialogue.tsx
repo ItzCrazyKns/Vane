@@ -4,6 +4,7 @@ import {
   BrainCog,
   ChevronLeft,
   ExternalLink,
+  Network,
   Search,
   Sliders,
   ToggleRight,
@@ -16,6 +17,7 @@ import Loader from '../ui/Loader';
 import { cn } from '@/lib/utils';
 import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
+import BifrostSection from './Sections/Bifrost';
 import Select from '@/components/ui/Select';
 import Personalization from './Sections/Personalization';
 import { useTranslations } from 'next-intl';
@@ -44,6 +46,12 @@ const sections = [
     icon: Search,
     component: SearchSection,
     dataAdd: 'search',
+  },
+  {
+    key: 'bifrost',
+    icon: Network,
+    component: BifrostSection,
+    dataAdd: 'bifrost',
   },
 ] as const;
 

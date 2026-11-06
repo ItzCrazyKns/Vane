@@ -1,6 +1,11 @@
 import { ConfigModelProvider } from '../config/types';
 import BaseModelProvider, { createProviderInstance } from './base/provider';
-import { getConfiguredModelProviders } from '../config/serverRegistry';
+import {
+  getBifrostConfig,
+  getConfiguredModelProviders,
+} from '../config/serverRegistry';
+import BifrostProvider from './providers/bifrost';
+import { BIFROST_PROVIDER_ID, BIFROST_PROVIDER_NAME } from '../bifrost';
 import { providers } from './providers';
 import { MinimalProvider, ModelList } from './types';
 import configManager from '../config';
@@ -31,6 +36,32 @@ class ModelRegistry {
           `Failed to initialize provider. Type: ${p.type}, ID: ${p.id}, Error: ${err}`,
         );
       }
+    });
+
+    this.addBifrostProvider();
+  }
+
+  /** While Settings > Bifrost is on, the gateway is one more provider. */
+  private addBifrostProvider() {
+    const bifrost = getBifrostConfig();
+    if (!bifrost.enabled) return;
+
+    const config = { url: bifrost.url, virtualKey: bifrost.virtualKey };
+
+    this.activeProviders.push({
+      id: BIFROST_PROVIDER_ID,
+      name: BIFROST_PROVIDER_NAME,
+      type: BIFROST_PROVIDER_ID,
+      chatModels: [],
+      embeddingModels: [],
+      config,
+      hash: '',
+      provider: createProviderInstance(
+        BifrostProvider,
+        BIFROST_PROVIDER_ID,
+        BIFROST_PROVIDER_NAME,
+        config,
+      ),
     });
   }
 

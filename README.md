@@ -149,6 +149,27 @@ Notes:
 - Discussion (Reddit) searches add `site:reddit.com` to the query, and academic searches use Firecrawl's `research` category.
 - Image search, video search and Discover still use SearxNG.
 
+#### Using a Bifrost gateway (models and MCP tools)
+
+[Bifrost](https://github.com/maximhq/bifrost) is an OpenAI-compatible gateway in front of many model providers, with its own MCP gateway. Vane can use it in two ways, both off by default and set under **Settings > Bifrost**:
+
+- **Use Bifrost** adds a **Bifrost** provider to the model picker. Its models come from the gateway's `GET /v1/models` and keep Bifrost's `provider/model` names (for example `anthropic/claude-sonnet-4-5`). Chat and embeddings go to `<Bifrost URL>/v1`.
+- **Use Bifrost MCP tools** lets the researcher call the tools of the MCP servers connected to Bifrost, through its `/mcp` endpoint. Each tool becomes a researcher tool named `mcp_<tool>`, and its result (capped at 8,000 characters) is used as a source. Tools run only during research, so a question the classifier answers without searching won't call them.
+
+Only tools marked read-only by their server are used, unless you list tools in **Allowed MCP tools** (comma-separated, `*` as a wildcard, for example `brave-*,github-search_code`). Listed tools are used even when they are not read-only, so list only tools you are happy for the model to run without asking.
+
+Chat requests from Vane send `x-bf-mcp-include-tools: vane-no-injected-tools`, so Bifrost doesn't attach MCP tools to them on its own; Vane passes the tools it wants itself. You can also turn on **Disable Auto Tool Injection** in Bifrost.
+
+| Variable              | Required | Description                                                                             |
+| --------------------- | -------- | --------------------------------------------------------------------------------------- |
+| `BIFROST_ENABLED`     | No       | `true` turns on the Bifrost provider.                                                   |
+| `BIFROST_URL`         | No       | Base URL of the gateway, without `/v1`. For example `http://host.docker.internal:8080`. |
+| `BIFROST_VIRTUAL_KEY` | No       | Sent as `x-bf-vk` when your gateway requires a virtual key.                             |
+| `BIFROST_MCP_ENABLED` | No       | `true` lets the researcher use Bifrost's MCP tools.                                     |
+| `BIFROST_MCP_TOOLS`   | No       | Allowed MCP tools, comma-separated with `*` wildcards.                                  |
+
+These variables only seed the settings on the first start; after that, change them in the Settings.
+
 #### Advanced Setup (Building from Source)
 
 If you prefer to build from source or need more control:
@@ -223,7 +244,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -231,7 +251,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
@@ -242,7 +261,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:8000`
    - **Mac:** Use `http://host.docker.internal:8000`
    - **Linux:** Use `http://<private_ip_of_host>:8000`
@@ -250,7 +268,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    Adjust the port number if you're using a different one.
 
 3. **Ensure Lemonade Server is Running:**
-
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
