@@ -737,6 +737,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     if (!isReady) return;
     console.debug(new Date(), 'app:ready');
     // A saved chat may still be answering: resume its stream.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- starts the /api/reconnect stream; the setState calls are its loading flags, not derived state
     if (!newChatCreated) checkReconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, newChatCreated]);
@@ -760,6 +761,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         toast.error(t('configNotReady'));
         return;
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sends the ?q= message once the app is ready; the setState calls are the request's loading flags
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
