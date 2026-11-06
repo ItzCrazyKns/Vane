@@ -1,6 +1,7 @@
 import z from 'zod';
 import { ResearchAction } from '../../types';
 import UploadStore from '@/lib/uploads/store';
+import { normalizeQueries } from './search/queries';
 
 const schema = z.object({
   queries: z
@@ -27,7 +28,16 @@ const uploadsSearchAction: ResearchAction<typeof schema> = {
   Never use this tool to search the web or for information that is not contained within the user's uploaded files.
   `,
   execute: async (input, additionalConfig) => {
-    input.queries = input.queries.slice(0, 3);
+    /* The model may omit the field or send a string (upstream #964). */
+    input.queries = normalizeQueries(input.queries);
+
+    if (input.queries.length === 0) {
+      return {
+        type: 'search_results',
+        results: [],
+        note: 'No upload search was run: send the queries as a list of non-empty strings.',
+      };
+    }
 
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,

@@ -35,6 +35,26 @@ const searxResults: Record<
       content: 'rust web memory',
     },
   ],
+  /* The same page (P) reached through two URL variants by two queries,
+     with contents far enough apart that the embedding dedup keeps both. */
+  'rust tokio': [
+    { title: 'P', url: 'https://p.test/page', content: 'rust tokio' },
+    { title: 'Q', url: 'https://q.test/', content: 'rust tokio memory async' },
+  ],
+  'rust async': [
+    {
+      title: 'P again',
+      url: 'https://P.test/page/?utm_source=feed&fbclid=1#top',
+      content: 'rust async',
+    },
+    { title: 'R', url: 'https://r.test/', content: 'rust async go web' },
+  ],
+  /* Twelve results that are all below the 0.5 similarity threshold. */
+  'low scores': Array.from({ length: 12 }, (_, i) => ({
+    title: `Low ${i}`,
+    url: `https://low.test/${i}`,
+    content: `low ${i}`,
+  })),
 };
 
 vi.mock('@/lib/searxng', () => ({
@@ -132,6 +152,109 @@ describe('executeSearch (speed and balanced)', () => {
   });
 });
 
+/* Query "low scores" -> e0; result "low i" -> similarity 0.04 * (i + 1)
+   to the query (all under 0.5) and at most 0.25 between results, so the
+   embedding dedup keeps them all. */
+class LowScoreEmbedding extends FakeEmbedding {
+  async embedText(texts: string[]): Promise<number[][]> {
+    this.calls.push(texts);
+    return texts.map((t) => {
+      const v = new Array(14).fill(0);
+      const m = t.match(/^low (\d+)$/);
+      if (!m) {
+        v[0] = 1;
+        return v;
+      }
+      const i = Number(m[1]);
+      const s = 0.04 * (i + 1);
+      v[0] = s;
+      v[i + 1] = Math.sqrt(1 - s * s);
+      return v;
+    });
+  }
+}
+
+describe('executeSearch (similarity fallback)', () => {
+  it.each(['speed', 'balanced'] as const)(
+    '%s: keeps the top 10 by score when the filter would drop every result',
+    async (mode) => {
+      const results = await executeSearch({
+        queries: ['low scores'],
+        mode,
+        researchBlock: newResearchBlock() as any,
+        session: createFakeSession() as any,
+        llm: new FakeLLM({}),
+        embedding: new LowScoreEmbedding(),
+      });
+
+      expect(results.map((r) => r.metadata.url)).toEqual(
+        [11, 10, 9, 8, 7, 6, 5, 4, 3, 2].map((i) => `https://low.test/${i}`),
+      );
+    },
+  );
+
+  it('does not fall back when some result passes the filter', async () => {
+    const results = await executeSearch({
+      queries: ['rust web'],
+      mode: 'speed',
+      researchBlock: newResearchBlock() as any,
+      session: createFakeSession() as any,
+      llm: new FakeLLM({}),
+      embedding: new FakeEmbedding(),
+    });
+
+    expect(results.map((r) => r.metadata.url)).not.toContain(
+      'https://c.test/x',
+    );
+  });
+});
+
+describe('executeSearch (URL dedup)', () => {
+  const normalized = (u: string) =>
+    u
+      .toLowerCase()
+      .replace(/[?#].*$/, '')
+      .replace(/\/$/, '');
+
+  it.each(['speed', 'balanced'] as const)(
+    '%s: keeps one result per normalized URL across queries',
+    async (mode) => {
+      const results = await executeSearch({
+        queries: ['rust tokio', 'rust async'],
+        mode,
+        researchBlock: newResearchBlock() as any,
+        session: createFakeSession() as any,
+        llm: new FakeLLM({}),
+        embedding: new FakeEmbedding(),
+      });
+
+      const urls = results.map((r) => normalized(r.metadata.url));
+      expect(urls).toHaveLength(3);
+      expect(new Set(urls).size).toBe(3);
+    },
+  );
+
+  it('quality: the picker sees each page once', async () => {
+    scrapeMock.mockResolvedValue({ title: 't', content: 'c' });
+    const llm = new FakeLLM({
+      generateObject: (_i, n) =>
+        n === 0 ? { picked_indices: [0] } : { extracted_facts: 'x' },
+    });
+
+    await executeSearch({
+      queries: ['rust tokio', 'rust async'],
+      mode: 'quality',
+      researchBlock: newResearchBlock() as any,
+      session: createFakeSession() as any,
+      llm,
+      embedding: new FakeEmbedding(),
+    });
+
+    const pickerUser = llm.calls[0].input.messages[1].content as string;
+    expect(pickerUser.match(/<result indice=/g)).toHaveLength(3);
+  });
+});
+
 describe('executeSearch (quality)', () => {
   beforeEach(() => scrapeMock.mockReset());
 
@@ -161,11 +284,12 @@ describe('executeSearch (quality)', () => {
       embedding: new FakeEmbedding(),
     });
 
-    // Picker sees every result; only the first 3 indices are used and
+    // Picker sees every page once (a.test/rust came from both queries);
+    // only the first 3 indices are used and
     // out-of-range indices are dropped.
     const pickerUser = llm.calls[0].input.messages[1].content as string;
     expect(pickerUser).toContain('<queries>rust web, go concurrency</queries>');
-    expect(pickerUser.match(/<result indice=/g)).toHaveLength(6);
+    expect(pickerUser.match(/<result indice=/g)).toHaveLength(5);
 
     const scraped = scrapeMock.mock.calls.map((c) => c[0]).sort();
     expect(scraped).toEqual(['https://a.test/rust', 'https://e.test/go']);
