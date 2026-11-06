@@ -16,6 +16,7 @@ import Markdown, { MarkdownToJSX, RuleType } from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
+import { useTranslations } from 'next-intl';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
@@ -50,6 +51,7 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
 }) => {
+  const t = useTranslations('MessageBox');
   const {
     loading,
     sendMessage,
@@ -121,7 +123,7 @@ const MessageBox = ({
               <div className="flex flex-row items-center space-x-2">
                 <BookCopy className="text-black dark:text-white" size={20} />
                 <h3 className="text-black dark:text-white font-medium text-xl">
-                  Sources
+                  {t('sources')}
                 </h3>
               </div>
               <MessageSources sources={sources} />
@@ -152,7 +154,7 @@ const MessageBox = ({
               <div className="flex items-center gap-2 p-3 rounded-lg bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200">
                 <Disc3 className="w-4 h-4 text-black dark:text-white animate-spin" />
                 <span className="text-sm text-black/70 dark:text-white/70">
-                  Brainstorming...
+                  {t('brainstorming')}
                 </span>
               </div>
             )}
@@ -170,7 +172,7 @@ const MessageBox = ({
                   size={20}
                 />
                 <h3 className="text-black dark:text-white font-medium text-xl">
-                  Answer
+                  {t('answer')}
                 </h3>
               </div>
             )}
@@ -229,7 +231,7 @@ const MessageBox = ({
                           size={20}
                         />
                         <h3 className="text-black dark:text-white font-medium text-xl">
-                          Related
+                          {t('related')}
                         </h3>
                       </div>
                       <div className="space-y-0">

@@ -12,8 +12,10 @@ import {
   getShowNewsWidget,
   getShowWeatherWidget,
 } from '@/lib/config/clientRegistry';
+import { useTranslations } from 'next-intl';
 
 const EmptyChat = () => {
+  const t = useTranslations('EmptyChat');
   const [showWeather, setShowWeather] = useState(() =>
     typeof window !== 'undefined' ? getShowWeatherWidget() : true,
   );
@@ -49,7 +51,7 @@ const EmptyChat = () => {
       <div className="flex flex-col items-center justify-center min-h-screen max-w-screen-sm mx-auto p-2 space-y-4">
         <div className="flex flex-col items-center justify-center w-full space-y-8">
           <h2 className="text-black/70 dark:text-white/70 text-3xl font-medium -mt-8">
-            Research begins here.
+            {t('title')}
           </h2>
           <EmptyChatMessageInput />
         </div>

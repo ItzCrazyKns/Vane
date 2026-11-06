@@ -3,6 +3,7 @@ import { ConfigModelProvider } from '@/lib/config/types';
 import { useChat } from '@/lib/hooks/useChat';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 const ModelSelect = ({
   providers,
@@ -17,6 +18,7 @@ const ModelSelect = ({
       : `${localStorage.getItem('embeddingModelProviderId')}/${localStorage.getItem('embeddingModelKey')}`,
   );
   const [loading, setLoading] = useState(false);
+  const t = useTranslations('Models');
   const { setChatModelProvider, setEmbeddingModelProvider } = useChat();
 
   const handleSave = async (newValue: string) => {
@@ -49,7 +51,7 @@ const ModelSelect = ({
       }
     } catch (error) {
       console.error('Error saving config:', error);
-      toast.error('Failed to save configuration.');
+      toast.error(t('saveConfigError'));
     } finally {
       setLoading(false);
     }
@@ -60,12 +62,12 @@ const ModelSelect = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-sm text-black dark:text-white">
-            Select {type === 'chat' ? 'Chat Model' : 'Embedding Model'}
+            {type === 'chat' ? t('selectChatModel') : t('selectEmbeddingModel')}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
             {type === 'chat'
-              ? 'Choose which model to use for generating responses'
-              : 'Choose which model to use for generating embeddings'}
+              ? t('chatModelDescription')
+              : t('embeddingModelDescription')}
           </p>
         </div>
         <Select

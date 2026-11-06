@@ -8,6 +8,8 @@ import {
 import { useState } from 'react';
 import Select from '../ui/Select';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
+import { useConfigText } from '@/i18n/configText';
 import { useTheme } from 'next-themes';
 import { Loader2 } from 'lucide-react';
 import { Switch } from '@headlessui/react';
@@ -29,6 +31,8 @@ const SettingsSelect = ({
   setValue: (value: any) => void;
   dataAdd: string;
 }) => {
+  const t = useTranslations('Models');
+  const ct = useConfigText();
   const [loading, setLoading] = useState(false);
   const { setTheme } = useTheme();
 
@@ -61,7 +65,7 @@ const SettingsSelect = ({
       }
     } catch (error) {
       console.error('Error saving config:', error);
-      toast.error('Failed to save configuration.');
+      toast.error(t('saveConfigError'));
     } finally {
       setTimeout(() => setLoading(false), 150);
     }
@@ -72,10 +76,10 @@ const SettingsSelect = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-sm text-black dark:text-white">
-            {field.name}
+            {ct(field.name)}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-            {field.description}
+            {ct(field.description)}
           </p>
         </div>
         <Select
@@ -83,7 +87,7 @@ const SettingsSelect = ({
           onChange={(event) => handleSave(event.target.value)}
           options={field.options.map((option) => ({
             value: option.value,
-            label: option.name,
+            label: ct(option.name) ?? option.name,
           }))}
           className="!text-xs lg:!text-sm"
           loading={loading}
@@ -105,6 +109,8 @@ const SettingsInput = ({
   setValue: (value: any) => void;
   dataAdd: string;
 }) => {
+  const t = useTranslations('Models');
+  const ct = useConfigText();
   const [loading, setLoading] = useState(false);
 
   const handleSave = async (newValue: any) => {
@@ -133,7 +139,7 @@ const SettingsInput = ({
       }
     } catch (error) {
       console.error('Error saving config:', error);
-      toast.error('Failed to save configuration.');
+      toast.error(t('saveConfigError'));
     } finally {
       setTimeout(() => setLoading(false), 150);
     }
@@ -144,10 +150,10 @@ const SettingsInput = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-sm text-black dark:text-white">
-            {field.name}
+            {ct(field.name)}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-            {field.description}
+            {ct(field.description)}
           </p>
         </div>
         <div className="relative">
@@ -156,7 +162,7 @@ const SettingsInput = ({
             onChange={(event) => setValue(event.target.value)}
             onBlur={(event) => handleSave(event.target.value)}
             className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder={field.placeholder}
+            placeholder={ct(field.placeholder)}
             type="text"
             disabled={loading}
           />
@@ -182,6 +188,8 @@ const SettingsTextarea = ({
   setValue: (value: any) => void;
   dataAdd: string;
 }) => {
+  const t = useTranslations('Models');
+  const ct = useConfigText();
   const [loading, setLoading] = useState(false);
 
   const handleSave = async (newValue: any) => {
@@ -210,7 +218,7 @@ const SettingsTextarea = ({
       }
     } catch (error) {
       console.error('Error saving config:', error);
-      toast.error('Failed to save configuration.');
+      toast.error(t('saveConfigError'));
     } finally {
       setTimeout(() => setLoading(false), 150);
     }
@@ -221,10 +229,10 @@ const SettingsTextarea = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-sm text-black dark:text-white">
-            {field.name}
+            {ct(field.name)}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-            {field.description}
+            {ct(field.description)}
           </p>
         </div>
         <div className="relative">
@@ -233,7 +241,7 @@ const SettingsTextarea = ({
             onChange={(event) => setValue(event.target.value)}
             onBlur={(event) => handleSave(event.target.value)}
             className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder={field.placeholder}
+            placeholder={ct(field.placeholder)}
             rows={4}
             disabled={loading}
           />
@@ -259,6 +267,8 @@ const SettingsSwitch = ({
   setValue: (value: any) => void;
   dataAdd: string;
 }) => {
+  const t = useTranslations('Models');
+  const ct = useConfigText();
   const [loading, setLoading] = useState(false);
 
   const handleSave = async (newValue: boolean) => {
@@ -287,7 +297,7 @@ const SettingsSwitch = ({
       }
     } catch (error) {
       console.error('Error saving config:', error);
-      toast.error('Failed to save configuration.');
+      toast.error(t('saveConfigError'));
     } finally {
       setTimeout(() => setLoading(false), 150);
     }
@@ -300,10 +310,10 @@ const SettingsSwitch = ({
       <div className="flex flex-row items-center space-x-3 lg:space-x-5 w-full justify-between">
         <div>
           <h4 className="text-sm lg:text-sm text-black dark:text-white">
-            {field.name}
+            {ct(field.name)}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-            {field.description}
+            {ct(field.description)}
           </p>
         </div>
         <Switch

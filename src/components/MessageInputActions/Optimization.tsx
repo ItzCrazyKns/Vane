@@ -9,24 +9,19 @@ import {
 import { Fragment } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
 import { AnimatePresence, motion } from 'motion/react';
+import { useTranslations } from 'next-intl';
 
 const OptimizationModes = [
   {
     key: 'speed',
-    title: 'Speed',
-    description: 'Prioritize speed and get the quickest possible answer.',
     icon: <Zap size={16} className="text-[#FF9800]" />,
   },
   {
     key: 'balanced',
-    title: 'Balanced',
-    description: 'Find the right balance between speed and accuracy',
     icon: <Sliders size={16} className="text-[#4CAF50]" />,
   },
   {
     key: 'quality',
-    title: 'Quality',
-    description: 'Get the most thorough and accurate answer',
     icon: (
       <Star
         size={16}
@@ -34,10 +29,11 @@ const OptimizationModes = [
       />
     ),
   },
-];
+] as const;
 
 const Optimization = () => {
   const { optimizationMode, setOptimizationMode } = useChat();
+  const t = useTranslations('Optimization');
 
   return (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
@@ -88,16 +84,18 @@ const Optimization = () => {
                       <div className="flex flex-row justify-between w-full text-black dark:text-white">
                         <div className="flex flex-row space-x-1">
                           {mode.icon}
-                          <p className="text-xs font-medium">{mode.title}</p>
+                          <p className="text-xs font-medium">
+                            {t(`${mode.key}.title`)}
+                          </p>
                         </div>
                         {mode.key === 'quality' && (
                           <span className="bg-sky-500/70 dark:bg-sky-500/40 border border-sky-600 px-1 rounded-full text-[10px] text-white">
-                            Beta
+                            {t('beta')}
                           </span>
                         )}
                       </div>
                       <p className="text-black/70 dark:text-white/70 text-xs">
-                        {mode.description}
+                        {t(`${mode.key}.description`)}
                       </p>
                     </PopoverButton>
                   ))}
