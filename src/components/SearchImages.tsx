@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { Message } from './ChatWindow';
+import { useTranslations } from 'next-intl';
 
 type Image = {
   url: string;
@@ -20,6 +21,7 @@ const SearchImages = ({
   chatHistory: [string, string][];
   messageId: string;
 }) => {
+  const t = useTranslations('SearchImages');
   const [images, setImages] = useState<Image[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -70,7 +72,7 @@ const SearchImages = ({
         >
           <div className="flex flex-row items-center space-x-2">
             <ImagesIcon size={17} />
-            <p>Search images</p>
+            <p>{t('search')}</p>
           </div>
           <PlusIcon className="text-[#24A0ED]" size={17} />
         </button>
@@ -137,7 +139,7 @@ const SearchImages = ({
                   ))}
                 </div>
                 <p className="text-black/70 dark:text-white/70 text-xs">
-                  View {images.length - 3} more
+                  {t('viewMore', { count: images.length - 3 })}
                 </p>
               </button>
             )}

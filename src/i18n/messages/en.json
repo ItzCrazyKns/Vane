@@ -1,0 +1,322 @@
+{
+  "Metadata": {
+    "title": "Vane - Direct your curiosity",
+    "description": "Vane is an AI powered answering engine.",
+    "libraryTitle": "Library - Vane",
+    "chatTitle": "Chat - Vane",
+    "chatDescription": "Chat with the internet, chat with Vane."
+  },
+  "MessageActions": {
+    "citations": "Citations",
+    "uploadedFile": "Uploaded File"
+  },
+  "ThinkBox": {
+    "title": "Thinking Process"
+  },
+  "Theme": {
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "EmptyChat": {
+    "title": "Research begins here."
+  },
+  "Calculation": {
+    "expression": "Expression",
+    "result": "Result"
+  },
+  "NewsWidget": {
+    "error": "Could not load news.",
+    "summaryQuery": "Summary: {url}"
+  },
+  "ChatWindow": {
+    "connectionError": "Failed to connect to the server. Please try again later."
+  },
+  "Widgets": {
+    "unknownType": "Unknown widget type: {type}"
+  },
+  "MessageInput": {
+    "askAnything": "Ask anything...",
+    "followUp": "Ask a follow-up"
+  },
+  "Sources": {
+    "web": "Web",
+    "academic": "Academic",
+    "social": "Social"
+  },
+  "Common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "loading": "Loading..."
+  },
+  "Models": {
+    "selectModels": "Select models",
+    "manageConnections": "Manage connections",
+    "noConnections": "No connections yet",
+    "noConnectionsDescription": "Add your first connection to start using AI models. Connect to OpenAI, Anthropic, Ollama, and more.",
+    "saveConfigError": "Failed to save configuration.",
+    "selectChatModel": "Select Chat Model",
+    "selectEmbeddingModel": "Select Embedding Model",
+    "chatModelDescription": "Choose which model to use for generating responses",
+    "embeddingModelDescription": "Choose which model to use for generating embeddings",
+    "deleteSuccess": "Connection deleted successfully.",
+    "deleteError": "Failed to delete connection.",
+    "deleteConnection": "Delete connection",
+    "deleteConfirm": "Are you sure you want to delete the connection \"{name}\"? This action cannot be undone. All associated models will also be removed.",
+    "addModelError": "Failed to add model.",
+    "addModelSuccess": "Model added successfully.",
+    "add": "Add",
+    "addChatModelTitle": "Add new chat model",
+    "addEmbeddingModelTitle": "Add new embedding model",
+    "modelName": "Model name*",
+    "modelNamePlaceholder": "e.g., GPT-4",
+    "modelKey": "Model key*",
+    "modelKeyPlaceholder": "e.g., gpt-4",
+    "addModel": "Add Model",
+    "addConnectionError": "Failed to add connection.",
+    "addConnectionSuccess": "Connection added successfully.",
+    "addConnection": "Add Connection",
+    "addConnectionTitle": "Add new connection",
+    "connectionType": "Select connection type",
+    "connectionName": "Connection Name",
+    "connectionNamePlaceholder": "e.g., My OpenAI Connection",
+    "updateConnectionError": "Failed to update connection.",
+    "updateConnectionSuccess": "Connection updated successfully.",
+    "updateConnectionTitle": "Update connection",
+    "updateConnection": "Update Connection",
+    "deleteModelError": "Failed to delete model.",
+    "deleteModelSuccess": "Model deleted successfully.",
+    "chatModels": "Chat Models",
+    "noChatModels": "No chat models configured",
+    "embeddingModels": "Embedding Models",
+    "noEmbeddingModels": "No embedding models configured"
+  },
+  "Optimization": {
+    "beta": "Beta",
+    "speed": {
+      "title": "Speed",
+      "description": "Prioritize speed and get the quickest possible answer."
+    },
+    "balanced": {
+      "title": "Balanced",
+      "description": "Find the right balance between speed and accuracy"
+    },
+    "quality": {
+      "title": "Quality",
+      "description": "Get the most thorough and accurate answer"
+    }
+  },
+  "DeleteChat": {
+    "error": "Failed to delete chat",
+    "title": "Delete Confirmation",
+    "confirm": "Are you sure you want to delete this chat?"
+  },
+  "Setup": {
+    "welcomeTo": "Welcome to",
+    "webSearch": "Web search,",
+    "reimagined": "reimagined",
+    "letUsGet": "Let us get",
+    "setUpForYou": "set up for you",
+    "loadProvidersError": "Failed to load providers",
+    "finishError": "Failed to complete setup",
+    "manageConnections": "Manage Connections",
+    "manageConnectionsDescription": "Add connections to access AI models",
+    "loadingProviders": "Loading providers...",
+    "noConnections": "No connections configured",
+    "noConnectionsHint": "Click \"Add Connection\" above to get started",
+    "selectModels": "Select models",
+    "selectModelsDescription": "Select models which you wish to use.",
+    "next": "Next",
+    "finishing": "Finishing...",
+    "finish": "Finish"
+  },
+  "Sidebar": {
+    "home": "Home",
+    "discover": "Discover",
+    "library": "Library"
+  },
+  "Attach": {
+    "embeddingRequired": "Please select an embedding model before uploading.",
+    "uploadFailed": "Failed to upload file(s).",
+    "invalidResponse": "Invalid upload response from server.",
+    "attachedFiles": "Attached files",
+    "add": "Add",
+    "clear": "Clear"
+  },
+  "SearchImages": {
+    "search": "Search images",
+    "viewMore": "View {count} more"
+  },
+  "MessageSources": {
+    "uploadedFile": "Uploaded File",
+    "viewMore": "View {count} more",
+    "title": "Sources"
+  },
+  "WeatherWidget": {
+    "humidity": "Humidity {value}%",
+    "now": "Now",
+    "unavailable": "Weather data unavailable for {location}",
+    "wind": "Wind",
+    "humidityLabel": "Humidity",
+    "feelsLike": "Feels Like"
+  },
+  "TimeAgo": {
+    "second": "{count, plural, one {# second} other {# seconds}} ago",
+    "minute": "{count, plural, one {# minute} other {# minutes}} ago",
+    "hour": "{count, plural, one {# hour} other {# hours}} ago",
+    "day": "{count, plural, one {# day} other {# days}} ago",
+    "year": "{count, plural, one {# year} other {# years}} ago"
+  },
+  "Library": {
+    "title": "Library",
+    "subtitle": "Past chats, sources, and uploads.",
+    "loading": "Loading…",
+    "chatCount": "{count, plural, one {# chat} other {# chats}}",
+    "empty": "No chats found.",
+    "startNew": "<link>Start a new chat</link> to see it listed here.",
+    "fileCount": "{count, plural, one {# file} other {# files}}"
+  },
+  "Navbar": {
+    "newConversation": "New Conversation",
+    "exportChat": "Export Chat",
+    "markdownFormat": ".md format",
+    "pdfFormat": "Document format",
+    "chatExport": "Chat Export",
+    "exportedOn": "Exported on",
+    "user": "User",
+    "assistant": "Assistant",
+    "citations": "Citations"
+  },
+  "Settings": {
+    "loadError": "Failed to load configuration.",
+    "back": "Back",
+    "version": "Version: {version}",
+    "sections": {
+      "preferences": {
+        "name": "Preferences",
+        "description": "Customize your application preferences."
+      },
+      "personalization": {
+        "name": "Personalization",
+        "description": "Customize the behavior and tone of the model."
+      },
+      "models": {
+        "name": "Models",
+        "description": "Connect to AI services and manage connections."
+      },
+      "search": {
+        "name": "Search",
+        "description": "Manage search settings."
+      }
+    }
+  },
+  "ModelSelector": {
+    "loadError": "Failed to fetch providers",
+    "search": "Search models...",
+    "noResults": "No models found",
+    "noModels": "No chat models configured"
+  },
+  "SearchVideos": {
+    "search": "Search videos",
+    "video": "Video",
+    "viewMore": "View {count} more"
+  },
+  "MessageBox": {
+    "sources": "Sources",
+    "brainstorming": "Brainstorming...",
+    "answer": "Answer",
+    "related": "Related"
+  },
+  "AssistantSteps": {
+    "thinkingActive": "Thinking...",
+    "thinking": "Thinking",
+    "searching": "Searching {count, plural, one {# query} other {# queries}}",
+    "found": "Found {count, plural, one {# result} other {# results}}",
+    "reading": "Reading {count, plural, one {# source} other {# sources}}",
+    "scanningUploads": "Scanning your uploaded documents",
+    "readingDocuments": "Reading {count, plural, one {# document} other {# documents}}",
+    "processing": "Processing",
+    "progress": "Research Progress ({count, plural, one {# step} other {# steps}})",
+    "untitled": "Untitled",
+    "untitledDocument": "Untitled document"
+  },
+  "Discover": {
+    "title": "Discover",
+    "fetchError": "Error fetching data",
+    "topics": {
+      "tech": "Tech & Science",
+      "finance": "Finance",
+      "art": "Art & Culture",
+      "sports": "Sports",
+      "entertainment": "Entertainment"
+    }
+  },
+  "WeatherConditions": {
+    "clear": "Clear",
+    "mostlyClear": "Mostly Clear",
+    "mainlyClear": "Mainly Clear",
+    "partlyCloudy": "Partly Cloudy",
+    "cloudy": "Cloudy",
+    "foggy": "Foggy",
+    "fog": "Fog",
+    "rimeFog": "Rime Fog",
+    "lightDrizzle": "Light Drizzle",
+    "drizzle": "Drizzle",
+    "moderateDrizzle": "Moderate Drizzle",
+    "heavyDrizzle": "Heavy Drizzle",
+    "denseDrizzle": "Dense Drizzle",
+    "lightFreezingDrizzle": "Light Freezing Drizzle",
+    "denseFreezingDrizzle": "Dense Freezing Drizzle",
+    "lightRain": "Light Rain",
+    "slightRain": "Slight Rain",
+    "rain": "Rain",
+    "moderateRain": "Moderate Rain",
+    "heavyRain": "Heavy Rain",
+    "lightFreezingRain": "Light Freezing Rain",
+    "heavyFreezingRain": "Heavy Freezing Rain",
+    "lightSnow": "Light Snow",
+    "slightSnowFall": "Slight Snow Fall",
+    "snow": "Snow",
+    "moderateSnowFall": "Moderate Snow Fall",
+    "heavySnow": "Heavy Snow",
+    "heavySnowFall": "Heavy Snow Fall",
+    "snowGrains": "Snow Grains",
+    "lightShowers": "Light Showers",
+    "slightRainShowers": "Slight Rain Showers",
+    "showers": "Showers",
+    "moderateRainShowers": "Moderate Rain Showers",
+    "heavyShowers": "Heavy Showers",
+    "heavyRainShowers": "Heavy Rain Showers",
+    "lightSnowShowers": "Light Snow Showers",
+    "slightSnowShowers": "Slight Snow Showers",
+    "snowShowers": "Snow Showers",
+    "moderateSnowShowers": "Moderate Snow Showers",
+    "heavySnowShowers": "Heavy Snow Showers",
+    "thunderstorm": "Thunderstorm",
+    "thunderstormHail": "Thunderstorm + Hail",
+    "thunderstormWithSlightHail": "Thunderstorm with Slight Hail",
+    "thunderstormWithHeavyHail": "Thunderstorm with Heavy Hail",
+    "severeThunderstorm": "Severe Thunderstorm"
+  },
+  "Stock": {
+    "error": "Error: {error}",
+    "live": "Live",
+    "preMarket": "Pre-Market",
+    "afterHours": "After Hours",
+    "prevClose": "Prev Close",
+    "marketCap": "Market Cap",
+    "open": "Open",
+    "peRatio": "P/E Ratio",
+    "dividendYield": "Dividend Yield",
+    "dayRange": "Day Range",
+    "volume": "Volume",
+    "eps": "EPS"
+  },
+  "Chat": {
+    "configNotReady": "Cannot send message before the configuration is ready",
+    "providerFetchFailed": "Provider fetching failed with status code {status}",
+    "noProviders": "No chat model providers found, please configure them in the settings page.",
+    "noChatModels": "No chat models found, please configure them in the settings page.",
+    "noEmbeddingModels": "No embedding models found, please configure them in the settings page."
+  }
+}

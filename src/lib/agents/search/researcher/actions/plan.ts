@@ -5,7 +5,7 @@ const schema = z.object({
   plan: z
     .string()
     .describe(
-      'A concise natural-language plan in one short paragraph. Open with a short intent phrase (e.g., "Okay, the user wants to...", "Searching for...", "Looking into...") and lay out the steps you will take.',
+      'A concise natural-language plan in one short paragraph. Open with a short intent phrase (e.g., "Okay, the user wants to...", "Searching for...", "Looking into...") and lay out the steps you will take. Write it in the same language as the user\'s question.',
     ),
 });
 

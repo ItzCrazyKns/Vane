@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import SmallNewsCard from '@/components/Discover/SmallNewsCard';
 import MajorNewsCard from '@/components/Discover/MajorNewsCard';
+import { useTranslations } from 'next-intl';
 
 export interface Discover {
   title: string;
@@ -14,30 +15,26 @@ export interface Discover {
   thumbnail: string;
 }
 
-const topics: { key: string; display: string }[] = [
+const topics = [
   {
-    display: 'Tech & Science',
     key: 'tech',
   },
   {
-    display: 'Finance',
     key: 'finance',
   },
   {
-    display: 'Art & Culture',
     key: 'art',
   },
   {
-    display: 'Sports',
     key: 'sports',
   },
   {
-    display: 'Entertainment',
     key: 'entertainment',
   },
-];
+] as const;
 
 const Page = () => {
+  const t = useTranslations('Discover');
   const [discover, setDiscover] = useState<Discover[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTopic, setActiveTopic] = useState<string>(topics[0].key);
@@ -63,7 +60,7 @@ const Page = () => {
       setDiscover(data.blogs);
     } catch (err: any) {
       console.error('Error fetching data:', err.message);
-      toast.error('Error fetching data');
+      toast.error(t('fetchError'));
     } finally {
       setLoading(false);
     }
@@ -84,22 +81,22 @@ const Page = () => {
                 className="text-5xl font-normal p-2"
                 style={{ fontFamily: 'PP Editorial, serif' }}
               >
-                Discover
+                {t('title')}
               </h1>
             </div>
             <div className="flex flex-row items-center space-x-2 overflow-x-auto">
-              {topics.map((t, i) => (
+              {topics.map((topic, i) => (
                 <div
                   key={i}
                   className={cn(
                     'border-[0.1px] rounded-full text-sm px-3 py-1 text-nowrap transition duration-200 cursor-pointer',
-                    activeTopic === t.key
+                    activeTopic === topic.key
                       ? 'text-cyan-700 dark:text-cyan-300 bg-cyan-300/20 border-cyan-700/60 dar:bg-cyan-300/30 dark:border-cyan-300/40'
                       : 'border-black/30 dark:border-white/30 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:border-black/40 dark:hover:border-white/40 hover:bg-black/5 dark:hover:bg-white/5',
                   )}
-                  onClick={() => setActiveTopic(t.key)}
+                  onClick={() => setActiveTopic(topic.key)}
                 >
-                  <span>{t.display}</span>
+                  <span>{t(`topics.${topic.key}`)}</span>
                 </div>
               ))}
             </div>

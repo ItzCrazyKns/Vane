@@ -10,8 +10,10 @@ import { useChat } from '@/lib/hooks/useChat';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 const AttachSmall = () => {
+  const t = useTranslations('Attach');
   const { files, setFiles, setFileIds, fileIds } = useChat();
 
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,7 @@ const AttachSmall = () => {
       const embeddingModel = localStorage.getItem('embeddingModelKey');
 
       if (!embeddingModelProvider || !embeddingModel) {
-        throw new Error('Please select an embedding model before uploading.');
+        throw new Error(t('embeddingRequired'));
       }
 
       data.append('embedding_model_provider_id', embeddingModelProvider);
@@ -53,11 +55,11 @@ const AttachSmall = () => {
       const resData = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(resData.message || 'Failed to upload file(s).');
+        throw new Error(resData.message || t('uploadFailed'));
       }
 
       if (!Array.isArray(resData.files)) {
-        throw new Error('Invalid upload response from server.');
+        throw new Error(t('invalidResponse'));
       }
 
       setFiles([...files, ...resData.files]);
@@ -66,7 +68,7 @@ const AttachSmall = () => {
         ...resData.files.map((file: any) => file.fileId),
       ]);
     } catch (err: any) {
-      toast(err?.message || 'Failed to upload file(s).');
+      toast(err?.message || t('uploadFailed'));
     } finally {
       setLoading(false);
       e.target.value = '';
@@ -102,7 +104,7 @@ const AttachSmall = () => {
                 >
                   <div className="flex flex-row items-center justify-between px-3 py-2">
                     <h4 className="text-black/70 dark:text-white/70 font-medium text-sm">
-                      Attached files
+                      {t('attachedFiles')}
                     </h4>
                     <div className="flex flex-row items-center space-x-4">
                       <button
@@ -119,7 +121,7 @@ const AttachSmall = () => {
                           hidden
                         />
                         <Plus size={16} />
-                        <p className="text-xs">Add</p>
+                        <p className="text-xs">{t('add')}</p>
                       </button>
                       <button
                         onClick={() => {
@@ -129,7 +131,7 @@ const AttachSmall = () => {
                         className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
                       >
                         <Trash size={13} />
-                        <p className="text-xs">Clear</p>
+                        <p className="text-xs">{t('clear')}</p>
                       </button>
                     </div>
                   </div>

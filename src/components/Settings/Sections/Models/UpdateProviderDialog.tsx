@@ -8,6 +8,8 @@ import {
   UIConfigField,
 } from '@/lib/config/types';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
+import { useConfigText } from '@/i18n/configText';
 
 const UpdateProvider = ({
   modelProvider,
@@ -18,6 +20,8 @@ const UpdateProvider = ({
   modelProvider: ConfigModelProvider;
   setProviders: React.Dispatch<React.SetStateAction<ConfigModelProvider[]>>;
 }) => {
+  const t = useTranslations('Models');
+  const ct = useConfigText();
   const [open, setOpen] = useState(false);
   const [config, setConfig] = useState<Record<string, any>>({});
   const [name, setName] = useState(modelProvider.name);
@@ -52,7 +56,7 @@ const UpdateProvider = ({
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update provider');
+        throw new Error(t('updateConnectionError'));
       }
 
       const data: ConfigModelProvider = (await res.json()).provider;
@@ -67,10 +71,10 @@ const UpdateProvider = ({
         });
       });
 
-      toast.success('Connection updated successfully.');
+      toast.success(t('updateConnectionSuccess'));
     } catch (error) {
       console.error('Error updating provider:', error);
-      toast.error('Failed to update connection.');
+      toast.error(t('updateConnectionError'));
     } finally {
       setLoading(false);
       setOpen(false);
@@ -110,7 +114,7 @@ const UpdateProvider = ({
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1">
                   <div className="px-6 pt-6 pb-4">
                     <h3 className="text-black/90 dark:text-white/90 font-medium text-sm">
-                      Update connection
+                      {t('updateConnectionTitle')}
                     </h3>
                   </div>
                   <div className="border-t border-light-200 dark:border-dark-200" />
@@ -121,13 +125,13 @@ const UpdateProvider = ({
                         className="flex flex-col items-start space-y-2"
                       >
                         <label className="text-xs text-black/70 dark:text-white/70">
-                          Connection Name*
+                          {t('connectionName')}*
                         </label>
                         <input
                           value={name}
                           onChange={(event) => setName(event.target.value)}
                           className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                          placeholder={'Connection Name'}
+                          placeholder={t('connectionName')}
                           type="text"
                           required={true}
                         />
@@ -139,7 +143,7 @@ const UpdateProvider = ({
                           className="flex flex-col items-start space-y-2"
                         >
                           <label className="text-xs text-black/70 dark:text-white/70">
-                            {field.name}
+                            {ct(field.name)}
                             {field.required && '*'}
                           </label>
                           <input
@@ -151,9 +155,9 @@ const UpdateProvider = ({
                               }))
                             }
                             className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                            placeholder={
-                              (field as StringUIConfigField).placeholder
-                            }
+                            placeholder={ct(
+                              (field as StringUIConfigField).placeholder,
+                            )}
                             type="text"
                             required={field.required}
                           />
@@ -171,7 +175,7 @@ const UpdateProvider = ({
                       {loading ? (
                         <Loader2 className="animate-spin" size={16} />
                       ) : (
-                        'Update Connection'
+                        t('updateConnection')
                       )}
                     </button>
                   </div>

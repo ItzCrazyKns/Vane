@@ -9,8 +9,10 @@ import {
 import { File } from 'lucide-react';
 import { Fragment, useState } from 'react';
 import { Chunk } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 
 const MessageSources = ({ sources }: { sources: Chunk[] }) => {
+  const t = useTranslations('MessageSources');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const closeModal = () => {
@@ -52,7 +54,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
               )}
               <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
                 {source.metadata.url.includes('file_id://')
-                  ? 'Uploaded File'
+                  ? t('uploadedFile')
                   : source.metadata.url.replace(/.+\/\/|www.|\..+/g, '')}
               </p>
             </div>
@@ -90,7 +92,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
             })}
           </div>
           <p className="text-xs text-black/50 dark:text-white/50">
-            View {sources.length - 3} more
+            {t('viewMore', { count: sources.length - 3 })}
           </p>
         </button>
       )}
@@ -109,7 +111,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
               >
                 <DialogPanel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
                   <DialogTitle className="text-lg font-medium leading-6 dark:text-white">
-                    Sources
+                    {t('title')}
                   </DialogTitle>
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
                     {sources.map((source, i) => (

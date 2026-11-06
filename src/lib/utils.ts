@@ -3,25 +3,22 @@ import { twMerge } from 'tailwind-merge';
 
 export const cn = (...classes: ClassValue[]) => twMerge(clsx(...classes));
 
-export const formatTimeDifference = (
+export type TimeUnit = 'second' | 'minute' | 'hour' | 'day' | 'year';
+
+export const getTimeDifference = (
   date1: Date | string,
   date2: Date | string,
-): string => {
-  date1 = new Date(date1);
-  date2 = new Date(date2);
-
+): { unit: TimeUnit; count: number } => {
   const diffInSeconds = Math.floor(
-    Math.abs(date2.getTime() - date1.getTime()) / 1000,
+    Math.abs(new Date(date2).getTime() - new Date(date1).getTime()) / 1000,
   );
 
-  if (diffInSeconds < 60)
-    return `${diffInSeconds} second${diffInSeconds !== 1 ? 's' : ''}`;
-  else if (diffInSeconds < 3600)
-    return `${Math.floor(diffInSeconds / 60)} minute${Math.floor(diffInSeconds / 60) !== 1 ? 's' : ''}`;
-  else if (diffInSeconds < 86400)
-    return `${Math.floor(diffInSeconds / 3600)} hour${Math.floor(diffInSeconds / 3600) !== 1 ? 's' : ''}`;
-  else if (diffInSeconds < 31536000)
-    return `${Math.floor(diffInSeconds / 86400)} day${Math.floor(diffInSeconds / 86400) !== 1 ? 's' : ''}`;
-  else
-    return `${Math.floor(diffInSeconds / 31536000)} year${Math.floor(diffInSeconds / 31536000) !== 1 ? 's' : ''}`;
+  if (diffInSeconds < 60) return { unit: 'second', count: diffInSeconds };
+  if (diffInSeconds < 3600)
+    return { unit: 'minute', count: Math.floor(diffInSeconds / 60) };
+  if (diffInSeconds < 86400)
+    return { unit: 'hour', count: Math.floor(diffInSeconds / 3600) };
+  if (diffInSeconds < 31536000)
+    return { unit: 'day', count: Math.floor(diffInSeconds / 86400) };
+  return { unit: 'year', count: Math.floor(diffInSeconds / 31536000) };
 };

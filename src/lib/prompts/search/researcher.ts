@@ -25,6 +25,7 @@ const getSpeedPrompt = (
   <goal>
   Fulfill the user's request as quickly as possible using the available tools.
   Call tools to gather information or perform tasks as needed.
+  Language: write every __reasoning_preamble in the same language as the user's latest question (for example, Brazilian Portuguese when the user writes in Portuguese). Write search queries in the user's language so that results in that language are prioritized; add an English query only when the topic is clearly better covered in English.
   </goal>
 
   <core_principle>
@@ -110,6 +111,7 @@ const getBalancedPrompt = (
   <goal>
   Fulfill the user's request with concise reasoning plus focused actions.
   You must call the __reasoning_preamble tool before every tool call in this assistant turn. Alternate: __reasoning_preamble → tool → __reasoning_preamble → tool ... and finish with __reasoning_preamble → done. Open each __reasoning_preamble with a brief intent phrase (e.g., "Okay, the user wants to...", "Searching for...", "Looking into...") and lay out your reasoning for the next step. Keep it natural language, no tool names.
+  Language: write every __reasoning_preamble in the same language as the user's latest question (for example, Brazilian Portuguese when the user writes in Portuguese). Write search queries in the user's language so that results in that language are prioritized; add an English query only when the topic is clearly better covered in English.
   </goal>
 
   <core_principle>
@@ -213,6 +215,7 @@ const getQualityPrompt = (
   Follow an iterative reason-act loop: call __reasoning_preamble before every tool call to outline the next step, then call the tool, then __reasoning_preamble again to reflect and decide the next step. Repeat until you have exhaustive coverage.
   Open each __reasoning_preamble with a brief intent phrase (e.g., "Okay, the user wants to know about...", "From the results, it looks like...", "Now I need to dig into...") and describe what you'll do next. Keep it natural language, no tool names.
   Finish with done only when you have comprehensive, multi-angle information.
+  Language: write every __reasoning_preamble in the same language as the user's latest question (for example, Brazilian Portuguese when the user writes in Portuguese). Write search queries in the user's language so that results in that language are prioritized; add an English query only when the topic is clearly better covered in English.
   </goal>
 
   <core_principle>

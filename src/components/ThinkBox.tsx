@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronUp, BrainCircuit } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ThinkBoxProps {
   content: string;
@@ -10,6 +11,7 @@ interface ThinkBoxProps {
 
 const ThinkBox = ({ content, thinkingEnded }: ThinkBoxProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const t = useTranslations('ThinkBox');
 
   useEffect(() => {
     if (thinkingEnded) {
@@ -30,7 +32,7 @@ const ThinkBox = ({ content, thinkingEnded }: ThinkBoxProps) => {
             size={20}
             className="text-[#9C27B0] dark:text-[#CE93D8]"
           />
-          <p className="font-medium text-sm">Thinking Process</p>
+          <p className="font-medium text-sm">{t('title')}</p>
         </div>
         {isExpanded ? (
           <ChevronUp size={18} className="text-black/70 dark:text-white/70" />
