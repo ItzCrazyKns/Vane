@@ -1,6 +1,6 @@
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Loader2, Pencil } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ConfigModelProvider,
@@ -10,6 +10,21 @@ import {
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { useConfigText } from '@/i18n/configText';
+
+const buildInitialConfig = (
+  modelProvider: ConfigModelProvider,
+  fields: UIConfigField[],
+) => {
+  const config: Record<string, any> = {
+    name: modelProvider.name,
+  };
+
+  fields.forEach((field) => {
+    config[field.key] = modelProvider.config[field.key] || field.default || '';
+  });
+
+  return config;
+};
 
 const UpdateProvider = ({
   modelProvider,
@@ -23,22 +38,19 @@ const UpdateProvider = ({
   const t = useTranslations('Models');
   const ct = useConfigText();
   const [open, setOpen] = useState(false);
-  const [config, setConfig] = useState<Record<string, any>>({});
+  const [config, setConfig] = useState<Record<string, any>>(() =>
+    buildInitialConfig(modelProvider, fields),
+  );
+  const [prevFields, setPrevFields] = useState(fields);
   const [name, setName] = useState(modelProvider.name);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const config: Record<string, any> = {
-      name: modelProvider.name,
-    };
-
-    fields.forEach((field) => {
-      config[field.key] =
-        modelProvider.config[field.key] || field.default || '';
-    });
-
-    setConfig(config);
-  }, [fields]);
+  // Reset the form when the provider's field list changes (adjusted during
+  // render instead of in an effect).
+  if (prevFields !== fields) {
+    setPrevFields(fields);
+    setConfig(buildInitialConfig(modelProvider, fields));
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

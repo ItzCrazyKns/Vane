@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp, BrainCircuit } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -10,16 +10,16 @@ interface ThinkBoxProps {
 }
 
 const ThinkBox = ({ content, thinkingEnded }: ThinkBoxProps) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(!thinkingEnded);
+  const [prevThinkingEnded, setPrevThinkingEnded] = useState(thinkingEnded);
   const t = useTranslations('ThinkBox');
 
-  useEffect(() => {
-    if (thinkingEnded) {
-      setIsExpanded(false);
-    } else {
-      setIsExpanded(true);
-    }
-  }, [thinkingEnded]);
+  // Collapse when thinking ends and expand when it restarts, keeping manual
+  // toggles in between (state adjusted during render, not in an effect).
+  if (prevThinkingEnded !== thinkingEnded) {
+    setPrevThinkingEnded(thinkingEnded);
+    setIsExpanded(!thinkingEnded);
+  }
 
   return (
     <div className="my-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200 overflow-hidden">

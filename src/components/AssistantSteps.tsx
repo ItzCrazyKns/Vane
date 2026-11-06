@@ -9,7 +9,7 @@ import {
   BookSearch,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ResearchBlock, ResearchBlockSubStep } from '@/lib/types';
 import { useChat } from '@/lib/hooks/useChat';
 import { useTranslations } from 'next-intl';
@@ -67,18 +67,22 @@ const AssistantSteps = ({
   isLast: boolean;
 }) => {
   const t = useTranslations('AssistantSteps');
-  const [isExpanded, setIsExpanded] = useState(
-    isLast && status === 'answering' ? true : false,
-  );
   const { researchEnded, loading } = useChat();
+  const [isExpanded, setIsExpanded] = useState(
+    isLast && status === 'answering' && !researchEnded,
+  );
+  const [prev, setPrev] = useState({ researchEnded, status });
 
-  useEffect(() => {
+  // Auto-collapse when research ends and auto-expand while answering, only
+  // when those values change (state adjusted during render, not in an effect).
+  if (prev.researchEnded !== researchEnded || prev.status !== status) {
+    setPrev({ researchEnded, status });
     if (researchEnded && isLast) {
       setIsExpanded(false);
     } else if (status === 'answering' && isLast) {
       setIsExpanded(true);
     }
-  }, [researchEnded, status]);
+  }
 
   if (!block || block.data.subSteps.length === 0) return null;
 

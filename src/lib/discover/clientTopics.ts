@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
+import { useIsClient } from '@/lib/hooks/useIsClient';
 
 /** A subject the user follows. Its articles come from `/api/discover?q=`. */
 export interface FollowedTopic {
@@ -79,25 +80,51 @@ export const removeTopic = (
   return { ...prefs, hidden: [...prefs.hidden, id] };
 };
 
+// A tiny store over localStorage so the hook can use useSyncExternalStore:
+// the server and the hydration render see empty prefs, the client then reads
+// the saved ones. The snapshot is cached by the raw string so it stays stable.
+const listeners = new Set<() => void>();
+let cachedRaw: string | null = null;
+let cachedPrefs: DiscoverTopicPrefs = emptyPrefs();
+const serverPrefs = emptyPrefs();
+
+const subscribePrefs = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
+const getPrefsSnapshot = (): DiscoverTopicPrefs => {
+  const raw = localStorage.getItem(DISCOVER_TOPICS_KEY);
+  if (raw !== cachedRaw) {
+    cachedRaw = raw;
+    cachedPrefs = parseTopicPrefs(raw);
+  }
+  return cachedPrefs;
+};
+
+const getServerPrefs = () => serverPrefs;
+
 /** Discover topic preferences, saved in this browser. */
 export const useDiscoverTopicPrefs = () => {
-  const [prefs, setPrefs] = useState<DiscoverTopicPrefs>(emptyPrefs);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    setPrefs(parseTopicPrefs(localStorage.getItem(DISCOVER_TOPICS_KEY)));
-    setLoaded(true);
-  }, []);
+  const prefs = useSyncExternalStore(
+    subscribePrefs,
+    getPrefsSnapshot,
+    getServerPrefs,
+  );
+  const loaded = useIsClient();
 
   const update = useCallback(
     (change: (prefs: DiscoverTopicPrefs) => DiscoverTopicPrefs) => {
-      setPrefs((current) => {
-        const next = change(current);
-        if (next !== current) {
-          localStorage.setItem(DISCOVER_TOPICS_KEY, JSON.stringify(next));
-        }
-        return next;
-      });
+      const current = getPrefsSnapshot();
+      const next = change(current);
+      if (next === current) return;
+      const raw = JSON.stringify(next);
+      localStorage.setItem(DISCOVER_TOPICS_KEY, raw);
+      cachedRaw = raw;
+      cachedPrefs = next;
+      listeners.forEach((listener) => listener());
     },
     [],
   );

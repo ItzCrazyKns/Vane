@@ -171,7 +171,7 @@ const loadMessages = async (
   chatId: string,
   setMessages: (messages: Message[]) => void,
   setIsMessagesLoaded: (loaded: boolean) => void,
-  chatHistory: React.MutableRefObject<[string, string][]>,
+  setChatHistory: (history: [string, string][]) => void,
   setSources: (sources: string[]) => void,
   setNotFound: (notFound: boolean) => void,
   setFiles: (files: File[]) => void,
@@ -229,7 +229,7 @@ const loadMessages = async (
   setFiles(files);
   setFileIds(files.map((file: File) => file.fileId));
 
-  chatHistory.current = history;
+  setChatHistory(history);
   setSources(data.chat.sources);
   setIsMessagesLoaded(true);
 };
@@ -270,15 +270,28 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
-  const [chatId, setChatId] = useState<string | undefined>(params.chatId);
-  const [newChatCreated, setNewChatCreated] = useState(false);
+  // Without a chatId in the URL this is a new chat: it gets a fresh id and
+  // has no messages to load.
+  const [chatId, setChatId] = useState<string | undefined>(
+    () => params.chatId ?? crypto.randomBytes(20).toString('hex'),
+  );
+  const [newChatCreated, setNewChatCreated] = useState(() => !params.chatId);
 
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
 
   const [researchEnded, setResearchEnded] = useState(false);
 
+  // The ref is read by the async handlers (always the latest value); the
+  // state copy is what the context exposes to rendering components.
   const chatHistory = useRef<[string, string][]>([]);
+  const [chatHistoryState, setChatHistoryState] = useState<[string, string][]>(
+    [],
+  );
+  const setChatHistory = (history: [string, string][]) => {
+    chatHistory.current = history;
+    setChatHistoryState(history);
+  };
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [files, setFiles] = useState<File[]>([]);
@@ -287,7 +300,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [sources, setSources] = useState<string[]>(['web']);
   const [optimizationMode, setOptimizationMode] = useState('speed');
 
-  const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
+  const [isMessagesLoaded, setIsMessagesLoaded] = useState(
+    () => !params.chatId,
+  );
 
   const [notFound, setNotFound] = useState(false);
 
@@ -306,7 +321,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [isConfigReady, setIsConfigReady] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isReady, setIsReady] = useState(false);
+  // Ready once the messages (or a new empty chat) and the model config are in.
+  const isReady = isMessagesLoaded && isConfigReady;
 
   const messagesRef = useRef<Message[]>([]);
 
@@ -354,149 +370,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const isReconnectingRef = useRef(false);
   const handledMessageEndRef = useRef<Set<string>>(new Set());
-
-  const checkReconnect = async () => {
-    if (isReconnectingRef.current) return;
-
-    setIsReady(true);
-    console.debug(new Date(), 'app:ready');
-
-    if (messages.length > 0) {
-      const lastMsg = messages[messages.length - 1];
-
-      if (lastMsg.status === 'answering') {
-        setLoading(true);
-        setResearchEnded(false);
-        setMessageAppeared(false);
-
-        isReconnectingRef.current = true;
-
-        const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
-          method: 'POST',
-        });
-
-        if (!res.body) throw new Error('No response body');
-
-        const reader = res.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-
-        let partialChunk = '';
-
-        const messageHandler = getMessageHandler(lastMsg);
-
-        try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            partialChunk += decoder.decode(value, { stream: true });
-
-            try {
-              const messages = partialChunk.split('\n');
-              for (const msg of messages) {
-                if (!msg.trim()) continue;
-                const json = JSON.parse(msg);
-                messageHandler(json);
-              }
-              partialChunk = '';
-            } catch (error) {
-              console.warn('Incomplete JSON, waiting for next chunk...');
-            }
-          }
-        } finally {
-          isReconnectingRef.current = false;
-        }
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkConfig(
-      setChatModelProvider,
-      setEmbeddingModelProvider,
-      setIsConfigReady,
-      setHasError,
-      t,
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (params.chatId && params.chatId !== chatId) {
-      setChatId(params.chatId);
-      setMessages([]);
-      chatHistory.current = [];
-      setFiles([]);
-      setFileIds([]);
-      setIsMessagesLoaded(false);
-      setNotFound(false);
-      setNewChatCreated(false);
-    }
-  }, [params.chatId, chatId]);
-
-  useEffect(() => {
-    if (
-      chatId &&
-      !newChatCreated &&
-      !isMessagesLoaded &&
-      messages.length === 0
-    ) {
-      loadMessages(
-        chatId,
-        setMessages,
-        setIsMessagesLoaded,
-        chatHistory,
-        setSources,
-        setNotFound,
-        setFiles,
-        setFileIds,
-      );
-    } else if (!chatId) {
-      setNewChatCreated(true);
-      setIsMessagesLoaded(true);
-      setChatId(crypto.randomBytes(20).toString('hex'));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
-
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-
-  useEffect(() => {
-    if (isMessagesLoaded && isConfigReady && newChatCreated) {
-      setIsReady(true);
-      console.debug(new Date(), 'app:ready');
-    } else if (isMessagesLoaded && isConfigReady && !newChatCreated) {
-      checkReconnect();
-    } else {
-      setIsReady(false);
-    }
-  }, [isMessagesLoaded, isConfigReady, newChatCreated]);
-
-  const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.messageId === messageId);
-
-    if (index === -1) return;
-
-    setMessages((prev) => prev.slice(0, index));
-
-    chatHistory.current = chatHistory.current.slice(0, index * 2);
-
-    const messageToRewrite = messages[index];
-    sendMessage(messageToRewrite.query, messageToRewrite.messageId, true);
-  };
-
-  useEffect(() => {
-    if (isReady && initialMessage && isConfigReady) {
-      if (!isConfigReady) {
-        toast.error(t('configNotReady'));
-        return;
-      }
-      sendMessage(initialMessage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConfigReady, isReady, initialMessage]);
 
   const getMessageHandler = (message: Message) => {
     const messageId = message.messageId;
@@ -600,7 +473,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           ],
         ];
 
-        chatHistory.current = newHistory;
+        setChatHistory(newHistory);
 
         setMessages((prev) =>
           prev.map((msg) =>
@@ -755,12 +628,151 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const checkReconnect = async () => {
+    if (isReconnectingRef.current) return;
+
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+
+      if (lastMsg.status === 'answering') {
+        setLoading(true);
+        setResearchEnded(false);
+        setMessageAppeared(false);
+
+        isReconnectingRef.current = true;
+
+        const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
+          method: 'POST',
+        });
+
+        if (!res.body) throw new Error('No response body');
+
+        const reader = res.body?.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        let partialChunk = '';
+
+        const messageHandler = getMessageHandler(lastMsg);
+
+        try {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            partialChunk += decoder.decode(value, { stream: true });
+
+            try {
+              const messages = partialChunk.split('\n');
+              for (const msg of messages) {
+                if (!msg.trim()) continue;
+                const json = JSON.parse(msg);
+                messageHandler(json);
+              }
+              partialChunk = '';
+            } catch (error) {
+              console.warn('Incomplete JSON, waiting for next chunk...');
+            }
+          }
+        } finally {
+          isReconnectingRef.current = false;
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    checkConfig(
+      setChatModelProvider,
+      setEmbeddingModelProvider,
+      setIsConfigReady,
+      setHasError,
+      t,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Opening another chat (client-side navigation to /c/<id>): reset the
+  // per-chat state while rendering, so the old chat is never shown for it.
+  if (params.chatId && params.chatId !== chatId) {
+    setChatId(params.chatId);
+    setMessages([]);
+    setChatHistoryState([]);
+    setFiles([]);
+    setFileIds([]);
+    setIsMessagesLoaded(false);
+    setNotFound(false);
+    setNewChatCreated(false);
+  }
+
+  // Keep the ref in step with resets done during render above.
+  useEffect(() => {
+    chatHistory.current = chatHistoryState;
+  }, [chatHistoryState]);
+
+  useEffect(() => {
+    if (
+      chatId &&
+      !newChatCreated &&
+      !isMessagesLoaded &&
+      messages.length === 0
+    ) {
+      loadMessages(
+        chatId,
+        setMessages,
+        setIsMessagesLoaded,
+        setChatHistory,
+        setSources,
+        setNotFound,
+        setFiles,
+        setFileIds,
+      );
+    }
+  }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    console.debug(new Date(), 'app:ready');
+    // A saved chat may still be answering: resume its stream.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- starts the /api/reconnect stream; the setState calls are its loading flags, not derived state
+    if (!newChatCreated) checkReconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, newChatCreated]);
+
+  const rewrite = (messageId: string) => {
+    const index = messages.findIndex((msg) => msg.messageId === messageId);
+
+    if (index === -1) return;
+
+    setMessages((prev) => prev.slice(0, index));
+
+    setChatHistory(chatHistory.current.slice(0, index * 2));
+
+    const messageToRewrite = messages[index];
+    sendMessage(messageToRewrite.query, messageToRewrite.messageId, true);
+  };
+
+  useEffect(() => {
+    if (isReady && initialMessage && isConfigReady) {
+      if (!isConfigReady) {
+        toast.error(t('configNotReady'));
+        return;
+      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sends the ?q= message once the app is ready; the setState calls are the request's loading flags
+      sendMessage(initialMessage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConfigReady, isReady, initialMessage]);
+
   return (
     <chatContext.Provider
       value={{
         messages,
         sections,
-        chatHistory: chatHistory.current,
+        chatHistory: chatHistoryState,
         files,
         fileIds,
         sources,

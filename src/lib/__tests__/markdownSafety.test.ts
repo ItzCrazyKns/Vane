@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import Markdown from 'markdown-to-jsx';
+import { compiler } from 'markdown-to-jsx';
 import { safeMarkdownRenderRule } from '@/lib/markdownSafety';
 
 const Citation = (props: { href: string; children?: unknown }) =>
@@ -13,12 +13,9 @@ const Citation = (props: { href: string; children?: unknown }) =>
 
 const render = (md: string) =>
   renderToStaticMarkup(
-    createElement(Markdown, {
-      options: {
-        renderRule: safeMarkdownRenderRule,
-        overrides: { citation: { component: Citation } },
-      },
-      children: md,
+    compiler(md, {
+      renderRule: safeMarkdownRenderRule,
+      overrides: { citation: { component: Citation } },
     }),
   );
 
