@@ -72,8 +72,10 @@ const Page = () => {
   const { prefs, loaded, follow, remove, restoreDefaults } =
     useDiscoverTopicPrefs();
 
-  const [discover, setDiscover] = useState<DiscoverItem[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<{
+    query: string;
+    items: DiscoverItem[];
+  } | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -99,38 +101,53 @@ const Page = () => {
 
   const active = pills.find((p) => p.id === activeId) ?? pills[0];
 
+  // The request for the active topic, also used to tell whether the fetched
+  // articles belong to it. null when every topic was removed.
+  const requestQuery = active
+    ? new URLSearchParams(
+        active.query
+          ? { lang: locale, q: active.query }
+          : { lang: locale, topic: active.id },
+      ).toString()
+    : null;
+
+  // Loading and the article list are derived from which request the last
+  // result answered, so the effect below only sets state when a fetch ends.
+  const loading =
+    !loaded || (requestQuery !== null && result?.query !== requestQuery);
+  const discover =
+    requestQuery === null
+      ? []
+      : result?.query === requestQuery
+        ? result.items
+        : null;
+
+  // Clear the filter when the topic changes (adjusted during render).
+  const [filterQuery, setFilterQuery] = useState(requestQuery);
+  if (filterQuery !== requestQuery) {
+    setFilterQuery(requestQuery);
+    setFilter('');
+  }
+
   useEffect(() => {
-    if (!loaded) return;
-    if (!active) {
-      setDiscover([]);
-      setLoading(false);
-      return;
-    }
+    if (!loaded || requestQuery === null) return;
 
     const controller = new AbortController();
-    const params = new URLSearchParams({ lang: locale });
-    if (active.query) params.set('q', active.query);
-    else params.set('topic', active.id);
-
-    setLoading(true);
-    setFilter('');
-    fetch(`/api/discover?${params}`, { signal: controller.signal })
+    fetch(`/api/discover?${requestQuery}`, { signal: controller.signal })
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
-        setDiscover(data.blogs ?? []);
-        setLoading(false);
+        setResult({ query: requestQuery, items: data.blogs ?? [] });
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
         console.error('Error fetching data:', err.message);
         toast.error(t('fetchError'));
-        setDiscover([]);
-        setLoading(false);
+        setResult({ query: requestQuery, items: [] });
       });
 
     return () => controller.abort();
-  }, [loaded, active?.id, active?.query, locale, t]);
+  }, [loaded, requestQuery, t]);
 
   const words = filter.toLowerCase().split(/\s+/).filter(Boolean);
   const visible =

@@ -15,13 +15,13 @@ const MessageInput = () => {
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');
 
-  useEffect(() => {
-    if (textareaRows >= 2 && message && mode === 'single') {
-      setMode('multi');
-    } else if (!message && mode === 'multi') {
-      setMode('single');
-    }
-  }, [textareaRows, mode, message]);
+  // Adjust the layout while rendering instead of in an effect: grow to
+  // multi-line once the text wraps, and shrink back only when it is cleared.
+  if (textareaRows >= 2 && message && mode === 'single') {
+    setMode('multi');
+  } else if (!message && mode === 'multi') {
+    setMode('single');
+  }
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 

@@ -50,17 +50,20 @@ const AddProvider = ({
 
   const selectedProviderFields = useMemo(() => {
     if (!selectedProvider) return [];
-    const providerFields = providerConfigMap[selectedProvider]?.fields || [];
-    const config: Record<string, any> = {};
-
-    providerFields.forEach((field) => {
-      config[field.key] = field.default || '';
-    });
-
-    setConfig(config);
-
-    return providerFields;
+    return providerConfigMap[selectedProvider]?.fields || [];
   }, [selectedProvider, providerConfigMap]);
+
+  // Reset the form to the field defaults whenever the selected provider's
+  // fields change (adjusted during render, not as a side effect of useMemo).
+  const [prevFields, setPrevFields] = useState<UIConfigField[] | null>(null);
+  if (selectedProvider && prevFields !== selectedProviderFields) {
+    setPrevFields(selectedProviderFields);
+    const defaults: Record<string, any> = {};
+    selectedProviderFields.forEach((field) => {
+      defaults[field.key] = field.default || '';
+    });
+    setConfig(defaults);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

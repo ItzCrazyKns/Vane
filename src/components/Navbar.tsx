@@ -1,6 +1,6 @@
 import { Clock, Edit, Share, Trash, FileText, FileDown } from 'lucide-react';
 import { Message } from './ChatWindow';
-import { useEffect, useState, Fragment } from 'react';
+import { useSyncExternalStore, Fragment } from 'react';
 import { getTimeDifference } from '@/lib/utils';
 import DeleteChat from './DeleteChat';
 import {
@@ -214,6 +214,11 @@ const exportAsPDF = async (
   doc.save(`${title || 'chat'}.pdf`);
 };
 
+const subscribeToClock = (onTick: () => void) => {
+  const intervalId = setInterval(onTick, 1000);
+  return () => clearInterval(intervalId);
+};
+
 const Navbar = () => {
   const t = useTranslations('Navbar');
   const tt = useTranslations('TimeAgo');
@@ -224,48 +229,37 @@ const Navbar = () => {
     assistant: t('assistant'),
     citations: t('citations'),
   };
-  const [title, setTitle] = useState<string>('');
-  const [timeAgo, setTimeAgo] = useState<string>('');
-
   const { sections, chatId } = useChat();
 
-  useEffect(() => {
-    if (sections.length > 0 && sections[0].message) {
-      const newTitle =
-        sections[0].message.query.length > 30
-          ? `${sections[0].message.query.substring(0, 30).trim()}...`
-          : sections[0].message.query || t('newConversation');
+  const firstMessage = sections[0]?.message;
+  const title = firstMessage
+    ? firstMessage.query.length > 30
+      ? `${firstMessage.query.substring(0, 30).trim()}...`
+      : firstMessage.query || t('newConversation')
+    : '';
 
-      setTitle(newTitle);
+  // "x minutes ago" for the first message, read from a one-second clock.
+  // React re-renders only when the label text changes; '' on the server.
+  const timeAgo = useSyncExternalStore(
+    subscribeToClock,
+    () => {
+      if (!firstMessage) return '';
       const { unit, count } = getTimeDifference(
         new Date(),
-        sections[0].message.createdAt,
+        firstMessage.createdAt,
       );
-      setTimeAgo(tt(unit, { count }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sections]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (sections.length > 0 && sections[0].message) {
-        const { unit, count } = getTimeDifference(
-          new Date(),
-          sections[0].message.createdAt,
-        );
-        setTimeAgo(tt(unit, { count }));
-      }
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      return tt(unit, { count });
+    },
+    () => '',
+  );
 
   return (
     <div className="sticky -mx-4 lg:mx-0 top-0 z-40 bg-light-primary/95 dark:bg-dark-primary/95 backdrop-blur-sm border-b border-light-200/50 dark:border-dark-200/30">
       <div className="px-4 lg:px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center min-w-0">
+            {/* Full reload on purpose: it resets the chat state kept by ChatProvider. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a
               href="/"
               className="lg:hidden mr-3 p-2 -ml-2 rounded-lg hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"

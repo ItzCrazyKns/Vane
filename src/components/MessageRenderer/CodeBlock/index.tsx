@@ -1,10 +1,11 @@
 'use client';
 
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react';
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import darkTheme from './CodeBlockDarkTheme';
 import lightTheme from './CodeBlockLightTheme';
+import { useIsClient } from '@/lib/hooks/useIsClient';
 
 // O highlighter (highlight.js) fica num chunk à parte, baixado no primeiro
 // bloco de código. Até lá o código aparece sem cores, na mesma caixa.
@@ -23,13 +24,9 @@ const CodeBlock = ({
   children: React.ReactNode;
 }) => {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
 
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const syntaxTheme = useMemo(() => {
     if (!mounted) return lightTheme;
