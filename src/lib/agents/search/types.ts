@@ -66,6 +66,8 @@ export type AdditionalConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   session: SessionManager;
+  /** The user's question (standalone form), for actions that judge relevance. */
+  question?: string;
 };
 
 export type ResearcherInput = {
@@ -83,6 +85,8 @@ export type ResearcherOutput = {
 export type SearchActionOutput = {
   type: 'search_results';
   results: Chunk[];
+  /** Told to the model when the action ran no search or every search failed. */
+  note?: string;
 };
 
 export type DoneActionOutput = {

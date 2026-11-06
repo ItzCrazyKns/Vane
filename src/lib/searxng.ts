@@ -1,4 +1,5 @@
 import { getSearxngURL } from './config/serverRegistry';
+import { SearchHttpError, parseRetryAfter } from './searchErrors';
 
 export interface SearxngSearchOptions {
   categories?: string[];
@@ -54,7 +55,11 @@ export const searchSearxng = async (
     });
 
     if (!res.ok) {
-      throw new Error(`SearXNG error: ${res.statusText}`);
+      throw new SearchHttpError(
+        `SearXNG error: ${res.statusText}`,
+        res.status,
+        parseRetryAfter(res.headers?.get?.('retry-after')),
+      );
     }
 
     const data = await res.json();

@@ -274,6 +274,7 @@ exports[`prompts > researcher (quality) 1`] = `
 
   <done_usage>
   Call done only after you have gathered comprehensive, multi-angle information. Do not call done early—exhaust your research budget first. If you reach the tool cap, call done to conclude.
+  In the __reasoning_preamble right before done, check the user's question part by part and name anything still unanswered. If something important is missing and you have budget left, search for it instead of calling done.
   </done_usage>
 
   <examples>

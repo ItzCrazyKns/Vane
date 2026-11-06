@@ -104,6 +104,8 @@ A page that fails or times out is skipped and the answer is built from the other
 | `FIRECRAWL_API_URL` | No       | Base URL of your Firecrawl API, without `/v2`. For example `https://api.firecrawl.dev` or `http://host.docker.internal:3002`.        |
 | `FIRECRAWL_API_KEY` | No       | Sent as `Authorization: Bearer <key>`. Needed for Firecrawl Cloud; leave it unset for a self-hosted instance without authentication. |
 
+Web searches made during research are throttled to `SEARCH_CONCURRENCY` at a time (default `2`) so a burst of queries does not trip SearXNG's bot detection or upstream rate limits. A search that fails with 403, 429, 502, 503, 504 or a timeout is retried twice (after 1 s and 3 s, or the server's `Retry-After` up to 10 s), and a query that still fails is skipped instead of aborting the research.
+
 Example `docker-compose.yaml` that builds the slim image and uses SearxNG, LM Studio and Firecrawl running on the host:
 
 ```yaml
