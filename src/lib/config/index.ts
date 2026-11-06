@@ -90,6 +90,26 @@ class ConfigManager {
         default: true,
         scope: 'client',
       },
+      {
+        name: 'Discover article click',
+        key: 'discoverClickAction',
+        type: 'select',
+        options: [
+          {
+            name: 'Summarize with AI',
+            value: 'summarize',
+          },
+          {
+            name: 'Open the article',
+            value: 'open',
+          },
+        ],
+        required: false,
+        description:
+          'What happens when you click an article in Discover or in the news widget.',
+        default: 'summarize',
+        scope: 'client',
+      },
     ],
     personalization: [
       {

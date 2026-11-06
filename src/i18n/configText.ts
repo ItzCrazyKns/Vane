@@ -30,6 +30,11 @@ const configText: Partial<Record<Locale, Record<string, string>>> = {
     'Show news widget': 'Mostrar widget de notícias',
     'Display the recent news card on the home screen.':
       'Exibir o cartão de notícias recentes na tela inicial.',
+    'Discover article click': 'Clique em notícias do Descobrir',
+    'Summarize with AI': 'Resumir com IA',
+    'Open the article': 'Abrir a notícia',
+    'What happens when you click an article in Discover or in the news widget.':
+      'O que acontece ao clicar em uma notícia no Descobrir ou no widget de notícias.',
     'System Instructions': 'Instruções do sistema',
     'Add custom behavior or tone for the model.':
       'Adicione um comportamento ou tom personalizado para o modelo.',

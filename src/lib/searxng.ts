@@ -5,6 +5,8 @@ export interface SearxngSearchOptions {
   engines?: string[];
   language?: string;
   pageno?: number;
+  /** Only keep results newer than this. Engines without date support ignore it. */
+  time_range?: 'day' | 'week' | 'month' | 'year';
 }
 
 export interface SearxngSearchResult {

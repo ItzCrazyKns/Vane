@@ -252,12 +252,26 @@
     "title": "Descobrir",
     "fetchError": "Erro ao carregar os dados",
     "topics": {
-      "tech": "Tecnologia e ciência",
+      "tech": "Tecnologia",
       "finance": "Finanças",
       "art": "Arte e cultura",
       "sports": "Esportes",
-      "entertainment": "Entretenimento"
-    }
+      "entertainment": "Entretenimento",
+      "science": "Ciência e saúde"
+    },
+    "add": "Adicionar",
+    "addPlaceholder": "Assunto para seguir",
+    "editTopics": "Editar tópicos",
+    "doneEditing": "Concluir edição",
+    "remove": "Remover {topic}",
+    "restore": "Restaurar padrões",
+    "filterPlaceholder": "Filtrar notícias carregadas",
+    "clearFilter": "Limpar filtro",
+    "follow": "Seguir “{topic}”",
+    "askAi": "Perguntar à IA",
+    "noTopics": "Nenhum tópico. Use “Adicionar” para seguir um assunto ou restaure os padrões.",
+    "noMatches": "Nenhuma notícia carregada corresponde ao filtro.",
+    "empty": "Nenhuma notícia encontrada para este tópico."
   },
   "WeatherConditions": {
     "clear": "Céu limpo",

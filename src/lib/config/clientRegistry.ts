@@ -18,6 +18,13 @@ export const getShowWeatherWidget = () =>
 export const getShowNewsWidget = () =>
   getClientConfig('showNewsWidget', 'true') === 'true';
 
+export type DiscoverClickAction = 'summarize' | 'open';
+
+export const getDiscoverClickAction = (): DiscoverClickAction =>
+  getClientConfig('discoverClickAction', 'summarize') === 'open'
+    ? 'open'
+    : 'summarize';
+
 export const getMeasurementUnit = () => {
   const value =
     getClientConfig('measureUnit') ??
