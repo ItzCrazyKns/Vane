@@ -14,6 +14,7 @@ import crypto from 'crypto';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
+import { openReconnectStream } from './reconnectStream';
 import { MinimalProvider } from '../models/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
@@ -371,13 +372,26 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         isReconnectingRef.current = true;
 
-        const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
-          method: 'POST',
-        });
+        const body = await openReconnectStream(lastMsg.backendId);
 
-        if (!res.body) throw new Error('No response body');
+        if (!body) {
+          // The session is gone (e.g. server restart) or failed: show the
+          // answer as failed instead of spinning forever.
+          isReconnectingRef.current = false;
+          toast.error(t('reconnectFailed'));
+          setLoading(false);
+          setResearchEnded(true);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.messageId === lastMsg.messageId
+                ? { ...msg, status: 'error' as const }
+                : msg,
+            ),
+          );
+          return;
+        }
 
-        const reader = res.body?.getReader();
+        const reader = body.getReader();
         const decoder = new TextDecoder('utf-8');
 
         let partialChunk = '';
