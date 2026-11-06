@@ -14,6 +14,13 @@ import {
 } from '@/lib/context/budget';
 import { compactResearchHistory } from '@/lib/context/compact';
 
+/**
+ * Sent back as the result of `done` when the research has found no source
+ * at all, so the model searches once more instead of answering blind.
+ */
+export const NO_EVIDENCE_NOTE =
+  'No sources were found yet, so the answer would have nothing to cite. Before finishing, search again once with broader or differently worded queries (and without recency/domain filters). Call done only if that search also finds nothing.';
+
 /** Rough per-tool cost of the tool schema sent with each request. */
 const TOOL_SCHEMA_OVERHEAD_TOKENS = 60;
 
@@ -79,6 +86,11 @@ class Researcher {
       });
 
     const researchBlockId = crypto.randomUUID();
+
+    /* The model gets one extra search when it tries to finish with no
+       sources at all (weak evidence), if a web search is available. */
+    let retriedForEvidence = false;
+    const canSearchWeb = availableTools.some((t) => t.name === 'web_search');
 
     /* One source block per answer, emitted with the first results and
        replaced as the research finds more. */
@@ -266,13 +278,52 @@ class Researcher {
           (tc) => tc.name !== 'done' && tc.name !== '__reasoning_preamble',
         );
 
-        if (remaining.length > 0) {
-          actionOutput.push(
-            ...(await ActionRegistry.executeAll(remaining, actionConfig)),
-          );
-        }
+        const remainingResults =
+          remaining.length > 0
+            ? await ActionRegistry.executeAll(remaining, actionConfig)
+            : [];
+        actionOutput.push(...remainingResults);
 
-        break;
+        const noEvidence =
+          canSearchWeb &&
+          !retriedForEvidence &&
+          i < maxIteration - 1 &&
+          mergeSearchFindings(actionOutput).length === 0;
+
+        if (!noEvidence) break;
+
+        retriedForEvidence = true;
+        console.log(
+          '[research] done called with no sources; asking for one more search',
+        );
+
+        publishSources(false);
+
+        agentMessageHistory.push({
+          role: 'assistant',
+          content: '',
+          tool_calls: finalToolCalls,
+        });
+
+        finalToolCalls.forEach((tc) => {
+          const k = remaining.indexOf(tc);
+          agentMessageHistory.push({
+            role: 'tool',
+            id: tc.id,
+            name: tc.name,
+            content:
+              tc.name === 'done'
+                ? JSON.stringify({ type: 'done', note: NO_EVIDENCE_NOTE })
+                : k !== -1
+                  ? JSON.stringify(remainingResults[k])
+                  : JSON.stringify({
+                      type: 'reasoning',
+                      reasoning: tc.arguments?.plan ?? '',
+                    }),
+          });
+        });
+
+        continue;
       }
 
       agentMessageHistory.push({

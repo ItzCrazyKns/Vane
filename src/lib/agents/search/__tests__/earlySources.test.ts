@@ -9,6 +9,10 @@ import {
 } from '@/__tests__/helpers/fakes';
 
 vi.mock('@/lib/searxng', () => ({ searchSearxng: vi.fn() }));
+/* Balanced reads its top pages; keep that off the network. */
+vi.mock('@/lib/scraper', () => ({
+  default: { scrape: vi.fn(async () => ({ title: 't', content: '' })) },
+}));
 
 import { searchSearxng } from '@/lib/searxng';
 import Researcher, { mergeSearchFindings } from '../researcher';

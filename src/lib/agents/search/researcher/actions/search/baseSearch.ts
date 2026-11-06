@@ -18,6 +18,7 @@ import {
   hasFilters,
   toSearchOptions,
 } from './filters';
+import { fuseQueryResults, lexicalScore, ranksOf, rrf } from './ranking';
 
 /**
  * Results kept from the search engine for one web_search call, split
@@ -58,6 +59,25 @@ const withEmbeddingSlot = createLimiter(EMBEDDING_CONCURRENCY, {
 const SIMILARITY_THRESHOLD = 0.5;
 /** Results kept, best first, when the threshold would drop all of a query's. */
 const FALLBACK_RESULTS = 10;
+/** Speed/balanced results returned to the researcher. */
+const MAX_RESULTS = 20;
+/** Fewer results than this after a filtered search counts as weak evidence. */
+export const MIN_FILTERED_RESULTS = 3;
+
+/** Page reading in balanced mode (span retrieval). */
+export const pageReading = {
+  /** Pages read per web_search call in balanced mode. */
+  balancedPages: 2,
+  /** Passages of a page added to its result. */
+  passagesPerPage: 2,
+  /** Passage size, in tokens, and the overlap between passages. */
+  passageTokens: 200,
+  passageOverlap: 30,
+  /** Passages scored per page; the rest of a long page is skipped. */
+  maxPassages: 40,
+  /** Pages not read by then are left with their snippet. */
+  timeoutMs: 8000,
+};
 
 /**
  * Extractor LLM calls in flight at once for one quality search. Every
@@ -135,7 +155,39 @@ export const executeSearch = async (input: {
   question?: string;
   /** Optional recency / domain / language filters sent by the researcher. */
   filters?: SearchFilters;
-}) => {
+  /**
+   * Speed/balanced only: how many of the top results to open and read, so
+   * the writer gets the most relevant passages of the page instead of the
+   * engine's snippet alone. 0 (default) reads none.
+   */
+  readPages?: number;
+}): Promise<Chunk[]> => {
+  const results = await runSearch(input);
+
+  /* Weak evidence after a filtered search: the filter was probably too
+     narrow (a site without the answer, a period with no coverage). Search
+     again without it instead of hoping the model notices. */
+  const filtered = input.filters && hasFilters(input.filters);
+  const weak =
+    input.mode === 'quality'
+      ? results.length === 0
+      : results.length < MIN_FILTERED_RESULTS;
+
+  if (!filtered || !weak) return results;
+
+  console.log(
+    `[search] only ${results.length} result(s) with filters; searching again without them`,
+  );
+  const unfiltered = await runSearch({ ...input, filters: undefined });
+  return dedupeByUrl([...results, ...unfiltered]).slice(
+    0,
+    input.mode === 'quality' ? undefined : MAX_RESULTS,
+  );
+};
+
+type SearchInput = Parameters<typeof executeSearch>[0];
+
+const runSearch = async (input: SearchInput): Promise<Chunk[]> => {
   const researchBlock = input.researchBlock;
   const filters = input.filters;
   const perQueryLimit = Math.max(
@@ -197,13 +249,24 @@ export const executeSearch = async (input: {
           () => input.embedding.embedText([q, ...contents]),
         );
 
+        const similarities = chunkEmbeddings.map((e) =>
+          computeSimilarity(queryEmbedding, e),
+        );
+        const fused = fuseQueryResults(
+          q,
+          input.question,
+          res.results.map((r, i) => ({ title: r.title, content: contents[i] })),
+          similarities,
+        );
+
         const scored = res.results.map((r, i) => ({
           content: contents[i],
           metadata: {
             title: r.title,
             url: r.url,
             ...dateOf(r),
-            similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
+            similarity: similarities[i],
+            score: fused[i],
             embedding: chunkEmbeddings[i],
           },
         }));
@@ -220,7 +283,18 @@ export const executeSearch = async (input: {
             .slice(0, FALLBACK_RESULTS);
         }
       } catch (err) {
-        resultChunks = res.results.map((r) => {
+        /* No embeddings: rank by the engine order and keywords alone. */
+        const fused = fuseQueryResults(
+          q,
+          input.question,
+          res.results.map((r) => ({
+            title: r.title,
+            content: r.content || r.title,
+          })),
+          res.results.map(() => 1),
+        );
+
+        resultChunks = res.results.map((r, i) => {
           const content = r.content || r.title;
 
           return {
@@ -230,6 +304,7 @@ export const executeSearch = async (input: {
               url: r.url,
               ...dateOf(r),
               similarity: 1,
+              score: fused[i],
               embedding: [],
             },
           };
@@ -277,7 +352,21 @@ export const executeSearch = async (input: {
 
     await Promise.all(input.queries.map(search));
 
-    scoredResults.sort((a, b) => b.metadata.similarity - a.metadata.similarity);
+    /* Reciprocal Rank Fusion across queries: a page found by several
+       queries adds up its scores, so agreement between queries counts. */
+    const totals = new Map<string, number>();
+    for (const c of scoredResults) {
+      const key = normalizeUrl(c.metadata.url);
+      totals.set(key, (totals.get(key) ?? 0) + (c.metadata.score ?? 0));
+    }
+    const totalOf = (c: Chunk) => totals.get(normalizeUrl(c.metadata.url)) ?? 0;
+
+    scoredResults.sort(
+      (a, b) =>
+        totalOf(b) - totalOf(a) ||
+        (b.metadata.score ?? 0) - (a.metadata.score ?? 0) ||
+        b.metadata.similarity - a.metadata.similarity,
+    );
 
     /* After sorting, so the best-scored copy of a page is the one kept. */
     const results = dedupeByUrl(scoredResults);
@@ -316,10 +405,15 @@ export const executeSearch = async (input: {
 
         delete uniqueResult.metadata.embedding;
         delete uniqueResult.metadata.similarity;
+        delete uniqueResult.metadata.score;
 
         return uniqueResult;
       })
-      .slice(0, 20);
+      .slice(0, MAX_RESULTS);
+
+    if (input.readPages && input.readPages > 0) {
+      await readTopPages(uniqueSearchResults, input);
+    }
 
     return uniqueSearchResults;
   } else if (input.mode === 'quality') {
@@ -585,4 +679,115 @@ export const executeSearch = async (input: {
   } else {
     return [];
   }
+};
+
+/** `promise`, or `undefined` once `ms` have passed. */
+const withTimeout = <T>(promise: Promise<T>, ms: number) =>
+  new Promise<T | undefined>((resolve) => {
+    const timer = setTimeout(() => resolve(undefined), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(undefined);
+      },
+    );
+  });
+
+/**
+ * The passages of `text` that best match `question`, in page order:
+ * embedding similarity and keyword overlap fused with RRF, the same way
+ * search results are ranked. Falls back to keywords alone when the
+ * embedding call fails.
+ */
+export const bestPassages = async (
+  text: string,
+  question: string,
+  embedding: BaseEmbedding<any>,
+  count = pageReading.passagesPerPage,
+): Promise<string[]> => {
+  const passages = splitText(
+    text.slice(0, MAX_PAGE_CHARS),
+    pageReading.passageTokens,
+    pageReading.passageOverlap,
+  )
+    .map((p) => p.trim())
+    .filter((p) => p.length > 40)
+    .slice(0, pageReading.maxPassages);
+
+  if (passages.length <= count) return passages;
+
+  let similarities = passages.map(() => 0);
+  try {
+    const [q, ...vectors] = await withEmbeddingSlot(() =>
+      embedding.embedText([question, ...passages]),
+    );
+    similarities = vectors.map((v) => computeSimilarity(q, v));
+  } catch (err) {
+    console.log(
+      '[search] passage embedding failed, ranking by keywords:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  const vectorRanks = ranksOf(similarities);
+  const lexicalRanks = ranksOf(
+    passages.map((p) => lexicalScore(question, '', p)),
+  );
+
+  return passages
+    .map((p, i) => ({ p, i, score: rrf([vectorRanks[i], lexicalRanks[i]]) }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .slice(0, count)
+    .sort((a, b) => a.i - b.i)
+    .map((x) => x.p);
+};
+
+/**
+ * Span retrieval for speed/balanced (Perplexity ranks passages, not whole
+ * pages): opens the top results and appends each page's best passages to
+ * its snippet. A page that fails or takes longer than the time limit keeps
+ * its snippet alone.
+ */
+const readTopPages = async (results: Chunk[], input: SearchInput) => {
+  const pages = results
+    .slice(0, input.readPages ?? 0)
+    .filter((r) => typeof r.metadata?.url === 'string');
+  if (pages.length === 0) return;
+
+  const question = input.question?.trim() || input.queries.join(' ');
+
+  input.researchBlock.data.subSteps.push({
+    id: crypto.randomUUID(),
+    type: 'reading',
+    reading: pages,
+  });
+  input.session.updateBlock(input.researchBlock.id, [
+    {
+      op: 'replace',
+      path: '/data/subSteps',
+      value: input.researchBlock.data.subSteps,
+    },
+  ]);
+
+  await Promise.all(
+    pages.map(async (page) => {
+      const passages = await withTimeout(
+        (async () => {
+          const scraped = await Scraper.scrape(page.metadata.url);
+          if (!scraped?.content || scraped.title === 'Failed to scrape')
+            return [];
+          return bestPassages(scraped.content, question, input.embedding);
+        })(),
+        pageReading.timeoutMs,
+      );
+
+      if (passages && passages.length > 0) {
+        page.content = [page.content, ...passages].join('\n\n');
+      }
+    }),
+  );
 };

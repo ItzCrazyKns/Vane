@@ -98,7 +98,7 @@ describe('search pipeline performance (speed/balanced embeddings)', () => {
     expect(embedding.calls.flat()).toHaveLength(3 * 11);
   });
 
-  it('keeps the exact scores and order of the per-result embedding path', async () => {
+  it('keeps the same relevance filter and dedup as the per-result embedding path', async () => {
     const queries = QUERIES[0];
     const results = await executeSearch({
       queries,
@@ -125,8 +125,21 @@ describe('search pipeline performance (speed/balanced embeddings)', () => {
       if (!kept.some((k) => computeSimilarity(k.e, r.e) > 0.75)) kept.push(r);
     }
 
-    expect(results.map((r) => r.metadata.url)).toEqual(
-      kept.slice(0, 20).map((r) => r.url),
+    /* Order now comes from the hybrid ranking (RRF), and the dedup keeps
+       the first of each near-duplicate group in that order, so compare
+       the filter and the dedup rather than the exact list. */
+    const passed = new Map(old.map((r) => [r.url, r.e]));
+    const urls = results.map((r) => r.metadata.url);
+    expect(urls).toHaveLength(Math.min(20, kept.length));
+    urls.forEach((u) => expect(passed.has(u)).toBe(true));
+    urls.forEach((u, i) =>
+      urls
+        .slice(i + 1)
+        .forEach((v) =>
+          expect(
+            computeSimilarity(passed.get(u)!, passed.get(v)!),
+          ).toBeLessThanOrEqual(0.75),
+        ),
     );
   });
 
