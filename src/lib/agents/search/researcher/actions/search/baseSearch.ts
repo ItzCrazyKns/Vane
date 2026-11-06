@@ -21,6 +21,11 @@ import { createLimiter } from '@/lib/utils/limit';
 export const EMBEDDING_CONCURRENCY = 3;
 const withEmbeddingSlot = createLimiter(EMBEDDING_CONCURRENCY);
 
+/** Results scoring at or below this (cosine) against the query are dropped. */
+const SIMILARITY_THRESHOLD = 0.5;
+/** Results kept, best first, when the threshold would drop all of a query's. */
+const FALLBACK_RESULTS = 10;
+
 /**
  * Runs one query, returning no results instead of throwing: one failed
  * query (SearXNG down, rate limited after retries, timeout) must not abort
@@ -88,17 +93,27 @@ export const executeSearch = async (input: {
           () => input.embedding.embedText([q, ...contents]),
         );
 
-        resultChunks = res.results
-          .map((r, i) => ({
-            content: contents[i],
-            metadata: {
-              title: r.title,
-              url: r.url,
-              similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
-              embedding: chunkEmbeddings[i],
-            },
-          }))
-          .filter((c) => c.metadata.similarity > 0.5);
+        const scored = res.results.map((r, i) => ({
+          content: contents[i],
+          metadata: {
+            title: r.title,
+            url: r.url,
+            similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
+            embedding: chunkEmbeddings[i],
+          },
+        }));
+
+        resultChunks = scored.filter(
+          (c) => c.metadata.similarity > SIMILARITY_THRESHOLD,
+        );
+
+        /* Some embedding models score everything low; rather than
+           "Found 0 results" (upstream #1119), keep the best ones. */
+        if (resultChunks.length === 0) {
+          resultChunks = scored
+            .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
+            .slice(0, FALLBACK_RESULTS);
+        }
       } catch (err) {
         resultChunks = res.results.map((r) => {
           const content = r.content || r.title;

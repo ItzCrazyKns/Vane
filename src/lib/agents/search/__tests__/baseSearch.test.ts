@@ -35,6 +35,12 @@ const searxResults: Record<
       content: 'rust web memory',
     },
   ],
+  /* Twelve results that are all below the 0.5 similarity threshold. */
+  'low scores': Array.from({ length: 12 }, (_, i) => ({
+    title: `Low ${i}`,
+    url: `https://low.test/${i}`,
+    content: `low ${i}`,
+  })),
 };
 
 vi.mock('@/lib/searxng', () => ({
@@ -129,6 +135,63 @@ describe('executeSearch (speed and balanced)', () => {
       'cooking recipes',
       'tokio async',
     ]);
+  });
+});
+
+/* Query "low scores" -> e0; result "low i" -> similarity 0.04 * (i + 1)
+   to the query (all under 0.5) and at most 0.25 between results, so the
+   embedding dedup keeps them all. */
+class LowScoreEmbedding extends FakeEmbedding {
+  async embedText(texts: string[]): Promise<number[][]> {
+    this.calls.push(texts);
+    return texts.map((t) => {
+      const v = new Array(14).fill(0);
+      const m = t.match(/^low (\d+)$/);
+      if (!m) {
+        v[0] = 1;
+        return v;
+      }
+      const i = Number(m[1]);
+      const s = 0.04 * (i + 1);
+      v[0] = s;
+      v[i + 1] = Math.sqrt(1 - s * s);
+      return v;
+    });
+  }
+}
+
+describe('executeSearch (similarity fallback)', () => {
+  it.each(['speed', 'balanced'] as const)(
+    '%s: keeps the top 10 by score when the filter would drop every result',
+    async (mode) => {
+      const results = await executeSearch({
+        queries: ['low scores'],
+        mode,
+        researchBlock: newResearchBlock() as any,
+        session: createFakeSession() as any,
+        llm: new FakeLLM({}),
+        embedding: new LowScoreEmbedding(),
+      });
+
+      expect(results.map((r) => r.metadata.url)).toEqual(
+        [11, 10, 9, 8, 7, 6, 5, 4, 3, 2].map((i) => `https://low.test/${i}`),
+      );
+    },
+  );
+
+  it('does not fall back when some result passes the filter', async () => {
+    const results = await executeSearch({
+      queries: ['rust web'],
+      mode: 'speed',
+      researchBlock: newResearchBlock() as any,
+      session: createFakeSession() as any,
+      llm: new FakeLLM({}),
+      embedding: new FakeEmbedding(),
+    });
+
+    expect(results.map((r) => r.metadata.url)).not.toContain(
+      'https://c.test/x',
+    );
   });
 });
 
