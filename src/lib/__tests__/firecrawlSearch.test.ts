@@ -37,6 +37,18 @@ describe('buildFirecrawlSearchBody', () => {
   });
 });
 
+describe('buildFirecrawlSearchBody filters', () => {
+  it('maps time_range to tbs and keeps the language', () => {
+    expect(
+      buildFirecrawlSearchBody('eleição', {
+        time_range: 'week',
+        language: 'pt',
+      }),
+    ).toMatchObject({ query: 'eleição', tbs: 'qdr:w', lang: 'pt' });
+    expect(buildFirecrawlSearchBody('x')).not.toHaveProperty('tbs');
+  });
+});
+
 describe('searchFirecrawl', () => {
   const fetchMock = vi.fn();
 

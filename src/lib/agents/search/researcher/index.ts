@@ -2,7 +2,7 @@ import { ActionOutput, ResearcherInput, ResearcherOutput } from '../types';
 import { ActionRegistry } from './actions';
 import { getResearcherPrompt } from '@/lib/prompts/search/researcher';
 import SessionManager from '@/lib/session';
-import { Message, ReasoningResearchBlock } from '@/lib/types';
+import { Chunk, Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
 import { syncMCPActions } from './actions/mcp';
@@ -16,6 +16,37 @@ import { compactResearchHistory } from '@/lib/context/compact';
 
 /** Rough per-tool cost of the tool schema sent with each request. */
 const TOOL_SCHEMA_OVERHEAD_TOKENS = 60;
+
+/**
+ * The search results of a research, one entry per URL in first-seen order.
+ * A URL found again adds its content to the first entry. Works on copies,
+ * so it can run after every step without appending the same text twice.
+ */
+export const mergeSearchFindings = (actionOutput: ActionOutput[]): Chunk[] => {
+  const merged: Chunk[] = [];
+  const byUrl = new Map<string, Chunk>();
+
+  for (const action of actionOutput) {
+    if (action.type !== 'search_results') continue;
+    for (const result of action.results) {
+      const url = result.metadata?.url;
+      if (!url) {
+        merged.push(result);
+        continue;
+      }
+      const existing = byUrl.get(url);
+      if (existing) {
+        existing.content += `\n\n${result.content}`;
+        continue;
+      }
+      const copy: Chunk = { ...result, metadata: { ...result.metadata } };
+      byUrl.set(url, copy);
+      merged.push(copy);
+    }
+  }
+
+  return merged;
+};
 
 class Researcher {
   async research(
@@ -48,6 +79,27 @@ class Researcher {
       });
 
     const researchBlockId = crypto.randomUUID();
+
+    /* One source block per answer, emitted with the first results and
+       replaced as the research finds more. */
+    const sourceBlockId = crypto.randomUUID();
+    let sourceBlockEmitted = false;
+
+    const publishSources = (final: boolean): Chunk[] => {
+      const data = mergeSearchFindings(actionOutput);
+
+      if (!sourceBlockEmitted) {
+        if (data.length === 0 && !final) return data;
+        session.emitBlock({ id: sourceBlockId, type: 'source', data });
+        sourceBlockEmitted = true;
+      } else {
+        session.updateBlock(sourceBlockId, [
+          { op: 'replace', path: '/data', value: data },
+        ]);
+      }
+
+      return data;
+    };
 
     session.emitBlock({
       id: researchBlockId,
@@ -236,6 +288,10 @@ class Researcher {
 
       actionOutput.push(...actionResults);
 
+      /* Show the sources found so far right away, as Perplexity streams
+         search results before the answer, instead of only at the end. */
+      publishSources(false);
+
       actionResults.forEach((action, i) => {
         agentMessageHistory.push({
           role: 'tool',
@@ -246,36 +302,9 @@ class Researcher {
       });
     }
 
-    const searchResults = actionOutput
-      .filter((a) => a.type === 'search_results')
-      .flatMap((a) => a.results);
-
-    const seenUrls = new Map<string, number>();
-
-    const filteredSearchResults = searchResults
-      .map((result, index) => {
-        if (result.metadata.url && !seenUrls.has(result.metadata.url)) {
-          seenUrls.set(result.metadata.url, index);
-          return result;
-        } else if (result.metadata.url && seenUrls.has(result.metadata.url)) {
-          const existingIndex = seenUrls.get(result.metadata.url)!;
-
-          const existingResult = searchResults[existingIndex];
-
-          existingResult.content += `\n\n${result.content}`;
-
-          return undefined;
-        }
-
-        return result;
-      })
-      .filter((r) => r !== undefined);
-
-    session.emitBlock({
-      id: crypto.randomUUID(),
-      type: 'source',
-      data: filteredSearchResults,
-    });
+    /* Final, deduplicated source list: the one the writer cites. Emitted
+       even when empty, as before. */
+    const filteredSearchResults = publishSources(true);
 
     return {
       findings: actionOutput,

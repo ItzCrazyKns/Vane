@@ -3,12 +3,36 @@ import { ResearchAction } from '../../../types';
 import { ResearchBlock } from '@/lib/types';
 import { executeSearch } from './baseSearch';
 import { NO_NEW_QUERIES_NOTE, normalizeQueries } from './queries';
+import {
+  FILTERS_TOOL_GUIDE,
+  RECENCY_VALUES,
+  hasFilters,
+  parseSearchFilters,
+} from './filters';
 
 const actionSchema = z.object({
   type: z.literal('web_search'),
   queries: z
     .array(z.string())
     .describe('An array of search queries to perform web searches for.'),
+  recency: z
+    .enum(RECENCY_VALUES)
+    .optional()
+    .describe(
+      'Optional. Only return results published in the last day, week, month or year.',
+    ),
+  domains: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Optional. Domains to restrict results to (e.g. "gov.br"), or to exclude when prefixed with "-" (e.g. "-pinterest.com").',
+    ),
+  language: z
+    .string()
+    .optional()
+    .describe(
+      'Optional. Two-letter ISO 639-1 code of the pages to search (e.g. "pt", "en").',
+    ),
 });
 
 const speedModePrompt = `
@@ -80,7 +104,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
         break;
     }
 
-    return prompt;
+    return prompt + FILTERS_TOOL_GUIDE;
   },
   enabled: (config) =>
     config.sources.includes('web') &&
@@ -102,6 +126,10 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
       };
     }
 
+    /* Filters are optional and validated loosely: a bad value is dropped
+       rather than failing the search. */
+    const filters = parseSearchFilters(input as Record<string, unknown>);
+
     const results = await executeSearch({
       llm: additionalConfig.llm,
       embedding: additionalConfig.embedding,
@@ -110,6 +138,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
       question: additionalConfig.question,
       researchBlock: researchBlock,
       session: additionalConfig.session,
+      filters: hasFilters(filters) ? filters : undefined,
     });
 
     return {

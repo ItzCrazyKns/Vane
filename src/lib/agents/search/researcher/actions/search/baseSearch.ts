@@ -11,6 +11,33 @@ import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
 import { createLimiter } from '@/lib/utils/limit';
 import { normalizeUrl } from '@/lib/utils/normalizeUrl';
+import {
+  SearchFilters,
+  applyDomainOperators,
+  filterResultsByDomain,
+  hasFilters,
+  toSearchOptions,
+} from './filters';
+
+/**
+ * Results kept from the search engine for one web_search call, split
+ * evenly across its queries (Perplexity splits max_results across the
+ * reformulated queries the same way): one query keeps up to 30, three
+ * queries keep 10 each. Fewer results means fewer embeddings and a
+ * shorter picker prompt, while several queries still add diversity.
+ */
+export const RESULTS_PER_SEARCH_CALL = 30;
+
+/** "2026-11-01T08:00:00Z" -> "2026-11-01"; anything unparsable -> undefined. */
+export const toIsoDate = (raw: unknown): string | undefined => {
+  if (typeof raw !== 'string' && typeof raw !== 'number') return undefined;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return undefined;
+  const year = d.getUTCFullYear();
+  if (year < 1990 || d.getTime() > Date.now() + 2 * 86_400_000)
+    return undefined;
+  return d.toISOString().slice(0, 10);
+};
 
 /**
  * Embedding requests allowed in flight at once, across every search in
@@ -78,6 +105,12 @@ const dedupeByUrl = (chunks: Chunk[]): Chunk[] => {
  * query (SearXNG down, rate limited after retries, timeout) must not abort
  * the other queries or the whole research.
  */
+/** The publication date of a result, when the engine gave one. */
+const dateOf = (r: { publishedDate?: unknown }) => {
+  const date = toIsoDate(r.publishedDate);
+  return date ? { publishedDate: date } : {};
+};
+
 const searchSafely = async (q: string, opts?: SearxngSearchOptions) => {
   try {
     return await searchWeb(q, opts);
@@ -100,8 +133,34 @@ export const executeSearch = async (input: {
   embedding: BaseEmbedding<any>;
   /** The user's question, so the picker and extractor judge relevance by it. */
   question?: string;
+  /** Optional recency / domain / language filters sent by the researcher. */
+  filters?: SearchFilters;
 }) => {
   const researchBlock = input.researchBlock;
+  const filters = input.filters;
+  const perQueryLimit = Math.max(
+    1,
+    Math.ceil(RESULTS_PER_SEARCH_CALL / Math.max(1, input.queries.length)),
+  );
+
+  /* One query on the configured provider, with the filters applied (site:
+     operators in the query, time range and language as options, and the
+     domain rule enforced again on the results, since some engines ignore
+     site:), capped to this query's share of the results. */
+  const runQuery = async (q: string) => {
+    const active = filters && hasFilters(filters) ? filters : undefined;
+    const res = await searchSafely(
+      active ? applyDomainOperators(q, active) : q,
+      {
+        ...(input.searchConfig ? input.searchConfig : {}),
+        ...(active ? toSearchOptions(active) : {}),
+      },
+    );
+    const results = active
+      ? filterResultsByDomain(res.results, active)
+      : res.results;
+    return { ...res, results: results.slice(0, perQueryLimit) };
+  };
 
   researchBlock.data.subSteps.push({
     id: crypto.randomUUID(),
@@ -124,9 +183,7 @@ export const executeSearch = async (input: {
     const scoredResults: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSafely(q, {
-        ...(input.searchConfig ? input.searchConfig : {}),
-      });
+      const res = await runQuery(q);
 
       let resultChunks: Chunk[] = [];
 
@@ -145,6 +202,7 @@ export const executeSearch = async (input: {
           metadata: {
             title: r.title,
             url: r.url,
+            ...dateOf(r),
             similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
             embedding: chunkEmbeddings[i],
           },
@@ -170,6 +228,7 @@ export const executeSearch = async (input: {
             metadata: {
               title: r.title,
               url: r.url,
+              ...dateOf(r),
               similarity: 1,
               embedding: [],
             },
@@ -270,9 +329,7 @@ export const executeSearch = async (input: {
     const searchResults: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSafely(q, {
-        ...(input.searchConfig ? input.searchConfig : {}),
-      });
+      const res = await runQuery(q);
 
       if (res.results.length === 0) return;
 
@@ -286,6 +343,7 @@ export const executeSearch = async (input: {
           metadata: {
             title: r.title,
             url: r.url,
+            ...dateOf(r),
             similarity: 1,
             embedding: [],
           },

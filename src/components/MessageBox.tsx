@@ -24,7 +24,7 @@ import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
 import { useChat, Section } from '@/lib/hooks/useChat';
-import Citation from './MessageRenderer/Citation';
+import Citation, { CitationSourcesContext } from './MessageRenderer/Citation';
 import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
 import Renderer from './Widgets/Renderer';
@@ -205,10 +205,12 @@ const MessageBox = ({
 
             {hasContent && (
               <>
-                <MessageMarkdown
-                  content={parsedMessage}
-                  thinkingEnded={thinkingEnded}
-                />
+                <CitationSourcesContext.Provider value={sources}>
+                  <MessageMarkdown
+                    content={parsedMessage}
+                    thinkingEnded={thinkingEnded}
+                  />
+                </CitationSourcesContext.Provider>
 
                 {loading && isLast ? null : (
                   <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4">
