@@ -1,13 +1,14 @@
 'use client';
 import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import Select from '../ui/Select';
 import { useTranslations } from 'next-intl';
+import { useIsClient } from '@/lib/hooks/useIsClient';
 
 type Theme = 'dark' | 'light' | 'system';
 
 const ThemeSwitcher = ({ className }: { className?: string }) => {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const t = useTranslations('Theme');
 
   const { theme, setTheme } = useTheme();
@@ -17,10 +18,6 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
   const handleThemeSwitch = (theme: Theme) => {
     setTheme(theme);
   };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (isTheme('system')) {

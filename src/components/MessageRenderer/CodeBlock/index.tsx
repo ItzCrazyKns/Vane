@@ -1,11 +1,12 @@
 'use client';
 
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import darkTheme from './CodeBlockDarkTheme';
 import lightTheme from './CodeBlockLightTheme';
+import { useIsClient } from '@/lib/hooks/useIsClient';
 
 const SyntaxHighlighterComponent =
   SyntaxHighlighter as unknown as React.ComponentType<any>;
@@ -18,13 +19,9 @@ const CodeBlock = ({
   children: React.ReactNode;
 }) => {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
 
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const syntaxTheme = useMemo(() => {
     if (!mounted) return lightTheme;
