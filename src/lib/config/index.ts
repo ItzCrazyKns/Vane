@@ -17,7 +17,9 @@ class ConfigManager {
     personalization: {},
     modelProviders: [],
     search: {
+      provider: '',
       searxngURL: '',
+      firecrawlURL: '',
     },
   };
   uiConfigSections: UIConfigSections = {
@@ -103,6 +105,27 @@ class ConfigManager {
     modelProviders: [],
     search: [
       {
+        name: 'Search Provider',
+        key: 'provider',
+        type: 'select',
+        options: [
+          {
+            name: 'SearXNG',
+            value: 'searxng',
+          },
+          {
+            name: 'Firecrawl',
+            value: 'firecrawl',
+          },
+        ],
+        required: false,
+        description:
+          'Engine used for web searches. Firecrawl needs the Firecrawl URL below.',
+        default: 'searxng',
+        scope: 'server',
+        env: 'SEARCH_PROVIDER',
+      },
+      {
         name: 'SearXNG URL',
         key: 'searxngURL',
         type: 'string',
@@ -112,6 +135,18 @@ class ConfigManager {
         default: '',
         scope: 'server',
         env: 'SEARXNG_API_URL',
+      },
+      {
+        name: 'Firecrawl URL',
+        key: 'firecrawlURL',
+        type: 'string',
+        required: false,
+        description:
+          'Base URL of your Firecrawl API, without /v2. Used for web search when Firecrawl is the provider, and for reading pages.',
+        placeholder: 'http://localhost:3002',
+        default: '',
+        scope: 'server',
+        env: 'FIRECRAWL_API_URL',
       },
     ],
   };

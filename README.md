@@ -134,6 +134,21 @@ volumes:
 
 If Firecrawl runs in another Compose project, you can also attach both to the same Docker network and point `FIRECRAWL_API_URL` at the Firecrawl API service name instead of `host.docker.internal`.
 
+#### Searching with Firecrawl instead of SearxNG
+
+Web searches use SearxNG by default. To run them through Firecrawl's `POST /v2/search` instead, pick **Firecrawl** under **Settings > Search > Search Provider** (the **Firecrawl URL** field there must be filled), or set `SEARCH_PROVIDER=firecrawl` before the first start.
+
+| Variable          | Required | Description                                                                                        |
+| ----------------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `SEARCH_PROVIDER` | No       | `searxng` (default) or `firecrawl`. Only seeds the setting; after that, change it in the Settings. |
+
+Notes:
+
+- Vane asks Firecrawl only for result snippets (no page scraping), 10 results per query.
+- Self-hosted Firecrawl has no search index of its own: it queries SearxNG when `SEARXNG_ENDPOINT` is set in Firecrawl, and DuckDuckGo otherwise.
+- Discussion (Reddit) searches add `site:reddit.com` to the query, and academic searches use Firecrawl's `research` category.
+- Image search, video search and Discover still use SearxNG.
+
 #### Advanced Setup (Building from Source)
 
 If you prefer to build from source or need more control:
