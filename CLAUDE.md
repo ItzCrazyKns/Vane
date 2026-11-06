@@ -57,7 +57,7 @@ Web search goes through `searchWeb` in `src/lib/webSearch.ts`, which dispatches 
 
 ## Internationalization
 
-UI strings use `next-intl`. Locales are `pt-BR` (default) and `en` (`src/i18n/config.ts`), chosen by the `NEXT_LOCALE` cookie, with messages in `src/i18n/messages/{pt-BR,en}.json`. Add a new UI string to both files and read it with `useTranslations` / `getTranslations`; do not hard-code user-facing text. Settings labels that come from `ConfigManager` are translated through `src/i18n/configText.ts`. Prompts stay in English but instruct the model to answer in the user's language.
+UI strings use `next-intl`. Locales are `pt-BR` (default) and `en` (`src/i18n/config.ts`), chosen by the `NEXT_LOCALE` cookie, with messages in `src/i18n/messages/{pt-BR,en}.json`. Add a new UI string to both files and read it with `useTranslations` / `getTranslations`; do not hard-code user-facing text. Settings labels that come from `ConfigManager` are translated through `src/i18n/configText.ts`. Prompts stay in English but instruct the model to answer in the user's language. After changing UI text, run `yarn i18n:check` (key parity, empty values and ICU arguments between the two files); the `i18n-sync` skill in `.claude/skills/` has the full checklist.
 
 ## Conventions
 
