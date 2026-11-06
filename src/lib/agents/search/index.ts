@@ -10,6 +10,7 @@ import { messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { Message, TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
+import { sanitizeCitations } from '@/lib/utils/citations';
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -134,6 +135,9 @@ class SearchAgent {
     let finalContext =
       '<Query to be answered without searching; Search not made>';
 
+    /* Sources the writer is given; it can only cite [1]..[n] of them. */
+    let writerSourceCount: number | null = null;
+
     if (searchResults) {
       const findings = await fitWriterSources({
         findings: searchResults.searchFindings,
@@ -149,6 +153,7 @@ class SearchAgent {
       });
 
       finalContext = findings.map(formatSearchResult).join('\n');
+      writerSourceCount = findings.length;
     }
 
     const finalContextWithWidgets = wrapContext(finalContext);
@@ -198,6 +203,19 @@ class SearchAgent {
             path: '/data',
             value: block.data,
           },
+        ]);
+      }
+    }
+
+    /* Drop [n] above the sources the writer saw (upstream #1227): the UI
+       would link them to a source it never read, or to nothing. */
+    const answer = session.getBlock(responseBlockId) as TextBlock | null;
+    if (answer && writerSourceCount !== null) {
+      const cleaned = sanitizeCitations(answer.data, writerSourceCount);
+      if (cleaned !== answer.data) {
+        answer.data = cleaned;
+        session.updateBlock(answer.id, [
+          { op: 'replace', path: '/data', value: cleaned },
         ]);
       }
     }
