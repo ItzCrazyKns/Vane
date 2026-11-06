@@ -37,7 +37,14 @@ vi.mock('@/lib/searxng', () => ({
   })),
 }));
 
+const scrapeMock = vi.fn();
+vi.mock('@/lib/scraper', () => ({
+  default: { scrape: (url: string) => scrapeMock(url) },
+}));
+
 import {
+  EXTRACTOR_CONCURRENCY,
+  MAX_PAGE_CHARS,
   EMBEDDING_CONCURRENCY,
   executeSearch,
 } from '../researcher/actions/search/baseSearch';
@@ -148,5 +155,57 @@ describe('search pipeline performance (speed/balanced embeddings)', () => {
     expect(embedding.calls).toHaveLength(9);
     expect(embedding.peak).toBe(EMBEDDING_CONCURRENCY);
     expect(EMBEDDING_CONCURRENCY).toBe(3);
+  });
+});
+
+describe('search pipeline performance (quality extraction)', () => {
+  it('caps extractor calls in flight and the page text that is chunked', async () => {
+    /* ~400k characters per page: a long article or a huge listing. */
+    const sentence = 'Rust ownership keeps memory safe without a collector. ';
+    const page = sentence.repeat(Math.ceil(400_000 / sentence.length));
+    scrapeMock.mockImplementation(async (url: string) => ({
+      title: url,
+      content: page,
+    }));
+
+    let inFlight = 0;
+    let peak = 0;
+    const llm = new FakeLLM({
+      generateObject: async (_input, i) => {
+        if (i === 0) return { picked_indices: [0, 1, 2] };
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((r) => setTimeout(r, 5));
+        inFlight -= 1;
+        return { extracted_facts: '- fact' };
+      },
+    });
+
+    const started = performance.now();
+    const results = await executeSearch({
+      queries: ['rust web'],
+      mode: 'quality',
+      researchBlock: newBlock() as any,
+      session: createFakeSession() as any,
+      llm,
+      embedding: new FakeEmbedding(),
+    });
+    const extractorCalls = llm.calls.length - 1;
+
+    console.log(
+      `[perf] quality: ${extractorCalls} extractor calls for 3 pages, peak in flight ${peak}, ${(performance.now() - started).toFixed(0)} ms`,
+    );
+    expect(results).toHaveLength(3);
+    expect(peak).toBe(EXTRACTOR_CONCURRENCY);
+    expect(EXTRACTOR_CONCURRENCY).toBe(3);
+    /* Every chunk sent comes from the first MAX_PAGE_CHARS characters. */
+    const sent = llm.calls
+      .slice(1)
+      .map((c) => c.input.messages[1].content as string)
+      .map((u) => u.match(/<scraped_data>([\s\S]*)<\/scraped_data>/)![1]);
+    const perPage = sent.length / 3;
+    expect(perPage * 3).toBe(sent.length);
+    expect(MAX_PAGE_CHARS).toBe(100_000);
+    expect(perPage).toBeLessThanOrEqual(10);
   });
 });

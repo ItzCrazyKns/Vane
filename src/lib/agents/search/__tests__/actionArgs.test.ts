@@ -114,3 +114,34 @@ describe('uploads_search argument guard', () => {
     expect(uploadQueryMock).toHaveBeenCalledWith(['budget'], 10);
   });
 });
+
+describe('scrape_url extraction limits', () => {
+  it('caps extractor calls in flight and the page text that is chunked', async () => {
+    const sentence = 'Rust ownership keeps memory safe without a collector. ';
+    scrapeMock.mockResolvedValue({
+      title: 'Long',
+      content: sentence.repeat(Math.ceil(400_000 / sentence.length)),
+    });
+
+    let inFlight = 0;
+    let peak = 0;
+    const cfg = config();
+    cfg.llm = new FakeLLM({
+      generateObject: async () => {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((r) => setTimeout(r, 5));
+        inFlight -= 1;
+        return { extracted_facts: '- fact' };
+      },
+    });
+
+    await scrapeURLAction.execute({ urls: ['https://long.test'] }, cfg);
+
+    console.log(
+      `[perf] scrape_url: ${cfg.llm.calls.length} extractor calls, peak in flight ${peak}`,
+    );
+    expect(peak).toBe(3);
+    expect(cfg.llm.calls.length).toBeLessThanOrEqual(10);
+  });
+});

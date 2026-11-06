@@ -28,6 +28,19 @@ const SIMILARITY_THRESHOLD = 0.5;
 const FALLBACK_RESULTS = 10;
 
 /**
+ * Extractor LLM calls in flight at once for one quality search. Every
+ * chunk of every picked page used to go out at the same time (60+ calls
+ * for three long pages), which a local LM Studio/Ollama can only queue.
+ */
+export const EXTRACTOR_CONCURRENCY = 3;
+/**
+ * Page text kept before chunking (~25k tokens, ~7 chunks of 4000 tokens).
+ * The relevant part of a page is nearly always near the top; the rest of
+ * a huge page (listings, comment threads) only multiplied extractor calls.
+ */
+export const MAX_PAGE_CHARS = 100_000;
+
+/**
  * One result per page, comparing normalized URLs (host case, utm_* /
  * fbclid / gclid, #fragment, trailing slash ignored), so a page found by
  * several queries is ranked, picked and read once (upstream #1228). The
@@ -445,6 +458,8 @@ export const executeSearch = async (input: {
         ),
     });
 
+    const withExtractorSlot = createLimiter(EXTRACTOR_CONCURRENCY);
+
     await Promise.all(
       filteredResults.map(async (result, i) => {
         try {
@@ -457,26 +472,30 @@ export const executeSearch = async (input: {
           if (!scrapedData) return;
 
           let accumulatedContent = '';
-          const chunks = splitText(scrapedData.content, 4000, 500);
+          const chunks = splitText(
+            scrapedData.content.slice(0, MAX_PAGE_CHARS),
+            4000,
+            500,
+          );
 
           await Promise.all(
             chunks.map(async (chunk) => {
               try {
-                const extractorOutput = await input.llm.generateObject<
-                  typeof extractorSchema
-                >({
-                  schema: extractorSchema,
-                  messages: [
-                    {
-                      role: 'system',
-                      content: extractorPrompt,
-                    },
-                    {
-                      role: 'user',
-                      content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
-                    },
-                  ],
-                });
+                const extractorOutput = await withExtractorSlot(() =>
+                  input.llm.generateObject<typeof extractorSchema>({
+                    schema: extractorSchema,
+                    messages: [
+                      {
+                        role: 'system',
+                        content: extractorPrompt,
+                      },
+                      {
+                        role: 'user',
+                        content: `${input.question ? `<question>${input.question}</question>\n` : ''}<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
+                      },
+                    ],
+                  }),
+                );
 
                 accumulatedContent += extractorOutput.extracted_facts + '\n';
               } catch (err) {
