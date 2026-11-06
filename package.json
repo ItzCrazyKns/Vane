@@ -10,7 +10,8 @@
     "lint": "next lint",
     "format:write": "prettier . --write",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "i18n:check": "node .claude/skills/i18n-sync/scripts/check-keys.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
