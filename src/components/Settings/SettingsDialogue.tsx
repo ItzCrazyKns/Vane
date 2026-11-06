@@ -76,13 +76,8 @@ const SettingsDialogue = ({
   const [activeSection, setActiveSection] = useState<
     (typeof sections)[number]['key']
   >(sections[0].key);
-  const [selectedSection, setSelectedSection] = useState<
-    (typeof sections)[number]
-  >(sections[0]);
-
-  useEffect(() => {
-    setSelectedSection(sections.find((s) => s.key === activeSection)!);
-  }, [activeSection]);
+  const selectedSection =
+    sections.find((s) => s.key === activeSection) ?? sections[0];
 
   useEffect(() => {
     if (isOpen) {
