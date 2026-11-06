@@ -19,6 +19,7 @@ import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
 import { claimMessageEnd } from '@/lib/utils/messageEndGuard';
+import { processTextBlock } from '@/lib/utils/citations';
 import { useTranslations } from 'next-intl';
 
 export type Section = {
@@ -327,58 +328,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
       msg.responseBlocks.forEach((block) => {
         if (block.type === 'text') {
-          let processedText = block.data;
-          const citationRegex = /\[([^\]]+)\]/g;
-          const regex = /\[(\d+)\]/g;
-
-          if (processedText.includes('<think>')) {
-            const openThinkTag = processedText.match(/<think>/g)?.length || 0;
-            const closeThinkTag =
-              processedText.match(/<\/think>/g)?.length || 0;
-
-            if (openThinkTag && !closeThinkTag) {
-              processedText += '</think> <a> </a>';
-            }
-          }
-
-          if (block.data.includes('</think>')) {
+          const processed = processTextBlock(block.data, sources);
+          const processedText = processed.text;
+          speechMessage += processed.speech;
+          if (processed.thinkingEnded) {
             thinkingEnded = true;
-          }
-
-          if (sources.length > 0) {
-            processedText = processedText.replace(
-              citationRegex,
-              (_, capturedContent: string) => {
-                const numbers = capturedContent
-                  .split(',')
-                  .map((numStr) => numStr.trim());
-
-                const linksHtml = numbers
-                  .map((numStr) => {
-                    const number = parseInt(numStr);
-
-                    if (isNaN(number) || number <= 0) {
-                      return `[${numStr}]`;
-                    }
-
-                    const source = sources[number - 1];
-                    const url = source?.metadata?.url;
-
-                    if (url) {
-                      return `<citation href="${url}">${numStr}</citation>`;
-                    } else {
-                      return ``;
-                    }
-                  })
-                  .join('');
-
-                return linksHtml;
-              },
-            );
-            speechMessage += block.data.replace(regex, '');
-          } else {
-            processedText = processedText.replace(regex, '');
-            speechMessage += block.data.replace(regex, '');
           }
 
           textBlocks.push(processedText);

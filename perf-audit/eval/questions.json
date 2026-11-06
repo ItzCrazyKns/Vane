@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "notes": "Perguntas da avaliação de qualidade (Fase 2). sources segue o campo do /api/chat; files aponta para perf-audit/fixtures/eval/uploads.",
+  "questions": [
+    { "id": "A01", "group": "fato", "query": "Qual é a capital da Austrália?", "sources": ["web"] },
+    { "id": "A02", "group": "fato", "query": "Em que ano foi lançado o primeiro iPhone e por qual preço?", "sources": ["web"] },
+    { "id": "A03", "group": "fato", "query": "Qual é a altura oficial do Monte Everest segundo a medição de 2020?", "sources": ["web"] },
+    { "id": "A04", "group": "fato", "query": "Who wrote \"One Hundred Years of Solitude\" and when was it published?", "sources": ["web"] },
+    { "id": "A05", "group": "fato", "query": "Qual é a população do Brasil segundo o Censo 2022 do IBGE?", "sources": ["web"] },
+    { "id": "A06", "group": "fato", "query": "Quantos graus Fahrenheit tem o ponto de ebulição da água ao nível do mar?", "sources": ["web"], "expectSkipSearch": true },
+    { "id": "A07", "group": "fato", "query": "Quem ganhou a Copa do Mundo de 2022 e qual foi o placar da final?", "sources": ["web"] },
+
+    { "id": "B08", "group": "varias-fontes", "query": "Compare Rust e Go para serviços web: desempenho, ecossistema e curva de aprendizado.", "sources": ["web"] },
+    { "id": "B09", "group": "varias-fontes", "query": "Quais são as diferenças entre PGBL e VGBL e para quem cada um é indicado?", "sources": ["web"] },
+    { "id": "B10", "group": "varias-fontes", "query": "What were the main causes and consequences of the 2008 financial crisis?", "sources": ["web"] },
+    { "id": "B11", "group": "varias-fontes", "query": "Quais são os prós e contras de carros elétricos e híbridos no Brasil hoje?", "sources": ["web"] },
+    { "id": "B12", "group": "varias-fontes", "query": "Como funciona o Pix e que impacto ele teve sobre os bancos brasileiros?", "sources": ["web"] },
+    { "id": "B13", "group": "varias-fontes", "query": "Explain the trade-offs between PostgreSQL and SQLite for a small web app.", "sources": ["web"] },
+    { "id": "B14", "group": "varias-fontes", "query": "Quais são os principais pontos da Reforma Tributária aprovada em 2023?", "sources": ["web"] },
+    { "id": "B15", "group": "varias-fontes", "query": "What has the Artemis program achieved so far and what are the next missions?", "sources": ["web"] },
+
+    { "id": "C16", "group": "academica", "query": "O que dizem os estudos recentes sobre jejum intermitente e perda de peso?", "sources": ["web", "academic"] },
+    { "id": "C17", "group": "academica", "query": "What does the research say about spaced repetition and long-term retention?", "sources": ["web", "academic"] },
+    { "id": "C18", "group": "academica", "query": "Quais foram os avanços recentes em baterias de estado sólido?", "sources": ["web", "academic"] },
+    { "id": "C19", "group": "academica", "query": "Summarize the main contributions of \"Attention Is All You Need\" and its impact.", "sources": ["web", "academic"] },
+    { "id": "C20", "group": "academica", "query": "Que evidências científicas existem sobre o efeito da cafeína na memória?", "sources": ["web", "academic"] },
+
+    { "id": "D21", "group": "dominio", "query": "site:gov.br como emitir a segunda via do CPF?", "sources": ["web"] },
+    { "id": "D22", "group": "dominio", "query": "site:wikipedia.org história do Santos Dumont e do 14-bis", "sources": ["web"] },
+    { "id": "D23", "group": "dominio", "query": "site:docs.python.org what is the difference between asyncio.gather and TaskGroup?", "sources": ["web"] },
+    { "id": "D24", "group": "dominio", "query": "site:ibge.gov.br qual é a taxa de desemprego mais recente?", "sources": ["web"] },
+
+    { "id": "E25", "group": "arquivo", "query": "O que o documento garante sobre liberdade de expressão?", "sources": ["web"], "files": ["constituicao-art5.pdf"] },
+    { "id": "E26", "group": "arquivo", "query": "Quem são os autores do artigo e qual é a principal contribuição?", "sources": ["web"], "files": ["artigo-arxiv.pdf"] },
+    { "id": "E27", "group": "arquivo", "query": "Resuma o capítulo e liste os personagens que aparecem.", "sources": ["web"], "files": ["dom-casmurro-cap.txt"] },
+    { "id": "E28", "group": "arquivo", "query": "Quais são os três números mais importantes do relatório?", "sources": ["web"], "files": ["relatorio-ficticio.docx"] },
+
+    { "id": "F29", "group": "conversa", "query": "E quantos anos ele tem?", "sources": ["web"], "history": [["human", "Quem é o atual presidente da França?"], ["assistant", "O atual presidente da França é Emmanuel Macron."]] },
+    { "id": "F30", "group": "conversa", "query": "Quanto é 15% de 2.340?", "sources": ["web"], "expectSkipSearch": true }
+  ]
+}
