@@ -194,7 +194,7 @@ export const POST = async (req: Request) => {
             }) + '\n',
           ),
         );
-        writer.close();
+        writer.close().catch(() => undefined);
         session.removeAllListeners();
       } else if (event === 'error') {
         writer.write(
@@ -205,7 +205,7 @@ export const POST = async (req: Request) => {
             }) + '\n',
           ),
         );
-        writer.close();
+        writer.close().catch(() => undefined);
         session.removeAllListeners();
       }
     });
@@ -234,7 +234,9 @@ export const POST = async (req: Request) => {
 
     req.signal.addEventListener('abort', () => {
       disconnect();
-      writer.close();
+      // The stream may already be closed by an 'end'/'error' event; closing a
+      // closed writer rejects, so swallow that to avoid an unhandled rejection.
+      writer.close().catch(() => undefined);
     });
 
     return new Response(responseStream.readable, {

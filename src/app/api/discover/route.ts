@@ -33,6 +33,10 @@ export const GET = async (req: Request) => {
       (params.get('mode') as 'normal' | 'preview') || 'normal';
     const topic: Topic = (params.get('topic') as Topic) || 'tech';
 
+    if (!Object.prototype.hasOwnProperty.call(websitesForTopic, topic)) {
+      return Response.json({ message: 'Invalid topic' }, { status: 400 });
+    }
+
     const selectedTopic = websitesForTopic[topic];
 
     let data = [];
