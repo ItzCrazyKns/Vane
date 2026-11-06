@@ -20,6 +20,11 @@ import {
 import { Message } from '@/lib/types';
 import { parseModelJson } from '../../utils/json';
 import { llmTimeoutMs } from '../../utils/timeout';
+import {
+  isOpenAIReasoningModel,
+  objectMaxTokens,
+  objectTemperature,
+} from '../../utils/objectDefaults';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -206,16 +211,25 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
+    const reasoning = isOpenAIReasoningModel(this.config.model);
+    const maxTokens =
+      input.options?.maxTokens ?? this.config.options?.maxTokens;
+
     /* create, not parse: the SDK's parse() runs JSON.parse on the raw content
        and throws on fenced JSON before parseModelJson can clean it up. */
     const response = await this.openAIClient.chat.completions.create({
       messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
       temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+        input.options?.temperature ??
+        this.config.options?.temperature ??
+        (reasoning ? 1.0 : objectTemperature()),
       top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
+      max_completion_tokens: maxTokens,
+      /* The default cap goes in max_tokens, the field LM Studio, Ollama and
+         most OpenAI-compatible servers read. */
+      max_tokens:
+        maxTokens === undefined && !reasoning ? objectMaxTokens() : undefined,
       stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
       frequency_penalty:
         input.options?.frequencyPenalty ??

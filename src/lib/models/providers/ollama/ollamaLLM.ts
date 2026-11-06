@@ -12,6 +12,7 @@ import { parse } from 'partial-json';
 import crypto from 'crypto';
 import { Message } from '@/lib/types';
 import { parseModelJson } from '../../utils/json';
+import { objectMaxTokens, objectTemperature } from '../../utils/objectDefaults';
 import { fetchWithHeadersTimeout, llmTimeoutMs } from '../../utils/timeout';
 
 type OllamaConfig = {
@@ -206,9 +207,14 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
-          input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+          input.options?.temperature ??
+          this.config.options?.temperature ??
+          objectTemperature(),
         num_ctx: numCtx,
-        num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
+        num_predict:
+          input.options?.maxTokens ??
+          this.config.options?.maxTokens ??
+          objectMaxTokens(),
         frequency_penalty:
           input.options?.frequencyPenalty ??
           this.config.options?.frequencyPenalty,
