@@ -3,7 +3,7 @@ import {
   UIConfigField,
   UIConfigSections,
 } from '@/lib/config/types';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';

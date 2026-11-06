@@ -1,6 +1,6 @@
 import { UIConfigField, ConfigModelProvider } from '@/lib/config/types';
 import { cn } from '@/lib/utils';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { AlertCircle, Plug2, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';

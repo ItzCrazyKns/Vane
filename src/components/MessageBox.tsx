@@ -41,6 +41,59 @@ const ThinkTagProcessor = ({
   );
 };
 
+// Parsear o markdown é a parte cara do MessageBox. Durante o streaming o
+// useChat recria todas as sections a cada token, então todo MessageBox
+// re-renderiza; com o memo, mensagens cujo texto não mudou não são
+// re-parseadas.
+const MessageMarkdown = React.memo(function MessageMarkdown({
+  content,
+  thinkingEnded,
+}: {
+  content: string;
+  thinkingEnded: boolean;
+}) {
+  const markdownOverrides: MarkdownToJSX.Options = {
+    renderRule(next, node, renderChildren, state) {
+      if (node.type === RuleType.codeInline) {
+        return `\`${node.text}\``;
+      }
+
+      if (node.type === RuleType.codeBlock) {
+        return (
+          <CodeBlock key={state.key} language={node.lang || ''}>
+            {node.text}
+          </CodeBlock>
+        );
+      }
+
+      return safeMarkdownRenderRule(next, node, renderChildren, state);
+    },
+    overrides: {
+      think: {
+        component: ThinkTagProcessor,
+        props: {
+          thinkingEnded: thinkingEnded,
+        },
+      },
+      citation: {
+        component: Citation,
+      },
+    },
+  };
+
+  return (
+    <Markdown
+      className={cn(
+        'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
+        'max-w-none break-words text-black dark:text-white',
+      )}
+      options={markdownOverrides}
+    >
+      {content}
+    </Markdown>
+  );
+});
+
 const MessageBox = ({
   section,
   sectionIndex,
@@ -76,35 +129,6 @@ const MessageBox = ({
   const hasContent = section.parsedTextBlocks.length > 0;
 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
-
-  const markdownOverrides: MarkdownToJSX.Options = {
-    renderRule(next, node, renderChildren, state) {
-      if (node.type === RuleType.codeInline) {
-        return `\`${node.text}\``;
-      }
-
-      if (node.type === RuleType.codeBlock) {
-        return (
-          <CodeBlock key={state.key} language={node.lang || ''}>
-            {node.text}
-          </CodeBlock>
-        );
-      }
-
-      return safeMarkdownRenderRule(next, node, renderChildren, state);
-    },
-    overrides: {
-      think: {
-        component: ThinkTagProcessor,
-        props: {
-          thinkingEnded: thinkingEnded,
-        },
-      },
-      citation: {
-        component: Citation,
-      },
-    },
-  };
 
   return (
     <div className="space-y-6">
@@ -180,15 +204,10 @@ const MessageBox = ({
 
             {hasContent && (
               <>
-                <Markdown
-                  className={cn(
-                    'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
-                    'max-w-none break-words text-black dark:text-white',
-                  )}
-                  options={markdownOverrides}
-                >
-                  {parsedMessage}
-                </Markdown>
+                <MessageMarkdown
+                  content={parsedMessage}
+                  thinkingEnded={thinkingEnded}
+                />
 
                 {loading && isLast ? null : (
                   <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4">

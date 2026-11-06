@@ -1,7 +1,7 @@
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Loader2, Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   ConfigModelProvider,
   StringUIConfigField,

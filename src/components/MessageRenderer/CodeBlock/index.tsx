@@ -1,14 +1,19 @@
 'use client';
 
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
-import SyntaxHighlighter from 'react-syntax-highlighter';
 import darkTheme from './CodeBlockDarkTheme';
 import lightTheme from './CodeBlockLightTheme';
 
-const SyntaxHighlighterComponent =
-  SyntaxHighlighter as unknown as React.ComponentType<any>;
+// O highlighter (highlight.js) fica num chunk à parte, baixado no primeiro
+// bloco de código. Até lá o código aparece sem cores, na mesma caixa.
+const SyntaxHighlighterComponent = lazy(
+  () =>
+    import('./highlighter') as unknown as Promise<{
+      default: React.ComponentType<any>;
+    }>,
+);
 
 const CodeBlock = ({
   language,
@@ -53,13 +58,26 @@ const CodeBlock = ({
           />
         )}
       </button>
-      <SyntaxHighlighterComponent
-        language={language}
-        style={syntaxTheme}
-        showInlineLineNumbers
+      <Suspense
+        fallback={
+          <pre style={syntaxTheme.hljs}>
+            <code
+              className={language ? `language-${language}` : undefined}
+              style={{ whiteSpace: 'pre' }}
+            >
+              {children as string}
+            </code>
+          </pre>
+        }
       >
-        {children as string}
-      </SyntaxHighlighterComponent>
+        <SyntaxHighlighterComponent
+          language={language}
+          style={syntaxTheme}
+          showInlineLineNumbers
+        >
+          {children as string}
+        </SyntaxHighlighterComponent>
+      </Suspense>
     </div>
   );
 };
