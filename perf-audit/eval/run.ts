@@ -79,6 +79,9 @@ const main = async () => {
   /* Imported after DATA_DIR is set: the config module reads it on load. */
   const { default: configManager } = await import('@/lib/config');
   configManager.updateConfig('search.searxngURL', searxngURL);
+  /* Web search always goes through the SearxNG stand-in, even when
+     FIRECRAWL_API_URL is set (that env only changes the page scraper). */
+  configManager.updateConfig('search.provider', 'searxng');
 
   const { default: UploadManager } = await import('@/lib/uploads/manager');
   UploadManager.uploadsDir = path.join(dataDir, 'uploads');
@@ -238,7 +241,12 @@ const main = async () => {
         label: opts.label,
         recordedAt: new Date().toISOString(),
         record: opts.record,
-        model: { chat: modelEnv.chatModel, embedding: modelEnv.embeddingModel },
+        model: {
+          endpoint: modelEnv.baseURL,
+          chat: modelEnv.chatModel,
+          embedding: `${modelEnv.embeddingProvider}:${modelEnv.embeddingModel}`,
+        },
+        scraper: process.env.FIRECRAWL_API_URL ? 'firecrawl' : 'readability',
         searxngMissRate: totalSearches
           ? searxng.misses.length / totalSearches
           : 0,

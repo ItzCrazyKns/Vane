@@ -23,7 +23,8 @@ export const createJudge = () => {
   if (!model)
     throw new Error('Set EVAL_JUDGE_MODEL (the larger LM Studio model).');
   const client = new OpenAI({
-    apiKey: 'lm-studio',
+    apiKey:
+      process.env.EVAL_JUDGE_API_KEY || process.env.EVAL_API_KEY || 'lm-studio',
     baseURL:
       process.env.EVAL_JUDGE_BASE_URL ||
       process.env.EVAL_BASE_URL ||
