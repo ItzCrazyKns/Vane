@@ -24,13 +24,13 @@ const Models = ({
           Select models
         </h3>
         <ModelSelect
-          providers={values.filter((p) =>
+          providers={providers.filter((p) =>
             p.chatModels.some((m) => m.key != 'error'),
           )}
           type="chat"
         />
         <ModelSelect
-          providers={values.filter((p) =>
+          providers={providers.filter((p) =>
             p.embeddingModels.some((m) => m.key != 'error'),
           )}
           type="embedding"
