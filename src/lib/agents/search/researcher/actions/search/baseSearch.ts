@@ -20,7 +20,12 @@ import { normalizeUrl } from '@/lib/utils/normalizeUrl';
  * three) fully parallel.
  */
 export const EMBEDDING_CONCURRENCY = 3;
-const withEmbeddingSlot = createLimiter(EMBEDDING_CONCURRENCY);
+/** A request still pending after this frees its slot (and fails) so one
+ *  hung embedding server call cannot block every later search. */
+export const EMBEDDING_TIMEOUT_MS = 120_000;
+const withEmbeddingSlot = createLimiter(EMBEDDING_CONCURRENCY, {
+  timeoutMs: EMBEDDING_TIMEOUT_MS,
+});
 
 /** Results scoring at or below this (cosine) against the query are dropped. */
 const SIMILARITY_THRESHOLD = 0.5;

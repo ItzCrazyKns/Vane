@@ -34,3 +34,34 @@ describe('createLimiter', () => {
     await expect(run(async () => 'ok')).resolves.toBe('ok');
   });
 });
+
+describe('createLimiter with a timeout', () => {
+  it('frees the slot of a task that never settles', async () => {
+    const run = createLimiter(1, { timeoutMs: 20 });
+    const hung = run(() => new Promise<never>(() => undefined));
+    await expect(hung).rejects.toThrow(/timed out/);
+    // The next task gets the slot instead of waiting forever.
+    await expect(run(async () => 'ok')).resolves.toBe('ok');
+  });
+
+  it('does not free a slot twice when a timed-out task settles later', async () => {
+    const run = createLimiter(1, { timeoutMs: 10 });
+    let finishLate!: () => void;
+    const late = run(() => new Promise<void>((r) => (finishLate = r)));
+    await expect(late).rejects.toThrow(/timed out/);
+
+    let active = 0;
+    let peak = 0;
+    const task = () =>
+      run(async () => {
+        active++;
+        peak = Math.max(peak, active);
+        await new Promise((r) => setTimeout(r, 5));
+        active--;
+      });
+    const both = Promise.all([task(), task()]);
+    finishLate();
+    await both;
+    expect(peak).toBe(1);
+  });
+});
