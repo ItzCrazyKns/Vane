@@ -36,8 +36,10 @@ const respond = (entry: Cached) =>
             "default-src 'none'; style-src 'unsafe-inline'",
         },
       })
-    : new Response(null, {
-        status: 404,
+    : /* 204, not 404: the <img> still fires onError (hideBrokenImage), but
+         the browser does not log a console error for each source. */
+      new Response(null, {
+        status: 204,
         headers: { 'Cache-Control': 'public, max-age=3600' },
       });
 
