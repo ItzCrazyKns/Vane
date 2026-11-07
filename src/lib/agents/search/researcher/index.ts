@@ -1,4 +1,5 @@
 import { ActionOutput, ResearcherInput, ResearcherOutput } from '../types';
+import { trace } from '@/lib/trace';
 import { ActionRegistry } from './actions';
 import { getResearcherPrompt } from '@/lib/prompts/search/researcher';
 import SessionManager from '@/lib/session';
@@ -188,6 +189,11 @@ class Researcher {
     );
 
     if (fastQueries) {
+      trace({
+        type: 'research_iteration',
+        iteration: -1,
+        actions: ['fast_path'],
+      });
       actionOutput.push(
         ...(await ActionRegistry.executeAll(
           [
@@ -339,6 +345,12 @@ class Researcher {
       if (finalToolCalls.length === 0) {
         break;
       }
+
+      trace({
+        type: 'research_iteration',
+        iteration: i,
+        actions: finalToolCalls.map((tc) => tc.name),
+      });
 
       if (finalToolCalls.some((tc) => tc.name === 'done')) {
         /* Small models often send a last search together with done. Run

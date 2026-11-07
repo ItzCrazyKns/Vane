@@ -6,6 +6,7 @@ import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
 import { fitWriterSources, formatSearchResult } from './writerContext';
 import { Message } from '@/lib/types';
+import { trace, withTraceLabel } from '@/lib/trace';
 
 class APISearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -23,19 +24,23 @@ class APISearchAgent {
   }
 
   private async _searchAsync(session: SessionManager, input: SearchAgentInput) {
-    const classification = await classify({
-      chatHistory: input.chatHistory,
-      enabledSources: input.config.sources,
-      query: input.followUp,
-      llm: input.config.llm,
-    });
+    const classification = await withTraceLabel('classifier', () =>
+      classify({
+        chatHistory: input.chatHistory,
+        enabledSources: input.config.sources,
+        query: input.followUp,
+        llm: input.config.llm,
+      }),
+    );
 
-    const widgetPromise = WidgetExecutor.executeAll({
-      classification,
-      chatHistory: input.chatHistory,
-      followUp: input.followUp,
-      llm: input.config.llm,
-    }).catch((err) => {
+    const widgetPromise = withTraceLabel('widget', () =>
+      WidgetExecutor.executeAll({
+        classification,
+        chatHistory: input.chatHistory,
+        followUp: input.followUp,
+        llm: input.config.llm,
+      }),
+    ).catch((err) => {
       console.error(`Error executing widgets: ${err}`);
       return [];
     });
@@ -44,12 +49,14 @@ class APISearchAgent {
 
     if (!classification.classification.skipSearch) {
       const researcher = new Researcher();
-      searchPromise = researcher.research(SessionManager.createSession(), {
-        chatHistory: input.chatHistory,
-        followUp: input.followUp,
-        classification: classification,
-        config: input.config,
-      });
+      searchPromise = withTraceLabel('researcher', () =>
+        researcher.research(SessionManager.createSession(), {
+          chatHistory: input.chatHistory,
+          followUp: input.followUp,
+          classification: classification,
+          config: input.config,
+        }),
+      );
     }
 
     const [widgetOutputs, searchResults] = await Promise.all([
@@ -102,6 +109,12 @@ class APISearchAgent {
       });
 
       finalContext = findings.map(formatSearchResult).join('\n');
+      trace({
+        type: 'writer_sources',
+        found: searchResults.searchFindings.length,
+        kept: findings.length,
+        contextChars: finalContext.length,
+      });
     }
 
     const finalContextWithWidgets = wrapContext(finalContext);
@@ -113,15 +126,17 @@ class APISearchAgent {
       classification.classification.skipSearch,
     );
 
-    const answerStream = input.config.llm.streamText({
-      messages: [
-        {
-          role: 'system',
-          content: writerPrompt,
-        },
-        ...writerMessages,
-      ],
-    });
+    const answerStream = withTraceLabel('writer', () =>
+      input.config.llm.streamText({
+        messages: [
+          {
+            role: 'system',
+            content: writerPrompt,
+          },
+          ...writerMessages,
+        ],
+      }),
+    );
 
     for await (const chunk of answerStream) {
       session.emit('data', {

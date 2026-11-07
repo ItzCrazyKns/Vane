@@ -12,9 +12,12 @@ import {
   StreamTextOutput,
 } from '@/lib/models/types';
 import { Chunk } from '@/lib/types';
+import { TraceEvent, currentTraceLabel } from '@/lib/trace';
 
 export type LLMCallStat = {
   kind: 'generateText' | 'streamText' | 'generateObject' | 'streamObject';
+  /** What the call was for (classifier, widget, researcher, writer...). */
+  label?: string;
   startMs: number;
   ms: number;
   firstChunkMs?: number;
@@ -32,8 +35,20 @@ export type EmbeddingCallStat = {
 };
 
 export type HttpStat = {
-  target: 'searxng' | 'firecrawl' | 'model' | 'other';
+  target:
+    | 'searxng'
+    | 'firecrawl-search'
+    | 'firecrawl-scrape'
+    | 'firecrawl'
+    | 'bifrost'
+    | 'model'
+    | 'other';
   host: string;
+  /** URL path without the query string. */
+  path?: string;
+  contentType?: string;
+  /** From Content-Length; the body is never read. */
+  bytes?: number;
   startMs: number;
   ms: number;
   status: number | null;
@@ -45,6 +60,8 @@ export type Recorder = {
   llm: LLMCallStat[];
   embedding: EmbeddingCallStat[];
   http: HttpStat[];
+  /** Search funnel counts reported through lib/trace. */
+  events: TraceEvent[];
 };
 
 export const newRecorder = (): Recorder => ({
@@ -52,6 +69,7 @@ export const newRecorder = (): Recorder => ({
   llm: [],
   embedding: [],
   http: [],
+  events: [],
 });
 
 const since = (r: Recorder, t: number) => Math.round(t - r.t0);
@@ -69,6 +87,12 @@ export class InstrumentedLLM extends BaseLLM<{ inner: BaseLLM<any> }> {
     super({ inner });
   }
 
+  /* Without this the search code would budget for the default window
+     instead of the one the real model reports (LM Studio, Ollama). */
+  getContextWindow() {
+    return this.inner.getContextWindow();
+  }
+
   private async timed<T>(
     kind: LLMCallStat['kind'],
     input: any,
@@ -78,6 +102,7 @@ export class InstrumentedLLM extends BaseLLM<{ inner: BaseLLM<any> }> {
     const start = performance.now();
     const stat: LLMCallStat = {
       kind,
+      label: currentTraceLabel(),
       startMs: since(this.rec, start),
       ms: 0,
       inputChars: msgChars(input),
@@ -114,23 +139,26 @@ export class InstrumentedLLM extends BaseLLM<{ inner: BaseLLM<any> }> {
     );
   }
 
-  async *streamText(
-    input: GenerateTextInput,
-  ): AsyncGenerator<StreamTextOutput> {
-    yield* this.stream(
+  /* Not generators themselves: the label is read when the call is made,
+     not when the caller first pulls a chunk (by then the labelled scope may
+     be gone). */
+  streamText(input: GenerateTextInput): AsyncGenerator<StreamTextOutput> {
+    return this.stream(
       'streamText',
+      currentTraceLabel(),
       input,
       this.inner.streamText(input),
       (c: StreamTextOutput) => c.contentChunk?.length ?? 0,
     );
   }
 
-  async *streamObject<T>(
+  streamObject<T>(
     input: GenerateObjectInput,
   ): AsyncGenerator<Partial<z.infer<T>>> {
     let last = 0;
-    yield* this.stream(
+    return this.stream(
       'streamObject',
+      currentTraceLabel(),
       input,
       this.inner.streamObject<T>(input),
       (c: any) => {
@@ -144,6 +172,7 @@ export class InstrumentedLLM extends BaseLLM<{ inner: BaseLLM<any> }> {
 
   private async *stream<C>(
     kind: LLMCallStat['kind'],
+    label: string | undefined,
     input: any,
     gen: AsyncGenerator<C>,
     size: (c: C) => number,
@@ -151,6 +180,7 @@ export class InstrumentedLLM extends BaseLLM<{ inner: BaseLLM<any> }> {
     const start = performance.now();
     const stat: LLMCallStat = {
       kind,
+      label,
       startMs: since(this.rec, start),
       ms: 0,
       inputChars: msgChars(input),
@@ -216,7 +246,8 @@ export class InstrumentedEmbedding extends BaseEmbedding<{
 
 /* HTTP tracing. fetch is wrapped once per process; a request is recorded
    only when it runs inside withHttpTrace(), so other users' requests are
-   untouched and unrecorded. Only host, status and time are kept. */
+   untouched and unrecorded. Only host, path, status, content type, size
+   and time are kept; never the query string, headers or body. */
 const traceStore = new AsyncLocalStorage<{
   rec: Recorder;
   classify: (url: URL) => HttpStat['target'];
@@ -244,6 +275,7 @@ const patchFetch = () => {
     const stat: HttpStat = {
       target: url ? ctx.classify(url) : 'other',
       host: url?.host ?? '?',
+      path: url?.pathname,
       startMs: since(ctx.rec, start),
       ms: 0,
       status: null,
@@ -251,6 +283,10 @@ const patchFetch = () => {
     try {
       const res = await original(input, init);
       stat.status = res.status;
+      const type = res.headers.get('content-type');
+      if (type) stat.contentType = type.split(';')[0].trim();
+      const len = Number(res.headers.get('content-length'));
+      if (Number.isFinite(len) && len > 0) stat.bytes = len;
       return res;
     } catch (err: any) {
       stat.error = String(
@@ -264,31 +300,49 @@ const patchFetch = () => {
   }) as typeof fetch;
 };
 
+export type TraceURLs = {
+  searxng?: string;
+  firecrawl?: string;
+  bifrost?: string;
+};
+
+/* By host and path, so a search and a page read on the same Firecrawl are
+   told apart, and so are SearXNG and Bifrost when they share a host. */
+export const classifyURL =
+  (urls: TraceURLs) =>
+  (url: URL): HttpStat['target'] => {
+    const host = (u?: string) => {
+      try {
+        return u ? new URL(u).host : null;
+      } catch {
+        return null;
+      }
+    };
+    const searxng = host(urls.searxng);
+    const firecrawl = host(urls.firecrawl);
+    const bifrost = host(urls.bifrost);
+    const p = url.pathname;
+    if (
+      /\/(chat\/completions|embeddings|responses|api\/chat|api\/embed)/.test(p)
+    )
+      return 'model';
+    if (bifrost && url.host === bifrost && /^\/mcp(\/|$)/.test(p))
+      return 'bifrost';
+    if (searxng && url.host === searxng) return 'searxng';
+    if (firecrawl && url.host === firecrawl) {
+      if (/\/search$/.test(p)) return 'firecrawl-search';
+      if (/\/scrape$/.test(p)) return 'firecrawl-scrape';
+      return 'firecrawl';
+    }
+    return 'other';
+  };
+
 export const withHttpTrace = <T>(
   rec: Recorder,
-  urls: { searxng?: string; firecrawl?: string },
+  urls: TraceURLs,
   fn: () => Promise<T>,
 ): Promise<T> => {
   patchFetch();
-  const prefix = (u?: string) => {
-    try {
-      return u ? new URL(u).host : null;
-    } catch {
-      return null;
-    }
-  };
-  const searxng = prefix(urls.searxng);
-  const firecrawl = prefix(urls.firecrawl);
-  const classify = (url: URL): HttpStat['target'] => {
-    if (searxng && url.host === searxng) return 'searxng';
-    if (firecrawl && url.host === firecrawl) return 'firecrawl';
-    if (
-      /\/(chat\/completions|embeddings|responses|api\/chat|api\/embed)/.test(
-        url.pathname,
-      )
-    )
-      return 'model';
-    return 'other';
-  };
+  const classify = classifyURL(urls);
   return traceStore.run({ rec, classify }, fn);
 };

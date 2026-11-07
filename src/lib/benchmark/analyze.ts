@@ -34,6 +34,28 @@ export type CaseBreakdown = {
   answerChars: number;
   maxPromptChars: number;
   writerCharsPerSec: number | null;
+  /** Model time per purpose (classifier, researcher, writer, widget...). */
+  llmMsByLabel: Record<string, number>;
+  funnel: Funnel;
+};
+
+/** Where search results went, from the trace events. */
+export type Funnel = {
+  iterations: number;
+  queries: number;
+  /** Results the engine returned, summed over queries. */
+  rawResults: number;
+  /** Kept by the similarity filter. */
+  keptResults: number;
+  /** Queries where the filter dropped everything and the best were kept. */
+  fallbacks: number;
+  emptyQueries: number;
+  /** Returned to the researcher after deduplication. */
+  returned: number;
+  writerFound: number | null;
+  writerKept: number | null;
+  writerContextChars: number | null;
+  simMedian: number | null;
 };
 
 const union = (spans: { startMs: number; ms: number }[]) => {
@@ -86,8 +108,59 @@ export const guessLanguage = (text: string): 'pt' | 'en' | 'unknown' => {
   return pt === en ? 'unknown' : pt > en ? 'pt' : 'en';
 };
 
+const SEARCH_TARGETS = new Set(['searxng', 'firecrawl-search']);
+const PAGE_TARGETS = new Set(['firecrawl-scrape', 'firecrawl', 'other']);
+const searchHttp = (r: CaseResult) =>
+  r.http.filter((h) => SEARCH_TARGETS.has(h.target));
 const pageHttp = (r: CaseResult) =>
-  r.http.filter((h) => h.target === 'firecrawl' || h.target === 'other');
+  r.http.filter((h) => PAGE_TARGETS.has(h.target));
+
+const median = (xs: number[]) => {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];
+};
+
+export const funnelOf = (r: CaseResult): Funnel => {
+  const ev = r.events ?? [];
+  const q = ev.flatMap((e) => (e.type === 'search_query' ? [e] : []));
+  const merge = ev.flatMap((e) => (e.type === 'search_merge' ? [e] : []));
+  const writer = ev.flatMap((e) => (e.type === 'writer_sources' ? [e] : []));
+  const w = writer[writer.length - 1];
+  return {
+    iterations: ev.filter((e) => e.type === 'research_iteration').length,
+    queries: q.length,
+    rawResults: q.reduce((n, e) => n + e.results, 0),
+    keptResults: q.reduce((n, e) => n + e.kept, 0),
+    fallbacks: q.filter((e) => e.fallback).length,
+    emptyQueries: q.filter((e) => e.results === 0).length,
+    returned: merge.length
+      ? merge.reduce((n, e) => n + e.returned, 0)
+      : q.reduce((n, e) => n + e.kept, 0),
+    writerFound: w ? w.found : null,
+    writerKept: w ? w.kept : null,
+    writerContextChars: w ? w.contextChars : null,
+    simMedian: median(
+      q.flatMap((e) => (e.simMedian === undefined ? [] : [e.simMedian])),
+    ),
+  };
+};
+
+/* A structured call that takes this long per character of output is
+   spending its time on tokens nobody sees: hidden reasoning (Qwen3,
+   DeepSeek-R1...) before the JSON. */
+const HIDDEN_REASONING_MS_PER_CHAR = 200;
+const HIDDEN_REASONING_MIN_MS = 8000;
+export const looksLikeHiddenReasoning = (c: {
+  kind: string;
+  ms: number;
+  outputChars: number;
+  error?: string;
+}) =>
+  c.kind === 'generateObject' &&
+  !c.error &&
+  c.ms >= HIDDEN_REASONING_MIN_MS &&
+  c.ms / Math.max(c.outputChars, 1) > HIDDEN_REASONING_MS_PER_CHAR;
 const failed = (h: { status: number | null; error?: string }) =>
   !!h.error || (h.status !== null && h.status >= 400);
 const sec = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
@@ -105,7 +178,7 @@ export const breakdown = (r: CaseResult): CaseBreakdown => {
     researchDoneMs: r.timing.researchDoneMs,
     llmBusyMs: union(r.llm),
     embeddingBusyMs: union(r.embedding),
-    searchBusyMs: union(r.http.filter((h) => h.target === 'searxng')),
+    searchBusyMs: union(searchHttp(r)),
     pagesBusyMs: union(pageHttp(r)),
     llmCalls: r.llm.length,
     llmCallsByKind: r.llm.reduce<Record<string, number>>(
@@ -114,7 +187,7 @@ export const breakdown = (r: CaseResult): CaseBreakdown => {
     ),
     embeddingCalls: r.embedding.length,
     embeddedTexts: r.embedding.reduce((n, e) => n + e.texts, 0),
-    searchRequests: r.http.filter((h) => h.target === 'searxng').length,
+    searchRequests: searchHttp(r).length,
     pageRequests: pageHttp(r).length,
     sources: r.resultCount,
     answerChars: visibleAnswer(r.answer).length,
@@ -123,23 +196,95 @@ export const breakdown = (r: CaseResult): CaseBreakdown => {
       lastWriter && genMs > 500
         ? Math.round(lastWriter.outputChars / (genMs / 1000))
         : null,
+    llmMsByLabel: r.llm.reduce<Record<string, number>>(
+      (a, c) => (
+        (a[c.label ?? c.kind] = (a[c.label ?? c.kind] ?? 0) + c.ms),
+        a
+      ),
+      {},
+    ),
+    funnel: funnelOf(r),
   };
 };
 
-/* LM Studio and Ollama often default to a 4096-token context; ~3.5 chars per
-   token is a rough average for Portuguese/English text. */
-const SMALL_CONTEXT_CHARS = 4096 * 3.5;
+/* When the model doesn't report its window: LM Studio and Ollama often
+   default to 4096 tokens. ~3.5 chars per token is a rough average for
+   Portuguese/English text. */
+
+const n = (x: number) => x.toLocaleString('pt-BR');
+
+/* Why a search case ended with no sources, from the funnel: the classifier
+   skipped search, the search failed or found nothing, the similarity filter
+   or dedup dropped everything, or the writer's context had no room. */
+const noSourcesFinding = (
+  r: CaseResult,
+  f: Funnel,
+  searches: CaseResult['http'],
+): Finding => {
+  const failedSearches = searches.filter(failed).length;
+  const base = { cases: [r.id] };
+  if (f.iterations === 0 && f.queries === 0 && searches.length === 0)
+    return {
+      ...base,
+      severity: 'aviso',
+      title: 'O classificador pulou a busca',
+      detail:
+        'A pergunta precisa de fontes, mas o classificador decidiu responder sem pesquisar (skipSearch). A resposta veio só do conhecimento do modelo.',
+    };
+  if (f.queries === 0 && searches.length === 0)
+    return {
+      ...base,
+      severity: 'aviso',
+      title: 'O pesquisador terminou sem buscar',
+      detail: `A pesquisa rodou ${f.iterations} iteração(ões) sem nenhuma consulta de busca.`,
+    };
+  if (f.rawResults === 0)
+    return {
+      ...base,
+      severity: 'bug',
+      title: 'A busca não trouxe resultados',
+      detail: `${searches.length || f.queries} consultas${failedSearches ? `, ${failedSearches} com erro` : ''}, nenhum resultado. Confira o serviço de busca.`,
+    };
+  if (f.writerFound !== null && f.writerFound > 0 && f.writerKept === 0)
+    return {
+      ...base,
+      severity: 'bug',
+      title: 'Fontes cortadas para caber no contexto',
+      detail: `A pesquisa achou ${f.writerFound} fontes, mas nenhuma coube no contexto do redator. Aumente o contexto do modelo.`,
+    };
+  return {
+    ...base,
+    severity: 'bug',
+    title: 'Resultados descartados antes do redator',
+    detail: `${f.queries} consultas trouxeram ${n(f.rawResults)} resultados; o filtro de similaridade manteve ${n(f.keptResults)}${f.fallbacks ? ` (${f.fallbacks} consulta(s) usaram os melhores porque o filtro zerou)` : ''}${f.simMedian !== null ? `, similaridade mediana ${f.simMedian}` : ''}; ${f.returned} voltaram ao pesquisador e ${f.writerFound ?? 0} chegaram ao redator.`,
+  };
+};
 
 /* Below this total, percentage-based bottleneck rules are noise. */
 const MIN_MS_FOR_SHARE = 3000;
 
 export const analyze = (
   results: CaseResult[],
-  env?: { searchProvider: string; searxngConfigured: boolean },
+  env?: {
+    searchProvider: string;
+    searxngConfigured: boolean;
+    contextWindow?: number | null;
+  },
+  probes: Finding[] = [],
 ) => {
   const rows = results.map(breakdown);
-  const findings: Finding[] = [];
+  const findings: Finding[] = [...probes];
   const add = (f: Finding) => findings.push(f);
+  const contextWindow = env?.contextWindow ?? null;
+  const contextChars = (contextWindow ?? 4096) * 3.5;
+
+  if (contextWindow !== null && contextWindow < 8192)
+    add({
+      severity: 'aviso',
+      title: 'Contexto do modelo pequeno',
+      detail: `O modelo de chat está carregado com ${contextWindow.toLocaleString('pt-BR')} tokens de contexto. Pesquisa e redator cortam fontes e histórico para caber. No LM Studio, aumente o "context length" ao carregar o modelo.`,
+      cases: [],
+    });
 
   if (env && env.searchProvider === 'searxng' && !env.searxngConfigured) {
     add({
@@ -215,7 +360,14 @@ export const analyze = (
 
     const cited = citedNumbers(answer);
     const bad = cited.filter((n) => n < 1 || n > r.sources.length);
-    if (bad.length)
+    if (bad.length && r.sources.length === 0)
+      add({
+        severity: 'bug',
+        title: 'Citou fontes sem ter nenhuma',
+        detail: `A resposta cita ${[...new Set(bad)].map((n) => `[${n}]`).join(', ')}, mas nenhuma fonte chegou ao redator. As citações foram inventadas.`,
+        cases: [r.id],
+      });
+    else if (bad.length)
       add({
         severity: 'bug',
         title: 'Citação para fonte inexistente',
@@ -223,22 +375,27 @@ export const analyze = (
         cases: [r.id],
       });
 
-    if (r.expectSkipSearch && (r.sources.length > 0 || searx.length > 0))
+    const searchReqs = searchHttp(r);
+    const fcFail = searchReqs.filter(
+      (h) => h.target === 'firecrawl-search' && failed(h),
+    );
+    if (fcFail.length)
+      add({
+        severity: 'bug',
+        title: 'Firecrawl (busca) respondeu com erro',
+        detail: `${fcFail.length} buscas falharam (${fcFail[0].status ?? fcFail[0].error}).`,
+        cases: [r.id],
+      });
+
+    if (r.expectSkipSearch && (r.sources.length > 0 || searchReqs.length > 0))
       add({
         severity: 'aviso',
         title: 'Buscou quando não precisava',
-        detail: `"${r.query}" deveria ser respondida sem busca (widget/modelo), mas houve ${searx.length} consultas. O classificador gastou tempo à toa.`,
+        detail: `"${r.query}" deveria ser respondida sem busca (widget/modelo), mas houve ${searchReqs.length} consultas. O classificador gastou tempo à toa.`,
         cases: [r.id],
       });
     if (!r.expectSkipSearch && r.id !== 'weather' && r.sources.length === 0)
-      add({
-        severity: searxFail.length ? 'bug' : 'aviso',
-        title: 'Busca sem fontes',
-        detail: searx.length
-          ? `Nenhuma fonte chegou ao redator (${searx.length} consultas à SearxNG). A resposta veio só do conhecimento do modelo.`
-          : 'O classificador decidiu não buscar nada para uma pergunta que precisa de fontes, então a resposta veio só do conhecimento do modelo.',
-        cases: [r.id],
-      });
+      add(noSourcesFinding(r, b.funnel, searchHttp(r)));
 
     const site = r.query.match(/site:(\S+)/)?.[1];
     if (site && r.sources.length) {
@@ -281,10 +438,13 @@ export const analyze = (
         cases: [r.id],
       });
 
-    if (b.maxPromptChars > SMALL_CONTEXT_CHARS)
+    if (b.maxPromptChars > contextChars)
       add({
         severity: 'aviso',
-        title: 'Prompt maior que um contexto de 4096 tokens',
+        title:
+          contextWindow === null
+            ? 'Prompt maior que um contexto de 4096 tokens'
+            : 'Prompt maior que o contexto do modelo',
         detail: `O maior prompt teve ${b.maxPromptChars.toLocaleString('pt-BR')} caracteres (~${Math.round(b.maxPromptChars / 3.5).toLocaleString('pt-BR')} tokens). Se o modelo no LM Studio/Ollama estiver com o contexto padrão de 4096, o começo do prompt é cortado em silêncio e a qualidade cai. Confira o "context length" do modelo.`,
         cases: [r.id],
       });
@@ -309,11 +469,12 @@ export const analyze = (
         cases: [r.id],
       });
 
-    if (searx.length && b.searchBusyMs / searx.length > 3000)
+    const searches = searchHttp(r);
+    if (searches.length && b.searchBusyMs / searches.length > 3000)
       add({
         severity: 'gargalo',
-        title: 'SearxNG lenta',
-        detail: `Média de ${sec(b.searchBusyMs / searx.length)} por consulta (${searx.length} consultas). Desligar motores lentos ou baixar o timeout na SearxNG ajuda.`,
+        title: 'Busca lenta',
+        detail: `Média de ${sec(b.searchBusyMs / searches.length)} por consulta (${searches.length} consultas). Na SearxNG, desligar motores lentos ou baixar o timeout ajuda.`,
         cases: [r.id],
       });
 
@@ -333,7 +494,7 @@ export const analyze = (
       add({
         severity: 'gargalo',
         title: 'Geração da resposta lenta',
-        detail: `O redator escreveu ~${b.writerCharsPerSec} caracteres/s (~${Math.round(b.writerCharsPerSec / 3.5)} tokens/s). Um modelo menor ou quantizado, ou GPU offload completo no LM Studio, acelera a resposta.`,
+        detail: `O redator escreveu ~${b.writerCharsPerSec} caracteres visíveis/s (~${Math.round(b.writerCharsPerSec / 3.5)} tokens/s). A medida conta só o texto da resposta: se o modelo raciocina escondido enquanto escreve, a taxa real de geração é maior e o tempo vai para o raciocínio. Senão, um modelo menor ou quantizado, ou GPU offload completo no LM Studio, acelera a resposta.`,
         cases: [r.id],
       });
 
@@ -358,9 +519,12 @@ export const analyze = (
   }
 
   const ok = rows.filter((r) => r.ok);
-  const classifier = results.flatMap((r) =>
-    r.llm.filter((c) => c.kind === 'generateObject').slice(0, 1),
-  );
+  const classifier = results.flatMap((r) => {
+    const labelled = r.llm.filter((c) => c.label === 'classifier');
+    return labelled.length
+      ? labelled
+      : r.llm.filter((c) => c.kind === 'generateObject').slice(0, 1);
+  });
   if (classifier.length >= 3) {
     const avg = classifier.reduce((n, c) => n + c.ms, 0) / classifier.length;
     if (avg > 3000)
@@ -371,6 +535,30 @@ export const analyze = (
         cases: [],
       });
   }
+  /* Structured calls (classifier, widgets, media query rewrite) that spend
+     far more time than their output needs. */
+  const hidden = results.flatMap((r) =>
+    r.llm.filter(looksLikeHiddenReasoning).map((c) => ({ id: r.id, c })),
+  );
+  if (hidden.length) {
+    const structured = results.flatMap((r) =>
+      r.llm.filter((c) => c.kind === 'generateObject' && !c.error),
+    );
+    const worst = hidden.reduce((a, b) =>
+      b.c.ms / Math.max(b.c.outputChars, 1) >
+      a.c.ms / Math.max(a.c.outputChars, 1)
+        ? b
+        : a,
+    );
+    const lost = hidden.reduce((t, h) => t + h.c.ms, 0);
+    merged.set('hidden-reasoning', {
+      severity: 'gargalo',
+      title: 'O modelo raciocina escondido nas chamadas estruturadas',
+      detail: `${hidden.length} de ${structured.length} chamadas estruturadas levaram ${sec(HIDDEN_REASONING_MIN_MS)} ou mais para devolver poucos caracteres (pior: ${worst.c.label ?? 'generateObject'} em ${worst.id}, ${sec(worst.c.ms)} para ${worst.c.outputChars} caracteres). Somam ${sec(lost)}. O tempo vai em tokens de raciocínio que o app descarta. Desligar o raciocínio nessas chamadas (no LM Studio ou por chamada) costuma levar cada uma para 1 a 3 s; muda o comportamento do modelo, então precisa de decisão e da avaliação.`,
+      cases: [...new Set(hidden.map((h) => h.id))],
+    });
+  }
+
   if (ok.length && !findings.some((f) => f.severity === 'bug'))
     merged.set('ok', {
       severity: 'sugestao',

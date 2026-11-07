@@ -80,6 +80,7 @@ const baseResult = (over: Partial<CaseResult>): CaseResult => ({
   llm: [],
   embedding: [],
   http: [],
+  events: [],
   ...over,
 });
 const titles = (r: CaseResult[]) => analyze(r).findings.map((f) => f.title);

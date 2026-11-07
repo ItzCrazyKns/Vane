@@ -19,6 +19,19 @@ import {
   toSearchOptions,
 } from './filters';
 import { fuseQueryResults, lexicalScore, ranksOf, rrf } from './ranking';
+import { trace } from '@/lib/trace';
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+/** Max, median and min similarity of one query's results, for the trace. */
+const similarityStats = (sims: number[]) => {
+  if (!sims.length) return {};
+  const s = [...sims].sort((a, b) => a - b);
+  return {
+    simMax: round2(s[s.length - 1]),
+    simMedian: round2(s[Math.floor(s.length / 2)]),
+    simMin: round2(s[0]),
+  };
+};
 
 /**
  * Results kept from the search engine for one web_search call, split
@@ -237,7 +250,16 @@ const runSearch = async (input: SearchInput): Promise<Chunk[]> => {
 
       let resultChunks: Chunk[] = [];
 
-      if (res.results.length === 0) return;
+      if (res.results.length === 0) {
+        trace({
+          type: 'search_query',
+          mode: input.mode,
+          results: 0,
+          kept: 0,
+          fallback: false,
+        });
+        return;
+      }
 
       try {
         /* One embedding call for the query and all its results, instead of
@@ -275,11 +297,20 @@ const runSearch = async (input: SearchInput): Promise<Chunk[]> => {
 
         /* Some embedding models score everything low; rather than
            "Found 0 results" (upstream #1119), keep the best ones. */
-        if (resultChunks.length === 0) {
+        const fallback = resultChunks.length === 0;
+        if (fallback) {
           resultChunks = scored
             .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
             .slice(0, FALLBACK_RESULTS);
         }
+        trace(() => ({
+          type: 'search_query',
+          mode: input.mode,
+          results: res.results.length,
+          kept: resultChunks.length,
+          fallback,
+          ...similarityStats(similarities),
+        }));
       } catch (err) {
         /* No embeddings: rank by the engine order and keywords alone. */
         const fused = fuseQueryResults(
@@ -306,6 +337,14 @@ const runSearch = async (input: SearchInput): Promise<Chunk[]> => {
               embedding: [],
             },
           };
+        });
+        trace({
+          type: 'search_query',
+          mode: input.mode,
+          results: res.results.length,
+          kept: resultChunks.length,
+          fallback: false,
+          embeddingError: true,
         });
       } finally {
         scoredResults.push(...resultChunks);
@@ -409,6 +448,14 @@ const runSearch = async (input: SearchInput): Promise<Chunk[]> => {
       })
       .slice(0, MAX_RESULTS);
 
+    trace({
+      type: 'search_merge',
+      mode: input.mode,
+      scored: scoredResults.length,
+      unique: uniqueSearchResultIndices.size,
+      returned: uniqueSearchResults.length,
+    });
+
     if (input.readPages && input.readPages > 0) {
       await readTopPages(uniqueSearchResults, input);
     }
@@ -423,7 +470,16 @@ const runSearch = async (input: SearchInput): Promise<Chunk[]> => {
     const search = async (q: string) => {
       const res = await runQuery(q);
 
-      if (res.results.length === 0) return;
+      if (res.results.length === 0) {
+        trace({
+          type: 'search_query',
+          mode: input.mode,
+          results: 0,
+          kept: 0,
+          fallback: false,
+        });
+        return;
+      }
 
       let resultChunks: Chunk[] = [];
 
@@ -443,6 +499,13 @@ const runSearch = async (input: SearchInput): Promise<Chunk[]> => {
       });
 
       searchResults.push(...resultChunks);
+      trace({
+        type: 'search_query',
+        mode: input.mode,
+        results: res.results.length,
+        kept: resultChunks.length,
+        fallback: false,
+      });
 
       if (!searchResultsEmitted) {
         searchResultsEmitted = true;
