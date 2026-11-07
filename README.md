@@ -1,18 +1,18 @@
 # Vane 🔍
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/network/members)
-[![GitHub watchers](https://img.shields.io/github/watchers/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/watchers)
+[![GitHub Repo stars](https://img.shields.io/github/stars/module195/Vane?style=social)](https://github.com/module195/Vane/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/module195/Vane?style=social)](https://github.com/module195/Vane/network/members)
+[![GitHub watchers](https://img.shields.io/github/watchers/module195/Vane?style=social)](https://github.com/module195/Vane/watchers)
 [![Docker Pulls](https://img.shields.io/docker/pulls/itzcrazykns1337/vane?color=blue)](https://hub.docker.com/r/itzcrazykns1337/vane)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/ItzCrazyKns/Vane/blob/master/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/ItzCrazyKns/Vane?color=green)](https://github.com/ItzCrazyKns/Vane/commits/master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/module195/Vane/blob/master/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/module195/Vane?color=green)](https://github.com/module195/Vane/commits/master)
 [![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
 
 Vane is a **privacy-focused AI answering engine** that runs entirely on your own hardware. It combines knowledge from the vast internet with support for **local LLMs** (Ollama) and cloud providers (OpenAI, Claude, Groq), delivering accurate answers with **cited sources**. Your chats, settings and API keys stay on your machine; queries go only to the search engine and model providers you configure (see [Security and privacy](#security-and-privacy)).
 
 ![preview](.assets/vane-screenshot.png)
 
-Want to know more about its architecture and how it works? You can read it [here](https://github.com/ItzCrazyKns/Vane/tree/master/docs/architecture/README.md).
+Want to know more about its architecture and how it works? You can read it [here](https://github.com/module195/Vane/tree/master/docs/architecture/README.md).
 
 ## ✨ Features
 
@@ -194,7 +194,7 @@ If you prefer to build from source or need more control:
 2. Clone the Vane repository:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Vane.git
+   git clone https://github.com/module195/Vane.git
    ```
 
 3. After cloning, navigate to the directory containing the project files.
@@ -216,7 +216,7 @@ If you prefer to build from source or need more control:
 2. Clone the repository:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Vane.git
+   git clone https://github.com/module195/Vane.git
    cd Vane
    ```
 
@@ -242,7 +242,7 @@ If you prefer to build from source or need more control:
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
-See the [installation documentation](https://github.com/ItzCrazyKns/Vane/tree/master/docs/installation) for more information like updating, etc.
+See the [installation documentation](https://github.com/module195/Vane/tree/master/docs/installation) for more information like updating, etc.
 
 ### Troubleshooting
 
@@ -301,7 +301,7 @@ If you wish to use Vane as an alternative to traditional search engines like Goo
 
 Vane also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, use multiple models and get answers to your queries.
 
-For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Vane/tree/master/docs/API/SEARCH.md).
+For more details, check out the full documentation [here](https://github.com/module195/Vane/tree/master/docs/API/SEARCH.md).
 
 ## Expose Vane to network
 
@@ -326,7 +326,7 @@ docker run -d -p 3000:3000 -e VANE_ALLOWED_HOSTS=vane.example.com -v vane-data:/
 [![Deploy to Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://usw.sealos.io/?openapp=system-template%3FtemplateName%3Dperplexica)
 [![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
 [![Run on ClawCloud](https://raw.githubusercontent.com/ClawCloud/Run-Template/refs/heads/main/Run-on-ClawCloud.svg)](https://template.run.claw.cloud/?referralCode=U11MRQ8U9RM4&openapp=system-fastdeploy%3FtemplateName%3Dperplexica)
-[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostinger.com/vps/docker-hosting?compose_url=https://raw.githubusercontent.com/ItzCrazyKns/Vane/refs/heads/master/docker-compose.yaml)
+[![Deploy on Hostinger](https://assets.hostinger.com/vps/deploy.svg)](https://www.hostinger.com/vps/docker-hosting?compose_url=https://raw.githubusercontent.com/module195/Vane/refs/heads/master/docker-compose.yaml)
 
 ## Upcoming Features
 
