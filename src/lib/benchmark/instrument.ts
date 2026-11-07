@@ -12,7 +12,12 @@ import {
   StreamTextOutput,
 } from '@/lib/models/types';
 import { Chunk } from '@/lib/types';
-import { TraceEvent, currentTraceLabel } from '@/lib/trace';
+import {
+  TraceEvent,
+  Usage,
+  currentTraceLabel,
+  withUsageSink,
+} from '@/lib/trace';
 
 export type LLMCallStat = {
   kind: 'generateText' | 'streamText' | 'generateObject' | 'streamObject';
@@ -23,7 +28,18 @@ export type LLMCallStat = {
   firstChunkMs?: number;
   inputChars: number;
   outputChars: number;
+  /** What the server reported, when it did (see lib/trace Usage). */
+  usage?: Usage;
   error?: string;
+};
+
+/* Fields a provider reported for the call; later reports fill in or
+   replace earlier ones (a stream's usage chunk, then its reasoning). */
+const usageSink = (stat: LLMCallStat) => (u: Usage) => {
+  const clean = Object.fromEntries(
+    Object.entries(u).filter(([, v]) => typeof v === 'number'),
+  );
+  if (Object.keys(clean).length) stat.usage = { ...stat.usage, ...clean };
 };
 
 export type EmbeddingCallStat = {
@@ -109,7 +125,7 @@ export class InstrumentedLLM extends BaseLLM<{ inner: BaseLLM<any> }> {
       outputChars: 0,
     };
     try {
-      const out = await fn();
+      const out = await withUsageSink(usageSink(stat), fn);
       stat.outputChars = size(out);
       return out;
     } catch (err: any) {
@@ -186,17 +202,29 @@ export class InstrumentedLLM extends BaseLLM<{ inner: BaseLLM<any> }> {
       inputChars: msgChars(input),
       outputChars: 0,
     };
+    /* Each step of the provider's stream runs inside the usage sink, so the
+       usage it reports lands on this call even with others in parallel. */
+    const sink = usageSink(stat);
+    let finished = false;
     try {
-      for await (const chunk of gen) {
+      while (true) {
+        const step = await withUsageSink(sink, () => gen.next());
+        if (step.done) {
+          finished = true;
+          break;
+        }
         if (stat.firstChunkMs === undefined)
           stat.firstChunkMs = Math.round(performance.now() - start);
-        stat.outputChars += size(chunk);
-        yield chunk;
+        stat.outputChars += size(step.value);
+        yield step.value;
       }
     } catch (err: any) {
+      finished = true;
       stat.error = String(err?.message ?? err).slice(0, 300);
       throw err;
     } finally {
+      /* The consumer stopped early: let the provider close its stream. */
+      if (!finished) await gen.return?.(undefined as any);
       stat.ms = Math.round(performance.now() - start);
       this.rec.llm.push(stat);
     }

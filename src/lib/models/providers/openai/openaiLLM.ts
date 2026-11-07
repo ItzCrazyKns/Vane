@@ -25,6 +25,22 @@ import {
   objectMaxTokens,
   objectTemperature,
 } from '../../utils/objectDefaults';
+import { isUsageTracked, reportUsage } from '@/lib/trace';
+
+/* Usage as OpenAI-compatible servers report it. reasoning_tokens is OpenAI's
+   field; LM Studio and DeepSeek send the reasoning text itself as
+   reasoning_content (some servers call it reasoning). Read only for the
+   benchmark: the app never uses the reasoning text. */
+const usageOf = (usage: any) =>
+  usage
+    ? {
+        promptTokens: usage.prompt_tokens,
+        completionTokens: usage.completion_tokens,
+        reasoningTokens: usage.completion_tokens_details?.reasoning_tokens,
+      }
+    : {};
+const reasoningOf = (m: any): string =>
+  (m && (m.reasoning_content ?? m.reasoning)) || '';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -109,6 +125,12 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
     });
 
+    const reasoningChars = reasoningOf(response.choices?.[0]?.message).length;
+    reportUsage({
+      ...usageOf(response.usage),
+      ...(reasoningChars ? { reasoningChars } : {}),
+    });
+
     if (response.choices && response.choices.length > 0) {
       return {
         content: response.choices[0].message.content!,
@@ -165,12 +187,20 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       stream: true,
+      ...(isUsageTracked() ? { stream_options: { include_usage: true } } : {}),
     });
 
+    let reasoningChars = 0;
     let recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];
 
     for await (const chunk of stream) {
+      reasoningChars += reasoningOf(chunk.choices?.[0]?.delta).length;
+      if (chunk.usage)
+        reportUsage({
+          ...usageOf(chunk.usage),
+          ...(reasoningChars ? { reasoningChars } : {}),
+        });
       if (chunk.choices && chunk.choices.length > 0) {
         const toolCalls = chunk.choices[0].delta.tool_calls;
         yield {
@@ -208,6 +238,9 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         };
       }
     }
+
+    /* Servers that send no usage chunk still show their reasoning text. */
+    if (reasoningChars) reportUsage({ reasoningChars });
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
@@ -237,6 +270,12 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       response_format: zodResponseFormat(input.schema, 'object'),
+    });
+
+    const reasoningChars = reasoningOf(response.choices?.[0]?.message).length;
+    reportUsage({
+      ...usageOf(response.usage),
+      ...(reasoningChars ? { reasoningChars } : {}),
     });
 
     if (response.choices && response.choices.length > 0) {
