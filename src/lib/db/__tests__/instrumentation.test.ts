@@ -39,14 +39,13 @@ describe('instrumentation register()', () => {
     expect(console.error).toHaveBeenCalled();
   });
 
-  it('only logs during next build, so the build does not crash', async () => {
+  it('skips the migrations during next build', async () => {
+    /* The build loads this hook in every page-data worker at once; they used
+       to race on the same fresh db.sqlite and fail with SQLITE_BUSY. */
     process.env.NEXT_PHASE = 'phase-production-build';
-    runMigrations.mockImplementation(() => {
-      throw new Error('boom');
-    });
     const { register } = await import('@/instrumentation');
 
     await expect(register()).resolves.toBeUndefined();
-    expect(console.error).toHaveBeenCalled();
+    expect(runMigrations).not.toHaveBeenCalled();
   });
 });
