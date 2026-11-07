@@ -1,26 +1,9 @@
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
 import * as schema from './schema';
-import fs from 'fs';
-import path from 'path';
 import { getDbPath } from './paths';
+import { openDatabase } from './open';
 
-const dbPath = getDbPath();
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-const sqlite = new Database(dbPath);
-
-/*
- * WAL lets the history/library reads run while an answer is being saved
- * instead of waiting on the rollback-journal lock, and with it
- * synchronous=NORMAL drops the fsync on every commit (WAL is synced only at
- * checkpoints). The database stays consistent after a crash; at worst the
- * last commits before a power loss are rolled back. Safe here because a
- * single Next.js process owns data/db.sqlite on local disk (WAL does not
- * work on network filesystems). journal_mode=WAL is persisted in the file;
- * synchronous is per connection.
- */
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('synchronous = NORMAL');
+const sqlite = openDatabase(getDbPath());
 
 const db = drizzle(sqlite, {
   schema: schema,
