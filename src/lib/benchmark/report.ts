@@ -84,6 +84,24 @@ const labelSection = (r: BenchmarkReport) => {
   ];
 };
 
+/* Tokens the server reported, per case. Empty when no provider did. */
+const tokenSection = (r: BenchmarkReport) => {
+  const rows = r.rows.filter((x) => x.tokens);
+  if (!rows.length) return [];
+  const t = (x: number) => (x ? x.toLocaleString('pt-BR') : '-');
+  return [
+    '## Tokens (contagem do servidor)',
+    '',
+    '| Teste | Prompt | Gerados | Raciocínio | Texto de raciocínio (caracteres) | Redator (tokens/s) |',
+    '| --- | --- | --- | --- | --- | --- |',
+    ...rows.map(
+      (x) =>
+        `| ${x.label} | ${t(x.tokens!.prompt)} | ${t(x.tokens!.completion)} | ${t(x.tokens!.reasoning)} | ${t(x.tokens!.reasoningChars)} | ${x.writerTokensPerSec ?? '-'} |`,
+    ),
+    '',
+  ];
+};
+
 export const reportToMarkdown = (r: BenchmarkReport) => {
   const e = r.environment;
   const lines = [
@@ -109,6 +127,7 @@ export const reportToMarkdown = (r: BenchmarkReport) => {
     '',
     ...funnelSection(r),
     ...labelSection(r),
+    ...tokenSection(r),
     '## Achados',
     '',
     ...(r.findings.length
