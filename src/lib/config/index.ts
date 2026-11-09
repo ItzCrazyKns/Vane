@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'fs';
 import { Config, ConfigModelProvider, UIConfigSections } from './types';
+import { mergeProviderConfig } from './credentials';
 import { hashObj } from '../utils/hash';
 import { getModelProvidersUIConfigSection } from '../models/providers';
 
@@ -309,7 +310,7 @@ class ConfigManager {
     if (!provider) throw new Error('Provider not found');
 
     provider.name = name;
-    provider.config = config;
+    provider.config = mergeProviderConfig(provider.config, config);
 
     this.saveConfig();
 
