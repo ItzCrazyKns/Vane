@@ -1,3 +1,4 @@
+import { redactCredentials } from '@/lib/config/credentials';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest } from 'next/server';
 
@@ -69,7 +70,10 @@ export const PATCH = async (
 
     return Response.json(
       {
-        provider: updatedProvider,
+        // The merge above restored a stored credential into `config`; the
+        // response must not hand it back. `redactCredentials` keeps the model
+        // lists the dialog needs and blanks the secret GET /api/config masks.
+        provider: redactCredentials(updatedProvider),
       },
       {
         status: 200,
