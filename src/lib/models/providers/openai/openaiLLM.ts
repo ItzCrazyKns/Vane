@@ -24,6 +24,7 @@ type OpenAIConfig = {
   apiKey: string;
   model: string;
   baseURL?: string;
+  headers?: Record<string, string>;
   options?: GenerateOptions;
 };
 
@@ -36,6 +37,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     this.openAIClient = new OpenAI({
       apiKey: this.config.apiKey,
       baseURL: this.config.baseURL || 'https://api.openai.com/v1',
+      defaultHeaders: this.config.headers,
     });
   }
 

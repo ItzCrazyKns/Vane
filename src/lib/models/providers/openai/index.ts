@@ -6,10 +6,12 @@ import BaseEmbedding from '../../base/embedding';
 import BaseModelProvider from '../../base/provider';
 import BaseLLM from '../../base/llm';
 import OpenAILLM from './openaiLLM';
+import { parseCustomHeaders } from '@/lib/utils/headers';
 
 interface OpenAIConfig {
   apiKey: string;
   baseURL: string;
+  headers?: Record<string, string>;
 }
 
 const defaultChatModels: Model[] = [
@@ -128,6 +130,16 @@ const providerConfigFields: UIConfigField[] = [
     env: 'OPENAI_BASE_URL',
     scope: 'server',
   },
+  {
+    type: 'string',
+    name: 'Custom Headers',
+    key: 'headers',
+    description:
+      'Optional extra HTTP headers sent with every request, as a JSON object',
+    required: false,
+    placeholder: '{"x-custom-header": "value"}',
+    scope: 'server',
+  },
 ];
 
 class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
@@ -177,6 +189,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
       apiKey: this.config.apiKey,
       model: key,
       baseURL: this.config.baseURL,
+      headers: this.config.headers,
     });
   }
 
@@ -194,6 +207,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
       apiKey: this.config.apiKey,
       model: key,
       baseURL: this.config.baseURL,
+      headers: this.config.headers,
     });
   }
 
@@ -208,6 +222,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
     return {
       apiKey: String(raw.apiKey),
       baseURL: String(raw.baseURL),
+      headers: parseCustomHeaders(raw.headers),
     };
   }
 

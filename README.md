@@ -158,6 +158,16 @@ If Vane tells you that you haven't configured any chat model providers, ensure t
 2. You have specified the correct model name loaded by your local LLM server.
 3. You have specified the correct API key, or if one is not defined, you have put _something_ in the API key field and not left it empty.
 
+#### OpenAI-Compatible Providers That Require Extra Headers
+
+Some OpenAI-compatible endpoints require additional HTTP headers on every request. When adding or editing an **OpenAI** connection, put them in the **Custom Headers** field as a JSON object, for example:
+
+```json
+{ "x-opencode-session": "vane" }
+```
+
+The headers are sent with every chat and embedding request made through that connection. Leave the field empty if your provider doesn't need it.
+
 #### Ollama Connection Errors
 
 If you're encountering an Ollama connection error, it is likely due to the backend being unable to connect to Ollama's API. To fix this issue you can:
