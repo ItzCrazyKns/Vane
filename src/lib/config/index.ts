@@ -193,6 +193,11 @@ class ConfigManager {
       };
 
       provider.fields.forEach((field) => {
+        /* Optional fields without an env var can only be set from the UI. Leaving
+           them out keeps the hash of env-based providers stable when new
+           optional fields are added, so existing providers aren't duplicated. */
+        if (!field.required && !field.env) return;
+
         newProvider.config[field.key] =
           process.env[field.env!] ||
           field.default ||
