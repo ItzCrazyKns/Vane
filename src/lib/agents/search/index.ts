@@ -9,6 +9,7 @@ import { messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
+import sanitizeCitations from '@/lib/utils/sanitizeCitations';
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -168,6 +169,30 @@ class SearchAgent {
             value: block.data,
           },
         ]);
+      }
+    }
+
+    /* The writer sometimes cites a source number that does not exist.
+       Strip those markers once the answer is complete so the UI and the
+       saved response only show citations that resolve to a source. */
+    if (responseBlockId) {
+      const block = session.getBlock(responseBlockId) as TextBlock | null;
+
+      if (block) {
+        const { text, removed } = sanitizeCitations(
+          block.data,
+          searchResults?.searchFindings.length ?? 0,
+        );
+
+        if (removed.length > 0) {
+          session.updateBlock(block.id, [
+            {
+              op: 'replace',
+              path: '/data',
+              value: text,
+            },
+          ]);
+        }
       }
     }
 
