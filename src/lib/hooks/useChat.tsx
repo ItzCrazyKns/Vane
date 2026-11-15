@@ -549,6 +549,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getMessageHandler = (message: Message) => {
     const messageId = message.messageId;
+    /* This stream's blocks with every patch applied, kept here as each line
+       arrives. messagesRef only catches up after React renders, so when the
+       last patch (e.g. the server's citation cleanup) and messageEnd come in
+       the same chunk, messagesRef still holds the text before that patch. */
+    const streamBlocks = new Map<string, Block>();
 
     return async (data: any) => {
       if (data.type === 'error') {
@@ -576,6 +581,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.type === 'block') {
+        streamBlocks.set(data.block.id, structuredClone(data.block));
         setMessages((prev) =>
           prev.map((msg) => {
             if (msg.messageId === messageId) {
@@ -611,6 +617,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.type === 'updateBlock') {
+        const mirrored = streamBlocks.get(data.blockId);
+        if (mirrored) applyPatch(mirrored, structuredClone(data.patch));
         setMessages((prev) =>
           prev.map((msg) => {
             if (msg.messageId === messageId) {
@@ -639,13 +647,18 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         const currentMsg = messagesRef.current.find(
           (msg) => msg.messageId === messageId,
         );
+        // Prefer this stream's own copy (final text); fall back to state.
+        const finalText = [...streamBlocks.values()].find(
+          (b) => b.type === 'text',
+        )?.data;
 
         const newHistory: [string, string][] = [
           ...chatHistory.current,
           ['human', message.query],
           [
             'assistant',
-            currentMsg?.responseBlocks.find((b) => b.type === 'text')?.data ||
+            (typeof finalText === 'string' ? finalText : undefined) ||
+              currentMsg?.responseBlocks.find((b) => b.type === 'text')?.data ||
               '',
           ],
         ];
