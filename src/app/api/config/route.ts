@@ -3,6 +3,9 @@ import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
 
+// Stand-in sent to the browser so the stored Keirolabs key never leaves the server.
+const MASKED_KEY = '********';
+
 type SaveConfigBody = {
   key: string;
   value: string;
@@ -29,8 +32,16 @@ export const GET = async (req: NextRequest) => {
       },
     );
 
+    const keirolabsAPIKey = values.search?.keirolabsAPIKey;
+
     return NextResponse.json({
-      values,
+      values: {
+        ...values,
+        search: {
+          ...values.search,
+          keirolabsAPIKey: keirolabsAPIKey ? MASKED_KEY : '',
+        },
+      },
       fields,
     });
   } catch (err) {
@@ -54,6 +65,14 @@ export const POST = async (req: NextRequest) => {
         {
           status: 400,
         },
+      );
+    }
+
+    // The settings input saves on blur, so an untouched masked key comes back as-is.
+    if (body.key === 'search.keirolabsAPIKey' && body.value === MASKED_KEY) {
+      return Response.json(
+        { message: 'Config updated successfully.' },
+        { status: 200 },
       );
     }
 
