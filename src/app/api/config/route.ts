@@ -60,6 +60,14 @@ export const POST = async (req: NextRequest) => {
 
     const isSecret = SECRET_KEYS.includes(body.key);
 
+    // A secret is stored as given, so anything but a string (an array, an object) is refused before it is read.
+    if (isSecret && typeof body.value !== 'string') {
+      return Response.json(
+        { message: 'The value must be a string.' },
+        { status: 400 },
+      );
+    }
+
     if (!body.key || (!body.value && !(isSecret && body.value === ''))) {
       return Response.json(
         {
