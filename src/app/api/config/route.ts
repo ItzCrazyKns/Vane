@@ -2,9 +2,10 @@ import configManager from '@/lib/config';
 import ModelRegistry from '@/lib/models/registry';
 import { NextRequest, NextResponse } from 'next/server';
 import { ConfigModelProvider } from '@/lib/config/types';
+import { MASKED_SECRET } from '@/lib/config/masked';
 
-// Stand-in sent to the browser so the stored Keirolabs key never leaves the server.
-const MASKED_KEY = '********';
+// Optional secrets: sent to the browser masked, and an empty value clears them.
+const SECRET_KEYS = ['search.keirolabsAPIKey'];
 
 type SaveConfigBody = {
   key: string;
@@ -39,7 +40,7 @@ export const GET = async (req: NextRequest) => {
         ...values,
         search: {
           ...values.search,
-          keirolabsAPIKey: keirolabsAPIKey ? MASKED_KEY : '',
+          keirolabsAPIKey: keirolabsAPIKey ? MASKED_SECRET : '',
         },
       },
       fields,
@@ -57,7 +58,9 @@ export const POST = async (req: NextRequest) => {
   try {
     const body: SaveConfigBody = await req.json();
 
-    if (!body.key || !body.value) {
+    const isSecret = SECRET_KEYS.includes(body.key);
+
+    if (!body.key || (!body.value && !(isSecret && body.value === ''))) {
       return Response.json(
         {
           message: 'Key and value are required.',
@@ -68,11 +71,19 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    // The settings input saves on blur, so an untouched masked key comes back as-is.
-    if (body.key === 'search.keirolabsAPIKey' && body.value === MASKED_KEY) {
+    // The input saves on blur, so an untouched secret comes back as the mask: keep the stored one.
+    if (isSecret && body.value === MASKED_SECRET) {
       return Response.json(
         { message: 'Config updated successfully.' },
         { status: 200 },
+      );
+    }
+
+    // An edit that kept part of the mask would store it as the key; API keys never contain '*'.
+    if (isSecret && body.value.includes('*')) {
+      return Response.json(
+        { message: 'Replace the whole masked key, or delete it to clear it.' },
+        { status: 400 },
       );
     }
 
