@@ -102,6 +102,7 @@ export type {
   UIConfigSections,
   SelectUIConfigField,
   StringUIConfigField,
+  PasswordUIConfigField,
   ModelProviderUISection,
   ConfigModelProvider,
   TextareaUIConfigField,

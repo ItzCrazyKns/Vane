@@ -18,6 +18,7 @@ class ConfigManager {
     modelProviders: [],
     search: {
       searxngURL: '',
+      keirolabsAPIKey: '',
     },
   };
   uiConfigSections: UIConfigSections = {
@@ -112,6 +113,18 @@ class ConfigManager {
         default: '',
         scope: 'server',
         env: 'SEARXNG_API_URL',
+      },
+      {
+        name: 'Keirolabs API Key',
+        key: 'keirolabsAPIKey',
+        type: 'password',
+        required: false,
+        description:
+          'Use Keirolabs (keirolabs.cloud) for web search instead of SearXNG. Academic and social searches keep using SearXNG.',
+        placeholder: 'keiro_...',
+        default: '',
+        scope: 'server',
+        env: 'KEIROLABS_API_KEY',
       },
     ],
   };
