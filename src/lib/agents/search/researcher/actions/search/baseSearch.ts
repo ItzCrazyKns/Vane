@@ -1,6 +1,7 @@
 import BaseEmbedding from '@/lib/models/base/embedding';
 import BaseLLM from '@/lib/models/base/llm';
-import { searchSearxng, SearxngSearchOptions } from '@/lib/searxng';
+import { searchWeb } from '@/lib/search';
+import type { SearxngSearchOptions } from '@/lib/searxng';
 import SessionManager from '@/lib/session';
 import { Chunk, ResearchBlock, SearchResultsResearchBlock } from '@/lib/types';
 import { SearchAgentConfig } from '../../../types';
@@ -41,7 +42,7 @@ export const executeSearch = async (input: {
     const results: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
+      const res = await searchWeb(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 
@@ -176,7 +177,7 @@ export const executeSearch = async (input: {
     const searchResults: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
+      const res = await searchWeb(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 
@@ -190,6 +191,7 @@ export const executeSearch = async (input: {
           metadata: {
             title: r.title,
             url: r.url,
+            publicScrapeOnly: r.publicScrapeOnly === true,
             similarity: 1,
             embedding: [],
           },
@@ -365,11 +367,15 @@ export const executeSearch = async (input: {
     await Promise.all(
       filteredResults.map(async (result, i) => {
         try {
-          const scrapedData = await Scraper.scrape(result.metadata.url).catch(
-            (err) => {
+          const scrapedData = await Scraper.scrape(result.metadata.url, {
+            publicOnly: result.metadata.publicScrapeOnly === true,
+          }).catch((err) => {
+            if (result.metadata.publicScrapeOnly === true) {
+              console.log('Public page could not be retrieved');
+            } else {
               console.log('Error scraping data from', result.metadata.url, err);
-            },
-          );
+            }
+          });
 
           if (!scrapedData) return;
 

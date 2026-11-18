@@ -1,3 +1,4 @@
+// Discover needs news-engine filtering and thumbnails from SearXNG.
 import { searchSearxng } from '@/lib/searxng';
 
 const websitesForTopic = {

@@ -1,6 +1,8 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Mutex } from 'async-mutex';
+import { fetchPublicHtml } from './publicHtml';
+import { getSearchBackend } from './config/serverRegistry';
 
 class Scraper {
   private static browser: any | undefined;
@@ -48,7 +50,22 @@ class Scraper {
 
   static async scrape(
     url: string,
+    options?: { publicOnly?: boolean },
   ): Promise<{ content: string; title: string }> {
+    if (options?.publicOnly || getSearchBackend() === 'desearch') {
+      // Desearch results never enter Chromium: no script/subresource egress.
+      const html = await fetchPublicHtml(url);
+      const dom = new JSDOM(html, { url });
+      const content = new Readability(dom.window.document).parse();
+      const title = content?.title || 'No title';
+      return {
+        content: `
+        # ${title} - ${url}
+        ${content?.textContent?.trim() || 'No content available'}
+        `,
+        title,
+      };
+    }
     await this.initBrowser();
 
     if (!this.browser) throw new Error('Browser not initialized');

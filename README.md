@@ -63,6 +63,8 @@ We'd like to thank the following partners for their generous support:
 
 There are mainly 2 ways of installing Vane - With Docker, Without Docker. Using Docker is highly recommended.
 
+Optional web search backend: [Configure Desearch](https://github.com/ItzCrazyKns/Vane/tree/master/docs/installation/DESEARCH.md).
+
 ### Getting Started with Docker (Recommended)
 
 Vane can be easily run using Docker. Simply run the following command:

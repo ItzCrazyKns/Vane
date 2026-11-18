@@ -103,6 +103,20 @@ class ConfigManager {
     modelProviders: [],
     search: [
       {
+        name: 'Web search backend',
+        key: 'backend',
+        type: 'select',
+        options: [
+          { name: 'Default', value: 'searxng' },
+          { name: 'Desearch', value: 'desearch' },
+        ],
+        required: false,
+        description: 'Choose the backend for web research and discovery.',
+        default: 'searxng',
+        scope: 'server',
+        env: 'SEARCH_BACKEND',
+      },
+      {
         name: 'SearXNG URL',
         key: 'searxngURL',
         type: 'string',
