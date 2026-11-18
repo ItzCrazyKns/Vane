@@ -35,7 +35,9 @@ separate static HTML transport: only HTTP(S) on ports 80/443, public IP ranges,
 and DNS answers containing exclusively public addresses are accepted. Connections
 are pinned to a checked address with the original Host/TLS hostname. Redirects
 are rejected, and HTML is parsed without executing scripts or loading frames or
-subresources. Requests have a 20-second deadline and a 2 MiB response cap.
+subresources. The 20-second deadline begins after DNS resolution and covers only
+the HTTP transport; DNS resolution is outside that limit. Responses have a 2 MiB
+cap.
 Pages requiring redirects or JavaScript rendering cannot be scraped through this
 path. The same guard applies to explicit URL scraping while Desearch is selected, so
 URLs passed through an LLM cannot lose the boundary. Other search backends

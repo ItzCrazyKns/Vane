@@ -57,9 +57,13 @@ class Scraper {
       const html = await fetchPublicHtml(url);
       const dom = new JSDOM(html, { url });
       const content = new Readability(dom.window.document).parse();
+      const title = content?.title || 'No title';
       return {
-        title: content?.title || 'No title',
-        content: content?.textContent?.trim() || 'No content available',
+        content: `
+        # ${title} - ${url}
+        ${content?.textContent?.trim() || 'No content available'}
+        `,
+        title,
       };
     }
     await this.initBrowser();

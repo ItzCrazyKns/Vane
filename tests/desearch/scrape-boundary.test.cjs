@@ -240,6 +240,41 @@ const { EventEmitter } = require('node:events');
     assert.equal(fallback.length, 1);
     assert.equal(browserCalls, 1);
     clearTimeout(Scraper.idleTimeout);
+
+    // Compare the actual Scraper return contract across both transport branches.
+    const sourceUrl = 'https://public.example/article';
+    Object.assign(state, {
+      backend: 'desearch',
+      addresses: [{ address: '93.184.216.34', family: 4 }],
+      requests: [],
+      dnsCalls: 0,
+      status: 200,
+      dnsError: false,
+    });
+    const publicPage = await Scraper.scrape(sourceUrl);
+    assert.equal(publicPage.title, 'Public control');
+    assert.equal(
+      publicPage.content.trim().split('\n')[0].trim(),
+      `# ${publicPage.title} - ${sourceUrl}`,
+    );
+    assert.ok(
+      publicPage.content.includes(
+        'Harmless static public fixture content for extraction.',
+      ),
+    );
+    assert.equal(state.requests.length, 1);
+    assert.equal(browserCalls, 1, 'Public shape check must not enter Chromium');
+
+    state.backend = 'searxng';
+    const defaultPage = await Scraper.scrape(sourceUrl);
+    clearTimeout(Scraper.idleTimeout);
+    assert.equal(defaultPage.title, 'Default');
+    assert.equal(
+      defaultPage.content.trim().split('\n')[0].trim(),
+      `# ${defaultPage.title} - ${sourceUrl}`,
+    );
+    assert.equal(defaultPage.content.trim().split('\n')[1].trim(), 'Default');
+    assert.equal(browserCalls, 2);
     assert.ok(!JSON.stringify(logs).includes('sensitive'));
     assert.ok(!JSON.stringify(logs).includes('synthetic-password'));
     console.log = originalLog;
@@ -260,6 +295,7 @@ const { EventEmitter } = require('node:events');
         publicControls: 3,
         pinnedLookupReused: true,
         defaultBrowserPreserved: true,
+        actualScraperPublicDefaultHeaderShape: true,
         realNetworkRequests: 0,
         apiFixtureCalls: apiCalls,
       }),
