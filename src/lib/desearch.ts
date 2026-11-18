@@ -1,13 +1,18 @@
 const isWebUrl = (value: string) => {
   try {
     const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      !url.username &&
+      !url.password
+    );
   } catch {
     return false;
   }
 };
 
 export interface DesearchResult {
+  publicScrapeOnly: true;
   title: string;
   url: string;
   content: string;
@@ -53,6 +58,7 @@ export const searchDesearch = async (query: string, num = 10) => {
     const results: DesearchResult[] = body.data
       .slice(0, num)
       .map((item: { title: string; link: string; snippet: string }) => ({
+        publicScrapeOnly: true,
         title: item.title,
         url: item.link,
         content: item.snippet,

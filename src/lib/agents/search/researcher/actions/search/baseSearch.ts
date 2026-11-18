@@ -191,6 +191,7 @@ export const executeSearch = async (input: {
           metadata: {
             title: r.title,
             url: r.url,
+            publicScrapeOnly: r.publicScrapeOnly === true,
             similarity: 1,
             embedding: [],
           },
@@ -366,11 +367,15 @@ export const executeSearch = async (input: {
     await Promise.all(
       filteredResults.map(async (result, i) => {
         try {
-          const scrapedData = await Scraper.scrape(result.metadata.url).catch(
-            (err) => {
+          const scrapedData = await Scraper.scrape(result.metadata.url, {
+            publicOnly: result.metadata.publicScrapeOnly === true,
+          }).catch((err) => {
+            if (result.metadata.publicScrapeOnly === true) {
+              console.log('Public page could not be retrieved');
+            } else {
               console.log('Error scraping data from', result.metadata.url, err);
-            },
-          );
+            }
+          });
 
           if (!scrapedData) return;
 

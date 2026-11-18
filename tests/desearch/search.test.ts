@@ -30,7 +30,12 @@ test('encodes query, sends bearer header, and maps results', async () => {
   });
   assert.deepEqual(await searchDesearch('a & b/雪', 3), {
     results: [
-      { title: 'A title', url: 'https://example.org', content: 'A snippet' },
+      {
+        publicScrapeOnly: true,
+        title: 'A title',
+        url: 'https://example.org',
+        content: 'A snippet',
+      },
     ],
     suggestions: [],
   });

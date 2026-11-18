@@ -6,6 +6,7 @@ export interface SearxngSearchOptions {
 }
 
 export interface SearxngSearchResult {
+  publicScrapeOnly?: boolean;
   title: string;
   url: string;
   img_src?: string;
