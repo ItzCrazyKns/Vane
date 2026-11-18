@@ -51,20 +51,36 @@ export const POST = async (req: Request) => {
 
     const agent = new APISearchAgent();
 
-    agent.searchAsync(session, {
-      chatHistory: history,
-      config: {
-        embedding: embeddings,
-        llm: llm,
-        sources: body.sources,
-        mode: body.optimizationMode,
-        fileIds: [],
-        systemInstructions: body.systemInstructions || '',
-      },
-      followUp: body.query,
-      chatId: crypto.randomUUID(),
-      messageId: crypto.randomUUID(),
-    });
+    agent
+      .searchAsync(session, {
+        chatHistory: history,
+        config: {
+          embedding: embeddings,
+          llm: llm,
+          sources: body.sources,
+          mode: body.optimizationMode,
+          fileIds: [],
+          systemInstructions: body.systemInstructions || '',
+        },
+        followUp: body.query,
+        chatId: crypto.randomUUID(),
+        messageId: crypto.randomUUID(),
+      })
+      .catch((err) => {
+        /*
+         * An unhandled rejection here leaves the request open forever: the
+         * non-streaming promise below never settles and the streaming response
+         * never ends. Emit the error event both subscribers already listen for.
+         */
+        console.error('An error occurred while generating the response:', err);
+
+        session.emit('error', {
+          data:
+            err instanceof Error && err.message
+              ? err.message
+              : 'An error occurred while generating the response',
+        });
+      });
 
     if (!body.stream) {
       return new Promise(

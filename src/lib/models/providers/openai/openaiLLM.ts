@@ -27,6 +27,19 @@ type OpenAIConfig = {
   options?: GenerateOptions;
 };
 
+/*
+ * Utility calls (classification, widgets, structured output) should never be
+ * able to keep a chat request open indefinitely. Streaming answers are left
+ * untouched because a long answer is legitimate.
+ */
+const NON_STREAMING_TIMEOUT_MS = 2 * 60 * 1000;
+const NON_STREAMING_MAX_RETRIES = 1;
+
+const REQUEST_OPTIONS = {
+  timeout: NON_STREAMING_TIMEOUT_MS,
+  maxRetries: NON_STREAMING_MAX_RETRIES,
+};
+
 class OpenAILLM extends BaseLLM<OpenAIConfig> {
   openAIClient: OpenAI;
 
@@ -98,7 +111,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-    });
+    }, REQUEST_OPTIONS);
 
     if (response.choices && response.choices.length > 0) {
       return {
@@ -210,7 +223,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       response_format: zodResponseFormat(input.schema, 'object'),
-    });
+    }, REQUEST_OPTIONS);
 
     if (response.choices && response.choices.length > 0) {
       try {

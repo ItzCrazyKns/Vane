@@ -6,8 +6,8 @@ import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
-import { eq } from 'drizzle-orm';
-import { chats } from '@/lib/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { chats, messages } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
 
 export const runtime = 'nodejs';
@@ -210,20 +210,56 @@ export const POST = async (req: Request) => {
       }
     });
 
-    agent.searchAsync(session, {
-      chatHistory: history,
-      followUp: message.content,
-      chatId: body.message.chatId,
-      messageId: body.message.messageId,
-      config: {
-        llm,
-        embedding: embedding,
-        sources: body.sources as SearchSources[],
-        mode: body.optimizationMode,
-        fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
-      },
-    });
+    agent
+      .searchAsync(session, {
+        chatHistory: history,
+        followUp: message.content,
+        chatId: body.message.chatId,
+        messageId: body.message.messageId,
+        config: {
+          llm,
+          embedding: embedding,
+          sources: body.sources as SearchSources[],
+          mode: body.optimizationMode,
+          fileIds: body.files,
+          systemInstructions: body.systemInstructions || 'None',
+        },
+      })
+      .catch(async (err) => {
+        /*
+         * Without this handler a failure inside the agent (for example a model
+         * that cannot produce the structured output it is asked for) becomes an
+         * unhandled rejection: the stream is never closed and the message stays
+         * stuck in 'answering'. Surface the error to the client and persist it
+         * so the chat can be reloaded.
+         */
+        console.error('An error occurred while generating the response:', err);
+
+        const errorMessage =
+          err instanceof Error && err.message
+            ? err.message
+            : 'An error occurred while generating the response';
+
+        session.emit('error', { data: errorMessage });
+
+        try {
+          await db
+            .update(messages)
+            .set({
+              status: 'error',
+              responseBlocks: session.getAllBlocks(),
+            })
+            .where(
+              and(
+                eq(messages.chatId, body.message.chatId),
+                eq(messages.messageId, body.message.messageId),
+              ),
+            )
+            .execute();
+        } catch (dbErr) {
+          console.error('Failed to mark message as errored:', dbErr);
+        }
+      });
 
     ensureChatExists({
       id: body.message.chatId,

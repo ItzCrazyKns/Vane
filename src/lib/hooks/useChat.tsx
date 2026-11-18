@@ -28,6 +28,24 @@ export type Section = {
   suggestions?: string[];
 };
 
+/*
+ * A failed request used to leave the chat spinning forever: the response body
+ * was parsed as an event stream, the JSON error body never matched any event,
+ * and the thrown error had nowhere to go. Always turn it into a message.
+ */
+const readErrorMessage = async (res: Response): Promise<string> => {
+  try {
+    const body = await res.json();
+
+    if (typeof body?.error === 'string') return body.error;
+    if (typeof body?.message === 'string') return body.message;
+  } catch {
+    /* not JSON, fall through to the status code */
+  }
+
+  return `The request failed with status ${res.status}`;
+};
+
 type ChatContext = {
   messages: Message[];
   sections: Section[];
@@ -421,20 +439,38 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         isReconnectingRef.current = true;
 
-        const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
-          method: 'POST',
-        });
-
-        if (!res.body) throw new Error('No response body');
-
-        const reader = res.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-
-        let partialChunk = '';
-
-        const messageHandler = getMessageHandler(lastMsg);
-
         try {
+          const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
+            method: 'POST',
+          });
+
+          if (!res.ok) {
+            /*
+             * The backend session is gone (for example the server restarted
+             * while the message was still marked as answering), so there is
+             * nothing left to reconnect to. Clear the spinner instead of
+             * waiting on a stream that will never arrive.
+             */
+            setLoading(false);
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.messageId === lastMsg.messageId
+                  ? { ...msg, status: 'error' as const }
+                  : msg,
+              ),
+            );
+            return;
+          }
+
+          if (!res.body) throw new Error('No response body');
+
+          const reader = res.body?.getReader();
+          const decoder = new TextDecoder('utf-8');
+
+          let partialChunk = '';
+
+          const messageHandler = getMessageHandler(lastMsg);
+
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
@@ -453,6 +489,20 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
               console.warn('Incomplete JSON, waiting for next chunk...');
             }
           }
+        } catch (err) {
+          toast.error(
+            err instanceof Error && err.message
+              ? err.message
+              : 'Failed to reconnect to the message',
+          );
+          setLoading(false);
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.messageId === lastMsg.messageId
+                ? { ...msg, status: 'error' as const }
+                : msg,
+            ),
+          );
         } finally {
           isReconnectingRef.current = false;
         }
@@ -742,66 +792,91 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const messageIndex = messages.findIndex((m) => m.messageId === messageId);
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content: message,
-        message: {
-          messageId: messageId,
-          chatId: chatId!,
+    const markFailed = (reason: string) => {
+      toast.error(reason);
+      setLoading(false);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.messageId === messageId
+            ? { ...msg, status: 'error' as const }
+            : msg,
+        ),
+      );
+    };
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           content: message,
-        },
-        chatId: chatId!,
-        files: fileIds,
-        sources: sources,
-        optimizationMode: optimizationMode,
-        history: rewrite
-          ? chatHistory.current.slice(
-              0,
-              messageIndex === -1 ? undefined : messageIndex,
-            )
-          : chatHistory.current,
-        chatModel: {
-          key: chatModelProvider.key,
-          providerId: chatModelProvider.providerId,
-        },
-        embeddingModel: {
-          key: embeddingModelProvider.key,
-          providerId: embeddingModelProvider.providerId,
-        },
-        systemInstructions: localStorage.getItem('systemInstructions'),
-      }),
-    });
+          message: {
+            messageId: messageId,
+            chatId: chatId!,
+            content: message,
+          },
+          chatId: chatId!,
+          files: fileIds,
+          sources: sources,
+          optimizationMode: optimizationMode,
+          history: rewrite
+            ? chatHistory.current.slice(
+                0,
+                messageIndex === -1 ? undefined : messageIndex,
+              )
+            : chatHistory.current,
+          chatModel: {
+            key: chatModelProvider.key,
+            providerId: chatModelProvider.providerId,
+          },
+          embeddingModel: {
+            key: embeddingModelProvider.key,
+            providerId: embeddingModelProvider.providerId,
+          },
+          systemInstructions: localStorage.getItem('systemInstructions'),
+        }),
+      });
 
-    if (!res.body) throw new Error('No response body');
-
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder('utf-8');
-
-    let partialChunk = '';
-
-    const messageHandler = getMessageHandler(newMessage);
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      partialChunk += decoder.decode(value, { stream: true });
-
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
-          messageHandler(json);
-        }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
+      if (!res.ok) {
+        markFailed(await readErrorMessage(res));
+        return;
       }
+
+      if (!res.body) throw new Error('No response body');
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      let partialChunk = '';
+
+      const messageHandler = getMessageHandler(newMessage);
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        partialChunk += decoder.decode(value, { stream: true });
+
+        try {
+          const messages = partialChunk.split('\n');
+          for (const msg of messages) {
+            if (!msg.trim()) continue;
+            const json = JSON.parse(msg);
+            messageHandler(json);
+          }
+          partialChunk = '';
+        } catch (error) {
+          console.warn('Incomplete JSON, waiting for next chunk...');
+        }
+      }
+    } catch (err) {
+      markFailed(
+        err instanceof Error && err.message
+          ? err.message
+          : 'The request failed unexpectedly',
+      );
     }
   };
 
