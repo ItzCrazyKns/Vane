@@ -1,3 +1,12 @@
+const isWebUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
 export interface DesearchResult {
   title: string;
   url: string;
@@ -14,7 +23,6 @@ export const searchDesearch = async (query: string, num = 10) => {
 
   const url = new URL('https://api.desearch.ai/web');
   url.searchParams.set('query', query);
-  url.searchParams.set('num', String(num));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -36,18 +44,19 @@ export const searchDesearch = async (query: string, num = 10) => {
           item &&
           typeof item.title === 'string' &&
           typeof item.link === 'string' &&
+          isWebUrl(item.link) &&
           typeof item.snippet === 'string',
       )
     ) {
       throw new Error('Invalid Desearch response');
     }
-    const results: DesearchResult[] = body.data.map(
-      (item: { title: string; link: string; snippet: string }) => ({
+    const results: DesearchResult[] = body.data
+      .slice(0, num)
+      .map((item: { title: string; link: string; snippet: string }) => ({
         title: item.title,
         url: item.link,
         content: item.snippet,
-      }),
-    );
+      }));
     return { results, suggestions: [] as string[] };
   } catch (error) {
     // Do not propagate transport errors or response bodies that may contain secrets.
@@ -59,6 +68,14 @@ export const searchDesearch = async (query: string, num = 10) => {
     ) {
       throw error;
     }
+    // Log a fixed failure category, never transport messages or response bodies.
+    const category =
+      error instanceof SyntaxError
+        ? 'invalid-json'
+        : error instanceof TypeError
+          ? 'transport'
+          : 'unexpected';
+    console.error(`Desearch search failed (${category})`);
     throw new Error('Desearch search failed');
   } finally {
     clearTimeout(timeout);

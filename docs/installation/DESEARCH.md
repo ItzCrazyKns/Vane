@@ -1,7 +1,7 @@
 # Desearch web search
 
-Desearch is an optional backend for web research and discovery. The existing
-backend remains the default. Image and video searches retain their existing
+Desearch is an optional backend for web research. The existing
+backend remains the default. Image, video, and discover news searches retain their existing
 backend.
 
 Set `DESEARCH_API_KEY` in the server process environment using your deployment's
@@ -15,12 +15,12 @@ missing config values; change an existing selection through Settings or config.
 Restart the server after editing the config file. To revert, select **Default**
 or set `search.backend` to `searxng`.
 
-The adapter sends one GET request to `https://api.desearch.ai/web` with `query`
-and `num` parameters and a bearer authorization header. It requests 10 results
+The adapter sends one GET request to `https://api.desearch.ai/web` with a `query`
+parameter and a bearer authorization header. It caps results locally at 10
 by default and maps `title`, `link`, and `snippet` to the app's title, URL, and
 content fields. Direct callers can pass a positive integer as the second
-argument to `searchDesearch` to choose the requested count. The returned count
-is determined by the API.
+argument to `searchDesearch` to choose the local result limit. The API may return fewer results.
+The unsupported `num` parameter is never sent to the API.
 
 The API wrapper does not translate engine, category, language, or pagination
 options. Research modes that use those options receive general web results

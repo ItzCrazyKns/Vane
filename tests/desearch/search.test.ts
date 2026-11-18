@@ -40,7 +40,7 @@ test('encodes query, sends bearer header, and maps results', async () => {
   ];
   assert.equal(url.origin + url.pathname, 'https://api.desearch.ai/web');
   assert.equal(url.searchParams.get('query'), 'a & b/雪');
-  assert.equal(url.searchParams.get('num'), '3');
+  assert.equal(url.searchParams.has('num'), false);
   assert.equal(options.method, 'GET');
   assert.deepEqual(options.headers, {
     Authorization: 'Bearer unit-test-credential',
@@ -50,17 +50,11 @@ test('encodes query, sends bearer header, and maps results', async () => {
 });
 
 test('supports empty responses and defaults to ten results', async () => {
-  const fetch = respond({ data: [] });
+  respond({ data: [] });
   assert.deepEqual(await searchDesearch('empty'), {
     results: [],
     suggestions: [],
   });
-  assert.equal(
-    (fetch.mock.calls[0].arguments[0] as unknown as URL).searchParams.get(
-      'num',
-    ),
-    '10',
-  );
 });
 
 test('missing key and invalid counts make no HTTP requests', async () => {
@@ -94,6 +88,12 @@ test('rejects malformed payloads', async () => {
     { data: {} },
     { data: [null] },
     { data: [{ title: 'x', link: 'y' }] },
+    ...[
+      'relative/path',
+      '//example.org',
+      'javascript:alert(1)',
+      'data:text/html,x',
+    ].map((link) => ({ data: [{ title: 'x', link, snippet: 's' }] })),
   ]) {
     respond(body);
     await assert.rejects(searchDesearch('q'), {
@@ -102,7 +102,8 @@ test('rejects malformed payloads', async () => {
   }
 });
 
-test('sanitizes transport and JSON errors', async () => {
+test('sanitizes transport and JSON errors and logs only fixed categories', async () => {
+  const log = mock.method(console, 'error', () => {});
   process.env.DESEARCH_API_KEY = 'unit-test-credential';
   globalThis.fetch = mock.fn(async () => {
     throw new Error('sensitive transport details');
@@ -110,27 +111,45 @@ test('sanitizes transport and JSON errors', async () => {
   await assert.rejects(searchDesearch('q'), {
     message: 'Desearch search failed',
   });
+  assert.deepEqual(log.mock.calls[0].arguments, [
+    'Desearch search failed (unexpected)',
+  ]);
+  globalThis.fetch = mock.fn(async () => {
+    throw new TypeError('sensitive DNS details');
+  });
+  await assert.rejects(searchDesearch('q'), {
+    message: 'Desearch search failed',
+  });
+  assert.deepEqual(log.mock.calls[1].arguments, [
+    'Desearch search failed (transport)',
+  ]);
   globalThis.fetch = mock.fn(async () => new Response('invalid JSON'));
   await assert.rejects(searchDesearch('q'), {
     message: 'Desearch search failed',
   });
+  assert.deepEqual(log.mock.calls[2].arguments, [
+    'Desearch search failed (invalid-json)',
+  ]);
 });
 
 test('aborts slow requests', async () => {
   process.env.DESEARCH_API_KEY = 'unit-test-credential';
   mock.timers.enable({ apis: ['setTimeout'] });
-  globalThis.fetch = mock.fn(
-    async (_url, options) =>
-      new Promise<Response>((_resolve, reject) => {
-        options?.signal?.addEventListener('abort', () =>
-          reject(new Error('aborted')),
-        );
-      }),
-  );
-  const request = searchDesearch('q');
-  mock.timers.tick(10000);
-  await assert.rejects(request, { message: 'Desearch search timed out' });
-  mock.timers.reset();
+  try {
+    globalThis.fetch = mock.fn(
+      async (_url, options) =>
+        new Promise<Response>((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () =>
+            reject(new Error('aborted')),
+          );
+        }),
+    );
+    const request = searchDesearch('q');
+    mock.timers.tick(10000);
+    await assert.rejects(request, { message: 'Desearch search timed out' });
+  } finally {
+    mock.timers.reset();
+  }
 });
 
 test('routes by config and preserves default search options', async () => {
@@ -172,4 +191,17 @@ test('unknown and empty backends fall back to searxng with search options', asyn
     assert.deepEqual(call.arguments, ['fallback query', opts]);
   }
   assert.equal(desearch.mock.callCount(), 0);
+});
+
+test('limits validated results locally, including the default ten', async () => {
+  const data = Array.from({ length: 15 }, (_, i) => ({
+    title: String(i),
+    link: `https://example.org/${i}`,
+    snippet: 's',
+  }));
+  const fetch = respond({ data });
+  assert.equal((await searchDesearch('q', 3)).results.length, 3);
+  assert.equal((await searchDesearch('q')).results.length, 10);
+  for (const call of fetch.mock.calls)
+    assert.equal((call.arguments[0] as URL).searchParams.has('num'), false);
 });

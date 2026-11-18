@@ -1,4 +1,5 @@
-import { searchWeb } from '@/lib/search';
+// Discover needs news-engine filtering and thumbnails from SearXNG.
+import { searchSearxng } from '@/lib/searxng';
 
 const websitesForTopic = {
   tech: {
@@ -45,7 +46,7 @@ export const GET = async (req: Request) => {
           selectedTopic.links.flatMap((link) =>
             selectedTopic.query.map(async (query) => {
               return (
-                await searchWeb(`site:${link} ${query}`, {
+                await searchSearxng(`site:${link} ${query}`, {
                   engines: ['bing news'],
                   pageno: 1,
                   language: 'en',
@@ -65,7 +66,7 @@ export const GET = async (req: Request) => {
         .sort(() => Math.random() - 0.5);
     } else {
       data = (
-        await searchWeb(
+        await searchSearxng(
           `site:${selectedTopic.links[Math.floor(Math.random() * selectedTopic.links.length)]} ${selectedTopic.query[Math.floor(Math.random() * selectedTopic.query.length)]}`,
           {
             engines: ['bing news'],
