@@ -171,8 +171,12 @@ class SearchAgent {
       }
     }
 
-    session.emit('end', {});
-
+    /*
+     * Persist before announcing the end of the message. The chat route closes
+     * the stream and detaches its listeners on `end`, so a failure in this
+     * write would otherwise be invisible: the client would already have marked
+     * the message as completed.
+     */
     await db
       .update(messages)
       .set({
@@ -186,6 +190,8 @@ class SearchAgent {
         ),
       )
       .execute();
+
+    session.emit('end', {});
   }
 }
 

@@ -27,6 +27,25 @@ type OpenAIConfig = {
   options?: GenerateOptions;
 };
 
+/*
+ * Utility calls (classification, widgets, structured output) should never be
+ * able to keep a chat request open indefinitely. Streaming answers are left
+ * untouched because a long answer is legitimate.
+ */
+const NON_STREAMING_TIMEOUT_MS = 2 * 60 * 1000;
+const NON_STREAMING_MAX_RETRIES = 1;
+
+const REQUEST_OPTIONS = {
+  timeout: NON_STREAMING_TIMEOUT_MS,
+  maxRetries: NON_STREAMING_MAX_RETRIES,
+};
+
+/*
+ * Streaming has no overall timeout because a long answer is legitimate, but a
+ * provider that silently stops sending chunks must not hang the chat forever.
+ */
+const STREAM_IDLE_TIMEOUT_MS = 90 * 1000;
+
 class OpenAILLM extends BaseLLM<OpenAIConfig> {
   openAIClient: OpenAI;
 
@@ -98,7 +117,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-    });
+    }, REQUEST_OPTIONS);
 
     if (response.choices && response.choices.length > 0) {
       return {
@@ -140,57 +159,103 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       });
     });
 
-    const stream = await this.openAIClient.chat.completions.create({
-      model: this.config.model,
-      messages: this.convertToOpenAIMessages(input.messages),
-      tools: openaiTools.length > 0 ? openaiTools : undefined,
-      temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
-      top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
-      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
-      frequency_penalty:
-        input.options?.frequencyPenalty ??
-        this.config.options?.frequencyPenalty,
-      presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      stream: true,
-    });
+    /*
+     * A provider that stops sending chunks without closing the connection would
+     * block this loop forever, and the route would never be able to emit an
+     * error. Abort when no chunk has arrived for a while; the timer is reset on
+     * every chunk, so long answers are still allowed.
+     */
+    const abortController = new AbortController();
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    let idleTimedOut = false;
 
-    let recievedToolCalls: { name: string; id: string; arguments: string }[] =
-      [];
+    const resetIdleTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        idleTimedOut = true;
+        abortController.abort();
+      }, STREAM_IDLE_TIMEOUT_MS);
+    };
 
-    for await (const chunk of stream) {
-      if (chunk.choices && chunk.choices.length > 0) {
-        const toolCalls = chunk.choices[0].delta.tool_calls;
-        yield {
-          contentChunk: chunk.choices[0].delta.content || '',
-          toolCallChunk:
-            toolCalls?.map((tc) => {
-              if (!recievedToolCalls[tc.index]) {
-                const call = {
-                  name: tc.function?.name!,
-                  id: tc.id!,
-                  arguments: tc.function?.arguments || '',
-                };
-                recievedToolCalls.push(call);
-                return { ...call, arguments: parse(call.arguments || '{}') };
-              } else {
-                const existingCall = recievedToolCalls[tc.index];
-                existingCall.arguments += tc.function?.arguments || '';
-                return {
-                  ...existingCall,
-                  arguments: parse(existingCall.arguments),
-                };
-              }
-            }) || [],
-          done: chunk.choices[0].finish_reason !== null,
-          additionalInfo: {
-            finishReason: chunk.choices[0].finish_reason,
-          },
-        };
+    resetIdleTimer();
+
+    try {
+      const stream = await this.openAIClient.chat.completions.create(
+        {
+          model: this.config.model,
+          messages: this.convertToOpenAIMessages(input.messages),
+          tools: openaiTools.length > 0 ? openaiTools : undefined,
+          temperature:
+            input.options?.temperature ??
+            this.config.options?.temperature ??
+            1.0,
+          top_p: input.options?.topP ?? this.config.options?.topP,
+          max_completion_tokens:
+            input.options?.maxTokens ?? this.config.options?.maxTokens,
+          stop:
+            input.options?.stopSequences ?? this.config.options?.stopSequences,
+          frequency_penalty:
+            input.options?.frequencyPenalty ??
+            this.config.options?.frequencyPenalty,
+          presence_penalty:
+            input.options?.presencePenalty ??
+            this.config.options?.presencePenalty,
+          stream: true,
+        },
+        { signal: abortController.signal },
+      );
+
+      let recievedToolCalls: {
+        name: string;
+        id: string;
+        arguments: string;
+      }[] = [];
+
+      for await (const chunk of stream) {
+        resetIdleTimer();
+
+        if (chunk.choices && chunk.choices.length > 0) {
+          const toolCalls = chunk.choices[0].delta.tool_calls;
+          yield {
+            contentChunk: chunk.choices[0].delta.content || '',
+            toolCallChunk:
+              toolCalls?.map((tc) => {
+                if (!recievedToolCalls[tc.index]) {
+                  const call = {
+                    name: tc.function?.name!,
+                    id: tc.id!,
+                    arguments: tc.function?.arguments || '',
+                  };
+                  recievedToolCalls.push(call);
+                  return { ...call, arguments: parse(call.arguments || '{}') };
+                } else {
+                  const existingCall = recievedToolCalls[tc.index];
+                  existingCall.arguments += tc.function?.arguments || '';
+                  return {
+                    ...existingCall,
+                    arguments: parse(existingCall.arguments),
+                  };
+                }
+              }) || [],
+            done: chunk.choices[0].finish_reason !== null,
+            additionalInfo: {
+              finishReason: chunk.choices[0].finish_reason,
+            },
+          };
+        }
       }
+    } catch (err) {
+      if (idleTimedOut) {
+        throw new Error(
+          `The model provider stopped sending data for ${Math.round(
+            STREAM_IDLE_TIMEOUT_MS / 1000,
+          )} seconds and the request was aborted.`,
+        );
+      }
+
+      throw err;
+    } finally {
+      if (idleTimer) clearTimeout(idleTimer);
     }
   }
 
@@ -210,7 +275,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       response_format: zodResponseFormat(input.schema, 'object'),
-    });
+    }, REQUEST_OPTIONS);
 
     if (response.choices && response.choices.length > 0) {
       try {
