@@ -16,7 +16,7 @@ Want to know more about its architecture and how it works? You can read it [here
 
 ## ✨ Features
 
-🤖 **Support for all major AI providers** - Use local LLMs through Ollama or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, and more. Mix and match models based on your needs.
+🤖 **Support for all major AI providers** - Use local LLMs through Ollama or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, Cloudflare Workers AI, and more. Mix and match models based on your needs.
 
 ⚡ **Smart search modes** - Choose Speed Mode when you need quick answers, Balanced Mode for everyday searches, or Quality Mode for deep research.
 
@@ -195,6 +195,17 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
+
+## Cloudflare Workers AI
+
+Vane supports **Cloudflare Workers AI** through Cloudflare's OpenAI-compatible API. Add a **Cloudflare Workers AI** connection from **Settings → Manage connections** and provide:
+
+- **API Token** — a Cloudflare API token with `Workers AI Read` permission
+- **Account ID** — your Cloudflare account ID
+
+You can also set these with the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` environment variables.
+
+Chat and text embedding models are discovered automatically from your account, and the provider uses the Workers AI OpenAI-compatible endpoints at `https://api.cloudflare.com/client/v4/accounts/<account_id>/ai/v1`. Structured output (JSON mode) is only supported by some Workers AI models, so object-based features may fail on models that don't support it.
 
 ## Using as a Search Engine
 
