@@ -240,7 +240,17 @@ export const POST = async (req: Request) => {
             ? err.message
             : 'An error occurred while generating the response';
 
-        session.emit('error', { data: errorMessage });
+        /*
+         * The reader can already be gone (the client disconnected, or the
+         * stream was closed after `end`). EventEmitter throws when `error` is
+         * emitted with no listeners, which would turn this handled failure into
+         * an unhandled rejection.
+         */
+        try {
+          session.emit('error', { data: errorMessage });
+        } catch (emitErr) {
+          console.error('Failed to deliver the error to the client:', emitErr);
+        }
 
         try {
           await db

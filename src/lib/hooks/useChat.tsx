@@ -449,8 +449,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
              * The backend session is gone (for example the server restarted
              * while the message was still marked as answering), so there is
              * nothing left to reconnect to. Clear the spinner instead of
-             * waiting on a stream that will never arrive.
+             * waiting on a stream that will never arrive, and show the reason
+             * the server gave.
              */
+            toast.error(await readErrorMessage(res));
             setLoading(false);
             setMessages((prev) =>
               prev.map((msg) =>
