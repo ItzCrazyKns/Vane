@@ -19,6 +19,7 @@ type ProviderMetadata = {
 type MinimalProvider = {
   id: string;
   name: string;
+  type: string;
   chatModels: Model[];
   embeddingModels: Model[];
 };

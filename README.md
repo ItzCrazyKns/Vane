@@ -194,7 +194,7 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 ## Model Router
 
-Vane includes a **Model Router** connection type that lets you expose a single virtual chat model backed by an ordered list of fallback targets. If the first target fails (bad key, rate limit, outage, or a provider error), the router automatically tries the next one.
+Vane includes a **Model Router** connection type that lets you expose one or more virtual chat models backed by ordered lists of fallback targets. If the first target fails (bad key, rate limit, outage, or a provider error), the router automatically tries the next one.
 
 Add a **Model Router** connection from **Settings → Manage connections**, then configure its `Routes` field with a JSON array:
 
@@ -213,7 +213,7 @@ Add a **Model Router** connection from **Settings → Manage connections**, then
 
 Each target's `provider` can be a connection name, a provider type (for example `openai` or `ollama`), or a provider id. Each route's `key` is optional and is derived from its name when omitted. Once the connection is saved, every route appears as a chat model in the model selector.
 
-Fallback applies to text, streaming, and object generation. If a stream fails before any content is sent, the router moves to the next target; if it fails after content has been streamed, the error is surfaced instead of restarting the answer. The Model Router does not provide embedding models.
+Fallback applies to text, streaming, and object generation. If a stream fails before any content or tool-call chunk is sent, the router moves to the next target; if it fails after content or a tool-call chunk has been streamed, the error is surfaced instead of restarting the answer. The Model Router does not provide embedding models.
 
 ## Using as a Search Engine
 

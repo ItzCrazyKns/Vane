@@ -84,6 +84,10 @@ const parseRoutes = (raw: string): RouterRoute[] => {
     throw new Error('Routes must be a JSON array');
   }
 
+  if (parsed.length === 0) {
+    throw new Error('Routes must contain at least one route');
+  }
+
   const seenKeys = new Set<string>();
 
   return parsed.map((route, routeIndex) => {
@@ -100,6 +104,17 @@ const parseRoutes = (raw: string): RouterRoute[] => {
     if (!key) {
       throw new Error(
         `Route "${name}" must include a "key" or a name that can be used as one`,
+      );
+    }
+
+    /*
+     * `error` is the sentinel the model list uses to report a provider that
+     * failed to load. A route with that key would be hidden by the settings UI
+     * and could not be selected.
+     */
+    if (key === 'error') {
+      throw new Error(
+        `Route "${name}" cannot use the reserved key "error". Choose a different key.`,
       );
     }
 

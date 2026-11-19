@@ -120,6 +120,13 @@ class RouterLLM extends BaseLLM<RouterLLMConfig> {
           err,
           errors.length < this.config.targets.length,
         );
+      } finally {
+        /*
+         * Delegating with `.next()` does not forward `.return()`, so a consumer
+         * that cancels mid-stream (or a target we are abandoning) would leave
+         * the underlying provider stream open.
+         */
+        await stream.return?.(undefined);
       }
     }
 
@@ -200,6 +207,13 @@ class RouterLLM extends BaseLLM<RouterLLMConfig> {
           err,
           errors.length < this.config.targets.length,
         );
+      } finally {
+        /*
+         * Delegating with `.next()` does not forward `.return()`, so a consumer
+         * that cancels mid-stream would leave the underlying provider stream
+         * open.
+         */
+        await stream.return?.(undefined);
       }
     }
 

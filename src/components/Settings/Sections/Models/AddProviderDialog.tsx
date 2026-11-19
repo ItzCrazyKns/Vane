@@ -172,6 +172,7 @@ const AddProvider = ({
                           </label>
                           {field.type === 'textarea' ? (
                             <textarea
+                              aria-label={field.name}
                               value={config[field.key] ?? field.default ?? ''}
                               onChange={(event) =>
                                 setConfig((prev) => ({
