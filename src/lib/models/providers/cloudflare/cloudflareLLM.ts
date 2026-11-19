@@ -3,11 +3,41 @@ import { repairJson } from '@toolsycc/json-repair';
 import OpenAILLM from '../openai/openaiLLM';
 import { GenerateObjectInput } from '../../types';
 
+/*
+ * Only fall back to prompt-based JSON when the endpoint rejected the request
+ * shape. An authentication, rate-limit, network or provider failure would fail
+ * the same way twice, doubling latency and hiding the real error.
+ */
+const isUnsupportedResponseFormatError = (err: unknown): boolean => {
+  const status = (err as any)?.status;
+
+  if (status === 401 || status === 403 || status === 429) return false;
+  if (typeof status === 'number' && status >= 500) return false;
+
+  const message = String((err as any)?.message ?? '').toLowerCase();
+
+  return (
+    status === 400 ||
+    /response_format|json_schema|json mode|structured output|not supported|unsupported/.test(
+      message,
+    )
+  );
+};
+
 class CloudflareLLM extends OpenAILLM {
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
     try {
       return await super.generateObject<T>(input);
-    } catch {
+    } catch (err) {
+      /*
+       * Only retry when the endpoint rejected the request shape. An
+       * authentication, rate-limit, network or provider failure would fail the
+       * same way twice, doubling latency and hiding the real error.
+       */
+      if (!isUnsupportedResponseFormatError(err)) {
+        throw err;
+      }
+
       /*
        * Workers AI only supports JSON mode on some models. For the rest, retry
        * as a normal chat completion with the schema in the prompt and parse the

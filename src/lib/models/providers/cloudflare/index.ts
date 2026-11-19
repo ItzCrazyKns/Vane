@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 import { Model, ModelList, ProviderMetadata } from '../../types';
@@ -19,6 +21,7 @@ const NON_CHAT_MODEL = /llama-guard|-lora$/i;
 
 const MODEL_CACHE_TTL_MS = 5 * 60 * 1000;
 const MODEL_REQUEST_TIMEOUT_MS = 15 * 1000;
+const MODEL_CACHE_MAX_ENTRIES = 8;
 
 /*
  * The catalog is fetched on every chat request when it is only discovered
@@ -27,6 +30,35 @@ const MODEL_REQUEST_TIMEOUT_MS = 15 * 1000;
  */
 const modelCache = new Map<string, { fetchedAt: number; models: ModelList }>();
 
+/*
+ * Key the cache on a fingerprint rather than the token itself: the map lives
+ * for the lifetime of the server process, and a raw credential sitting in a
+ * long-lived map key is needless exposure. The fingerprint still changes when
+ * the token is rotated, so stale entries are not reused.
+ */
+const fingerprint = (value: string) =>
+  createHash('sha256').update(value).digest('hex').slice(0, 16);
+
+const readCache = (key: string): ModelList | undefined => {
+  const cached = modelCache.get(key);
+
+  if (cached && Date.now() - cached.fetchedAt < MODEL_CACHE_TTL_MS) {
+    return cached.models;
+  }
+
+  if (cached) modelCache.delete(key);
+
+  return undefined;
+};
+
+const writeCache = (key: string, models: ModelList) => {
+  if (modelCache.size >= MODEL_CACHE_MAX_ENTRIES) {
+    const oldest = modelCache.keys().next().value;
+    if (oldest) modelCache.delete(oldest);
+  }
+
+  modelCache.set(key, { fetchedAt: Date.now(), models });
+};
 
 const providerConfigFields: UIConfigField[] = [
   {
@@ -66,11 +98,13 @@ class CloudflareProvider extends BaseModelProvider<CloudflareConfig> {
     const chat: Model[] = [];
     const embedding: Model[] = [];
 
-    const cacheKey = `${this.config.accountId}:${this.config.apiKey}`;
-    const cached = modelCache.get(cacheKey);
+    const cacheKey = `${this.config.accountId}:${fingerprint(
+      this.config.apiKey,
+    )}`;
+    const cached = readCache(cacheKey);
 
-    if (cached && Date.now() - cached.fetchedAt < MODEL_CACHE_TTL_MS) {
-      return cached.models;
+    if (cached) {
+      return cached;
     }
 
     try {
@@ -138,7 +172,7 @@ class CloudflareProvider extends BaseModelProvider<CloudflareConfig> {
       chat,
     };
 
-    modelCache.set(cacheKey, { fetchedAt: Date.now(), models });
+    writeCache(cacheKey, models);
 
     return models;
   }
