@@ -36,38 +36,16 @@ class RapidMLXProvider extends BaseModelProvider<RapidMLXConfig> {
   }
 
   async getDefaultModels(): Promise<ModelList> {
-    try {
-      const baseURL = this.normalizeBaseURL(this.config.baseURL);
+    const baseURL = this.normalizeBaseURL(this.config.baseURL);
+    let res: Response;
 
-      const res = await fetch(`${baseURL}/models`, {
+    try {
+      res = await fetch(`${baseURL}/models`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-
-      if (!res.ok) {
-        throw new Error(
-          `Error fetching Rapid-MLX models: ${res.status} ${res.statusText}`,
-        );
-      }
-
-      const data = await res.json();
-
-      const models = data.data as { id: string; capabilities?: string[] }[];
-      const toModel = (model: { id: string }): Model => ({
-        name: model.id,
-        key: model.id,
-      });
-
-      return {
-        embedding: models
-          .filter((m) => m.capabilities?.includes('embedding'))
-          .map(toModel),
-        chat: models
-          .filter((m) => !m.capabilities || m.capabilities.includes('text'))
-          .map(toModel),
-      };
     } catch (err) {
       if (err instanceof TypeError) {
         throw new Error(
@@ -77,6 +55,29 @@ class RapidMLXProvider extends BaseModelProvider<RapidMLXConfig> {
 
       throw err;
     }
+
+    if (!res.ok) {
+      throw new Error(
+        `Error fetching Rapid-MLX models: ${res.status} ${res.statusText}`,
+      );
+    }
+
+    const data = await res.json();
+
+    const models = data.data as { id: string; capabilities?: string[] }[];
+    const toModel = (model: { id: string }): Model => ({
+      name: model.id,
+      key: model.id,
+    });
+
+    return {
+      embedding: models
+        .filter((m) => m.capabilities?.includes('embedding'))
+        .map(toModel),
+      chat: models
+        .filter((m) => !m.capabilities || m.capabilities.includes('text'))
+        .map(toModel),
+    };
   }
 
   async getModelList(): Promise<ModelList> {
