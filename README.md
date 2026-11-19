@@ -164,7 +164,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -172,7 +171,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
@@ -183,7 +181,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:8000`
    - **Mac:** Use `http://host.docker.internal:8000`
    - **Linux:** Use `http://<private_ip_of_host>:8000`
@@ -191,10 +188,32 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    Adjust the port number if you're using a different one.
 
 3. **Ensure Lemonade Server is Running:**
-
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
+
+## Model Router
+
+Vane includes a **Model Router** connection type that lets you expose one or more virtual chat models backed by ordered lists of fallback targets. If the first target fails (bad key, rate limit, outage, or a provider error), the router automatically tries the next one.
+
+Add a **Model Router** connection from **Settings → Manage connections**, then configure its `Routes` field with a JSON array:
+
+```json
+[
+  {
+    "name": "GPT-4o with fallback",
+    "key": "gpt-4o-fallback",
+    "targets": [
+      { "provider": "OpenAI", "model": "gpt-4o" },
+      { "provider": "Groq", "model": "llama-3.3-70b-versatile" }
+    ]
+  }
+]
+```
+
+Each target's `provider` can be a connection name, a provider type (for example `openai` or `ollama`), or a provider id. Each route's `key` is optional and is derived from its name when omitted. Once the connection is saved, every route appears as a chat model in the model selector.
+
+Fallback applies to text, streaming, and object generation. If a stream fails before any content or tool-call chunk is sent, the router moves to the next target; if it fails after content or a tool-call chunk has been streamed, the error is surfaced instead of restarting the answer. The Model Router does not provide embedding models.
 
 ## Using as a Search Engine
 

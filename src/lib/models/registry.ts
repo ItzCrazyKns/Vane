@@ -62,6 +62,7 @@ class ModelRegistry {
         providers.push({
           id: p.id,
           name: p.name,
+          type: p.type,
           chatModels: m.chat,
           embeddingModels: m.embedding,
         });

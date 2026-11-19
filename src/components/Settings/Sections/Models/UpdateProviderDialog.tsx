@@ -142,21 +142,38 @@ const UpdateProvider = ({
                             {field.name}
                             {field.required && '*'}
                           </label>
-                          <input
-                            value={config[field.key] ?? field.default ?? ''}
-                            onChange={(event) =>
-                              setConfig((prev) => ({
-                                ...prev,
-                                [field.key]: event.target.value,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                            placeholder={
-                              (field as StringUIConfigField).placeholder
-                            }
-                            type="text"
-                            required={field.required}
-                          />
+                          {field.type === 'textarea' ? (
+                            <textarea
+                              aria-label={field.name}
+                              value={config[field.key] ?? field.default ?? ''}
+                              onChange={(event) =>
+                                setConfig((prev) => ({
+                                  ...prev,
+                                  [field.key]: event.target.value,
+                                }))
+                              }
+                              className="w-full min-h-[120px] resize-y rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                              placeholder={field.placeholder}
+                              rows={6}
+                              required={field.required}
+                            />
+                          ) : (
+                            <input
+                              value={config[field.key] ?? field.default ?? ''}
+                              onChange={(event) =>
+                                setConfig((prev) => ({
+                                  ...prev,
+                                  [field.key]: event.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                              placeholder={
+                                (field as StringUIConfigField).placeholder
+                              }
+                              type="text"
+                              required={field.required}
+                            />
+                          )}
                         </div>
                       ))}
                     </div>
