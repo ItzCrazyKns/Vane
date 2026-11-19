@@ -177,6 +177,18 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
 
+#### Rapid-MLX
+
+[Rapid-MLX](https://github.com/raullenchai/Rapid-MLX) is a local OpenAI-compatible server for Apple Silicon Macs. Start it with chat and embeddings enabled:
+
+```bash
+rapid-mlx serve qwen3.5-4b-4bit --embedding-model embeddinggemma-2-4bit
+```
+
+In Vane's setup or settings, add the **Rapid-MLX** provider. The default base URL is `http://127.0.0.1:8000/v1`; no API key is required. Vane discovers models from `/v1/models`. Select a chat model and an embedding model from this provider.
+
+If Vane runs in Docker on your Mac, use `http://host.docker.internal:8000/v1` and ensure the server is reachable from the container. You can also set the base URL with `RAPID_MLX_BASE_URL`.
+
 #### Lemonade Connection Errors
 
 If you're encountering a Lemonade connection error, it is likely due to the backend being unable to connect to Lemonade's API. To fix this issue you can:
