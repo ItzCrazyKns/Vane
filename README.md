@@ -20,7 +20,7 @@ Want to know more about its architecture and how it works? You can read it [here
 
 ⚡ **Smart search modes** - Choose Speed Mode when you need quick answers, Balanced Mode for everyday searches, or Quality Mode for deep research.
 
-🧭 **Pick your sources** - Search the web, discussions, or academic papers. More sources and integrations are in progress.
+🧭 **Pick your sources** - Search the web, discussions, academic papers, or Stack Overflow.
 
 🧩 **Widgets** - Helpful UI cards that show up when relevant, like weather, calculations, stock prices, and other quick lookups.
 
@@ -87,6 +87,7 @@ docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v va
 
 - JSON format enabled in the settings
 - Wolfram Alpha search engine enabled
+- The `stackoverflow` engine enabled if you use the Stack Overflow search source
 
 Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
 
@@ -116,7 +117,7 @@ If you prefer to build from source or need more control:
 
 ### Non-Docker Installation
 
-1. Install SearXNG and allow `JSON` format in the SearXNG settings. Make sure Wolfram Alpha search engine is also enabled.
+1. Install SearXNG and enable `JSON` output and the Wolfram Alpha engine. To use the Stack Overflow search source, also enable the `stackoverflow` engine.
 2. Clone the repository:
 
    ```bash

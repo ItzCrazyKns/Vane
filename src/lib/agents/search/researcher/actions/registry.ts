@@ -87,20 +87,16 @@ class ActionRegistry {
       mode: SearchAgentConfig['mode'];
     },
   ): Promise<ActionOutput[]> {
-    const results: ActionOutput[] = [];
-
-    await Promise.all(
-      actions.map(async (actionConfig) => {
-        const output = await this.execute(
+    // The next model turn pairs tool results with calls by position.
+    return Promise.all(
+      actions.map((actionConfig) =>
+        this.execute(
           actionConfig.name,
           actionConfig.arguments,
           additionalConfig,
-        );
-        results.push(output);
-      }),
+        ),
+      ),
     );
-
-    return results;
   }
 }
 

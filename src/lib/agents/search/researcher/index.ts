@@ -25,6 +25,8 @@ class Researcher {
       mode: input.config.mode,
       sources: input.config.sources,
     });
+    const availableToolNames = new Set(availableTools.map((tool) => tool.name));
+    const ignoredToolNames = new Set<string>();
 
     const availableActionsDescription =
       ActionRegistry.getAvailableActionsDescriptions({
@@ -86,6 +88,16 @@ class Researcher {
       for await (const partialRes of actionStream) {
         if (partialRes.toolCallChunk.length > 0) {
           partialRes.toolCallChunk.forEach((tc) => {
+            if (!availableToolNames.has(tc.name)) {
+              if (!ignoredToolNames.has(tc.name)) {
+                ignoredToolNames.add(tc.name);
+                console.warn(
+                  `Ignoring unavailable research tool ${JSON.stringify(tc.name)}`,
+                );
+              }
+              return;
+            }
+
             if (
               tc.name === '__reasoning_preamble' &&
               tc.arguments['plan'] &&

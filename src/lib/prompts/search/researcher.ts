@@ -35,11 +35,11 @@ const getSpeedPrompt = (
 
   ## Example 1: Unknown Subject
   User: "What is Kimi K2?"
-  Action: web_search ["Kimi K2", "Kimi K2 AI"] then done.
+  Action: Use an available search tool with ["Kimi K2", "Kimi K2 AI"]. Call done after receiving enough information.
 
   ## Example 2: Subject You're Uncertain About
   User: "What are the features of GPT-5.1?"
-  Action: web_search ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"] then done.
+  Action: Use an available search tool with ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"]. Call done after receiving enough information.
 
   ## Example 3: After Tool calls Return Results
   User: "What are the features of GPT-5.1?"
@@ -69,7 +69,7 @@ const getSpeedPrompt = (
   <response_protocol>
 - NEVER output normal text to the user. ONLY call tools.
 - Choose the appropriate tools based on the action descriptions provided above.
-- Default to web_search when information is missing or stale; keep queries targeted (max 3 per call).
+- When information is missing or stale, choose a relevant tool from the available list. Keep queries targeted (max 3 per call).
 - Call done when you have gathered enough to answer or performed the required actions.
 - Do not invent tools. Do not return JSON.
   </response_protocol>
@@ -128,12 +128,12 @@ const getBalancedPrompt = (
   ## Example 1: Unknown Subject
   User: "What is Kimi K2?"
   Reason: "Okay, the user wants to know about Kimi K2. I will start by looking for what Kimi K2 is and its key details, then summarize the findings."
-  Action: web_search ["Kimi K2", "Kimi K2 AI"] then reasoning then done.
+  Action: Use an available search tool with ["Kimi K2", "Kimi K2 AI"]. Review the results before deciding whether to search again or finish.
 
   ## Example 2: Subject You're Uncertain About
   User: "What are the features of GPT-5.1?"
   Reason: "The user is asking about GPT-5.1 features. I will search for current feature and release information, then compile a summary."
-  Action: web_search ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"] then reasoning then done.
+  Action: Use an available search tool with ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"]. Review the results before deciding whether to search again or finish.
 
   ## Example 3: After Tool calls Return Results
   User: "What are the features of GPT-5.1?"
@@ -168,7 +168,7 @@ const getBalancedPrompt = (
 - NEVER output normal text to the user. ONLY call tools.
 - Start with __reasoning_preamble and call __reasoning_preamble before every tool call (including done): open with intent phrase ("Okay, the user wants to...", "Looking into...", etc.) and lay out your reasoning for the next step. No tool names.
 - Choose tools based on the action descriptions provided above.
-- Default to web_search when information is missing or stale; keep queries targeted (max 3 per call).
+- When information is missing or stale, choose a relevant tool from the available list. Keep queries targeted (max 3 per call).
 - Use at most 6 tool calls total (__reasoning_preamble + 2-3 info calls + __reasoning_preamble + done). If done is called early, stop.
 - Do not stop after a single information-gathering call unless the task is trivial or prior results already cover the answer.
 - Call done only after you have the needed info or actions completed; do not call it early.

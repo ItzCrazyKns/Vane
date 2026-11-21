@@ -35,11 +35,15 @@ const schema = z.object({
 });
 
 export const classify = async (input: ClassifierInput) => {
+  const prompt = input.enabledSources.includes('stackoverflow')
+    ? `${classifierPrompt}\nStack Overflow is available. Set skipSearch to false when the user asks to find Stack Overflow posts or cite Stack Overflow as a source.`
+    : classifierPrompt;
+
   const output = await input.llm.generateObject<typeof schema>({
     messages: [
       {
         role: 'system',
-        content: classifierPrompt,
+        content: prompt,
       },
       {
         role: 'user',
