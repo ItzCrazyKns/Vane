@@ -27,23 +27,19 @@ Vane's codebase is organized as follows:
 If you are not sure where to start, use this section as a map.
 
 - **Search behavior and reasoning**
-
   - `src/lib/agents/search` contains the core chat and search pipeline.
   - `classifier.ts` decides whether research is needed and what should run.
   - `researcher/` gathers information in the background.
 
 - **Add or change a search capability**
-
   - Research tools (web, academic, discussions, uploads, scraping) live in `src/lib/agents/search/researcher/actions`.
   - Tools are registered in `src/lib/agents/search/researcher/actions/index.ts`.
 
 - **Add or change widgets**
-
   - Widgets live in `src/lib/agents/search/widgets`.
   - Widgets run in parallel with research and show structured results in the UI.
 
 - **Model integrations**
-
   - Providers live in `src/lib/models/providers`.
   - Add new providers there and wire them into the model registry so they show up in the app.
 
@@ -70,6 +66,16 @@ Database migrations are applied automatically on startup.
 For full installation options (Docker and non Docker), see the installation guide in the repository README.
 
 **Please note**: Docker configurations are present for setting up production environments, whereas `npm run dev` is used for development purposes.
+
+## Running Tests
+
+Use Node.js 24, the major version used by the Docker images, to run the test suite:
+
+```bash
+npm test
+```
+
+The tests use Node.js's built-in test runner and TypeScript support. Model, research, and session dependencies are stubbed, so no API keys or running SearXNG instance are required.
 
 ## Coding and Contribution Practices
 

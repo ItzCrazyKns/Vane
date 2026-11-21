@@ -4,6 +4,11 @@ import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import APISearchAgent from '@/lib/agents/search/api';
+import {
+  formatSearchSources,
+  isResponseFormat,
+  type ResponseFormat,
+} from './responseFormat';
 
 interface ChatRequestBody {
   optimizationMode: 'speed' | 'balanced' | 'quality';
@@ -14,6 +19,7 @@ interface ChatRequestBody {
   history: Array<[string, string]>;
   stream?: boolean;
   systemInstructions?: string;
+  responseFormat?: ResponseFormat;
 }
 
 export const POST = async (req: Request) => {
@@ -23,6 +29,19 @@ export const POST = async (req: Request) => {
     if (!body.sources || !body.query) {
       return Response.json(
         { message: 'Missing sources or query' },
+        { status: 400 },
+      );
+    }
+
+    const responseFormat =
+      body.responseFormat === undefined ? 'full' : body.responseFormat;
+
+    if (!isResponseFormat(responseFormat)) {
+      return Response.json(
+        {
+          message:
+            'Invalid responseFormat. Expected full, summary-only, or metadata-only.',
+        },
         { status: 400 },
       );
     }
@@ -73,7 +92,7 @@ export const POST = async (req: Request) => {
           reject: (value: Response) => void,
         ) => {
           let message = '';
-          let sources: any[] = [];
+          let sources = formatSearchSources([], responseFormat);
 
           session.subscribe((event: string, data: Record<string, any>) => {
             if (event === 'data') {
@@ -81,7 +100,7 @@ export const POST = async (req: Request) => {
                 if (data.type === 'response') {
                   message += data.data;
                 } else if (data.type === 'searchResults') {
-                  sources = data.data;
+                  sources = formatSearchSources(data.data, responseFormat);
                 }
               } catch (error) {
                 reject(
@@ -117,8 +136,6 @@ export const POST = async (req: Request) => {
 
     const stream = new ReadableStream({
       start(controller) {
-        let sources: any[] = [];
-
         controller.enqueue(
           encoder.encode(
             JSON.stringify({
@@ -151,7 +168,9 @@ export const POST = async (req: Request) => {
                   ),
                 );
               } else if (data.type === 'searchResults') {
-                sources = data.data;
+                const sources = formatSearchSources(data.data, responseFormat);
+                if (sources === undefined) return;
+
                 controller.enqueue(
                   encoder.encode(
                     JSON.stringify({
