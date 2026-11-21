@@ -35,11 +35,11 @@ const getSpeedPrompt = (
 
   ## Example 1: Unknown Subject
   User: "What is Kimi K2?"
-  Action: web_search ["Kimi K2", "Kimi K2 AI"] then done.
+  Action: Use an available search tool with ["Kimi K2", "Kimi K2 AI"]. Call done after receiving enough information.
 
   ## Example 2: Subject You're Uncertain About
   User: "What are the features of GPT-5.1?"
-  Action: web_search ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"] then done.
+  Action: Use an available search tool with ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"]. Call done after receiving enough information.
 
   ## Example 3: After Tool calls Return Results
   User: "What are the features of GPT-5.1?"
@@ -128,12 +128,12 @@ const getBalancedPrompt = (
   ## Example 1: Unknown Subject
   User: "What is Kimi K2?"
   Reason: "Okay, the user wants to know about Kimi K2. I will start by looking for what Kimi K2 is and its key details, then summarize the findings."
-  Action: web_search ["Kimi K2", "Kimi K2 AI"] then reasoning then done.
+  Action: Use an available search tool with ["Kimi K2", "Kimi K2 AI"]. Review the results before deciding whether to search again or finish.
 
   ## Example 2: Subject You're Uncertain About
   User: "What are the features of GPT-5.1?"
   Reason: "The user is asking about GPT-5.1 features. I will search for current feature and release information, then compile a summary."
-  Action: web_search ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"] then reasoning then done.
+  Action: Use an available search tool with ["GPT-5.1", "GPT-5.1 features", "GPT-5.1 release"]. Review the results before deciding whether to search again or finish.
 
   ## Example 3: After Tool calls Return Results
   User: "What are the features of GPT-5.1?"

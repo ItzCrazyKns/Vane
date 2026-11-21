@@ -102,7 +102,7 @@ The API accepts a JSON object in the request body, where you define the enabled 
 
   Selecting a source allows the research model to use it when the classifier decides a search is needed.
 
-  Use `"sources": ["stackoverflow"]` for Stack Overflow's main programming Q&A site, or combine it with other sources, such as `["web", "stackoverflow"]`. An empty Stack Overflow search leaves the source selection intact.
+  Use `"sources": ["stackoverflow"]` for Stack Overflow's main programming Q&A site, or combine it with other sources, such as `["web", "stackoverflow"]`. Zero Stack Overflow matches are a normal result. Other selected sources remain available for research, and the API returns an empty `sources` array when there are no citations.
 
   Use a SearXNG instance with JSON responses and the `stackoverflow` engine enabled. The engine is available in [SearXNG's default configuration](https://docs.searxng.org/user/configured_engines.html#group-q-a). Speed and Balanced use the question titles and metadata returned by the engine. Quality can also read selected question pages.
 
