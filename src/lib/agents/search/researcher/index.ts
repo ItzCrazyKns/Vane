@@ -1,6 +1,7 @@
 import { ActionOutput, ResearcherInput, ResearcherOutput } from '../types';
 import { ActionRegistry } from './actions';
 import { getResearcherPrompt } from '@/lib/prompts/search/researcher';
+import UploadStore from '@/lib/uploads/store';
 import SessionManager from '@/lib/session';
 import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
@@ -56,13 +57,20 @@ class Researcher {
       },
     ];
 
+    const fileDescription = UploadStore.getFileData(input.config.fileIds)
+      .map(
+        ({ fileName, initialContent }) =>
+          `<file><name>${fileName}</name><initial_content>${initialContent}</initial_content></file>`,
+      )
+      .join('\n');
+
     for (let i = 0; i < maxIteration; i++) {
       const researcherPrompt = getResearcherPrompt(
         availableActionsDescription,
         input.config.mode,
         i,
         maxIteration,
-        input.config.fileIds,
+        fileDescription,
       );
 
       const actionStream = input.config.llm.streamText({
