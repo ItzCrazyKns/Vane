@@ -25,6 +25,7 @@ class Researcher {
       mode: input.config.mode,
       sources: input.config.sources,
     });
+    const availableToolNames = new Set(availableTools.map((tool) => tool.name));
 
     const availableActionsDescription =
       ActionRegistry.getAvailableActionsDescriptions({
@@ -86,6 +87,8 @@ class Researcher {
       for await (const partialRes of actionStream) {
         if (partialRes.toolCallChunk.length > 0) {
           partialRes.toolCallChunk.forEach((tc) => {
+            if (!availableToolNames.has(tc.name)) return;
+
             if (
               tc.name === '__reasoning_preamble' &&
               tc.arguments['plan'] &&

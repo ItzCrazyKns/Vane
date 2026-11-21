@@ -3,7 +3,7 @@ import BaseLLM from '@/lib/models/base/llm';
 import { searchSearxng, SearxngSearchOptions } from '@/lib/searxng';
 import SessionManager from '@/lib/session';
 import { Chunk, ResearchBlock, SearchResultsResearchBlock } from '@/lib/types';
-import { SearchAgentConfig } from '../../../types';
+import { SearchAgentConfig, SearchSources } from '../../../types';
 import computeSimilarity from '@/lib/utils/computeSimilarity';
 import z from 'zod';
 import Scraper from '@/lib/scraper';
@@ -13,6 +13,7 @@ export const executeSearch = async (input: {
   queries: string[];
   mode: SearchAgentConfig['mode'];
   searchConfig?: SearxngSearchOptions;
+  source?: SearchSources;
   researchBlock: ResearchBlock;
   session: InstanceType<typeof SessionManager>;
   llm: BaseLLM<any>;
@@ -34,6 +35,24 @@ export const executeSearch = async (input: {
     },
   ]);
 
+  const fetchResults = async (query: string) => {
+    const { results } = await searchSearxng(query, input.searchConfig);
+    if (input.source !== 'stackoverflow') return results;
+
+    // SearXNG can fall back to other engines when the requested engine is absent.
+    return results.filter((result) => {
+      try {
+        const { hostname, protocol } = new URL(result.url);
+        return (
+          hostname === 'stackoverflow.com' &&
+          (protocol === 'https:' || protocol === 'http:')
+        );
+      } catch {
+        return false;
+      }
+    });
+  };
+
   if (input.mode === 'speed' || input.mode === 'balanced') {
     const searchResultsBlockId = crypto.randomUUID();
     let searchResultsEmitted = false;
@@ -41,9 +60,7 @@ export const executeSearch = async (input: {
     const results: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
-        ...(input.searchConfig ? input.searchConfig : {}),
-      });
+      const searchResults = await fetchResults(q);
 
       let resultChunks: Chunk[] = [];
 
@@ -52,10 +69,13 @@ export const executeSearch = async (input: {
 
         resultChunks = (
           await Promise.all(
-            res.results.map(async (r) => {
+            searchResults.map(async (r) => {
               const content = r.content || r.title;
+              // Stack Overflow snippets contain metadata, so rank the question title.
+              const rankingText =
+                input.source === 'stackoverflow' ? r.title : content;
               const chunkEmbedding = (
-                await input.embedding.embedText([content])
+                await input.embedding.embedText([rankingText])
               )[0];
 
               return {
@@ -71,7 +91,7 @@ export const executeSearch = async (input: {
           )
         ).filter((c) => c.metadata.similarity > 0.5);
       } catch (err) {
-        resultChunks = res.results.map((r) => {
+        resultChunks = searchResults.map((r) => {
           const content = r.content || r.title;
 
           return {
@@ -95,6 +115,7 @@ export const executeSearch = async (input: {
           id: searchResultsBlockId,
           type: 'search_results',
           reading: resultChunks,
+          source: input.source,
         });
 
         input.session.updateBlock(researchBlock.id, [
@@ -176,13 +197,11 @@ export const executeSearch = async (input: {
     const searchResults: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
-        ...(input.searchConfig ? input.searchConfig : {}),
-      });
+      const results = await fetchResults(q);
 
       let resultChunks: Chunk[] = [];
 
-      resultChunks = res.results.map((r) => {
+      resultChunks = results.map((r) => {
         const content = r.content || r.title;
 
         return {
@@ -205,6 +224,7 @@ export const executeSearch = async (input: {
           id: searchResultsBlockId,
           type: 'search_results',
           reading: resultChunks,
+          source: input.source,
         });
 
         input.session.updateBlock(researchBlock.id, [
@@ -236,6 +256,8 @@ export const executeSearch = async (input: {
     };
 
     await Promise.all(input.queries.map(search));
+
+    if (searchResults.length === 0) return [];
 
     const pickerPrompt = `
       Assistant is an AI search result picker. Assistant's task is to pick 2-3 of the most relevant search results based off the query which can be then scraped for information to answer the query.

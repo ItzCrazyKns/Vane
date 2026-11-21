@@ -98,8 +98,13 @@ The API accepts a JSON object in the request body, where you define the enabled 
   - `key` (string): The embedding model key (e.g., `text-embedding-3-large`, `nomic-embed-text`). Use the `key` value from the provider's `embeddingModels` array, not the display name.
 
 - **`sources`** (array, required): Which search sources to enable. Available values:
+  - `web`, `academic`, `discussions`, `stackoverflow`.
 
-  - `web`, `academic`, `discussions`.
+  Selecting a source allows the research model to use it when the classifier decides a search is needed.
+
+  Use `"sources": ["stackoverflow"]` for Stack Overflow's main programming Q&A site, or combine it with other sources, such as `["web", "stackoverflow"]`. An empty Stack Overflow search leaves the source selection intact.
+
+  Use a SearXNG instance with JSON responses and the `stackoverflow` engine enabled. The engine is available in [SearXNG's default configuration](https://docs.searxng.org/user/configured_engines.html#group-q-a). Speed and Balanced use the question titles and metadata returned by the engine. Quality can also read selected question pages.
 
 - **`optimizationMode`** (string, optional): Specifies the optimization mode to control the balance between performance and quality. Available modes:
 

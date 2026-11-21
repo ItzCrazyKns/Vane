@@ -40,6 +40,12 @@ const getStepTitle = (
     const queries = Array.isArray(step.searching) ? step.searching : [];
     return `Searching ${queries.length} ${queries.length === 1 ? 'query' : 'queries'}`;
   } else if (step.type === 'search_results') {
+    if (step.source === 'stackoverflow') {
+      const count = step.reading.length;
+      return count === 0
+        ? 'No Stack Overflow results found'
+        : `Found ${count} Stack Overflow ${count === 1 ? 'result' : 'results'}`;
+    }
     return `Found ${step.reading.length} ${step.reading.length === 1 ? 'result' : 'results'}`;
   } else if (step.type === 'reading') {
     return `Reading ${step.reading.length} ${step.reading.length === 1 ? 'source' : 'sources'}`;

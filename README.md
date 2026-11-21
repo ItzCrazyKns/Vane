@@ -20,7 +20,7 @@ Want to know more about its architecture and how it works? You can read it [here
 
 ⚡ **Smart search modes** - Choose Speed Mode when you need quick answers, Balanced Mode for everyday searches, or Quality Mode for deep research.
 
-🧭 **Pick your sources** - Search the web, discussions, or academic papers. More sources and integrations are in progress.
+🧭 **Pick your sources** - Search the web, discussions, academic papers, or Stack Overflow.
 
 🧩 **Widgets** - Helpful UI cards that show up when relevant, like weather, calculations, stock prices, and other quick lookups.
 

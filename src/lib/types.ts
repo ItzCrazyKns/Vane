@@ -1,4 +1,5 @@
 import { ToolCall } from './models/types';
+import type { SearchSources } from './agents/search/types';
 
 export type SystemMessage = {
   role: 'system';
@@ -79,6 +80,7 @@ export type SearchResultsResearchBlock = {
   id: string;
   type: 'search_results';
   reading: Chunk[];
+  source?: SearchSources;
 };
 
 export type ReadingResearchBlock = {
