@@ -5,7 +5,7 @@ const tokenizeUnicodeWords = (s: string): string[] =>
     .normalize('NFKC')
     .replace(ARABIC_DIACRITICS_RE, '')
     .toLowerCase()
-    .split(/[^\p{L}\p{N}_]+/u)
+    .split(/[^\p{L}\p{M}\p{N}_]+/u)
     .filter(Boolean);
 
 const computeJaccardSimilarity = (a: string, b: string): number => {
