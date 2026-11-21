@@ -1,6 +1,16 @@
+const ARABIC_DIACRITICS_RE = /[\u064B-\u065F\u0670\u0640]/g;
+
+const tokenizeUnicodeWords = (s: string): string[] =>
+  s
+    .normalize('NFKC')
+    .replace(ARABIC_DIACRITICS_RE, '')
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}_]+/u)
+    .filter(Boolean);
+
 const computeJaccardSimilarity = (a: string, b: string): number => {
-  const wordsA = a.toLowerCase().split(/\W+/);
-  const wordsB = b.toLowerCase().split(/\W+/);
+  const wordsA = tokenizeUnicodeWords(a);
+  const wordsB = tokenizeUnicodeWords(b);
 
   const setA = new Set(wordsA);
   const setB = new Set(wordsB);
