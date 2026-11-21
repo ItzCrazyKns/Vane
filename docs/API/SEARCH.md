@@ -79,6 +79,7 @@ The API accepts a JSON object in the request body, where you define the enabled 
     ["assistant", "I am doing well, how can I help you today?"]
   ],
   "systemInstructions": "Focus on providing technical details about Vane's architecture.",
+  "responseFormat": "full",
   "stream": false
 }
 ```
@@ -88,21 +89,17 @@ The API accepts a JSON object in the request body, where you define the enabled 
 ### Request Parameters
 
 - **`chatModel`** (object, required): Defines the chat model to be used for the query. To get available providers and models, send a GET request to `http://localhost:3000/api/providers`.
-
   - `providerId` (string): The UUID of the provider. You can get this from the `/api/providers` endpoint response.
   - `key` (string): The model key/identifier (e.g., `gpt-4o-mini`, `llama3.1:latest`). Use the `key` value from the provider's `chatModels` array, not the display name.
 
 - **`embeddingModel`** (object, required): Defines the embedding model for similarity-based searching. To get available providers and models, send a GET request to `http://localhost:3000/api/providers`.
-
   - `providerId` (string): The UUID of the embedding provider. You can get this from the `/api/providers` endpoint response.
   - `key` (string): The embedding model key (e.g., `text-embedding-3-large`, `nomic-embed-text`). Use the `key` value from the provider's `embeddingModels` array, not the display name.
 
 - **`sources`** (array, required): Which search sources to enable. Available values:
-
   - `web`, `academic`, `discussions`.
 
 - **`optimizationMode`** (string, optional): Specifies the optimization mode to control the balance between performance and quality. Available modes:
-
   - `speed`: Prioritize speed and return the fastest answer.
   - `balanced`: Provide a balanced answer with good speed and reasonable quality.
   - `quality`: Prioritize answer quality (may be slower).
@@ -122,9 +119,21 @@ The API accepts a JSON object in the request body, where you define the enabled 
 
 - **`stream`** (boolean, optional): When set to `true`, enables streaming responses. Default is `false`.
 
+- **`responseFormat`** (string, optional): Controls which source information is returned. Available values are `full`, `metadata-only`, and `summary-only`. Omitting the parameter is equivalent to `full`.
+
+  | Value            | Source information returned                                                                                                                    |
+  | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `full` (default) | The existing source objects, including `content` and `metadata`.                                                                               |
+  | `metadata-only`  | Source objects containing only `metadata.title` and `metadata.url`, in the original order. No `content` or other metadata fields are returned. |
+  | `summary-only`   | No source information. The standard response omits `sources`, and the stream omits the `sources` event.                                        |
+
+  This parameter only changes the returned source information. It does not change the search process, the writer prompt, or the generated answer text. In particular, `summary-only` does not request a shorter answer. Inline citation markers such as `[1]` remain unchanged in every format. In `full` and `metadata-only`, `[n]` refers to the nth source; in `summary-only`, the corresponding source information is not returned.
+
+  Any other value, including `null` or a non-string value, returns HTTP 400 before models are loaded.
+
 ### Response
 
-The response from the API includes both the final message and the sources used to generate that message.
+By default, the response from the API includes both the final message and the sources used to generate that message. Use `responseFormat` to omit source content or all source information.
 
 #### Standard Response (stream: false)
 
@@ -151,6 +160,32 @@ The response from the API includes both the final message and the sources used t
 }
 ```
 
+With `responseFormat: "metadata-only"`, the standard response keeps the answer and source order but returns only citation metadata:
+
+```json
+{
+  "message": "Vane is an open-source AI-powered answering engine [1].",
+  "sources": [
+    {
+      "metadata": {
+        "title": "Vane",
+        "url": "https://github.com/ItzCrazyKns/Vane"
+      }
+    }
+  ]
+}
+```
+
+With `responseFormat: "summary-only"`, the standard response omits the `sources` field and preserves the answer, including citation markers:
+
+```json
+{
+  "message": "Vane is an open-source AI-powered answering engine [1]."
+}
+```
+
+If no sources are available, `full` and `metadata-only` return `sources: []`; `summary-only` still omits the field.
+
 #### Streaming Response (stream: true)
 
 When streaming is enabled, the API returns a stream of newline-delimited JSON objects using Server-Sent Events (SSE). Each line contains a complete, valid JSON object. The response has `Content-Type: text/event-stream`.
@@ -173,11 +208,27 @@ Clients should process each line as a separate JSON object. The different messag
 - **`response`**: Chunks of the generated answer text
 - **`done`**: Indicates the stream is complete
 
+With `responseFormat: "metadata-only"`, any `sources` event contains the same metadata-only objects as the standard response:
+
+```
+{"type":"sources","data":[{"metadata":{"title":"Vane","url":"https://github.com/ItzCrazyKns/Vane"}}]}
+```
+
+With `responseFormat: "summary-only"`, no `sources` event is sent. The `init`, `response`, and `done` objects keep their existing format, and answer chunks are unchanged:
+
+```
+{"type":"init","data":"Stream connected"}
+{"type":"response","data":"Vane is an open-source AI-powered answering engine [1]."}
+{"type":"done"}
+```
+
+Response formats do not change the newline-delimited JSON framing or the `Content-Type` header. If search is skipped, the existing behavior of not emitting a `sources` event also applies to `full` and `metadata-only`.
+
 ### Fields in the Response
 
 - **`message`** (string): The search result, generated based on the query and enabled `sources`.
-- **`sources`** (array): A list of sources that were used to generate the search result. Each source includes:
-  - `content`: A snippet of the relevant content from the source.
+- **`sources`** (array): A list of sources that were used to generate the search result, omitted in `summary-only`. Source order is preserved across response formats. Each source includes:
+  - `content`: Relevant content from the source, returned only in `full`.
   - `metadata`: Metadata about the source, including:
     - `title`: The title of the webpage.
     - `url`: The URL of the webpage.
@@ -186,5 +237,5 @@ Clients should process each line as a separate JSON object. The different messag
 
 If an error occurs during the search process, the API will return an appropriate error message with an HTTP status code.
 
-- **400**: If the request is malformed or missing required fields (e.g., no `sources` or `query`).
+- **400**: If the request is malformed, missing required fields (e.g., no `sources` or `query`), or includes an invalid `responseFormat`. Only the three listed string values are accepted; `null`, unsupported strings, and other types are rejected before model loading.
 - **500**: If an internal server error occurs during the search.
