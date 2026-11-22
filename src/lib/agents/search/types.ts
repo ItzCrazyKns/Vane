@@ -23,6 +23,7 @@ export type SearchAgentInput = {
   config: SearchAgentConfig;
   chatId: string;
   messageId: string;
+  recoveryId?: string;
 };
 
 export type WidgetInput = {

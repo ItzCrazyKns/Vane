@@ -5,7 +5,7 @@ import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
-import { chats, messages } from '@/lib/db/schema';
+import { chatRecoveries, chats, messages } from '@/lib/db/schema';
 import { and, desc, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
@@ -246,16 +246,31 @@ class SearchAgent {
       }
     }
 
-    await db
-      .update(messages)
-      .set({
-        status: 'completed',
-        responseBlocks: session.getAllBlocks(),
-      })
-      .where(and(targetMessage, eq(messages.backendId, session.id)))
-      .execute();
+    const { recoveryId } = input;
+    const completedRecoveryId = db.transaction((tx) => {
+      const completed = tx
+        .update(messages)
+        .set({
+          status: 'completed',
+          responseBlocks: session.getAllBlocks(),
+        })
+        .where(and(targetMessage, eq(messages.backendId, session.id)))
+        .run();
 
-    session.emit('end', {});
+      if (!exists && recoveryId && completed.changes > 0) {
+        tx.delete(chatRecoveries)
+          .where(
+            and(
+              eq(chatRecoveries.chatId, input.chatId),
+              eq(chatRecoveries.backendId, recoveryId),
+            ),
+          )
+          .run();
+        return recoveryId;
+      }
+    });
+
+    session.emit('end', { recoveryId: completedRecoveryId });
   }
 }
 

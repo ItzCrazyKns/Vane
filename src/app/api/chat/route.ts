@@ -40,6 +40,7 @@ const embeddingModelSchema: z.ZodType<ModelWithProvider> = z.object({
 
 const bodySchema = z.object({
   message: messageSchema,
+  recoveryId: z.string().min(1).optional(),
   optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
     message: 'Optimization mode must be one of: speed, balanced, quality',
   }),
@@ -89,7 +90,7 @@ export const POST = async (req: Request) => {
     }
 
     const body = parseBody.data as Body;
-    const { message } = body;
+    const { message, recoveryId } = body;
 
     if (message.content === '') {
       return Response.json(
@@ -145,6 +146,7 @@ export const POST = async (req: Request) => {
         followUp: message.content,
         chatId: body.message.chatId,
         messageId: body.message.messageId,
+        recoveryId,
         config: {
           llm,
           embedding: embedding,
@@ -165,6 +167,7 @@ export const POST = async (req: Request) => {
         let recovery:
           | {
               recoveryId: string;
+              replacesRecoveryId?: string;
               recoveryFiles: ChatRecovery['files'];
               recoverySources: ChatRecovery['sources'];
               chatRemoved?: true;
@@ -191,7 +194,18 @@ export const POST = async (req: Request) => {
                 name: UploadManager.getFile(fileId)?.name || 'Uploaded File',
               }));
               const sources = body.sources as SearchSources[];
-              // Keep the rejected draft outside the conversation history until the client recovers it.
+              if (recoveryId) {
+                tx.delete(chatRecoveries)
+                  .where(
+                    and(
+                      eq(chatRecoveries.chatId, message.chatId),
+                      eq(chatRecoveries.backendId, recoveryId),
+                    ),
+                  )
+                  .run();
+              }
+
+              // Use the new session ID so another retry cannot remove this rejection.
               tx.insert(chatRecoveries)
                 .values({
                   chatId: message.chatId,
@@ -216,6 +230,7 @@ export const POST = async (req: Request) => {
                 .run();
               return {
                 recoveryId: session.id,
+                replacesRecoveryId: recoveryId,
                 recoveryFiles: files,
                 recoverySources: sources,
                 ...(removedChat.changes > 0 && { chatRemoved: true as const }),

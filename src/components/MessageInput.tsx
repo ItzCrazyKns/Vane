@@ -9,7 +9,11 @@ import { useChat, useComposerDraft } from '@/lib/hooks/useChat';
 
 const MessageInput = () => {
   const { loading, sendMessage } = useChat();
-  const { draft: message, setDraft: setMessage } = useComposerDraft();
+  const {
+    draft: { text: message, recoveryId },
+    setDraft: setMessage,
+    clearDraft,
+  } = useComposerDraft();
 
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [textareaRows, setTextareaRows] = useState(1);
@@ -55,8 +59,8 @@ const MessageInput = () => {
         onSubmit={(e) => {
           e.preventDefault();
           if (loading || !message.trim()) return;
-          sendMessage(message);
-          setMessage('');
+          sendMessage(message, { recoveryId });
+          clearDraft();
         }}
         onKeyDown={(e) => {
           if (

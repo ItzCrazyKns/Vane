@@ -11,7 +11,11 @@ import ModelSelector from './MessageInputActions/ChatModelSelector';
 
 const EmptyChatMessageInput = () => {
   const { loading, sendMessage } = useChat();
-  const { draft: message, setDraft: setMessage } = useComposerDraft();
+  const {
+    draft: { text: message, recoveryId },
+    setDraft: setMessage,
+    clearDraft,
+  } = useComposerDraft();
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -47,8 +51,8 @@ const EmptyChatMessageInput = () => {
         onSubmit={(e) => {
           e.preventDefault();
           if (loading || !message.trim()) return;
-          sendMessage(message);
-          setMessage('');
+          sendMessage(message, { recoveryId });
+          clearDraft();
         }}
         onKeyDown={(e) => {
           if (

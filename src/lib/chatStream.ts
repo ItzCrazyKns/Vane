@@ -34,7 +34,7 @@ export const streamChatSession = (
         if (event === 'end' || event === 'error') {
           const message =
             event === 'end'
-              ? { type: 'messageEnd' }
+              ? { type: 'messageEnd', recoveryId: data?.recoveryId }
               : { type: 'error', data: data.data };
           controller.enqueue(encoder.encode(JSON.stringify(message) + '\n'));
           close();
