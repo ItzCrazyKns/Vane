@@ -8,7 +8,13 @@ import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
 import { and, eq, notExists } from 'drizzle-orm';
-import { chats, messages } from '@/lib/db/schema';
+import {
+  chatRecoveries,
+  chats,
+  messages,
+  type ChatRecovery,
+} from '@/lib/db/schema';
+import UploadManager from '@/lib/uploads/manager';
 import UploadStore, { AttachmentReindexRequired } from '@/lib/uploads/store';
 
 export const runtime = 'nodejs';
@@ -156,7 +162,14 @@ export const POST = async (req: Request) => {
           console.error('Chat processing failed:', error);
         }
 
-        let chatRemoved = false;
+        let recovery:
+          | {
+              recoveryId: string;
+              recoveryFiles: ChatRecovery['files'];
+              recoverySources: ChatRecovery['sources'];
+              chatRemoved?: true;
+            }
+          | undefined;
         try {
           const currentTurn = and(
             eq(messages.chatId, message.chatId),
@@ -165,9 +178,30 @@ export const POST = async (req: Request) => {
             eq(messages.status, 'answering'),
           );
           if (needsReindex) {
-            chatRemoved = db.transaction((tx) => {
-              const removed = tx.delete(messages).where(currentTurn).run();
-              if (!removed.changes) return false;
+            recovery = db.transaction((tx) => {
+              const removed = tx
+                .delete(messages)
+                .where(currentTurn)
+                .returning({ query: messages.query })
+                .get();
+              if (!removed) return;
+
+              const files = Array.from(new Set(body.files), (fileId) => ({
+                fileId,
+                name: UploadManager.getFile(fileId)?.name || 'Uploaded File',
+              }));
+              const sources = body.sources as SearchSources[];
+              // Keep the rejected draft outside the conversation history until the client recovers it.
+              tx.insert(chatRecoveries)
+                .values({
+                  chatId: message.chatId,
+                  backendId: session.id,
+                  query: removed.query,
+                  errorFiles: error.files,
+                  files,
+                  sources,
+                })
+                .run();
 
               // A concurrent send may still need this chat and its metadata.
               const remainingTurns = tx
@@ -180,7 +214,12 @@ export const POST = async (req: Request) => {
                   and(eq(chats.id, message.chatId), notExists(remainingTurns)),
                 )
                 .run();
-              return removedChat.changes > 0;
+              return {
+                recoveryId: session.id,
+                recoveryFiles: files,
+                recoverySources: sources,
+                ...(removedChat.changes > 0 && { chatRemoved: true as const }),
+              };
             });
           } else if (!rewriteConflict) {
             await db
@@ -196,7 +235,7 @@ export const POST = async (req: Request) => {
         }
         session.emit('error', {
           data: needsReindex
-            ? { ...error.toResponse(), ...(chatRemoved && { chatRemoved }) }
+            ? { ...error.toResponse(), ...recovery }
             : rewriteConflict
               ? { code: 'CHAT_REWRITE_CONFLICT', message: error.message }
               : 'An error occurred while processing chat request',

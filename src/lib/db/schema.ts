@@ -1,7 +1,8 @@
 import { sql } from 'drizzle-orm';
-import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { text, integer, sqliteTable, index } from 'drizzle-orm/sqlite-core';
 import { Block } from '../types';
 import { SearchSources } from '../agents/search/types';
+import type { AttachmentReindexRequired } from '../uploads/store';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
@@ -36,3 +37,23 @@ export const chats = sqliteTable('chats', {
     .$type<DBFile[]>()
     .default(sql`'[]'`),
 });
+
+export const chatRecoveries = sqliteTable(
+  'chat_recoveries',
+  {
+    id: integer('id').primaryKey(),
+    backendId: text('backendId').notNull().unique(),
+    chatId: text('chatId').notNull(),
+    query: text('query').notNull(),
+    errorFiles: text('errorFiles', { mode: 'json' })
+      .$type<AttachmentReindexRequired['files']>()
+      .notNull(),
+    files: text('files', { mode: 'json' }).$type<DBFile[]>().notNull(),
+    sources: text('sources', { mode: 'json' })
+      .$type<SearchSources[]>()
+      .notNull(),
+  },
+  (table) => [index('chat_recoveries_chat_id_idx').on(table.chatId)],
+);
+
+export type ChatRecovery = typeof chatRecoveries.$inferSelect;

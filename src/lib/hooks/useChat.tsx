@@ -20,6 +20,7 @@ import { MinimalProvider } from '../models/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
+import type { ChatRecovery } from '@/lib/db/schema';
 
 export type Section = {
   message: Message;
@@ -241,35 +242,7 @@ const checkConfig = async (
   }
 };
 
-const loadMessages = async (
-  chatId: string,
-  setMessages: (messages: Message[]) => void,
-  setIsMessagesLoaded: (loaded: boolean) => void,
-  chatHistory: React.MutableRefObject<[string, string][]>,
-  setSources: (sources: string[]) => void,
-  setNotFound: (notFound: boolean) => void,
-  setFiles: (files: File[]) => void,
-  setFileIds: (fileIds: string[]) => void,
-) => {
-  const res = await fetch(`/api/chats/${chatId}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (res.status === 404) {
-    setNotFound(true);
-    setIsMessagesLoaded(true);
-    return;
-  }
-
-  const data = await res.json();
-
-  const messages = data.messages as Message[];
-
-  setMessages(messages);
-
+const buildChatHistory = (messages: Message[]): [string, string][] => {
   const history: [string, string][] = [];
   messages.forEach((msg) => {
     if (msg.status === 'answering') return;
@@ -288,25 +261,77 @@ const loadMessages = async (
     }
   });
 
+  return history;
+};
+
+type ChatDetail = {
+  chat: { files: { fileId: string; name: string }[]; sources: string[] } | null;
+  messages: Message[];
+  recoveries: ChatRecovery[];
+};
+
+const toComposerFiles = (files: ChatRecovery['files']): File[] =>
+  files.map(({ fileId, name }) => ({
+    fileName: name,
+    fileExtension: name.split('.').pop() ?? '',
+    fileId,
+  }));
+
+const acknowledgeRecoveries = async (chatId: string, recoveryIds: string[]) => {
+  try {
+    const response = await fetch(`/api/chats/${chatId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recoveryIds }),
+    });
+    if (!response.ok) throw new Error('Could not acknowledge draft recovery');
+  } catch (error) {
+    console.warn('Draft recovery remains available on reload:', error);
+  }
+};
+
+const loadMessages = async (
+  chatId: string,
+  setMessages: (messages: Message[]) => void,
+  setIsMessagesLoaded: (loaded: boolean) => void,
+  chatHistory: React.MutableRefObject<[string, string][]>,
+  setSources: (sources: string[]) => void,
+  setNotFound: (notFound: boolean) => void,
+  setFiles: (files: File[]) => void,
+  setFileIds: (fileIds: string[]) => void,
+  restoreRejections: (recoveries: ChatRecovery[], chatRemoved: boolean) => void,
+  signal: AbortSignal,
+) => {
+  const res = await fetch(`/api/chats/${chatId}?recover=1`, { signal });
+  if (signal.aborted) return;
+
+  if (res.status === 404) {
+    setNotFound(true);
+    setIsMessagesLoaded(true);
+    return;
+  }
+
+  if (!res.ok) throw new Error('Could not load this conversation');
+
+  const { chat, messages, recoveries = [] }: ChatDetail = await res.json();
+  if (signal.aborted) return;
+
+  setMessages(messages);
   console.debug(new Date(), 'app:messages_loaded');
 
   if (messages.length > 0) {
     document.title = messages[0].query;
   }
 
-  const files = data.chat.files.map((file: any) => {
-    return {
-      fileName: file.name,
-      fileExtension: file.name.split('.').pop(),
-      fileId: file.fileId,
-    };
-  });
+  const latestRecovery = recoveries.at(-1);
+  const files = toComposerFiles(latestRecovery?.files ?? chat?.files ?? []);
 
   setFiles(files);
-  setFileIds(files.map((file: File) => file.fileId));
+  setFileIds(files.map((file) => file.fileId));
 
-  chatHistory.current = history;
-  setSources(data.chat.sources);
+  chatHistory.current = buildChatHistory(messages);
+  setSources(latestRecovery?.sources ?? chat?.sources ?? []);
+  if (recoveries.length) restoreRejections(recoveries, !chat);
   setIsMessagesLoaded(true);
 };
 
@@ -377,6 +402,7 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
   const initialMessage = searchParams.get('q');
 
   const [chatId, setChatId] = useState<string | undefined>(params.chatId);
+  const activeChatId = useRef(chatId);
   const [newChatCreated, setNewChatCreated] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -530,7 +556,10 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
           const response = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
             method: 'POST',
           });
-          await readChatEvents(response, getMessageHandler(lastMsg));
+          await readChatEvents(
+            response,
+            getMessageHandler(lastMsg, undefined, true),
+          );
         } catch {
           toast.error(
             'Could not reconnect to this response. Reload to try again.',
@@ -555,6 +584,7 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (params.chatId && params.chatId !== chatId) {
+      activeChatId.current = params.chatId;
       setChatId(params.chatId);
       setMessages([]);
       chatHistory.current = [];
@@ -575,6 +605,7 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
       !isMessagesLoaded &&
       messages.length === 0
     ) {
+      const controller = new AbortController();
       loadMessages(
         chatId,
         setMessages,
@@ -584,9 +615,35 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
         setNotFound,
         setFiles,
         setFileIds,
-      );
+        (recoveries, chatRemoved) => {
+          if (activeChatId.current !== chatId) return;
+
+          // The latest rejection supplies the attachment selection being restored.
+          setFilesNeedingReindex(recoveries[recoveries.length - 1].errorFiles);
+          for (const recovery of [...recoveries].reverse()) {
+            preserveUnsentDraft(recovery.query);
+          }
+          if (chatRemoved) returnToComposer(chatId);
+          void acknowledgeRecoveries(
+            chatId,
+            recoveries.map((recovery) => recovery.backendId),
+          );
+        },
+        controller.signal,
+      ).catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Could not load this conversation',
+        );
+        setHasError(true);
+      });
+
+      return () => controller.abort();
     } else if (!chatId) {
       const newChatId = crypto.randomBytes(20).toString('hex');
+      activeChatId.current = newChatId;
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
       setChatId(newChatId);
@@ -626,6 +683,12 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
 
+  const returnToComposer = (id: string) => {
+    if (window.location.pathname === `/c/${id}`) {
+      window.history.replaceState(null, '', '/');
+    }
+  };
+
   const preserveUnsentDraft = (draft: string) => {
     setComposerDrafts((current) => {
       if (current.chatId !== chatId || current.draft === draft) return current;
@@ -664,7 +727,11 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
     clearReindexNotice(fileId);
   };
 
-  const getMessageHandler = (message: Message, restoreRewrite?: () => void) => {
+  const getMessageHandler = (
+    message: Message,
+    restoreRewrite?: () => void,
+    reconnecting = false,
+  ) => {
     const messageId = message.messageId;
     let responseBlocks = message.responseBlocks;
 
@@ -681,6 +748,8 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (data: any) => {
+      if (activeChatId.current !== message.chatId) return;
+
       if (data.type === 'error') {
         const needsReindex = reportAttachmentReindex(data.data);
         const rewriteConflict = data.data?.code === 'CHAT_REWRITE_CONFLICT';
@@ -692,12 +761,22 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
               prev.filter((msg) => msg.messageId !== messageId),
             );
             preserveUnsentDraft(message.query);
-            if (
-              needsReindex &&
-              data.data?.chatRemoved === true &&
-              window.location.pathname === `/c/${message.chatId}`
-            ) {
-              window.history.replaceState(null, '', '/');
+            if (needsReindex) {
+              if (reconnecting && Array.isArray(data.data.recoveryFiles)) {
+                const files = toComposerFiles(data.data.recoveryFiles);
+                setFiles(files);
+                setFileIds(files.map((file) => file.fileId));
+                if (Array.isArray(data.data.recoverySources)) {
+                  setSources(data.data.recoverySources);
+                }
+              }
+              if (data.data.chatRemoved === true)
+                returnToComposer(message.chatId);
+              if (typeof data.data.recoveryId === 'string') {
+                void acknowledgeRecoveries(message.chatId, [
+                  data.data.recoveryId,
+                ]);
+              }
             }
           }
         } else {
@@ -857,7 +936,7 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
     const previousHistory = chatHistory.current;
     const requestHistory =
       rewrite && messageIndex !== -1
-        ? previousHistory.slice(0, messageIndex * 2)
+        ? buildChatHistory(messages.slice(0, messageIndex))
         : previousHistory;
 
     let accepted = false;
