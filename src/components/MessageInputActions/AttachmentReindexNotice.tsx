@@ -79,7 +79,7 @@ const AttachmentReindexNotice = () => {
             )}
             <button
               type="button"
-              aria-label={`Skip ${fileName} for now`}
+              aria-label={`Skip for now: ${fileName}`}
               disabled={loading || rebuildingFileId !== null}
               onClick={() => removeAttachment(fileId)}
               className="rounded px-2 py-1 hover:bg-light-primary disabled:opacity-50 dark:hover:bg-dark-primary"

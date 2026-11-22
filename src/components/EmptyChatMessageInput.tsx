@@ -1,22 +1,17 @@
 import { ArrowRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import Sources from './MessageInputActions/Sources';
 import Optimization from './MessageInputActions/Optimization';
 import Attach from './MessageInputActions/Attach';
 import AttachmentReindexNotice from './MessageInputActions/AttachmentReindexNotice';
-import { useChat } from '@/lib/hooks/useChat';
+import SavedMessageDrafts from './MessageInputActions/SavedMessageDrafts';
+import { useChat, useComposerDraft } from '@/lib/hooks/useChat';
 import ModelSelector from './MessageInputActions/ChatModelSelector';
 
 const EmptyChatMessageInput = () => {
-  const { loading, rejectedDraft, sendMessage } = useChat();
-
-  /* const [copilotEnabled, setCopilotEnabled] = useState(false); */
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    if (rejectedDraft) setMessage((draft) => draft || rejectedDraft);
-  }, [rejectedDraft]);
+  const { loading, sendMessage } = useChat();
+  const { draft: message, setDraft: setMessage } = useComposerDraft();
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -47,6 +42,7 @@ const EmptyChatMessageInput = () => {
   return (
     <div className="w-full">
       <AttachmentReindexNotice />
+      <SavedMessageDrafts />
       <form
         onSubmit={(e) => {
           e.preventDefault();

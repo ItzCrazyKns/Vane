@@ -75,7 +75,8 @@ class UploadStore {
         chunks.some(
           (chunk) =>
             !Array.isArray(chunk.embedding) ||
-            chunk.embedding.length !== dimensions,
+            chunk.embedding.length !== dimensions ||
+            !chunk.embedding.every(Number.isFinite),
         )
       ) {
         incompatible.push(attachment);

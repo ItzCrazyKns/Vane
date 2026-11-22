@@ -5,10 +5,11 @@ import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
-import { messages } from '@/lib/db/schema';
+import { chats, messages } from '@/lib/db/schema';
 import { and, desc, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
+import UploadManager from '@/lib/uploads/manager';
 
 export class ChatRewriteConflict extends Error {
   constructor() {
@@ -41,12 +42,54 @@ class SearchAgent {
         })
         .sync();
 
-    const { exists, expectedTail } = input.config.uploads
-      ? db.transaction((tx) => {
-          const exists = findTarget(tx);
-          return { exists, expectedTail: exists ? findTail(tx) : undefined };
-        })
-      : { exists: findTarget(db), expectedTail: undefined };
+    const { exists, expectedTail } = db.transaction(
+      (tx) => {
+        const exists = findTarget(tx);
+        const expectedTail =
+          exists && input.config.uploads ? findTail(tx) : undefined;
+
+        const createdAt = new Date().toISOString();
+        if (!exists) {
+          tx.insert(messages)
+            .values({
+              chatId: input.chatId,
+              messageId: input.messageId,
+              backendId: session.id,
+              query: input.followUp,
+              createdAt,
+              status: 'answering',
+              responseBlocks: [],
+            })
+            .run();
+        }
+
+        // Publish the chat with its first pending message so another request
+        // cannot roll it back before the message is saved.
+        const chat = tx.query.chats
+          .findFirst({
+            where: eq(chats.id, input.chatId),
+            columns: { id: true },
+          })
+          .sync();
+        if (!chat) {
+          tx.insert(chats)
+            .values({
+              id: input.chatId,
+              createdAt,
+              sources: input.config.sources,
+              title: input.followUp,
+              files: input.config.fileIds.map((fileId) => ({
+                fileId,
+                name: UploadManager.getFile(fileId)?.name || 'Uploaded File',
+              })),
+            })
+            .run();
+        }
+
+        return { exists, expectedTail };
+      },
+      { behavior: 'immediate' },
+    );
 
     const startRewrite = (id: number) => {
       db.transaction((tx) => {
@@ -77,17 +120,7 @@ class SearchAgent {
       });
     };
 
-    if (!exists) {
-      await db.insert(messages).values({
-        chatId: input.chatId,
-        messageId: input.messageId,
-        backendId: session.id,
-        query: input.followUp,
-        createdAt: new Date().toISOString(),
-        status: 'answering',
-        responseBlocks: [],
-      });
-    } else if (!input.config.uploads) {
+    if (exists && !input.config.uploads) {
       startRewrite(exists.id);
     }
 

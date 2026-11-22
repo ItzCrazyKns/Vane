@@ -4,6 +4,8 @@ import { Message } from '@/components/ChatWindow';
 import { Block } from '@/lib/types';
 import {
   createContext,
+  type Dispatch,
+  type SetStateAction,
   useContext,
   useEffect,
   useMemo,
@@ -47,7 +49,6 @@ type ChatContext = {
   embeddingModelProvider: EmbeddingModelProvider;
   researchEnded: boolean;
   filesNeedingReindex: AttachmentReindexFile[];
-  rejectedDraft: string;
   clearReindexNotice: (fileId: string) => void;
   removeAttachment: (fileId: string) => void;
   setResearchEnded: (ended: boolean) => void;
@@ -74,6 +75,67 @@ export interface File {
 type AttachmentReindexFile = Pick<File, 'fileId' | 'fileName'> & {
   canReindex?: false;
 };
+
+type ComposerDrafts = {
+  chatId: string | undefined;
+  draft: string;
+  saved: string[];
+};
+
+const composerDraftContext = createContext<{
+  draft: string;
+  savedDrafts: string[];
+  setDraft: (draft: string) => void;
+  restoreDraft: (index: number) => void;
+}>({ draft: '', savedDrafts: [], setDraft: () => {}, restoreDraft: () => {} });
+
+const setComposerDraftsContext = createContext<
+  Dispatch<SetStateAction<ComposerDrafts>>
+>(() => {});
+
+const ComposerDraftProvider = ({ children }: { children: React.ReactNode }) => {
+  const { chatId } = useParams<{ chatId: string }>();
+  const [drafts, setDrafts] = useState<ComposerDrafts>({
+    chatId,
+    draft: '',
+    saved: [],
+  });
+
+  const setDraft = (draft: string) => {
+    setDrafts((current) => ({ ...current, draft }));
+  };
+
+  const restoreDraft = (index: number) => {
+    setDrafts((current) => {
+      const saved = [...current.saved];
+      const draft = saved[index];
+      if (draft === undefined) return current;
+
+      // Keep the text the user was editing available after restoring a draft.
+      if (current.draft) saved[index] = current.draft;
+      else saved.splice(index, 1);
+
+      return { ...current, draft, saved };
+    });
+  };
+
+  return (
+    <setComposerDraftsContext.Provider value={setDrafts}>
+      <composerDraftContext.Provider
+        value={{
+          draft: drafts.draft,
+          savedDrafts: drafts.saved,
+          setDraft,
+          restoreDraft,
+        }}
+      >
+        {children}
+      </composerDraftContext.Provider>
+    </setComposerDraftsContext.Provider>
+  );
+};
+
+export const useComposerDraft = () => useContext(composerDraftContext);
 
 interface ChatModelProvider {
   key: string;
@@ -295,7 +357,6 @@ export const chatContext = createContext<ChatContext>({
   embeddingModelProvider: { key: '', providerId: '' },
   researchEnded: false,
   filesNeedingReindex: [],
-  rejectedDraft: '',
   clearReindexNotice: () => {},
   removeAttachment: () => {},
   rewrite: () => {},
@@ -309,7 +370,7 @@ export const chatContext = createContext<ChatContext>({
   setResearchEnded: () => {},
 });
 
-export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
+const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
   const params: { chatId: string } = useParams();
 
   const searchParams = useSearchParams();
@@ -331,7 +392,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [filesNeedingReindex, setFilesNeedingReindex] = useState<
     AttachmentReindexFile[]
   >([]);
-  const [rejectedDraft, setRejectedDraft] = useState('');
+  const setComposerDrafts = useContext(setComposerDraftsContext);
 
   const [sources, setSources] = useState<string[]>(['web']);
   const [optimizationMode, setOptimizationMode] = useState('speed');
@@ -500,7 +561,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setFiles([]);
       setFileIds([]);
       setFilesNeedingReindex([]);
-      setRejectedDraft('');
+      setComposerDrafts({ chatId: params.chatId, draft: '', saved: [] });
       setIsMessagesLoaded(false);
       setNotFound(false);
       setNewChatCreated(false);
@@ -525,9 +586,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setFileIds,
       );
     } else if (!chatId) {
+      const newChatId = crypto.randomBytes(20).toString('hex');
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
-      setChatId(crypto.randomBytes(20).toString('hex'));
+      setChatId(newChatId);
+      setComposerDrafts({ chatId: newChatId, draft: '', saved: [] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
@@ -562,6 +625,15 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
+
+  const preserveUnsentDraft = (draft: string) => {
+    setComposerDrafts((current) => {
+      if (current.chatId !== chatId || current.draft === draft) return current;
+      if (!current.draft) return { ...current, draft };
+
+      return { ...current, saved: [...current.saved, draft] };
+    });
+  };
 
   const reportAttachmentReindex = (
     error: {
@@ -619,7 +691,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             setMessages((prev) =>
               prev.filter((msg) => msg.messageId !== messageId),
             );
-            setRejectedDraft(message.query);
+            preserveUnsentDraft(message.query);
+            if (
+              needsReindex &&
+              data.data?.chatRemoved === true &&
+              window.location.pathname === `/c/${message.chatId}`
+            ) {
+              window.history.replaceState(null, '', '/');
+            }
           }
         } else {
           setMessages((prev) =>
@@ -760,7 +839,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   ) => {
     if (loading || !message) return;
     setLoading(true);
-    setRejectedDraft('');
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
     const backendId = crypto.randomBytes(20).toString('hex');
@@ -782,6 +860,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         ? previousHistory.slice(0, messageIndex * 2)
         : previousHistory;
 
+    let accepted = false;
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -816,12 +895,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         const error = await res.json().catch(() => null);
 
         if (res.status === 409 && reportAttachmentReindex(error)) {
-          if (!rewrite) setRejectedDraft(message);
+          if (!rewrite) preserveUnsentDraft(message);
           return;
         }
         throw new Error(error?.message || 'Failed to send message.');
       }
 
+      accepted = true;
       if (!res.body) throw new Error('No response body');
 
       setFilesNeedingReindex([]);
@@ -852,6 +932,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         : undefined;
       await readChatEvents(res, getMessageHandler(newMessage, restoreRewrite));
     } catch (error) {
+      if (!accepted && !rewrite) preserveUnsentDraft(message);
       toast.error(
         error instanceof Error ? error.message : 'Failed to send message.',
       );
@@ -869,7 +950,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         files,
         fileIds,
         filesNeedingReindex,
-        rejectedDraft,
         clearReindexNotice,
         removeAttachment,
         sources,
@@ -899,6 +979,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     </chatContext.Provider>
   );
 };
+
+export const ChatProvider = ({ children }: { children: React.ReactNode }) => (
+  <ComposerDraftProvider>
+    <ChatStateProvider>{children}</ChatStateProvider>
+  </ComposerDraftProvider>
+);
 
 export const useChat = () => {
   const ctx = useContext(chatContext);

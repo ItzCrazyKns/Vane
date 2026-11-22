@@ -4,19 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import AttachSmall from './MessageInputActions/AttachSmall';
 import AttachmentReindexNotice from './MessageInputActions/AttachmentReindexNotice';
-import { useChat } from '@/lib/hooks/useChat';
+import SavedMessageDrafts from './MessageInputActions/SavedMessageDrafts';
+import { useChat, useComposerDraft } from '@/lib/hooks/useChat';
 
 const MessageInput = () => {
-  const { loading, rejectedDraft, sendMessage } = useChat();
+  const { loading, sendMessage } = useChat();
+  const { draft: message, setDraft: setMessage } = useComposerDraft();
 
   const [copilotEnabled, setCopilotEnabled] = useState(false);
-  const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');
-
-  useEffect(() => {
-    if (rejectedDraft) setMessage((draft) => draft || rejectedDraft);
-  }, [rejectedDraft]);
 
   useEffect(() => {
     if (textareaRows >= 2 && message && mode === 'single') {
@@ -53,6 +50,7 @@ const MessageInput = () => {
   return (
     <>
       <AttachmentReindexNotice />
+      <SavedMessageDrafts />
       <form
         onSubmit={(e) => {
           e.preventDefault();

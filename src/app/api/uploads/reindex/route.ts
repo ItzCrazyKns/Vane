@@ -30,6 +30,7 @@ export async function POST(req: Request) {
   }
 
   pendingReindexes.add(fileId);
+  let step = 'read attachment';
   try {
     const file = UploadManager.getFile(fileId);
     if (!file) {
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
       );
     }
 
+    step = 'load embedding model';
     const registry = new ModelRegistry();
     const model = await registry.loadEmbeddingModel(
       embeddingModel.providerId,
@@ -51,10 +53,23 @@ export async function POST(req: Request) {
       ),
     });
 
+    step = 'rebuild index';
     await uploadManager.reindexFile(file);
     return Response.json({ fileId });
-  } catch {
-    console.error('Unable to rebuild attachment index for file', fileId);
+  } catch (error) {
+    // Provider errors may include request headers or document text.
+    const status =
+      error instanceof Error &&
+      'status' in error &&
+      typeof error.status === 'number'
+        ? error.status
+        : undefined;
+    console.error('Unable to rebuild attachment index', {
+      fileId,
+      step,
+      errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+      status,
+    });
     return Response.json(
       {
         message:

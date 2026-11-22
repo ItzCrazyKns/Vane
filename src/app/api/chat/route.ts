@@ -7,9 +7,8 @@ import { streamChatSession } from '@/lib/chatStream';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, notExists } from 'drizzle-orm';
 import { chats, messages } from '@/lib/db/schema';
-import UploadManager from '@/lib/uploads/manager';
 import UploadStore, { AttachmentReindexRequired } from '@/lib/uploads/store';
 
 export const runtime = 'nodejs';
@@ -68,38 +67,6 @@ const safeValidateBody = (data: unknown) => {
     success: true,
     data: result.data,
   };
-};
-
-const ensureChatExists = async (input: {
-  id: string;
-  sources: SearchSources[];
-  query: string;
-  fileIds: string[];
-}) => {
-  try {
-    const exists = await db.query.chats
-      .findFirst({
-        where: eq(chats.id, input.id),
-      })
-      .execute();
-
-    if (!exists) {
-      await db.insert(chats).values({
-        id: input.id,
-        createdAt: new Date().toISOString(),
-        sources: input.sources,
-        title: input.query,
-        files: input.fileIds.map((id) => {
-          return {
-            fileId: id,
-            name: UploadManager.getFile(id)?.name || 'Uploaded File',
-          };
-        }),
-      });
-    }
-  } catch (err) {
-    console.error('Failed to check/save chat:', err);
-  }
 };
 
 export const POST = async (req: Request) => {
@@ -189,6 +156,7 @@ export const POST = async (req: Request) => {
           console.error('Chat processing failed:', error);
         }
 
+        let chatRemoved = false;
         try {
           const currentTurn = and(
             eq(messages.chatId, message.chatId),
@@ -197,8 +165,23 @@ export const POST = async (req: Request) => {
             eq(messages.status, 'answering'),
           );
           if (needsReindex) {
-            // Roll back only this request's pending row so the user can retry the turn.
-            await db.delete(messages).where(currentTurn);
+            chatRemoved = db.transaction((tx) => {
+              const removed = tx.delete(messages).where(currentTurn).run();
+              if (!removed.changes) return false;
+
+              // A concurrent send may still need this chat and its metadata.
+              const remainingTurns = tx
+                .select({ id: messages.id })
+                .from(messages)
+                .where(eq(messages.chatId, message.chatId));
+              const removedChat = tx
+                .delete(chats)
+                .where(
+                  and(eq(chats.id, message.chatId), notExists(remainingTurns)),
+                )
+                .run();
+              return removedChat.changes > 0;
+            });
           } else if (!rewriteConflict) {
             await db
               .update(messages)
@@ -213,19 +196,12 @@ export const POST = async (req: Request) => {
         }
         session.emit('error', {
           data: needsReindex
-            ? error.toResponse()
+            ? { ...error.toResponse(), ...(chatRemoved && { chatRemoved }) }
             : rewriteConflict
               ? { code: 'CHAT_REWRITE_CONFLICT', message: error.message }
               : 'An error occurred while processing chat request',
         });
       });
-
-    ensureChatExists({
-      id: body.message.chatId,
-      sources: body.sources as SearchSources[],
-      fileIds: body.files,
-      query: body.message.content,
-    });
 
     return response;
   } catch (err) {
