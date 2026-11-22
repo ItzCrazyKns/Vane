@@ -60,11 +60,10 @@ class CrowLLMProvider extends BaseModelProvider<CrowLLMConfig> {
     const defaultModels = await this.getDefaultModels();
     const configProvider = getConfiguredModelProviderById(this.id)!;
 
+    // The gateway does not serve embeddings, so configured embedding models are
+    // intentionally ignored: advertising them would let a user pick one and fail at chat time.
     return {
-      embedding: [
-        ...defaultModels.embedding,
-        ...configProvider.embeddingModels,
-      ],
+      embedding: [],
       chat: [...defaultModels.chat, ...configProvider.chatModels],
     };
   }
