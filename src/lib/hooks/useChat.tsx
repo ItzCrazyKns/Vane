@@ -103,7 +103,11 @@ const composerDraftContext = createContext<{
   setDraft: (text: string) => void;
   clearDraft: () => void;
   restoreDraft: (index: number, attachments: DraftAttachments) => void;
-  discardRecovery: (chatId: string, recoveryId: string) => void;
+  discardRecovery: (
+    chatId: string,
+    recoveryId: string,
+    sources: string[],
+  ) => void;
 }>({
   draft: emptyDraft,
   savedDrafts: [],
@@ -165,7 +169,11 @@ const ComposerDraftProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
-  const discardRecovery = (chatId: string, recoveryId: string) => {
+  const discardRecovery = (
+    chatId: string,
+    recoveryId: string,
+    sources: string[],
+  ) => {
     setDrafts((current) => {
       if (current.chatId !== chatId) return current;
       const saved = current.saved.filter(
@@ -174,7 +182,13 @@ const ComposerDraftProvider = ({ children }: { children: React.ReactNode }) => {
       if (current.draft.recoveryId !== recoveryId) return { ...current, saved };
 
       const [draft = emptyDraft, ...remaining] = saved;
-      return { ...current, draft, saved: remaining };
+      // Without a saved selection, do not carry the discarded draft's files forward.
+      const attachments = draft.attachments ?? {
+        files: [],
+        sources,
+        filesNeedingReindex: [],
+      };
+      return { ...current, draft: { ...draft, attachments }, saved: remaining };
     });
   };
 

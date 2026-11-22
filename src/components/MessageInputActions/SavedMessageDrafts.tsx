@@ -13,22 +13,15 @@ const summarize = (text: string) => {
 const SavedMessageDrafts = () => {
   const { draft, savedDrafts, restoreDraft, discardRecovery } =
     useComposerDraft();
-  const {
-    chatId,
-    files,
-    sources,
-    filesNeedingReindex,
-    messages,
-    loading,
-    clearReindexNotice,
-  } = useChat();
+  const { chatId, files, sources, filesNeedingReindex, messages, loading } =
+    useChat();
   const [discarding, setDiscarding] = useState(false);
   const current = useRef({
     draft,
     savedDrafts,
     messages,
     loading,
-    filesNeedingReindex,
+    sources,
   });
 
   useEffect(() => {
@@ -37,9 +30,9 @@ const SavedMessageDrafts = () => {
       savedDrafts,
       messages,
       loading,
-      filesNeedingReindex,
+      sources,
     };
-  }, [draft, savedDrafts, messages, loading, filesNeedingReindex]);
+  }, [draft, savedDrafts, messages, loading, sources]);
 
   const { recoveryId: activeRecoveryId } = draft;
   if (!savedDrafts.length && !activeRecoveryId) return null;
@@ -61,16 +54,10 @@ const SavedMessageDrafts = () => {
 
       if (!response.ok) throw new Error('Could not discard this draft.');
 
-      discardRecovery(chatId, recoveryId);
-      if (window.location.pathname !== chatPath) return;
-
-      const { draft, savedDrafts, messages, loading, filesNeedingReindex } =
+      const { draft, savedDrafts, messages, loading, sources } =
         current.current;
-      const discardingActiveDraft = draft.recoveryId === recoveryId;
-
-      if (discardingActiveDraft && !savedDrafts[0]?.attachments) {
-        for (const file of filesNeedingReindex) clearReindexNotice(file.fileId);
-      }
+      discardRecovery(chatId, recoveryId, sources);
+      if (window.location.pathname !== chatPath) return;
 
       const hasOtherRecovery = [draft, ...savedDrafts].some(
         (draft) => draft.recoveryId && draft.recoveryId !== recoveryId,
