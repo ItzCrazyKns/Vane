@@ -6,18 +6,76 @@ import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
 import { messages } from '@/lib/db/schema';
-import { and, eq, gt } from 'drizzle-orm';
+import { and, desc, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
 
+export class ChatRewriteConflict extends Error {
+  constructor() {
+    super(
+      'This conversation changed while rewriting. Reload it and try again.',
+    );
+  }
+}
+
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
-    const exists = await db.query.messages.findFirst({
-      where: and(
-        eq(messages.chatId, input.chatId),
-        eq(messages.messageId, input.messageId),
-      ),
-    });
+    const chatMessages = eq(messages.chatId, input.chatId);
+    const targetMessage = and(
+      chatMessages,
+      eq(messages.messageId, input.messageId),
+    );
+    const findTarget = (database: Pick<typeof db, 'query'>) =>
+      database.query.messages
+        .findFirst({
+          where: targetMessage,
+          columns: { id: true, backendId: true },
+        })
+        .sync();
+    const findTail = (database: Pick<typeof db, 'query'>) =>
+      database.query.messages
+        .findFirst({
+          where: chatMessages,
+          orderBy: desc(messages.id),
+          columns: { id: true, backendId: true },
+        })
+        .sync();
+
+    const { exists, expectedTail } = input.config.uploads
+      ? db.transaction((tx) => {
+          const exists = findTarget(tx);
+          return { exists, expectedTail: exists ? findTail(tx) : undefined };
+        })
+      : { exists: findTarget(db), expectedTail: undefined };
+
+    const startRewrite = (id: number) => {
+      db.transaction((tx) => {
+        if (input.config.uploads) {
+          const currentTarget = findTarget(tx);
+          const currentTail = findTail(tx);
+          if (
+            !expectedTail ||
+            currentTarget?.id !== id ||
+            currentTarget.backendId !== exists?.backendId ||
+            currentTail?.id !== expectedTail.id ||
+            currentTail.backendId !== expectedTail.backendId
+          ) {
+            throw new ChatRewriteConflict();
+          }
+        }
+        tx.delete(messages)
+          .where(and(chatMessages, gt(messages.id, id)))
+          .run();
+        tx.update(messages)
+          .set({
+            status: 'answering',
+            backendId: session.id,
+            responseBlocks: [],
+          })
+          .where(eq(messages.id, id))
+          .run();
+      });
+    };
 
     if (!exists) {
       await db.insert(messages).values({
@@ -29,27 +87,8 @@ class SearchAgent {
         status: 'answering',
         responseBlocks: [],
       });
-    } else {
-      await db
-        .delete(messages)
-        .where(
-          and(eq(messages.chatId, input.chatId), gt(messages.id, exists.id)),
-        )
-        .execute();
-      await db
-        .update(messages)
-        .set({
-          status: 'answering',
-          backendId: session.id,
-          responseBlocks: [],
-        })
-        .where(
-          and(
-            eq(messages.chatId, input.chatId),
-            eq(messages.messageId, input.messageId),
-          ),
-        )
-        .execute();
+    } else if (!input.config.uploads) {
+      startRewrite(exists.id);
     }
 
     const classification = await classify({
@@ -94,6 +133,9 @@ class SearchAgent {
       widgetPromise,
       searchPromise,
     ]);
+
+    // A dimension change may only surface once the provider embeds a search query.
+    if (exists && input.config.uploads) startRewrite(exists.id);
 
     session.emit('data', {
       type: 'researchComplete',
@@ -171,21 +213,16 @@ class SearchAgent {
       }
     }
 
-    session.emit('end', {});
-
     await db
       .update(messages)
       .set({
         status: 'completed',
         responseBlocks: session.getAllBlocks(),
       })
-      .where(
-        and(
-          eq(messages.chatId, input.chatId),
-          eq(messages.messageId, input.messageId),
-        ),
-      )
+      .where(and(targetMessage, eq(messages.backendId, session.id)))
       .execute();
+
+    session.emit('end', {});
   }
 }
 

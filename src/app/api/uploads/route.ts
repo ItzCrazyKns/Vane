@@ -8,7 +8,9 @@ export async function POST(req: Request) {
 
     const files = formData.getAll('files') as File[];
     const embeddingModel = formData.get('embedding_model_key') as string;
-    const embeddingModelProvider = formData.get('embedding_model_provider_id') as string;
+    const embeddingModelProvider = formData.get(
+      'embedding_model_provider_id',
+    ) as string;
 
     if (!embeddingModel || !embeddingModelProvider) {
       return NextResponse.json(
@@ -19,11 +21,15 @@ export async function POST(req: Request) {
 
     const registry = new ModelRegistry();
 
-    const model = await registry.loadEmbeddingModel(embeddingModelProvider, embeddingModel);
-    
+    const model = await registry.loadEmbeddingModel(
+      embeddingModelProvider,
+      embeddingModel,
+    );
+
     const uploadManager = new UploadManager({
       embeddingModel: model,
-    })
+      embeddingFingerprint: model.getIndexFingerprint(embeddingModelProvider),
+    });
 
     const processedFiles = await uploadManager.processFiles(files);
 

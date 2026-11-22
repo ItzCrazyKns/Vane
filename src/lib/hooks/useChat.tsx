@@ -46,6 +46,10 @@ type ChatContext = {
   chatModelProvider: ChatModelProvider;
   embeddingModelProvider: EmbeddingModelProvider;
   researchEnded: boolean;
+  filesNeedingReindex: AttachmentReindexFile[];
+  rejectedDraft: string;
+  clearReindexNotice: (fileId: string) => void;
+  removeAttachment: (fileId: string) => void;
   setResearchEnded: (ended: boolean) => void;
   setOptimizationMode: (mode: string) => void;
   setSources: (sources: string[]) => void;
@@ -66,6 +70,10 @@ export interface File {
   fileExtension: string;
   fileId: string;
 }
+
+type AttachmentReindexFile = Pick<File, 'fileId' | 'fileName'> & {
+  canReindex?: false;
+};
 
 interface ChatModelProvider {
   key: string;
@@ -202,6 +210,8 @@ const loadMessages = async (
 
   const history: [string, string][] = [];
   messages.forEach((msg) => {
+    if (msg.status === 'answering') return;
+
     history.push(['human', msg.query]);
 
     const textBlocks = msg.responseBlocks
@@ -238,6 +248,34 @@ const loadMessages = async (
   setIsMessagesLoaded(true);
 };
 
+const readChatEvents = async (
+  response: Response,
+  handleEvent: (event: any) => void,
+) => {
+  if (!response.ok || !response.body)
+    throw new Error('Could not open chat stream');
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let remainder = '';
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      remainder += decoder.decode(value, { stream: true });
+      const lines = remainder.split('\n');
+      remainder = lines.pop() ?? '';
+      for (const line of lines) {
+        if (line.trim()) handleEvent(JSON.parse(line));
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+};
+
 export const chatContext = createContext<ChatContext>({
   chatHistory: [],
   chatId: '',
@@ -256,6 +294,10 @@ export const chatContext = createContext<ChatContext>({
   chatModelProvider: { key: '', providerId: '' },
   embeddingModelProvider: { key: '', providerId: '' },
   researchEnded: false,
+  filesNeedingReindex: [],
+  rejectedDraft: '',
+  clearReindexNotice: () => {},
+  removeAttachment: () => {},
   rewrite: () => {},
   sendMessage: async () => {},
   setFileIds: () => {},
@@ -286,6 +328,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [files, setFiles] = useState<File[]>([]);
   const [fileIds, setFileIds] = useState<string[]>([]);
+  const [filesNeedingReindex, setFilesNeedingReindex] = useState<
+    AttachmentReindexFile[]
+  >([]);
+  const [rejectedDraft, setRejectedDraft] = useState('');
 
   const [sources, setSources] = useState<string[]>(['web']);
   const [optimizationMode, setOptimizationMode] = useState('speed');
@@ -310,8 +356,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConfigReady, setIsConfigReady] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isReady, setIsReady] = useState(false);
-
-  const messagesRef = useRef<Message[]>([]);
 
   const sections = useMemo<Section[]>(() => {
     return messages.map((msg) => {
@@ -421,40 +465,18 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         isReconnectingRef.current = true;
 
-        const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
-          method: 'POST',
-        });
-
-        if (!res.body) throw new Error('No response body');
-
-        const reader = res.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-
-        let partialChunk = '';
-
-        const messageHandler = getMessageHandler(lastMsg);
-
         try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            partialChunk += decoder.decode(value, { stream: true });
-
-            try {
-              const messages = partialChunk.split('\n');
-              for (const msg of messages) {
-                if (!msg.trim()) continue;
-                const json = JSON.parse(msg);
-                messageHandler(json);
-              }
-              partialChunk = '';
-            } catch (error) {
-              console.warn('Incomplete JSON, waiting for next chunk...');
-            }
-          }
+          const response = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
+            method: 'POST',
+          });
+          await readChatEvents(response, getMessageHandler(lastMsg));
+        } catch {
+          toast.error(
+            'Could not reconnect to this response. Reload to try again.',
+          );
         } finally {
           isReconnectingRef.current = false;
+          setLoading(false);
         }
       }
     }
@@ -477,6 +499,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       chatHistory.current = [];
       setFiles([]);
       setFileIds([]);
+      setFilesNeedingReindex([]);
+      setRejectedDraft('');
       setIsMessagesLoaded(false);
       setNotFound(false);
       setNewChatCreated(false);
@@ -509,10 +533,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
 
   useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-
-  useEffect(() => {
     if (isMessagesLoaded && isConfigReady && newChatCreated) {
       setIsReady(true);
       console.debug(new Date(), 'app:ready');
@@ -527,10 +547,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const index = messages.findIndex((msg) => msg.messageId === messageId);
 
     if (index === -1) return;
-
-    setMessages((prev) => prev.slice(0, index));
-
-    chatHistory.current = chatHistory.current.slice(0, index * 2);
 
     const messageToRewrite = messages[index];
     sendMessage(messageToRewrite.query, messageToRewrite.messageId, true);
@@ -547,59 +563,101 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
 
-  const getMessageHandler = (message: Message) => {
-    const messageId = message.messageId;
+  const reportAttachmentReindex = (
+    error: {
+      code?: string;
+      files?: AttachmentReindexFile[];
+    } | null,
+  ) => {
+    if (
+      error?.code !== 'ATTACHMENT_REINDEX_REQUIRED' ||
+      !Array.isArray(error.files)
+    ) {
+      return false;
+    }
 
-    return async (data: any) => {
+    setFilesNeedingReindex(error.files);
+    return true;
+  };
+
+  const clearReindexNotice = (fileId: string) => {
+    setFilesNeedingReindex((prev) =>
+      prev.filter((file) => file.fileId !== fileId),
+    );
+  };
+
+  const removeAttachment = (fileId: string) => {
+    setFiles((prev) => prev.filter((file) => file.fileId !== fileId));
+    setFileIds((prev) => prev.filter((id) => id !== fileId));
+    clearReindexNotice(fileId);
+  };
+
+  const getMessageHandler = (message: Message, restoreRewrite?: () => void) => {
+    const messageId = message.messageId;
+    let responseBlocks = message.responseBlocks;
+
+    // A stream chunk can contain both a block and messageEnd before React renders.
+    const setResponseBlocks = (blocks: Block[]) => {
+      responseBlocks = blocks;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.messageId === messageId
+            ? { ...msg, responseBlocks: blocks }
+            : msg,
+        ),
+      );
+    };
+
+    return (data: any) => {
       if (data.type === 'error') {
-        toast.error(data.data);
-        setLoading(false);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.messageId === messageId
-              ? { ...msg, status: 'error' as const }
-              : msg,
-          ),
-        );
+        const needsReindex = reportAttachmentReindex(data.data);
+        const rewriteConflict = data.data?.code === 'CHAT_REWRITE_CONFLICT';
+        if (needsReindex || rewriteConflict) {
+          if (restoreRewrite) {
+            restoreRewrite();
+          } else {
+            setMessages((prev) =>
+              prev.filter((msg) => msg.messageId !== messageId),
+            );
+            setRejectedDraft(message.query);
+          }
+        } else {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.messageId === messageId
+                ? { ...msg, status: 'error' as const }
+                : msg,
+            ),
+          );
+        }
+        if (!needsReindex) {
+          toast.error(
+            data.data?.message || data.data || 'Failed to send message.',
+          );
+        }
         return;
       }
 
       if (data.type === 'researchComplete') {
         setResearchEnded(true);
         if (
-          message.responseBlocks.find(
-            (b) => b.type === 'source' && b.data.length > 0,
-          )
+          responseBlocks.find((b) => b.type === 'source' && b.data.length > 0)
         ) {
           setMessageAppeared(true);
         }
       }
 
       if (data.type === 'block') {
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.messageId === messageId) {
-              const exists = msg.responseBlocks.findIndex(
-                (b) => b.id === data.block.id,
-              );
-
-              if (exists !== -1) {
-                const existingBlocks = [...msg.responseBlocks];
-                existingBlocks[exists] = data.block;
-
-                return {
-                  ...msg,
-                  responseBlocks: existingBlocks,
-                };
-              }
-
-              return {
-                ...msg,
-                responseBlocks: [...msg.responseBlocks, data.block],
-              };
-            }
-            return msg;
-          }),
+        const block: Block = data.block;
+        const alreadyReceived = responseBlocks.some(
+          (item) => item.id === block.id,
+        );
+        setResponseBlocks(
+          alreadyReceived
+            ? responseBlocks.map((item) =>
+                item.id === block.id ? block : item,
+              )
+            : [...responseBlocks, block],
         );
 
         if (
@@ -611,20 +669,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.type === 'updateBlock') {
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.messageId === messageId) {
-              const updatedBlocks = msg.responseBlocks.map((block) => {
-                if (block.id === data.blockId) {
-                  const updatedBlock = { ...block };
-                  applyPatch(updatedBlock, data.patch);
-                  return updatedBlock;
-                }
-                return block;
-              });
-              return { ...msg, responseBlocks: updatedBlocks };
-            }
-            return msg;
+        setResponseBlocks(
+          responseBlocks.map((block) => {
+            if (block.id !== data.blockId) return block;
+            const updatedBlock = structuredClone(block);
+            applyPatch(updatedBlock, data.patch);
+            return updatedBlock;
           }),
         );
       }
@@ -636,17 +686,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         handledMessageEndRef.current.add(messageId);
 
-        const currentMsg = messagesRef.current.find(
-          (msg) => msg.messageId === messageId,
-        );
-
         const newHistory: [string, string][] = [
           ...chatHistory.current,
           ['human', message.query],
           [
             'assistant',
-            currentMsg?.responseBlocks.find((b) => b.type === 'text')?.data ||
-              '',
+            responseBlocks.find((b) => b.type === 'text')?.data || '',
           ],
         ];
 
@@ -660,52 +705,49 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           ),
         );
 
-        setLoading(false);
-
-        const lastMsg = messagesRef.current[messagesRef.current.length - 1];
-
         const autoMediaSearch = getAutoMediaSearch();
 
         if (autoMediaSearch) {
           setTimeout(() => {
-            document
-              .getElementById(`search-images-${lastMsg.messageId}`)
-              ?.click();
+            document.getElementById(`search-images-${messageId}`)?.click();
 
-            document
-              .getElementById(`search-videos-${lastMsg.messageId}`)
-              ?.click();
+            document.getElementById(`search-videos-${messageId}`)?.click();
           }, 200);
         }
 
         // Check if there are sources and no suggestions
 
-        const hasSourceBlocks = currentMsg?.responseBlocks.some(
+        const hasSourceBlocks = responseBlocks.some(
           (block) => block.type === 'source' && block.data.length > 0,
         );
-        const hasSuggestions = currentMsg?.responseBlocks.some(
+        const hasSuggestions = responseBlocks.some(
           (block) => block.type === 'suggestion',
         );
 
         if (hasSourceBlocks && !hasSuggestions) {
-          const suggestions = await getSuggestions(newHistory);
-          const suggestionBlock: Block = {
-            id: crypto.randomBytes(7).toString('hex'),
-            type: 'suggestion',
-            data: suggestions,
-          };
+          getSuggestions(newHistory)
+            .then((suggestions) => {
+              const suggestionBlock: Block = {
+                id: crypto.randomBytes(7).toString('hex'),
+                type: 'suggestion',
+                data: suggestions,
+              };
 
-          setMessages((prev) =>
-            prev.map((msg) => {
-              if (msg.messageId === messageId) {
-                return {
-                  ...msg,
-                  responseBlocks: [...msg.responseBlocks, suggestionBlock],
-                };
-              }
-              return msg;
-            }),
-          );
+              setMessages((prev) =>
+                prev.map((msg) => {
+                  if (msg.messageId === messageId) {
+                    return {
+                      ...msg,
+                      responseBlocks: [...msg.responseBlocks, suggestionBlock],
+                    };
+                  }
+                  return msg;
+                }),
+              );
+            })
+            .catch((error) =>
+              console.error('Unable to load suggestions:', error),
+            );
         }
       }
     };
@@ -718,12 +760,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   ) => {
     if (loading || !message) return;
     setLoading(true);
-    setResearchEnded(false);
-    setMessageAppeared(false);
-
-    if (messages.length <= 1) {
-      window.history.replaceState(null, '', `/c/${chatId}`);
-    }
+    setRejectedDraft('');
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
     const backendId = crypto.randomBytes(20).toString('hex');
@@ -738,70 +775,88 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       createdAt: new Date(),
     };
 
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-
     const messageIndex = messages.findIndex((m) => m.messageId === messageId);
+    const previousHistory = chatHistory.current;
+    const requestHistory =
+      rewrite && messageIndex !== -1
+        ? previousHistory.slice(0, messageIndex * 2)
+        : previousHistory;
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content: message,
-        message: {
-          messageId: messageId,
-          chatId: chatId!,
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           content: message,
-        },
-        chatId: chatId!,
-        files: fileIds,
-        sources: sources,
-        optimizationMode: optimizationMode,
-        history: rewrite
-          ? chatHistory.current.slice(
-              0,
-              messageIndex === -1 ? undefined : messageIndex,
-            )
-          : chatHistory.current,
-        chatModel: {
-          key: chatModelProvider.key,
-          providerId: chatModelProvider.providerId,
-        },
-        embeddingModel: {
-          key: embeddingModelProvider.key,
-          providerId: embeddingModelProvider.providerId,
-        },
-        systemInstructions: localStorage.getItem('systemInstructions'),
-      }),
-    });
+          message: {
+            messageId: messageId,
+            chatId: chatId!,
+            content: message,
+          },
+          chatId: chatId!,
+          files: fileIds,
+          sources: sources,
+          optimizationMode: optimizationMode,
+          history: requestHistory,
+          chatModel: {
+            key: chatModelProvider.key,
+            providerId: chatModelProvider.providerId,
+          },
+          embeddingModel: {
+            key: embeddingModelProvider.key,
+            providerId: embeddingModelProvider.providerId,
+          },
+          systemInstructions: localStorage.getItem('systemInstructions'),
+        }),
+      });
 
-    if (!res.body) throw new Error('No response body');
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
 
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder('utf-8');
-
-    let partialChunk = '';
-
-    const messageHandler = getMessageHandler(newMessage);
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      partialChunk += decoder.decode(value, { stream: true });
-
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
-          messageHandler(json);
+        if (res.status === 409 && reportAttachmentReindex(error)) {
+          if (!rewrite) setRejectedDraft(message);
+          return;
         }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
+        throw new Error(error?.message || 'Failed to send message.');
       }
+
+      if (!res.body) throw new Error('No response body');
+
+      setFilesNeedingReindex([]);
+      setResearchEnded(false);
+      setMessageAppeared(false);
+
+      if (messages.length <= 1) {
+        window.history.replaceState(null, '', `/c/${chatId}`);
+      }
+
+      // Keep the existing answer and history until the server accepts the rewrite.
+      if (rewrite) {
+        chatHistory.current = requestHistory;
+        handledMessageEndRef.current.delete(messageId);
+      }
+      setMessages((prev) => [
+        ...(rewrite && messageIndex !== -1
+          ? prev.slice(0, messageIndex)
+          : prev),
+        newMessage,
+      ]);
+
+      const restoreRewrite = rewrite
+        ? () => {
+            chatHistory.current = previousHistory;
+            setMessages(messages);
+          }
+        : undefined;
+      await readChatEvents(res, getMessageHandler(newMessage, restoreRewrite));
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to send message.',
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -813,6 +868,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         chatHistory: chatHistory.current,
         files,
         fileIds,
+        filesNeedingReindex,
+        rejectedDraft,
+        clearReindexNotice,
+        removeAttachment,
         sources,
         chatId,
         hasError,

@@ -1,14 +1,16 @@
 import { z } from 'zod';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
-import SearchAgent from '@/lib/agents/search';
+import SearchAgent, { ChatRewriteConflict } from '@/lib/agents/search';
 import SessionManager from '@/lib/session';
+import { streamChatSession } from '@/lib/chatStream';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
-import { eq } from 'drizzle-orm';
-import { chats } from '@/lib/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { chats, messages } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
+import UploadStore, { AttachmentReindexRequired } from '@/lib/uploads/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -127,13 +129,23 @@ export const POST = async (req: Request) => {
 
     const registry = new ModelRegistry();
 
-    const [llm, embedding] = await Promise.all([
-      registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),
-      registry.loadEmbeddingModel(
-        body.embeddingModel.providerId,
-        body.embeddingModel.key,
-      ),
-    ]);
+    const embedding = await registry.loadEmbeddingModel(
+      body.embeddingModel.providerId,
+      body.embeddingModel.key,
+    );
+    const uploads = body.files.length
+      ? new UploadStore({
+          fileIds: body.files,
+          embeddingModel: embedding,
+          fingerprint: embedding.getIndexFingerprint(
+            body.embeddingModel.providerId,
+          ),
+        })
+      : undefined;
+    const llm = await registry.loadChatModel(
+      body.chatModel.providerId,
+      body.chatModel.key,
+    );
 
     const history: ChatTurnMessage[] = body.history.map((msg) => {
       if (msg[0] === 'human') {
@@ -152,78 +164,61 @@ export const POST = async (req: Request) => {
     const agent = new SearchAgent();
     const session = SessionManager.createSession();
 
-    const responseStream = new TransformStream();
-    const writer = responseStream.writable.getWriter();
-    const encoder = new TextEncoder();
+    const response = streamChatSession(session, req.signal);
 
-    const disconnect = session.subscribe((event: string, data: any) => {
-      if (event === 'data') {
-        if (data.type === 'block') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'block',
-                block: data.block,
-              }) + '\n',
-            ),
+    agent
+      .searchAsync(session, {
+        chatHistory: history,
+        followUp: message.content,
+        chatId: body.message.chatId,
+        messageId: body.message.messageId,
+        config: {
+          llm,
+          embedding: embedding,
+          sources: body.sources as SearchSources[],
+          mode: body.optimizationMode,
+          fileIds: body.files,
+          uploads,
+          systemInstructions: body.systemInstructions || 'None',
+        },
+      })
+      .catch(async (error: unknown) => {
+        const needsReindex = error instanceof AttachmentReindexRequired;
+        const rewriteConflict = error instanceof ChatRewriteConflict;
+        if (!needsReindex && !rewriteConflict) {
+          console.error('Chat processing failed:', error);
+        }
+
+        try {
+          const currentTurn = and(
+            eq(messages.chatId, message.chatId),
+            eq(messages.messageId, message.messageId),
+            eq(messages.backendId, session.id),
+            eq(messages.status, 'answering'),
           );
-        } else if (data.type === 'updateBlock') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'updateBlock',
-                blockId: data.blockId,
-                patch: data.patch,
-              }) + '\n',
-            ),
-          );
-        } else if (data.type === 'researchComplete') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'researchComplete',
-              }) + '\n',
-            ),
+          if (needsReindex) {
+            // Roll back only this request's pending row so the user can retry the turn.
+            await db.delete(messages).where(currentTurn);
+          } else if (!rewriteConflict) {
+            await db
+              .update(messages)
+              .set({ status: 'error' })
+              .where(currentTurn);
+          }
+        } catch (persistenceError) {
+          console.error(
+            'Failed to finish unsuccessful chat turn:',
+            persistenceError,
           );
         }
-      } else if (event === 'end') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'messageEnd',
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        session.removeAllListeners();
-      } else if (event === 'error') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'error',
-              data: data.data,
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        session.removeAllListeners();
-      }
-    });
-
-    agent.searchAsync(session, {
-      chatHistory: history,
-      followUp: message.content,
-      chatId: body.message.chatId,
-      messageId: body.message.messageId,
-      config: {
-        llm,
-        embedding: embedding,
-        sources: body.sources as SearchSources[],
-        mode: body.optimizationMode,
-        fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
-      },
-    });
+        session.emit('error', {
+          data: needsReindex
+            ? error.toResponse()
+            : rewriteConflict
+              ? { code: 'CHAT_REWRITE_CONFLICT', message: error.message }
+              : 'An error occurred while processing chat request',
+        });
+      });
 
     ensureChatExists({
       id: body.message.chatId,
@@ -232,19 +227,11 @@ export const POST = async (req: Request) => {
       query: body.message.content,
     });
 
-    req.signal.addEventListener('abort', () => {
-      disconnect();
-      writer.close();
-    });
-
-    return new Response(responseStream.readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        Connection: 'keep-alive',
-        'Cache-Control': 'no-cache, no-transform',
-      },
-    });
+    return response;
   } catch (err) {
+    if (err instanceof AttachmentReindexRequired) {
+      return Response.json(err.toResponse(), { status: 409 });
+    }
     console.error('An error occurred while processing chat request:', err);
     return Response.json(
       { message: 'An error occurred while processing chat request' },

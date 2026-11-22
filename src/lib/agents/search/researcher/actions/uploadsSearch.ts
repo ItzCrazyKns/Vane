@@ -1,6 +1,5 @@
 import z from 'zod';
 import { ResearchAction } from '../../types';
-import UploadStore from '@/lib/uploads/store';
 
 const schema = z.object({
   queries: z
@@ -49,12 +48,8 @@ const uploadsSearchAction: ResearchAction<typeof schema> = {
       ]);
     }
 
-    const uploadStore = new UploadStore({
-      embeddingModel: additionalConfig.embedding,
-      fileIds: additionalConfig.fileIds,
-    });
-
-    const results = await uploadStore.query(input.queries, 10);
+    const results =
+      (await additionalConfig.uploads?.query(input.queries, 10)) ?? [];
 
     const seenIds = new Map<string, number>();
 

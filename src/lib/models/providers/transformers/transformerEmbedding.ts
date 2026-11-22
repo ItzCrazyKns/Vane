@@ -13,6 +13,10 @@ class TransformerEmbedding extends BaseEmbedding<TransformerConfig> {
     super(config);
   }
 
+  protected getIndexEndpoint(): null {
+    return null;
+  }
+
   async embedText(texts: string[]): Promise<number[][]> {
     return this.embed(texts);
   }
