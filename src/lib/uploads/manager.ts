@@ -71,17 +71,6 @@ class UploadManager {
     }
   }
 
-  private static addNewRecordedFile(fileRecord: RecordedFile) {
-    const currentData = this.getRecordedFiles();
-
-    currentData.push(fileRecord);
-
-    fs.writeFileSync(
-      UploadManager.uploadedFilesRecordPath,
-      JSON.stringify({ files: currentData }, null, 2),
-    );
-  }
-
   static getFile(fileId: string): RecordedFile | null {
     const recordedFiles = this.getRecordedFiles();
 
@@ -173,51 +162,82 @@ class UploadManager {
   }
 
   async processFiles(files: File[]): Promise<FileRes[]> {
-    const processedFiles: FileRes[] = [];
+    if (!files.length) return [];
 
-    await Promise.all(
-      files.map(async (file) => {
-        if (!(supportedMimeTypes as readonly string[]).includes(file.type)) {
-          throw new Error(`File type ${file.type} not supported`);
-        }
+    const uploads = files.map((file) => {
+      if (!(supportedMimeTypes as readonly string[]).includes(file.type)) {
+        throw new Error(`File type ${file.type} not supported`);
+      }
 
-        const fileId = crypto.randomBytes(16).toString('hex');
-        const fileExtension = file.name.split('.').pop();
-        const fileStem = crypto.randomBytes(16).toString('hex');
-        const filePath = path.join(
-          UploadManager.uploadsDir,
-          `${fileStem}.${fileExtension}`,
-        );
-        const contentPath = path.join(
-          UploadManager.uploadsDir,
-          `${fileStem}.content.json`,
-        );
+      const fileId = crypto.randomBytes(16).toString('hex');
+      const fileExtension = path.basename(file.name).split('.').pop() ?? '';
+      const fileStem = crypto.randomBytes(16).toString('hex');
+      const filePath = path.join(
+        UploadManager.uploadsDir,
+        `${fileStem}.${fileExtension}`,
+      );
+      const contentPath = path.join(
+        UploadManager.uploadsDir,
+        `${fileStem}.content.json`,
+      );
 
-        fs.writeFileSync(filePath, Buffer.from(await file.arrayBuffer()));
+      return { file, fileId, fileExtension, filePath, contentPath };
+    });
+    const recordPath = UploadManager.uploadedFilesRecordPath;
+    const pendingRecordPath = `${recordPath}.${crypto.randomUUID()}.tmp`;
 
-        const text = await this.extractText(
-          filePath,
-          file.type as SupportedMimeType,
-        );
-        await this.writeIndex(contentPath, splitText(text, 512, 128));
+    try {
+      // Wait for every file to finish before rolling back a failed batch.
+      const results = await Promise.allSettled(
+        uploads.map(async ({ file, filePath, contentPath }) => {
+          fs.writeFileSync(filePath, Buffer.from(await file.arrayBuffer()));
+          const text = await this.extractText(
+            filePath,
+            file.type as SupportedMimeType,
+          );
+          await this.writeIndex(contentPath, splitText(text, 512, 128));
+        }),
+      );
+      const failure = results.find((result) => result.status === 'rejected');
+      if (failure) throw failure.reason;
 
-        UploadManager.addNewRecordedFile({
+      const records = UploadManager.getRecordedFiles();
+      for (const { file, fileId, filePath, contentPath } of uploads) {
+        records.push({
           id: fileId,
           name: file.name,
           filePath,
           contentPath,
           uploadedAt: new Date().toISOString(),
         });
+      }
 
-        processedFiles.push({
-          fileExtension: fileExtension || '',
-          fileId,
-          fileName: file.name,
-        });
-      }),
-    );
+      // Publish the whole batch only after every index is ready.
+      fs.writeFileSync(
+        pendingRecordPath,
+        JSON.stringify({ files: records }, null, 2),
+      );
+      fs.renameSync(pendingRecordPath, recordPath);
+    } catch (error) {
+      const paths = uploads.flatMap(({ filePath, contentPath }) => [
+        filePath,
+        contentPath,
+      ]);
+      paths.push(pendingRecordPath);
+      const cleanup = await Promise.allSettled(
+        paths.map((targetPath) => fs.promises.rm(targetPath, { force: true })),
+      );
+      if (cleanup.some((result) => result.status === 'rejected')) {
+        console.error('Unable to clean up one or more failed uploads');
+      }
+      throw error;
+    }
 
-    return processedFiles;
+    return uploads.map(({ file, fileId, fileExtension }) => ({
+      fileName: file.name,
+      fileId,
+      fileExtension,
+    }));
   }
 }
 

@@ -97,6 +97,15 @@ type ComposerDrafts = {
 
 const emptyDraft: ComposerDraft = { text: '' };
 
+const sameSelectionValues = (left: string[], right: string[]) => {
+  const leftValues = new Set(left);
+  const rightValues = new Set(right);
+  return (
+    leftValues.size === rightValues.size &&
+    [...leftValues].every((value) => rightValues.has(value))
+  );
+};
+
 const composerDraftContext = createContext<{
   draft: ComposerDraft;
   savedDrafts: ComposerDraft[];
@@ -786,14 +795,24 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
         current.draft.text === draft.text
       ) {
         const { attachments } = draft;
-        if (!attachments?.filesNeedingReindex.length) return current;
+        if (!attachments) return current;
 
-        // Keep a separate draft if the selection changed while the request was in flight.
         if (
-          attachments.files === selection.files &&
-          attachments.sources === selection.sources
+          sameSelectionValues(
+            attachments.files.map(({ fileId }) => fileId),
+            selection.files.map(({ fileId }) => fileId),
+          ) &&
+          sameSelectionValues(attachments.sources, selection.sources)
         ) {
-          return { ...current, draft: { ...current.draft, attachments } };
+          const { filesNeedingReindex } = attachments;
+          if (!filesNeedingReindex.length) return current;
+          return {
+            ...current,
+            draft: {
+              ...current.draft,
+              attachments: { ...selection, filesNeedingReindex },
+            },
+          };
         }
       }
 
