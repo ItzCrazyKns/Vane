@@ -484,6 +484,7 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
   const activeDraftAttachments = useContext(draftAttachmentsContext);
 
   const [sources, setSources] = useState<string[]>(['web']);
+  const composerSelection = useRef({ files, sources });
   const [optimizationMode, setOptimizationMode] = useState('speed');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
@@ -654,6 +655,10 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
   }, [activeDraftAttachments, chatId]);
 
   useEffect(() => {
+    composerSelection.current = { files, sources };
+  }, [files, sources]);
+
+  useEffect(() => {
     if (params.chatId && params.chatId !== chatId) {
       activeChatId.current = params.chatId;
       setChatId(params.chatId);
@@ -767,6 +772,7 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const preserveUnsentDraft = (draft: ComposerDraft) => {
+    const selection = composerSelection.current;
     setComposerDrafts((current) => {
       if (current.chatId !== chatId) return current;
       if (draft.recoveryId) {
@@ -775,8 +781,20 @@ const ChatStateProvider = ({ children }: { children: React.ReactNode }) => {
           current.saved.some((saved) => saved.recoveryId === draft.recoveryId)
         )
           return current;
-      } else if (current.draft.text === draft.text) {
-        return current;
+      } else if (
+        !current.draft.recoveryId &&
+        current.draft.text === draft.text
+      ) {
+        const { attachments } = draft;
+        if (!attachments?.filesNeedingReindex.length) return current;
+
+        // Keep a separate draft if the selection changed while the request was in flight.
+        if (
+          attachments.files === selection.files &&
+          attachments.sources === selection.sources
+        ) {
+          return { ...current, draft: { ...current.draft, attachments } };
+        }
       }
 
       if (!current.draft.text && !current.draft.recoveryId) {
