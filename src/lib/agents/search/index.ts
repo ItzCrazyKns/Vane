@@ -5,51 +5,123 @@ import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
-import { messages } from '@/lib/db/schema';
-import { and, eq, gt } from 'drizzle-orm';
+import { chatRecoveries, chats, messages } from '@/lib/db/schema';
+import { and, desc, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
+import UploadManager from '@/lib/uploads/manager';
+
+export class ChatRewriteConflict extends Error {
+  constructor() {
+    super(
+      'This conversation changed while rewriting. Reload it and try again.',
+    );
+  }
+}
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
-    const exists = await db.query.messages.findFirst({
-      where: and(
-        eq(messages.chatId, input.chatId),
-        eq(messages.messageId, input.messageId),
-      ),
-    });
-
-    if (!exists) {
-      await db.insert(messages).values({
-        chatId: input.chatId,
-        messageId: input.messageId,
-        backendId: session.id,
-        query: input.followUp,
-        createdAt: new Date().toISOString(),
-        status: 'answering',
-        responseBlocks: [],
-      });
-    } else {
-      await db
-        .delete(messages)
-        .where(
-          and(eq(messages.chatId, input.chatId), gt(messages.id, exists.id)),
-        )
-        .execute();
-      await db
-        .update(messages)
-        .set({
-          status: 'answering',
-          backendId: session.id,
-          responseBlocks: [],
+    const chatMessages = eq(messages.chatId, input.chatId);
+    const targetMessage = and(
+      chatMessages,
+      eq(messages.messageId, input.messageId),
+    );
+    const findTarget = (database: Pick<typeof db, 'query'>) =>
+      database.query.messages
+        .findFirst({
+          where: targetMessage,
+          columns: { id: true, backendId: true },
         })
-        .where(
-          and(
-            eq(messages.chatId, input.chatId),
-            eq(messages.messageId, input.messageId),
-          ),
-        )
-        .execute();
+        .sync();
+    const findTail = (database: Pick<typeof db, 'query'>) =>
+      database.query.messages
+        .findFirst({
+          where: chatMessages,
+          orderBy: desc(messages.id),
+          columns: { id: true, backendId: true },
+        })
+        .sync();
+
+    const { exists, expectedTail } = db.transaction(
+      (tx) => {
+        const exists = findTarget(tx);
+        const expectedTail =
+          exists && input.config.uploads ? findTail(tx) : undefined;
+
+        const createdAt = new Date().toISOString();
+        if (!exists) {
+          tx.insert(messages)
+            .values({
+              chatId: input.chatId,
+              messageId: input.messageId,
+              backendId: session.id,
+              query: input.followUp,
+              createdAt,
+              status: 'answering',
+              responseBlocks: [],
+            })
+            .run();
+        }
+
+        // Publish the chat with its first pending message so another request
+        // cannot roll it back before the message is saved.
+        const chat = tx.query.chats
+          .findFirst({
+            where: eq(chats.id, input.chatId),
+            columns: { id: true },
+          })
+          .sync();
+        if (!chat) {
+          tx.insert(chats)
+            .values({
+              id: input.chatId,
+              createdAt,
+              sources: input.config.sources,
+              title: input.followUp,
+              files: input.config.fileIds.map((fileId) => ({
+                fileId,
+                name: UploadManager.getFile(fileId)?.name || 'Uploaded File',
+              })),
+            })
+            .run();
+        }
+
+        return { exists, expectedTail };
+      },
+      { behavior: 'immediate' },
+    );
+
+    const startRewrite = (id: number) => {
+      db.transaction((tx) => {
+        if (input.config.uploads) {
+          const currentTarget = findTarget(tx);
+          const currentTail = findTail(tx);
+          if (
+            !expectedTail ||
+            currentTarget?.id !== id ||
+            currentTarget.backendId !== exists?.backendId ||
+            currentTail?.id !== expectedTail.id ||
+            currentTail.backendId !== expectedTail.backendId
+          ) {
+            throw new ChatRewriteConflict();
+          }
+        }
+        tx.delete(messages)
+          .where(and(chatMessages, gt(messages.id, id)))
+          .run();
+        tx.update(messages)
+          .set({
+            status: 'answering',
+            backendId: session.id,
+            responseBlocks: [],
+          })
+          .where(eq(messages.id, id))
+          .run();
+      });
+    };
+
+    if (exists && !input.config.uploads) {
+      startRewrite(exists.id);
     }
 
     const classification = await classify({
@@ -94,6 +166,9 @@ class SearchAgent {
       widgetPromise,
       searchPromise,
     ]);
+
+    // A dimension change may only surface once the provider embeds a search query.
+    if (exists && input.config.uploads) startRewrite(exists.id);
 
     session.emit('data', {
       type: 'researchComplete',
@@ -171,21 +246,31 @@ class SearchAgent {
       }
     }
 
-    session.emit('end', {});
+    const { recoveryId } = input;
+    const completedRecoveryId = db.transaction((tx) => {
+      const completed = tx
+        .update(messages)
+        .set({
+          status: 'completed',
+          responseBlocks: session.getAllBlocks(),
+        })
+        .where(and(targetMessage, eq(messages.backendId, session.id)))
+        .run();
 
-    await db
-      .update(messages)
-      .set({
-        status: 'completed',
-        responseBlocks: session.getAllBlocks(),
-      })
-      .where(
-        and(
-          eq(messages.chatId, input.chatId),
-          eq(messages.messageId, input.messageId),
-        ),
-      )
-      .execute();
+      if (!exists && recoveryId && completed.changes > 0) {
+        tx.delete(chatRecoveries)
+          .where(
+            and(
+              eq(chatRecoveries.chatId, input.chatId),
+              eq(chatRecoveries.backendId, recoveryId),
+            ),
+          )
+          .run();
+        return recoveryId;
+      }
+    });
+
+    session.emit('end', { recoveryId: completedRecoveryId });
   }
 }
 

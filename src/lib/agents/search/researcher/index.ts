@@ -62,7 +62,7 @@ class Researcher {
         input.config.mode,
         i,
         maxIteration,
-        input.config.fileIds,
+        input.config.uploads,
       );
 
       const actionStream = input.config.llm.streamText({
@@ -165,6 +165,7 @@ class Researcher {
         llm: input.config.llm,
         embedding: input.config.embedding,
         session: session,
+        uploads: input.config.uploads,
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
         mode: input.config.mode,

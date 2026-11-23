@@ -43,8 +43,10 @@ class SessionManager {
   }
 
   emit(event: string, data: any) {
-    this.emitter.emit(event, data);
     this.events.push({ event, data });
+    if (event !== 'error' || this.emitter.listenerCount('error') > 0) {
+      this.emitter.emit(event, data);
+    }
   }
 
   emitBlock(block: Block) {

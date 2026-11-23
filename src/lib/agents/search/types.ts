@@ -3,12 +3,14 @@ import BaseLLM from '../../models/base/llm';
 import BaseEmbedding from '@/lib/models/base/embedding';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage, Chunk } from '@/lib/types';
+import type UploadStore from '@/lib/uploads/store';
 
 export type SearchSources = 'web' | 'discussions' | 'academic';
 
 export type SearchAgentConfig = {
   sources: SearchSources[];
   fileIds: string[];
+  uploads?: UploadStore;
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
@@ -21,6 +23,7 @@ export type SearchAgentInput = {
   config: SearchAgentConfig;
   chatId: string;
   messageId: string;
+  recoveryId?: string;
 };
 
 export type WidgetInput = {
@@ -66,6 +69,7 @@ export type AdditionalConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   session: SessionManager;
+  uploads?: UploadStore;
 };
 
 export type ResearcherInput = {

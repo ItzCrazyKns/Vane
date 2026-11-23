@@ -1,5 +1,4 @@
-import BaseEmbedding from '@/lib/models/base/embedding';
-import UploadStore from '@/lib/uploads/store';
+import type UploadStore from '@/lib/uploads/store';
 
 const getSpeedPrompt = (
   actionDesc: string,
@@ -322,11 +321,11 @@ export const getResearcherPrompt = (
   mode: 'speed' | 'balanced' | 'quality',
   i: number,
   maxIteration: number,
-  fileIds: string[],
+  uploads?: UploadStore,
 ) => {
   let prompt = '';
 
-  const filesData = UploadStore.getFileData(fileIds);
+  const filesData = uploads?.getFileData() ?? [];
 
   const fileDesc = filesData
     .map(

@@ -131,6 +131,7 @@ const Attach = () => {
                         <p className="text-xs">Add</p>
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setFiles([]);
                           setFileIds([]);

@@ -7,15 +7,25 @@ type OllamaConfig = {
   baseURL?: string;
 };
 
+class OllamaEmbeddingClient extends Ollama {
+  get embeddingEndpoint(): string {
+    return `${this.config.host}/api/embed`;
+  }
+}
+
 class OllamaEmbedding extends BaseEmbedding<OllamaConfig> {
-  ollamaClient: Ollama;
+  ollamaClient: OllamaEmbeddingClient;
 
   constructor(protected config: OllamaConfig) {
     super(config);
 
-    this.ollamaClient = new Ollama({
+    this.ollamaClient = new OllamaEmbeddingClient({
       host: this.config.baseURL || 'http://localhost:11434',
     });
+  }
+
+  protected getIndexEndpoint(): string {
+    return this.ollamaClient.embeddingEndpoint;
   }
 
   async embedText(texts: string[]): Promise<number[][]> {

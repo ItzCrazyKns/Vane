@@ -20,6 +20,10 @@ class OpenAIEmbedding extends BaseEmbedding<OpenAIConfig> {
     });
   }
 
+  protected getIndexEndpoint(): string {
+    return this.openAIClient.buildURL('/embeddings', undefined);
+  }
+
   async embedText(texts: string[]): Promise<number[][]> {
     const response = await this.openAIClient.embeddings.create({
       model: this.config.model,

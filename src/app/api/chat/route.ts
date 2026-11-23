@@ -1,14 +1,21 @@
 import { z } from 'zod';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
-import SearchAgent from '@/lib/agents/search';
+import SearchAgent, { ChatRewriteConflict } from '@/lib/agents/search';
 import SessionManager from '@/lib/session';
+import { streamChatSession } from '@/lib/chatStream';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
-import { eq } from 'drizzle-orm';
-import { chats } from '@/lib/db/schema';
+import { and, eq, notExists } from 'drizzle-orm';
+import {
+  chatRecoveries,
+  chats,
+  messages,
+  type ChatRecovery,
+} from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
+import UploadStore, { AttachmentReindexRequired } from '@/lib/uploads/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,6 +40,7 @@ const embeddingModelSchema: z.ZodType<ModelWithProvider> = z.object({
 
 const bodySchema = z.object({
   message: messageSchema,
+  recoveryId: z.string().min(1).optional(),
   optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
     message: 'Optimization mode must be one of: speed, balanced, quality',
   }),
@@ -68,38 +76,6 @@ const safeValidateBody = (data: unknown) => {
   };
 };
 
-const ensureChatExists = async (input: {
-  id: string;
-  sources: SearchSources[];
-  query: string;
-  fileIds: string[];
-}) => {
-  try {
-    const exists = await db.query.chats
-      .findFirst({
-        where: eq(chats.id, input.id),
-      })
-      .execute();
-
-    if (!exists) {
-      await db.insert(chats).values({
-        id: input.id,
-        createdAt: new Date().toISOString(),
-        sources: input.sources,
-        title: input.query,
-        files: input.fileIds.map((id) => {
-          return {
-            fileId: id,
-            name: UploadManager.getFile(id)?.name || 'Uploaded File',
-          };
-        }),
-      });
-    }
-  } catch (err) {
-    console.error('Failed to check/save chat:', err);
-  }
-};
-
 export const POST = async (req: Request) => {
   try {
     const reqBody = (await req.json()) as Body;
@@ -114,7 +90,7 @@ export const POST = async (req: Request) => {
     }
 
     const body = parseBody.data as Body;
-    const { message } = body;
+    const { message, recoveryId } = body;
 
     if (message.content === '') {
       return Response.json(
@@ -127,13 +103,23 @@ export const POST = async (req: Request) => {
 
     const registry = new ModelRegistry();
 
-    const [llm, embedding] = await Promise.all([
-      registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),
-      registry.loadEmbeddingModel(
-        body.embeddingModel.providerId,
-        body.embeddingModel.key,
-      ),
-    ]);
+    const embedding = await registry.loadEmbeddingModel(
+      body.embeddingModel.providerId,
+      body.embeddingModel.key,
+    );
+    const uploads = body.files.length
+      ? new UploadStore({
+          fileIds: body.files,
+          embeddingModel: embedding,
+          fingerprint: embedding.getIndexFingerprint(
+            body.embeddingModel.providerId,
+          ),
+        })
+      : undefined;
+    const llm = await registry.loadChatModel(
+      body.chatModel.providerId,
+      body.chatModel.key,
+    );
 
     const history: ChatTurnMessage[] = body.history.map((msg) => {
       if (msg[0] === 'human') {
@@ -152,99 +138,130 @@ export const POST = async (req: Request) => {
     const agent = new SearchAgent();
     const session = SessionManager.createSession();
 
-    const responseStream = new TransformStream();
-    const writer = responseStream.writable.getWriter();
-    const encoder = new TextEncoder();
+    const response = streamChatSession(session, req.signal);
 
-    const disconnect = session.subscribe((event: string, data: any) => {
-      if (event === 'data') {
-        if (data.type === 'block') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'block',
-                block: data.block,
-              }) + '\n',
-            ),
+    agent
+      .searchAsync(session, {
+        chatHistory: history,
+        followUp: message.content,
+        chatId: body.message.chatId,
+        messageId: body.message.messageId,
+        recoveryId,
+        config: {
+          llm,
+          embedding: embedding,
+          sources: body.sources as SearchSources[],
+          mode: body.optimizationMode,
+          fileIds: body.files,
+          uploads,
+          systemInstructions: body.systemInstructions || 'None',
+        },
+      })
+      .catch(async (error: unknown) => {
+        const needsReindex = error instanceof AttachmentReindexRequired;
+        const rewriteConflict = error instanceof ChatRewriteConflict;
+        if (!needsReindex && !rewriteConflict) {
+          console.error('Chat processing failed:', error);
+        }
+
+        let recovery:
+          | {
+              recoveryId: string;
+              replacesRecoveryId?: string;
+              recoveryFiles: ChatRecovery['files'];
+              recoverySources: ChatRecovery['sources'];
+              chatRemoved?: true;
+            }
+          | undefined;
+        try {
+          const currentTurn = and(
+            eq(messages.chatId, message.chatId),
+            eq(messages.messageId, message.messageId),
+            eq(messages.backendId, session.id),
+            eq(messages.status, 'answering'),
           );
-        } else if (data.type === 'updateBlock') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'updateBlock',
-                blockId: data.blockId,
-                patch: data.patch,
-              }) + '\n',
-            ),
-          );
-        } else if (data.type === 'researchComplete') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'researchComplete',
-              }) + '\n',
-            ),
+          if (needsReindex) {
+            recovery = db.transaction((tx) => {
+              const removed = tx
+                .delete(messages)
+                .where(currentTurn)
+                .returning({ query: messages.query })
+                .get();
+              if (!removed) return;
+
+              const files = Array.from(new Set(body.files), (fileId) => ({
+                fileId,
+                name: UploadManager.getFile(fileId)?.name || 'Uploaded File',
+              }));
+              const sources = body.sources as SearchSources[];
+              if (recoveryId) {
+                tx.delete(chatRecoveries)
+                  .where(
+                    and(
+                      eq(chatRecoveries.chatId, message.chatId),
+                      eq(chatRecoveries.backendId, recoveryId),
+                    ),
+                  )
+                  .run();
+              }
+
+              // Use the new session ID so another retry cannot remove this rejection.
+              tx.insert(chatRecoveries)
+                .values({
+                  chatId: message.chatId,
+                  backendId: session.id,
+                  query: removed.query,
+                  errorFiles: error.files,
+                  files,
+                  sources,
+                })
+                .run();
+
+              // A concurrent send may still need this chat and its metadata.
+              const remainingTurns = tx
+                .select({ id: messages.id })
+                .from(messages)
+                .where(eq(messages.chatId, message.chatId));
+              const removedChat = tx
+                .delete(chats)
+                .where(
+                  and(eq(chats.id, message.chatId), notExists(remainingTurns)),
+                )
+                .run();
+              return {
+                recoveryId: session.id,
+                replacesRecoveryId: recoveryId,
+                recoveryFiles: files,
+                recoverySources: sources,
+                ...(removedChat.changes > 0 && { chatRemoved: true as const }),
+              };
+            });
+          } else if (!rewriteConflict) {
+            await db
+              .update(messages)
+              .set({ status: 'error' })
+              .where(currentTurn);
+          }
+        } catch (persistenceError) {
+          console.error(
+            'Failed to finish unsuccessful chat turn:',
+            persistenceError,
           );
         }
-      } else if (event === 'end') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'messageEnd',
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        session.removeAllListeners();
-      } else if (event === 'error') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'error',
-              data: data.data,
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        session.removeAllListeners();
-      }
-    });
+        session.emit('error', {
+          data: needsReindex
+            ? { ...error.toResponse(), ...recovery }
+            : rewriteConflict
+              ? { code: 'CHAT_REWRITE_CONFLICT', message: error.message }
+              : 'An error occurred while processing chat request',
+        });
+      });
 
-    agent.searchAsync(session, {
-      chatHistory: history,
-      followUp: message.content,
-      chatId: body.message.chatId,
-      messageId: body.message.messageId,
-      config: {
-        llm,
-        embedding: embedding,
-        sources: body.sources as SearchSources[],
-        mode: body.optimizationMode,
-        fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
-      },
-    });
-
-    ensureChatExists({
-      id: body.message.chatId,
-      sources: body.sources as SearchSources[],
-      fileIds: body.files,
-      query: body.message.content,
-    });
-
-    req.signal.addEventListener('abort', () => {
-      disconnect();
-      writer.close();
-    });
-
-    return new Response(responseStream.readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        Connection: 'keep-alive',
-        'Cache-Control': 'no-cache, no-transform',
-      },
-    });
+    return response;
   } catch (err) {
+    if (err instanceof AttachmentReindexRequired) {
+      return Response.json(err.toResponse(), { status: 409 });
+    }
     console.error('An error occurred while processing chat request:', err);
     return Response.json(
       { message: 'An error occurred while processing chat request' },
