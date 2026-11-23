@@ -227,9 +227,15 @@ class UploadManager {
       const cleanup = await Promise.allSettled(
         paths.map((targetPath) => fs.promises.rm(targetPath, { force: true })),
       );
-      if (cleanup.some((result) => result.status === 'rejected')) {
-        console.error('Unable to clean up one or more failed uploads');
-      }
+      cleanup.forEach((result, index) => {
+        if (result.status !== 'rejected') return;
+        const failure = result.reason as NodeJS.ErrnoException | undefined;
+        console.error('Unable to remove failed upload artifact', {
+          file: path.basename(paths[index]),
+          code: failure?.code ?? failure?.name,
+          errno: failure?.errno,
+        });
+      });
       throw error;
     }
 
