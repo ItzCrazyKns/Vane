@@ -25,6 +25,8 @@ COPY --from=builder /home/vane/public ./public
 COPY --from=builder /home/vane/.next/static ./public/_next/static
 
 COPY --from=builder /home/vane/.next/standalone ./
+# Without the lockfile, `yarn add` below re-resolves `next` to a newer version than the build used
+COPY --from=builder /home/vane/yarn.lock ./
 COPY --from=builder /home/vane/data ./data
 COPY drizzle ./drizzle
 

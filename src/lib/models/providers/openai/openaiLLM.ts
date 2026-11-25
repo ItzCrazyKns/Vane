@@ -20,6 +20,8 @@ import {
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
+const STREAM_IDLE_TIMEOUT_MS = 60_000;
+
 type OpenAIConfig = {
   apiKey: string;
   model: string;
@@ -110,7 +112,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                 return {
                   name: tc.function.name,
                   id: tc.id,
-                  arguments: JSON.parse(tc.function.arguments),
+arguments: JSON.parse((tc.function.arguments || '').trim() || '{}'),
                 };
               }
             })
@@ -140,57 +142,85 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       });
     });
 
-    const stream = await this.openAIClient.chat.completions.create({
-      model: this.config.model,
-      messages: this.convertToOpenAIMessages(input.messages),
-      tools: openaiTools.length > 0 ? openaiTools : undefined,
-      temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
-      top_p: input.options?.topP ?? this.config.options?.topP,
-      max_completion_tokens:
-        input.options?.maxTokens ?? this.config.options?.maxTokens,
-      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
-      frequency_penalty:
-        input.options?.frequencyPenalty ??
-        this.config.options?.frequencyPenalty,
-      presence_penalty:
-        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
-      stream: true,
-    });
+    /* The SDK's timeout stops at response headers, so a stream that stalls afterwards would hang; abort after 60s with no chunks. */
+    const controller = new AbortController();
+    let idleTimer: NodeJS.Timeout | undefined;
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), STREAM_IDLE_TIMEOUT_MS);
+    };
+    resetIdleTimer();
 
-    let recievedToolCalls: { name: string; id: string; arguments: string }[] =
-      [];
+    try {
+      const stream = await this.openAIClient.chat.completions.create(
+        {
+          model: this.config.model,
+          messages: this.convertToOpenAIMessages(input.messages),
+          tools: openaiTools.length > 0 ? openaiTools : undefined,
+          temperature:
+            input.options?.temperature ??
+            this.config.options?.temperature ??
+            1.0,
+          top_p: input.options?.topP ?? this.config.options?.topP,
+          max_completion_tokens:
+            input.options?.maxTokens ?? this.config.options?.maxTokens,
+          stop:
+            input.options?.stopSequences ?? this.config.options?.stopSequences,
+          frequency_penalty:
+            input.options?.frequencyPenalty ??
+            this.config.options?.frequencyPenalty,
+          presence_penalty:
+            input.options?.presencePenalty ??
+            this.config.options?.presencePenalty,
+          stream: true,
+        },
+        { signal: controller.signal },
+      );
 
-    for await (const chunk of stream) {
-      if (chunk.choices && chunk.choices.length > 0) {
-        const toolCalls = chunk.choices[0].delta.tool_calls;
-        yield {
-          contentChunk: chunk.choices[0].delta.content || '',
-          toolCallChunk:
-            toolCalls?.map((tc) => {
-              if (!recievedToolCalls[tc.index]) {
-                const call = {
-                  name: tc.function?.name!,
-                  id: tc.id!,
-                  arguments: tc.function?.arguments || '',
-                };
-                recievedToolCalls.push(call);
-                return { ...call, arguments: parse(call.arguments || '{}') };
-              } else {
-                const existingCall = recievedToolCalls[tc.index];
-                existingCall.arguments += tc.function?.arguments || '';
-                return {
-                  ...existingCall,
-                  arguments: parse(existingCall.arguments),
-                };
-              }
-            }) || [],
-          done: chunk.choices[0].finish_reason !== null,
-          additionalInfo: {
-            finishReason: chunk.choices[0].finish_reason,
-          },
-        };
+      let recievedToolCalls: { name: string; id: string; arguments: string }[] =
+        [];
+
+      for await (const chunk of stream) {
+        resetIdleTimer();
+        if (chunk.choices && chunk.choices.length > 0) {
+          const toolCalls = chunk.choices[0].delta.tool_calls;
+          yield {
+            contentChunk: chunk.choices[0].delta.content || '',
+            toolCallChunk:
+              toolCalls?.map((tc) => {
+                if (!recievedToolCalls[tc.index]) {
+                  const call = {
+                    name: tc.function?.name!,
+                    id: tc.id!,
+                    arguments: tc.function?.arguments || '',
+                  };
+                  recievedToolCalls.push(call);
+                  return { ...call, arguments: parse(call.arguments || '{}') };
+                } else {
+                  const existingCall = recievedToolCalls[tc.index];
+                  existingCall.arguments += tc.function?.arguments || '';
+                  return {
+                    ...existingCall,
+                    arguments: parse(existingCall.arguments || '{}'),
+                  };
+                }
+              }) || [],
+            done: chunk.choices[0].finish_reason !== null,
+            additionalInfo: {
+              finishReason: chunk.choices[0].finish_reason,
+            },
+          };
+        }
       }
+
+      /* The SDK ends the iterator quietly on abort, so surface the stall as an error. */
+      if (controller.signal.aborted) {
+        throw new Error(
+          `Model stream stalled: no data for ${STREAM_IDLE_TIMEOUT_MS / 1000}s`,
+        );
+      }
+    } finally {
+      clearTimeout(idleTimer);
     }
   }
 

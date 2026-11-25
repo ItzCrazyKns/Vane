@@ -5,6 +5,9 @@ services:
       context: .
     ports:
       - '3000:3000'
+    environment:
+      # Next's standalone server binds to $HOSTNAME's IP only; with several networks that may not be the published one
+      - HOSTNAME=0.0.0.0
     volumes:
       - data:/home/vane/data
     restart: unless-stopped
