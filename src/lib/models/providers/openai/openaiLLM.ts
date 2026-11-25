@@ -112,7 +112,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                 return {
                   name: tc.function.name,
                   id: tc.id,
-                  arguments: JSON.parse(tc.function.arguments || '{}'),
+arguments: JSON.parse((tc.function.arguments || '').trim() || '{}'),
                 };
               }
             })
