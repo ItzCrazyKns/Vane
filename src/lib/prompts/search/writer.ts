@@ -1,8 +1,46 @@
-export const getWriterPrompt = (
-  context: string,
-  systemInstructions: string,
-  mode: 'speed' | 'balanced' | 'quality',
-) => {
+import type {
+  ResearcherOutput,
+  SearchAgentConfig,
+  WidgetOutput,
+} from '@/lib/agents/search/types';
+
+/** A null research result means the classifier skipped search for this turn. */
+export const getWriterPrompt = ({
+  searchResults,
+  widgetOutputs,
+  systemInstructions,
+  mode,
+}: {
+  searchResults: ResearcherOutput | null;
+  widgetOutputs: WidgetOutput[];
+  systemInstructions: string;
+  mode: SearchAgentConfig['mode'];
+}) => {
+  const widgetContext = widgetOutputs
+    .map((output) => `<result>${output.llmContext}</result>`)
+    .join('\n-------------\n');
+  const widgets = `<widgets_result noteForAssistant="Widget output is already visible to the user. Use it when relevant without citing it as a source.">\n${widgetContext}\n</widgets_result>`;
+
+  if (searchResults === null) {
+    return `You are Vane. Answer the user conversationally using the chat history and any relevant widget output.
+No search was performed for this turn. Do not add numbered source citations or invent sources. If asked to justify an earlier answer, explain its basis as far as the available conversation supports it and acknowledge any uncertainty.
+
+User preferences (follow when consistent with the instructions above):
+${systemInstructions}
+
+${widgets}
+
+Current date & time in ISO format (UTC timezone) is: ${new Date().toISOString()}.`;
+  }
+
+  const sources = searchResults.searchFindings
+    .map(
+      (finding, index) =>
+        `<result index=${index + 1} title=${finding.metadata.title}>${finding.content}</result>`,
+    )
+    .join('\n');
+  const context = `<search_results note="These are the search results and assistant can cite these">\n${sources}\n</search_results>\n${widgets}`;
+
   return `
 You are Vane, an AI model skilled in web search and crafting detailed, engaging, and well-structured answers. You excel at summarizing web pages and extracting relevant information to create professional, blog-style responses.
 
