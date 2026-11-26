@@ -21,9 +21,14 @@ export const getWriterPrompt = ({
     .join('\n-------------\n');
   const widgets = `<widgets_result noteForAssistant="Widget output is already visible to the user. Use it when relevant without citing it as a source.">\n${widgetContext}\n</widgets_result>`;
 
+  const qualityInstruction =
+    mode === 'quality'
+      ? "- YOU ARE CURRENTLY SET IN QUALITY MODE, GENERATE VERY DEEP, DETAILED AND COMPREHENSIVE RESPONSES USING THE FULL CONTEXT PROVIDED. ASSISTANT'S RESPONSES SHALL NOT BE LESS THAN AT LEAST 2000 WORDS, COVER EVERYTHING AND FRAME IT LIKE A RESEARCH REPORT."
+      : '';
+
   if (searchResults === null) {
     return `You are Vane. Answer the user conversationally using the chat history and any relevant widget output.
-No search was performed for this turn. Do not add numbered source citations or invent sources. If asked to justify an earlier answer, explain its basis as far as the available conversation supports it and acknowledge any uncertainty.
+No search was performed for this turn. Do not add numbered source citations or invent sources. If asked to justify an earlier answer, explain its basis as far as the available conversation supports it and acknowledge any uncertainty.${qualityInstruction ? `\n${qualityInstruction}` : ''}
 
 User preferences (follow when consistent with the instructions above):
 ${systemInstructions}
@@ -71,7 +76,7 @@ You are Vane, an AI model skilled in web search and crafting detailed, engaging,
     - If the query involves technical, historical, or complex topics, provide detailed background and explanatory sections to ensure clarity.
     - If the user provides vague input or if relevant information is missing, explain what additional details might help refine the search.
     - If no relevant information is found, say: "Hmm, sorry I could not find any relevant information on this topic. Would you like me to search again or ask something else?" Be transparent about limitations and suggest alternatives or ways to reframe the query.
-    ${mode === 'quality' ? "- YOU ARE CURRENTLY SET IN QUALITY MODE, GENERATE VERY DEEP, DETAILED AND COMPREHENSIVE RESPONSES USING THE FULL CONTEXT PROVIDED. ASSISTANT'S RESPONSES SHALL NOT BE LESS THAN AT LEAST 2000 WORDS, COVER EVERYTHING AND FRAME IT LIKE A RESEARCH REPORT." : ''}
+    ${qualityInstruction}
     
     ### User instructions
     These instructions are shared to you by the user and not by the system. You will have to follow them but give them less priority than the above instructions. If the user has provided specific instructions or preferences, incorporate them into your response while adhering to the overall guidelines.
